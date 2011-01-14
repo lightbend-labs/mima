@@ -5,7 +5,9 @@ import scala.util.Properties
 
 object Config {
 
-  var settings: Settings = _
+	def settings: Settings = _settings
+	
+  private var _settings: Settings = _
 
   def info(str: String) = if (settings.verbose.value) println(str)
 
@@ -32,8 +34,12 @@ object Config {
       map(s => format(s.helpSyntax).padTo(21, ' ')+" "+s.helpDescription) .
       toList.sorted.mkString("Usage: "+cmd+" <options>\nwhere possible options include:\n  ", "\n  ", "\n")
 
+  def setup(s: Settings) {
+  	_settings = s
+  }
+      
   def setup(cmd: String, args: Array[String], validate: List[String] => Boolean, specificOptions: String*): List[String] = {
-    settings = new Settings(specificOptions: _*)
+    _settings = new Settings(specificOptions: _*)
     val (_, resargs) = settings.processArguments(args.toList, true)
     if (settings.help.value) {
       println(usageMsg(cmd))

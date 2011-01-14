@@ -121,6 +121,27 @@ class MiMaLib {
       }
     }
   }
+  
+  /** Return a list of problems for the two versions of the library. */
+  def collectProblems(oldDir: String, newDir: String, settings: Settings): List[Problem] = {
+    val oldRoot = root(oldDir)
+    val newRoot = root(newDir)      
+    Config.info("[old version in: "+oldRoot+"]")
+    Config.info("[new version in: "+newRoot+"]")
+    traversePackages(oldRoot, newRoot)
+    val fixes = new ListBuffer[Fix]
+    problems.toList
+  }
+  
+  /** Return a list of fixes for the given problems. */
+  def fixesFor(problems: List[IncompatibleResultTypeProblem]): List[Fix] = {
+  	val fixes = new ListBuffer[Fix]
+  	
+    for ((clazz, problems) <- problems groupBy (_.newmeth.owner)) {
+      fixes += new Fix(clazz).lib(problems map (p => (p.newmeth, p.oldmeth.sig)))
+    } 
+  	fixes.toList
+  }
 }
 
 object MiMaLib extends MiMaLib {
