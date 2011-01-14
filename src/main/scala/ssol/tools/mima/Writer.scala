@@ -15,7 +15,7 @@ class Writer(fixes: Seq[Fix]) {
     case ar: ZipArchive => ar
   }
 
-  private lazy val jarfiles = zippedClassFiles.map(archive).distinct
+  lazy val jarfiles = zippedClassFiles.map(archive).distinct
 
   private def overwrite(file: File)(op: File => Unit) {
     val out = new File(file.getAbsolutePath+".0")
@@ -35,6 +35,8 @@ class Writer(fixes: Seq[Fix]) {
               "leaving patched file in "+out)
     }
   }
+
+  var fixesStr = ""
 
   def writeOut() {
     if (Config.inPlace && jarfiles.nonEmpty) {
@@ -66,7 +68,7 @@ class Writer(fixes: Seq[Fix]) {
     for (fix <- fixes) {
       Config.info("["+"Fixed up "+fix.clazz+" in "+fix.outputFileName+"]")
     }
-    val fixesStr = fixes.length match {
+    fixesStr = fixes.length match {
       case 0 => "no classes to fix"
       case 1 => "one class fixed"
       case n => n+" classes fixed"
