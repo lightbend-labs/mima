@@ -7,7 +7,7 @@ import scala.tools.nsc.io.{File, AbstractFile}
 import scala.tools.nsc.util.DirectoryClassPath
 import collection.mutable.ListBuffer
 
-object MiMaLib {
+class MiMaLib {
 
 /*
   options: 
@@ -121,7 +121,9 @@ object MiMaLib {
       }
     }
   }
+}
 
+object MiMaLib extends MiMaLib {
   def main(args: Array[String]) = {
     setupClassfileParser()
     val resargs = Config.setup("scala ssol.tools.misco.MiMaLib <old-dir> <new-dir>", args, _.length == 2, "-fixall")
