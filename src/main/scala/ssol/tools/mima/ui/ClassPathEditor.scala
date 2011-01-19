@@ -1,32 +1,122 @@
 package ssol.tools.mima.ui
 
+import scala.collection.mutable
+
 import scala.swing._
+import event._
 import Swing._
 import BorderPanel._
 
-class ClassPathEditor extends BorderPanel {
-  private var elements: List[String] = List("jar1", "jar2")
+/** A simple interface for interacting with the classpath. Allows
+ *  one to reorder and add/remove entries using a list view.
+ */
+class ClassPathEditor extends GridBagPanel {
+  private var elements = mutable.ListBuffer("jar1", "jar2", "jar3", "jar4")
 
-  private val listView = new ListView(elements) {
-    border = BeveledBorder(Lowered)
-//    border = EmptyBorder(10, 10, 10, 10)
+  import java.awt.Color
+  import java.awt.GridBagConstraints
+  
+  private val listView = new ListView(elements.toList) {
+    border = LineBorder(Color.gray)
+    selection.intervalMode = ListView.IntervalMode.SingleInterval
   }
   
-  private val title = new Label("Classpath") 
-  add(title, Position.North)
-  
-  val bottom = new GridBagPanel {
-    import GridBagPanel._
-    
-    val c = new Constraints
-    c.weightx = 1.0
-    layout(HStrut(10)) = c
-    
-    c.fill = Fill.Both
-    c.gridy = 1
-    c.weighty = 1.0
-    layout(listView) = c
+  private def getIcon(path: String): javax.swing.Icon = {
+    val resource = Swing.Icon(getClass.getResource(path))
+    if (resource eq null) EmptyIcon else resource
   }
   
-  add(bottom, Position.Center)
+  val addEntry = new Button("Add Entry") {
+    icon = getIcon("/images/add.png")
+    horizontalAlignment = Alignment.Left
+  }
+  val removeEntry = new Button("Remove Entry") {
+    icon = getIcon("/images/remove.gif")
+    horizontalAlignment = Alignment.Left
+  }
+  val moveUp      = new Button("Up") {
+    icon = getIcon("/images/up.gif")
+    horizontalAlignment = Alignment.Left
+  }
+  val moveDown    = new Button("Down") {
+    icon = getIcon("/images/down.gif")
+    horizontalAlignment = Alignment.Left
+  }
+  
+  import GridBagPanel._
+  import GridBagConstraints._
+  
+  def withConstraints[T](gridx: Int = RELATIVE, 
+      gridy: Int = RELATIVE, 
+      gridwidth: Int = 1,
+      gridheight: Int = 1, 
+      weightx: Double = 0.0,
+      weighty: Double = 0.0, 
+      anchor: Anchor.Value = Anchor.NorthWest,
+      fill: Fill.Value = Fill.None,
+      insets: Insets = new Insets(0, 0, 0, 0), 
+      ipadx: Int = 0,
+      ipady: Int = 0)(op: Constraints => T) = {
+        val c = new Constraints(gridx, gridy, 
+                                  gridwidth, gridheight, 
+                                  weightx, weighty, 
+                                  anchor.id, fill.id, insets, 
+                                  ipadx, ipady)
+        op(c)
+  }
+  
+//    border = LineBorder(Color.RED)
+
+  withConstraints(gridwidth = 2)(add(new Label("Classpath"), _))
+  withConstraints(gridx = 0, gridy = 1, fill = Fill.Both, weightx = 1.0, weighty = 1.0, gridheight = REMAINDER)(add(listView, _))
+  
+  // add buttons
+  withConstraints(gridx = 1, anchor = Anchor.NorthWest, fill = Fill.Horizontal) { c =>
+    add(addEntry, c)
+    add(removeEntry, c)
+    add(moveUp, c)
+    add(moveDown, c)
+  }
+
+  updateButtonStatus()
+  listenTo(listView.selection, moveUp, moveDown, addEntry, removeEntry)
+  
+  reactions += {
+    case ListSelectionChanged(`listView`, range, live) =>
+      updateButtonStatus()
+      
+    case ButtonClicked(`removeEntry`) =>
+      listView.listData = listView.listData.filterNot(listView.selection.items contains _)
+      
+    case ButtonClicked(`addEntry`) =>
+      import FileChooser._
+      
+      val d = new FileChooser
+      d.showOpenDialog(this) match {
+        case Result.Approve => 
+          listView.listData ++= List(d.selectedFile.getName)
+        case _ =>
+      }
+      
+    case ButtonClicked(`moveUp`) =>
+      val sel  = listView.selection
+      val indices = sel.indices.toList
+      val (prefix, suffix) = listView.listData.splitAt(indices.min)
+      listView.listData = prefix.dropRight(1) ++ sel.items ++ List(prefix.last) ++ suffix.drop(indices.size)
+      listView.selectIndices((indices map (_ - 1)).toSeq: _*)
+
+    case ButtonClicked(`moveDown`) =>
+      val sel  = listView.selection
+      val indices = sel.indices.toList
+      val (prefix, suffix) = listView.listData.splitAt(sel.indices.max + 1)
+      listView.listData = prefix.dropRight(sel.indices.size) ++ List(suffix.first) ++ sel.items ++ suffix.drop(1)
+      listView.selectIndices((indices map (_ + 1)).toSeq: _*)
+  }
+
+  /** Enable/disable buttons according to the list selection. */
+  private def updateButtonStatus() {
+    moveUp.enabled = listView.selection.items.nonEmpty && !(listView.selection.indices contains 0)
+    moveDown.enabled = listView.selection.items.nonEmpty && !(listView.selection.indices contains (listView.listData.length - 1))
+    removeEntry.enabled = listView.selection.items.nonEmpty
+  }
 }

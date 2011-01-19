@@ -1,5 +1,6 @@
 package ssol.tools.mima.ui
 
+import javax.swing.UIManager
 import wizard._
 
 import scala.swing._
@@ -7,6 +8,9 @@ import Swing._
 
 object MimaLibUI extends SimpleSwingApplication {
 	import Swing._
+	
+	UIManager.setLookAndFeel(UIManager.getSystemLookAndFeelClassName())
+	
 	val top = new MainFrame() {	  
 		title = "Migration Manager Client"
 		location = (200, 200)

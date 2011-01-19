@@ -26,9 +26,20 @@ class ConfigurationPanel extends GridBagPanel {
 	c.weightx = 1.0
 	c.fill = Fill.Both
 	
-	layout(oldFilePicker) = c
-	c.gridy = 1
-	layout(newFilePicker) = c
+	
+	c.insets = new Insets(10, 10, 10, 10)
+
+	import java.awt.Color
+	val files = new GridPanel(2, 1) {
+	  border = LineBorder(Color.lightGray)
+	  contents += oldFilePicker
+	  contents += newFilePicker
+	}
+	layout(files) = c
+	
+//	layout(oldFilePicker) = c
+//	c.gridy = 1
+//	layout(newFilePicker) = c
 
 	c.gridy = 2
   layout(new Separator) = c
