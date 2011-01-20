@@ -2,6 +2,8 @@ package ssol.tools.mima.ui
 
 import scala.collection.mutable
 
+import scala.tools.nsc.util.ClassPath
+
 import scala.swing._
 import event._
 import Swing._
@@ -10,8 +12,8 @@ import BorderPanel._
 /** A simple interface for interacting with the classpath. Allows
  *  one to reorder and add/remove entries using a list view.
  */
-class ClassPathEditor extends GridBagPanel {
-  private var elements = mutable.ListBuffer("jar1", "jar2", "jar3", "jar4")
+class ClassPathEditor(init: List[String]) extends GridBagPanel {
+  private var elements = mutable.ListBuffer(init: _*)
 
   import java.awt.Color
   import java.awt.GridBagConstraints
@@ -21,6 +23,11 @@ class ClassPathEditor extends GridBagPanel {
     selection.intervalMode = ListView.IntervalMode.SingleInterval
   }
   
+  private val scrollableList = new ScrollPane {
+    contents = listView
+  }
+  
+  /** Load the icon from the given path, or EmptyIcon if not found. */
   private def getIcon(path: String): javax.swing.Icon = {
     val resource = Swing.Icon(getClass.getResource(path))
     if (resource eq null) EmptyIcon else resource
@@ -46,6 +53,9 @@ class ClassPathEditor extends GridBagPanel {
   import GridBagPanel._
   import GridBagConstraints._
   
+  /** Convenience method for creating and adding components to a GridBagPanel.
+   *  It has reasonable defaults for all parameters.
+   */
   def withConstraints[T](gridx: Int = RELATIVE, 
       gridy: Int = RELATIVE, 
       gridwidth: Int = 1,
@@ -68,7 +78,7 @@ class ClassPathEditor extends GridBagPanel {
 //    border = LineBorder(Color.RED)
 
   withConstraints(gridwidth = 2)(add(new Label("Classpath"), _))
-  withConstraints(gridx = 0, gridy = 1, fill = Fill.Both, weightx = 1.0, weighty = 1.0, gridheight = REMAINDER)(add(listView, _))
+  withConstraints(gridx = 0, gridy = 1, fill = Fill.Both, weightx = 1.0, weighty = 1.0, gridheight = REMAINDER)(add(scrollableList, _))
   
   // add buttons
   withConstraints(gridx = 1, anchor = Anchor.NorthWest, fill = Fill.Horizontal) { c =>
@@ -91,10 +101,10 @@ class ClassPathEditor extends GridBagPanel {
     case ButtonClicked(`addEntry`) =>
       import FileChooser._
       
-      val d = new FileChooser
+      val d = new ClassPathFileChooser
       d.showOpenDialog(this) match {
         case Result.Approve => 
-          listView.listData ++= List(d.selectedFile.getName)
+          listView.listData ++= List(d.selectedFile.getAbsolutePath)
         case _ =>
       }
       
@@ -111,6 +121,11 @@ class ClassPathEditor extends GridBagPanel {
       val (prefix, suffix) = listView.listData.splitAt(sel.indices.max + 1)
       listView.listData = prefix.dropRight(sel.indices.size) ++ List(suffix.first) ++ sel.items ++ suffix.drop(1)
       listView.selectIndices((indices map (_ + 1)).toSeq: _*)
+  }
+  
+  /** Return the string of current classpath in this editor. */
+  def classPathString = {
+    ClassPath.join(listView.listData: _*)
   }
 
   /** Enable/disable buttons according to the list selection. */

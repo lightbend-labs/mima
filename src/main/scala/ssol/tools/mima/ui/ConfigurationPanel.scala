@@ -1,17 +1,21 @@
-package ssol.tools.mima.ui
-
-import scala.swing._
+package ssol.tools.mima
+package ui
 
 import java.io.File
+
+import scala.tools.nsc.{util, io}
+import util._
+import io.AbstractFile
+
+import scala.swing._
 
 import Swing._
 import GridBagPanel._
 
 /** A Panel used to configure MiMa. It allows jar file selection
  *  and setting up the classpath.
- * 
  */
-class ConfigurationPanel extends GridBagPanel {
+class ConfigurationPanel(initialClassPath: JavaClassPath) extends GridBagPanel {
 	val oldFilePicker = new FilePicker("Old version:", this)
 	val newFilePicker = new FilePicker("New version:", this)
 
@@ -37,26 +41,22 @@ class ConfigurationPanel extends GridBagPanel {
 	}
 	layout(files) = c
 	
-//	layout(oldFilePicker) = c
-//	c.gridy = 1
-//	layout(newFilePicker) = c
-
 	c.gridy = 2
   layout(new Separator) = c
 
   c.gridy = 3
   c.fill = Fill.Both
   c.weighty = 1.0
-  val cp = new ClassPathEditor
-  layout(cp) = c
   
+  import ClassPath._
   
-//  val bottom = new Panel {
-//		
-//		border = LineBorder(java.awt.Color.RED)
-//	}
-//	c.gridy = 3
-//	c.fill = Fill.Both
-//	c.weighty = 1.0
-//	layout(bottom) = c
+  val cpEditor = new ClassPathEditor(split(initialClassPath.asClasspathString))
+  layout(cpEditor) = c
+  
+  def classPath: JavaClassPath = {
+	  val cpString = cpEditor.classPathString
+	  println(cpString)
+	  new JavaClassPath(DefaultJavaContext.classesInPath(cpString), DefaultJavaContext)
+	}
+  
 }
