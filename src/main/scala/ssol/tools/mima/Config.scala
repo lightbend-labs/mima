@@ -9,9 +9,9 @@ object Config {
 	
   private var _settings: Settings = _
 
-  def info(str: String) = if (settings.verbose.value) println(str)
+  def info(str: String) = if (_settings.verbose.value) println(str)
 
-  def inPlace = settings.mimaOutDir.isDefault
+  def inPlace = _settings.mimaOutDir.isDefault
 
   def error(msg: String) = System.err.println(msg)
 
@@ -23,14 +23,14 @@ object Config {
 
   lazy val outDir: Directory = {
     assert(!inPlace)
-    val f = Path(settings.mimaOutDir.value).toDirectory
+    val f = Path(_settings.mimaOutDir.value).toDirectory
     if (!(f.isDirectory && f.canWrite)) fatal(f+" is not a writable directory")
     f
   }
 
   /** Creates a help message for a subset of options based on cond */
   def usageMsg(cmd: String): String =
-    settings.visibleSettings .
+    _settings.visibleSettings .
       map(s => format(s.helpSyntax).padTo(21, ' ')+" "+s.helpDescription) .
       toList.sorted.mkString("Usage: "+cmd+" <options>\nwhere possible options include:\n  ", "\n  ", "\n")
 
@@ -40,8 +40,8 @@ object Config {
       
   def setup(cmd: String, args: Array[String], validate: List[String] => Boolean, specificOptions: String*): List[String] = {
     _settings = new Settings(specificOptions: _*)
-    val (_, resargs) = settings.processArguments(args.toList, true)
-    if (settings.help.value) {
+    val (_, resargs) = _settings.processArguments(args.toList, true)
+    if (_settings.help.value) {
       println(usageMsg(cmd))
       System.exit(0)
     }

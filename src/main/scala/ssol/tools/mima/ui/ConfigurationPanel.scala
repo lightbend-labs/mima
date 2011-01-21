@@ -53,6 +53,9 @@ class ConfigurationPanel(initialClassPath: JavaClassPath) extends GridBagPanel {
   val cpEditor = new ClassPathEditor(split(initialClassPath.asClasspathString))
   layout(cpEditor) = c
   
+  def oldFile = oldFilePicker.selectedFile.get
+  def newFile = oldFilePicker.selectedFile.get
+  
   def classPath: JavaClassPath = {
 	  val cpString = cpEditor.classPathString
 	  println(cpString)

@@ -123,7 +123,7 @@ class MiMaLib {
   }
   
   /** Return a list of problems for the two versions of the library. */
-  def collectProblems(oldDir: String, newDir: String, settings: Settings): List[Problem] = {
+  def collectProblems(oldDir: String, newDir: String): List[Problem] = {
     val oldRoot = root(oldDir)
     val newRoot = root(newDir)      
     Config.info("[old version in: "+oldRoot+"]")

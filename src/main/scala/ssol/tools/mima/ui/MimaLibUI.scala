@@ -22,7 +22,9 @@ object MimaLibUI extends SimpleSwingApplication {
 	  super.startup(args)
 	}
 
-  lazy val configurationPage = new ConfigurationPanel(initialClassPath) 
+  lazy val configurationPage = new ConfigurationPanel(initialClassPath)
+  
+  lazy val reportPage = new ReportPage
   
 	def top = new MainFrame() {	  
 		title = "Migration Manager Client"
@@ -31,10 +33,7 @@ object MimaLibUI extends SimpleSwingApplication {
 		
 	  val wizard = new Wizard {
 			pages += configurationPage
-			
-			pages += new BoxPanel(Orientation.Horizontal) {
-				contents += new Label("I am the walrus")
-			}
+			pages += reportPage
 			
 			switchTo(0)
 		}
@@ -46,6 +45,11 @@ object MimaLibUI extends SimpleSwingApplication {
 		  case PageChanged(_, _) =>
 		    println("new classpath: " + configurationPage.classPath)
 		  
+		  case Next(`reportPage`) =>
+		    println("Reporting now")
+		    val mima = new MiMaLib
+		    reportPage.doCompare(configurationPage.oldFile.getAbsolutePath, configurationPage.oldFile.getAbsolutePath, mima)
+		    
 			case Cancelled() =>
 			  Dialog.showConfirmation(parent = wizard, 
 			  		title = "Exit Mimalib", 

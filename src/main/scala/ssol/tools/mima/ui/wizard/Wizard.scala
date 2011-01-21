@@ -75,16 +75,20 @@ class Wizard extends BorderPanel {
 		  if (currentPage + 1 < pages.length) _currentPage += 1
 		  switchTo(currentPage)
 		  publish(PageChanged(pages(currentPage - 1), pages(currentPage)))
+      publish(Next(pages(currentPage)))
 
 		case ButtonClicked(`backButton`) =>
 		  if (currentPage > 0) _currentPage -= 1
 		  switchTo(currentPage)
 		  publish(PageChanged(pages(currentPage + 1), pages(currentPage)))
+		  publish(Back(pages(currentPage)))
 		  
 		case ButtonClicked(`exitButton`) =>
 		  publish(Cancelled())
 	}
 }
 
+case class Back(newPage: Panel) extends Event
+case class Next(newPage: Panel) extends Event
 case class PageChanged(oldPage: Panel, newPage: Panel) extends Event
 case class Cancelled() extends Event

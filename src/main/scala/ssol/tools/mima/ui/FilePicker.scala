@@ -14,7 +14,7 @@ import javax.swing.filechooser.FileNameExtensionFilter
  * 
  */
 class FilePicker(_label: String, owner: Component) extends FlowPanel(FlowPanel.Alignment.Left)() {
-	var _selectedFile: Option[File] = None
+	private var _selectedFile: Option[File] = None
 	
 //	border = Swing.EtchedBorder
 

@@ -12,7 +12,7 @@ import BorderPanel._
 /** A simple interface for interacting with the classpath. Allows
  *  one to reorder and add/remove entries using a list view.
  */
-class ClassPathEditor(init: List[String]) extends GridBagPanel {
+class ClassPathEditor(init: List[String]) extends GridBagPanel with WithConstraints {
   private var elements = mutable.ListBuffer(init: _*)
 
   import java.awt.Color
@@ -53,31 +53,9 @@ class ClassPathEditor(init: List[String]) extends GridBagPanel {
   import GridBagPanel._
   import GridBagConstraints._
   
-  /** Convenience method for creating and adding components to a GridBagPanel.
-   *  It has reasonable defaults for all parameters.
-   */
-  def withConstraints[T](gridx: Int = RELATIVE, 
-      gridy: Int = RELATIVE, 
-      gridwidth: Int = 1,
-      gridheight: Int = 1, 
-      weightx: Double = 0.0,
-      weighty: Double = 0.0, 
-      anchor: Anchor.Value = Anchor.NorthWest,
-      fill: Fill.Value = Fill.None,
-      insets: Insets = new Insets(0, 0, 0, 0), 
-      ipadx: Int = 0,
-      ipady: Int = 0)(op: Constraints => T) = {
-        val c = new Constraints(gridx, gridy, 
-                                  gridwidth, gridheight, 
-                                  weightx, weighty, 
-                                  anchor.id, fill.id, insets, 
-                                  ipadx, ipady)
-        op(c)
-  }
-  
 //    border = LineBorder(Color.RED)
 
-  withConstraints(gridwidth = 2)(add(new Label("Classpath"), _))
+  withConstraints(gridwidth = 2)(add(new Label("Classpath") { border = LineBorder(Color.RED) } , _))
   withConstraints(gridx = 0, gridy = 1, fill = Fill.Both, weightx = 1.0, weighty = 1.0, gridheight = REMAINDER)(add(scrollableList, _))
   
   // add buttons
