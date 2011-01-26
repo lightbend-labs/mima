@@ -28,6 +28,7 @@ class ReportPage extends GridBagPanel with WithConstraints {
   }
   
   def doCompare(oldDir: String, newDir: String, mimalib: MiMaLib) {
+    println("old: " + oldDir + " new: " + newDir)
     val problems = mimalib.collectProblems(oldDir, newDir)
     table.model = new ProblemsModel(problems)
   }

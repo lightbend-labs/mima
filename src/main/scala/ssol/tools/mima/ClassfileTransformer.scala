@@ -49,7 +49,7 @@ class ClassfileTransformer(out: DataOutputStream) extends ClassfileParser {
     }
 
     def writeNew() = index.keys foreach { entry =>
-      if (Config.settings.debug.value) println("CP"+index(entry)+": "+entry)
+      Config.debugLog("CP"+index(entry)+": "+entry)
       entry.write()
     }
 

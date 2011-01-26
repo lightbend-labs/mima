@@ -15,7 +15,7 @@ object PackageInfo {
     assert(iclassName endsWith implClassSuffix)
     iclassName.substring(0, iclassName.length - implClassSuffix.length)
   }
-  lazy val classpath = new PathResolver(Config.settings).mimaResult
+  lazy val classpath = Config.classpath
   lazy val root = new ConcretePackageInfo(null, classpath)
   Config.info("classpath = "+classpath)
 }

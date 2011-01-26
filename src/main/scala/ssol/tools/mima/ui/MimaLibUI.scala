@@ -2,10 +2,10 @@ package ssol.tools.mima
 package ui
 
 import javax.swing.UIManager
+import java.io.File
 import wizard._
 
 import scala.tools.nsc.util.JavaClassPath
-
 import scala.swing._
 import Swing._
 
@@ -16,13 +16,22 @@ object MimaLibUI extends SimpleSwingApplication {
 	
 	var initialClassPath: JavaClassPath = _
 	
+	private var residualArgs: List[String] = Nil  
+	
 	override def startup(args: Array[String]) {
-	  Config.setup("scala ssol.tools.misco.MiMaLibUI <old-dir> <new-dir>", Array(), (xs) => true, "-fixall")
-	  initialClassPath = new PathResolver(Config.settings).mimaResult
+	  Config.setup("scala ssol.tools.misco.MiMaLibUI <old-dir> <new-dir>", args, { (xs) => residualArgs = xs; true }, "-fixall")
+	  initialClassPath = Config.classpath
 	  super.startup(args)
 	}
 
-  lazy val configurationPage = new ConfigurationPanel(initialClassPath)
+	// pick up the initial file, if any
+  lazy val configurationPage = {
+    val (f1, f2) = residualArgs match {
+      case List(f1, f2) => (Some(new File(f1)), Some(new File(f2)))
+      case _ => (None, None)
+    }
+    new ConfigurationPanel(initialClassPath, f1, f2)
+  }
   
   lazy val reportPage = new ReportPage
   
@@ -42,13 +51,12 @@ object MimaLibUI extends SimpleSwingApplication {
 		listenTo(wizard)
 		
 		reactions += {
-		  case PageChanged(_, _) =>
-		    println("new classpath: " + configurationPage.classPath)
-		  
 		  case Next(`reportPage`) =>
 		    println("Reporting now")
+		    // set the new settings
+		    Config.classpath = configurationPage.classPath
 		    val mima = new MiMaLib
-		    reportPage.doCompare(configurationPage.oldFile.getAbsolutePath, configurationPage.oldFile.getAbsolutePath, mima)
+		    reportPage.doCompare(configurationPage.oldFile.getAbsolutePath, configurationPage.newFile.getAbsolutePath, mima)
 		    
 			case Cancelled() =>
 			  Dialog.showConfirmation(parent = wizard, 

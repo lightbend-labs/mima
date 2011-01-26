@@ -15,7 +15,7 @@ object MiMaClient {
   private val fixes = new mutable.ListBuffer[Fix]
 
   def processClass(clazz: ClassInfo) {
-    if (Config.settings.debug.value) {
+    if (Config.debug) {
       printLine("    "+clazz+" extends "+clazz.superClass.name+
                 " implements "+clazz.interfaces.map(_.name).mkString(", "))
       if (clazz.isTrait)
@@ -38,7 +38,7 @@ object MiMaClient {
 
   def processPackage(pkg: PackageInfo) {
     def printKeys[T](lead: String, m: collection.Map[String, T]) = printLine(lead+ m.keys.mkString(", "))
-    if (Config.settings.debug.value) {
+    if (Config.debug) {
       printKeys("  implClasses = ", pkg.implClasses)
       printKeys("  traits      = ", pkg.traits)
       printKeys("  classes     = ", pkg.classes)
@@ -49,8 +49,7 @@ object MiMaClient {
 
   def traversePackage(pkg: PackageInfo): Unit =
     if (!(ignore contains pkg.fullName)) {
-      if (Config.settings.verbose.value) 
-        printLine("* " + pkg.fullName + ": ")
+      Config.info("* " + pkg.fullName + ": ")
       processPackage(pkg)
       indented {
         pkg.packages.valuesIterator foreach traversePackage

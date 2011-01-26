@@ -13,28 +13,32 @@ import javax.swing.filechooser.FileNameExtensionFilter
  *  and a button for showing the FileChooser dialog.
  * 
  */
-class FilePicker(_label: String, owner: Component) extends FlowPanel(FlowPanel.Alignment.Left)() {
-	private var _selectedFile: Option[File] = None
+class FilePicker(_label: String, owner: Component, private var _selectedFile: Option[File]) extends FlowPanel(FlowPanel.Alignment.Left)() {
 	
 //	border = Swing.EtchedBorder
 
 	def selectedFile: Option[File] = _selectedFile
+  private val fileNameLabel = new Label("Please select a file")
+
+	if (selectedFile.isDefined) {
+	  println("starting with initial file: " + selectedFile.get.getAbsolutePath)
+	  fileNameLabel.text = selectedFile.get.getName
+	}
 	
 	private val label = new Label(_label) {
 		preferredSize = (100, 20)
 	}
-	private val fileName = new Label("Please select a file")
 	
 	contents += (label, Swing.HStrut(10))
 	contents += Button("Choose") {
 		val d = new ClassPathFileChooser
 		d.showOpenDialog(owner) match {
 			case Approve => 
-				fileName.text = d.selectedFile.getName
+				fileNameLabel.text = d.selectedFile.getName
 				_selectedFile = Some(d.selectedFile)
 			case _ =>
 		}
 	}
 	
-	contents += (fileName, Swing.HGlue)
+	contents += (fileNameLabel, Swing.HGlue)
 }

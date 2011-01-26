@@ -1,20 +1,30 @@
 package ssol.tools.mima
 
 import scala.tools.nsc.io.{Path, Directory}
+import scala.tools.nsc.util.JavaClassPath
 import scala.util.Properties
 
 object Config {
 
-	def settings: Settings = _settings
-	
-  private var _settings: Settings = _
+  private var settings: Settings = _
+  private var _classpath: JavaClassPath = _
+  
+  def info(str: String) = if (settings.verbose.value) println(str)
+  def debugLog(str: String) = if (settings.debug.value) println(str) 
 
-  def info(str: String) = if (_settings.verbose.value) println(str)
-
-  def inPlace = _settings.mimaOutDir.isDefault
+  def inPlace = settings.mimaOutDir.isDefault
+  def verbose = settings.verbose.value
+  def debug   = settings.debug.value
+  def fixall  = settings.fixall.value
 
   def error(msg: String) = System.err.println(msg)
-
+  
+  def classpath: JavaClassPath = _classpath
+  
+  def classpath_=(cp: JavaClassPath) {
+    _classpath = cp
+  }
+  
   def fatal(msg: String): Nothing = {
     error(msg)
     System.exit(-1)
@@ -23,25 +33,26 @@ object Config {
 
   lazy val outDir: Directory = {
     assert(!inPlace)
-    val f = Path(_settings.mimaOutDir.value).toDirectory
+    val f = Path(settings.mimaOutDir.value).toDirectory
     if (!(f.isDirectory && f.canWrite)) fatal(f+" is not a writable directory")
     f
   }
 
   /** Creates a help message for a subset of options based on cond */
   def usageMsg(cmd: String): String =
-    _settings.visibleSettings .
+    settings.visibleSettings .
       map(s => format(s.helpSyntax).padTo(21, ' ')+" "+s.helpDescription) .
       toList.sorted.mkString("Usage: "+cmd+" <options>\nwhere possible options include:\n  ", "\n  ", "\n")
 
   def setup(s: Settings) {
-  	_settings = s
+  	settings = s
   }
       
   def setup(cmd: String, args: Array[String], validate: List[String] => Boolean, specificOptions: String*): List[String] = {
-    _settings = new Settings(specificOptions: _*)
-    val (_, resargs) = _settings.processArguments(args.toList, true)
-    if (_settings.help.value) {
+    settings = new Settings(specificOptions: _*)
+    _classpath = new PathResolver(settings).mimaResult 
+    val (_, resargs) = settings.processArguments(args.toList, true)
+    if (settings.help.value) {
       println(usageMsg(cmd))
       System.exit(0)
     }

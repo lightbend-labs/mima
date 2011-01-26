@@ -15,9 +15,9 @@ import GridBagPanel._
 /** A Panel used to configure MiMa. It allows jar file selection
  *  and setting up the classpath.
  */
-class ConfigurationPanel(initialClassPath: JavaClassPath) extends GridBagPanel {
-	val oldFilePicker = new FilePicker("Old version:", this)
-	val newFilePicker = new FilePicker("New version:", this)
+class ConfigurationPanel(initialClassPath: JavaClassPath, f1: Option[File] = None, f2: Option[File] = None) extends GridBagPanel {
+	val oldFilePicker = new FilePicker("Old version:", this, f1)
+	val newFilePicker = new FilePicker("New version:", this, f2)
 
 	val c = new Constraints
 	c.fill = Fill.Horizontal
@@ -54,7 +54,7 @@ class ConfigurationPanel(initialClassPath: JavaClassPath) extends GridBagPanel {
   layout(cpEditor) = c
   
   def oldFile = oldFilePicker.selectedFile.get
-  def newFile = oldFilePicker.selectedFile.get
+  def newFile = newFilePicker.selectedFile.get
   
   def classPath: JavaClassPath = {
 	  val cpString = cpEditor.classPathString

@@ -4,6 +4,7 @@ import java.io._
 import scala.tools.nsc.io.{AbstractFile, PlainFile}
 import scala.tools.nsc.symtab.classfile.ClassfileConstants._
 import scala.collection.mutable.ArrayBuffer
+import Config._
 
 class Fix(val clazz: ClassInfo) {
 
@@ -102,8 +103,7 @@ class Fix(val clazz: ClassInfo) {
     Code((for ((ac, idx) <- argcats.zipWithIndex) yield load(ac, idx + firstOffset)): _*)
 
   def addField(getter: MemberInfo): Field = {
-    if (Config.settings.debug.value) 
-      println("add field for "+getter+":"+getter.sig)
+    debugLog("add field for "+getter+":"+getter.sig)
     new Field(
       namestr = getter.name,
       flags = getter.flags & JAVA_ACC_FINAL,
@@ -113,8 +113,7 @@ class Fix(val clazz: ClassInfo) {
 
   def addGetter(missing: MemberInfo, fld: Field): Method = {
     val (List(), rescat) = categories(missing.sig)
-    if (Config.settings.debug.value) 
-      println("add getter for "+missing+":"+missing.sig+": "+rescat)
+    debugLog("add getter for "+missing+":"+missing.sig+": "+rescat)
     val targetRef = new FieldRef(clazz, fld.namestr, fld.sigstr)
     val code = Code(
       aload_0.toByte,
@@ -125,8 +124,7 @@ class Fix(val clazz: ClassInfo) {
 
   def addSetter(missing: MemberInfo, fld: Field): Method = {
     val (List(argcat), Vcat) = categories(missing.sig)
-    if (Config.settings.debug.value) 
-      println("add setter for "+missing+":"+missing.sig+": "+argcat)
+    debugLog("add setter for "+missing+":"+missing.sig+": "+argcat)
     val targetRef = new FieldRef(clazz, fld.namestr, fld.sigstr)
     val code = Code(
       aload_0.toByte,
@@ -139,8 +137,7 @@ class Fix(val clazz: ClassInfo) {
   
   def addForwarder(missing: MemberInfo): Method = {
     val (argcats, rescat) = categories(missing.sig)
-    if (Config.settings.debug.value) 
-      println("add forwarder method for "+missing+":"+missing.sig+": "+argcats+"/"+rescat)
+    debugLog("add forwarder method for "+missing+":"+missing.sig+": "+argcats+"/"+rescat)
     val targetMeth = missing.staticImpl.get
     val targetRef = new MethodRef(targetMeth)
     val code = Code(
@@ -154,8 +151,7 @@ class Fix(val clazz: ClassInfo) {
 
   def addBridge(existing: MemberInfo, sig: String): Method = {
     val (argcats, rescat) = categories(sig)
-    if (Config.settings.debug.value) 
-      println("add bridge method for "+existing+":"+sig)
+    debugLog("add bridge method for "+existing+":"+sig)
     val bridge = new MemberInfo(clazz, existing.name, existing.flags & ~JAVA_ACC_ABSTRACT, sig)
     val targetRef = new MethodRef(existing)
     val (code, stackSize) = 
@@ -214,8 +210,7 @@ class Fix(val clazz: ClassInfo) {
   def typeSigOfClass(clazz: ClassInfo): String = "L"+external(clazz.fullName)+";"
 
   def initPatch(iface: ClassInfo, offset: Int): Patch = {
-    if (Config.settings.debug.value) 
-      println("add init call to "+iface.implClass)
+    debugLog("add init call to "+iface.implClass)
     val targetRef = new MethodRef(
       iface.implClass, implClassInitName, "("+typeSigOfClass(iface)+")V")
     val code = Code(

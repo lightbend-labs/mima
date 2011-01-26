@@ -17,6 +17,9 @@ class MiMaLib {
   -i, -iinteractive
   -f, -fix
   */
+  
+  // make sure we initialize the classfile parser
+  setupClassfileParser()
 
   def classPath(name: String) = {
     val f = new File(new java.io.File(name))
@@ -107,8 +110,7 @@ class MiMaLib {
   }
 
   def traversePackages(oldpkg: PackageInfo, newpkg: PackageInfo) {
-    if (settings.verbose.value) 
-      printLine("* " + oldpkg.fullName + ": ")
+    info("* " + oldpkg.fullName + ": ")
     comparePackages(oldpkg, newpkg)
     indented {
       for (p <- oldpkg.packages.valuesIterator) {
@@ -154,7 +156,7 @@ object MiMaLib extends MiMaLib {
     Config.info("[new version in: "+newRoot+"]")
     traversePackages(oldRoot, newRoot)
     val fixes = new ListBuffer[Fix]
-    if (Config.settings.fixall.value) {
+    if (Config.fixall) {
       val resultTypeProblems = problems.toList collect { case x: IncompatibleResultTypeProblem => x }
       for ((clazz, problems) <- resultTypeProblems groupBy (_.newmeth.owner)) {
         fixes += new Fix(clazz).lib(problems map (p => (p.newmeth, p.oldmeth.sig)))

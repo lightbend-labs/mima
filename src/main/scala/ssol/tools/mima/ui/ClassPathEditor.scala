@@ -55,7 +55,7 @@ class ClassPathEditor(init: List[String]) extends GridBagPanel with WithConstrai
   
 //    border = LineBorder(Color.RED)
 
-  withConstraints(gridwidth = 2)(add(new Label("Classpath") { border = LineBorder(Color.RED) } , _))
+  withConstraints(gridwidth = 2)(add(new Label("Classpath"), _))
   withConstraints(gridx = 0, gridy = 1, fill = Fill.Both, weightx = 1.0, weighty = 1.0, gridheight = REMAINDER)(add(scrollableList, _))
   
   // add buttons
