@@ -3,3 +3,5 @@ target/
 project/boot
 project/build/target
 lib_managed
+test/project/boot
+test/project/build/target
