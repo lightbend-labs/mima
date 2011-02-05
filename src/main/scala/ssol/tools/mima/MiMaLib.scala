@@ -2,9 +2,10 @@ package ssol.tools
 package mima
 
 import Config._
+
 import util.IndentedOutput._
 import scala.tools.nsc.io.{File, AbstractFile}
-import scala.tools.nsc.util.DirectoryClassPath
+import scala.tools.nsc.util.{DirectoryClassPath, JavaClassPath}
 import collection.mutable.ListBuffer
 
 class MiMaLib {
@@ -19,7 +20,7 @@ class MiMaLib {
   */
   
   // make sure we initialize the classfile parser
-  setupClassfileParser()
+//  setupClassfileParser()
 
   def classPath(name: String) = {
     val f = new File(new java.io.File(name))
@@ -28,17 +29,17 @@ class MiMaLib {
     else new DirectoryClassPath(dir, DefaultJavaContext)
   }
 
-  def root(name: String) = {
+  def root(name: String): Definitions = {
     val cp = classPath(name)
     if (cp == null) Config.fatal("not a directory or jar file: "+name)
-    else new ConcretePackageInfo(null, cp)
+    else new Definitions(Some(cp), Config.baseClassPath)
   }
 
-  def setupClassfileParser() {
-    ClassfileParser.readFields = (clazz: ClassInfo) => true
-    ClassfileParser.readMethods = (clazz: ClassInfo) => true
-    ClassfileParser.readCode = (meth: MemberInfo) => false
-  }
+//  def setupClassfileParser() {
+//    ClassfileParser.readFields = (clazz: ClassInfo) => true
+//    ClassfileParser.readMethods = (clazz: ClassInfo) => true
+//    ClassfileParser.readCode = (meth: MemberInfo) => false
+//  }
 
   val problems = new ListBuffer[Problem]
 
@@ -52,6 +53,7 @@ class MiMaLib {
     methods.groupBy(_.parametersSig).values.map(_.head).toList
 
   def compareClasses(oldclazz: ClassInfo, newclazz: ClassInfo) {
+    Config.info("[compare] %s \t %s".format(oldclazz, newclazz))
     for (oldfld <- oldclazz.fields.iterator)
       if (oldfld.isAccessible) {
         val newflds = newclazz.lookupFields(oldfld.name)
@@ -130,7 +132,7 @@ class MiMaLib {
     val newRoot = root(newDir)      
     Config.info("[old version in: "+oldRoot+"]")
     Config.info("[new version in: "+newRoot+"]")
-    traversePackages(oldRoot, newRoot)
+    traversePackages(oldRoot.targetPackage, newRoot.targetPackage)
     val fixes = new ListBuffer[Fix]
     problems.toList
   }
@@ -148,13 +150,13 @@ class MiMaLib {
 
 object MiMaLib extends MiMaLib {
   def main(args: Array[String]) = {
-    setupClassfileParser()
+//    setupClassfileParser()
     val resargs = Config.setup("scala ssol.tools.misco.MiMaLib <old-dir> <new-dir>", args, _.length == 2, "-fixall")
     val oldRoot = root(resargs(0))
     val newRoot = root(resargs(1))      
     Config.info("[old version in: "+oldRoot+"]")
     Config.info("[new version in: "+newRoot+"]")
-    traversePackages(oldRoot, newRoot)
+    traversePackages(oldRoot.targetPackage, newRoot.targetPackage)
     val fixes = new ListBuffer[Fix]
     if (Config.fixall) {
       val resultTypeProblems = problems.toList collect { case x: IncompatibleResultTypeProblem => x }

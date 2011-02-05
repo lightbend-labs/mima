@@ -38,7 +38,7 @@ class Fix(val clazz: ClassInfo) {
         (new BufferedOutputStream(new FileOutputStream(outFile)), outFile.toString)
       }
 
-  val trans = new ClassfileTransformer(new DataOutputStream(outputStream))
+  val trans = new ClassfileTransformer(new DataOutputStream(outputStream), clazz.owner.definitions)
   import trans._
 
   parse(clazz)

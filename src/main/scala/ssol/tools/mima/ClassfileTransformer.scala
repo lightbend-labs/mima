@@ -16,7 +16,7 @@ import scala.collection.mutable
  *  @author Martin Odersky
  *  @version 1.0
  */
-class ClassfileTransformer(out: DataOutputStream) extends ClassfileParser {
+class ClassfileTransformer(out: DataOutputStream, definitions: Definitions) extends ClassfileParser(definitions) {
 
   def readFields = (clazz: ClassInfo) => false
   def readMethods = (clazz: ClassInfo) => true

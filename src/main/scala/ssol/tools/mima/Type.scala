@@ -22,41 +22,6 @@ object Type {
     'D' -> doubleType,
     'Z' -> booleanType,
     'V' -> unitType)
-
-  def fromSig(sig: String): Type = {
-
-    var in = 0
-    
-    def getType(): Type = {
-      val ch = sig(in)
-      in += 1
-      abbrevToValueType get ch match {
-        case Some(tp) => 
-          tp
-        case None =>
-          if (ch == '[') {
-            ArrayType(getType())
-          } else if (ch == 'L') {
-            val end = sig indexOf (';', in)
-            val fullname = sig.substring(in, end) replace ('/', '.')
-            in = end + 1
-            ClassType(ClassInfo.fromName(fullname))
-          } else if (ch == '(') {
-            val params = getParamTypes()
-            in += 1
-            MethodType(params, getType())
-          } else {
-            throw new MatchError("unknown signature: "+sig.substring(in))
-          }
-      }
-    }
-
-    def getParamTypes(): List[Type] =
-      if (sig(in) == ')') List()
-      else getType() :: getParamTypes()
-
-    getType()
-  }
 }
 
 abstract class Type {

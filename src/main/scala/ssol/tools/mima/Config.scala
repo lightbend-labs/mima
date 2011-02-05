@@ -19,9 +19,11 @@ object Config {
 
   def error(msg: String) = System.err.println(msg)
   
-  def classpath: JavaClassPath = _classpath
+  def baseClassPath: JavaClassPath = _classpath
   
-  def classpath_=(cp: JavaClassPath) {
+  lazy val baseDefinitions = new Definitions(None, baseClassPath)
+  
+  def baseClassPath_=(cp: JavaClassPath) {
     _classpath = cp
   }
   

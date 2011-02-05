@@ -4,37 +4,30 @@ import scala.tools.nsc.io.AbstractFile
 import scala.reflect.NameTransformer
 
 object ClassInfo {
-  lazy val ObjectClass = fromName("java.lang.Object")
-  lazy val AnnotationClass = fromName("java.lang.annotation.Annotation")
-  val NoClass = new SyntheticClassInfo(null, "<noclass>")
-  
-  def fromName(name: String): ClassInfo = {
-    val parts = name.split("\\.")
-    var pkg: PackageInfo = PackageInfo.root
-    var i = 0
-    var part = parts(i)
-    while (i < parts.length - 1) {
-      pkg.packages get part match {
-        case Some(p) => pkg = p
-        case None => 
-          val newpkg = new SyntheticPackageInfo(pkg, part)
-          pkg.packages += (part -> newpkg)
-          pkg = newpkg
-      }
-      i += 1
-      part = parts(i)
-    }
-    pkg.classes getOrElse (part, new SyntheticClassInfo(pkg, part))
-  }
-
   def formatClassName(str: String) = NameTransformer.decode(str).replace('$', '#')
+  
+  /** We assume there can be only one java.lang.Object class, and that comes from the configuration
+   *  class path.
+   */
+  lazy val ObjectClass = Config.baseDefinitions.fromName("java.lang.Object")
 }
 
+/** A placeholder class info for a class that is not found on the classpath or in a given
+ *  package.
+ */
 class SyntheticClassInfo(owner: PackageInfo, val name: String) extends ClassInfo(owner) {
+  println("<synthetic> " + toString)
   loaded = true
   def file: AbstractFile = throw new UnsupportedOperationException
 }
 
+/** As the name implies. */
+object NoClass extends SyntheticClassInfo(null, "<noclass>") {
+  override lazy val superClasses = List(this)
+  override lazy val allTraits = Set(): Set[ClassInfo]
+}
+
+/** A class for which we have the classfile. */
 class ConcreteClassInfo(owner: PackageInfo, val file: AbstractFile) extends ClassInfo(owner) {
   def name = PackageInfo.className(file.name)
 }
@@ -47,7 +40,7 @@ abstract class ClassInfo(val owner: PackageInfo) {
   def name: String
   
   def fullName: String = 
-    if (owner eq PackageInfo.root) name
+    if (owner.isRoot) name
     else owner.fullName + "." + name
 
   def classString = 
@@ -59,11 +52,12 @@ abstract class ClassInfo(val owner: PackageInfo) {
   private def ensureLoaded() =
     if (!loaded)
       try {
-        ClassfileParser.parse(this)
+        println("parsing " + file)
+        owner.definitions.ClassfileParser.parse(this)
       } finally {
         loaded = true
       }
-
+      
   private var _superClass: ClassInfo = NoClass
   private var _interfaces: List[ClassInfo] = List()
   private var _fields: Members = null
@@ -88,7 +82,7 @@ abstract class ClassInfo(val owner: PackageInfo) {
   def isScala_=(x: Boolean) = _isScala = x
 
   lazy val superClasses: List[ClassInfo] = 
-    this :: (if (this == ObjectClass) List() else superClass.superClasses)
+    this :: (if (this == ClassInfo.ObjectClass) List() else superClass.superClasses)
 
   def lookupFields(name: String): Iterator[MemberInfo] =
     superClasses.iterator flatMap (_.fields.get(name))
@@ -110,7 +104,7 @@ abstract class ClassInfo(val owner: PackageInfo) {
     else methods.iterator.filter(_.isClassConstructor).toList
 
   /** The setter methods defined of this trait that correspond to
-   *  a concrete field. Todo: define and check annotation for a mutable
+   *  a concrete field. TODO: define and check annotation for a mutable
    *  setter.
    */
   lazy val traitSetters: List[MemberInfo] = {
@@ -132,7 +126,7 @@ abstract class ClassInfo(val owner: PackageInfo) {
 
   /** All traits inherited directly or indirectly by this class */ 
   lazy val allTraits: Set[ClassInfo] =
-    if (this == ObjectClass || this == NoClass) Set()
+    if (this == ClassInfo.ObjectClass || this == NoClass) Set()
     else superClass.allTraits ++ directTraits
 
   /** All traits in the transitive, reflexive inheritance closure of given trait `t' */
@@ -195,7 +189,7 @@ abstract class ClassInfo(val owner: PackageInfo) {
   /** Is this class an implementation class? */
   lazy val isImplClass: Boolean = name endsWith PackageInfo.implClassSuffix
 
-  /** The implementation class correspondig to this trait */
+  /** The implementation class corresponding to this trait */
   private var _implClass: ClassInfo = NoClass
 
   def implClass_=(ic: ClassInfo) = _implClass = ic

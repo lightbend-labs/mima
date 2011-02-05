@@ -10,18 +10,26 @@ import scala.collection.mutable.ArrayBuffer
 import scala.tools.nsc.symtab.classfile.ClassfileConstants._
 import scala.annotation.switch
 
-object ClassfileParser extends ClassfileParser {
+class ClientClassfileParser(definitions: Definitions) extends ClassfileParser(definitions) {
   var readFields = (clazz: ClassInfo) => false
   var readMethods = (clazz: ClassInfo) => clazz.methodsAreRelevant
   var readCode = (meth: MemberInfo) => meth.needCode
 }
+
+class LibClassfileParser(definitions: Definitions) extends ClassfileParser(definitions) {
+  var readFields = (clazz: ClassInfo) => true
+  var readMethods = (clazz: ClassInfo) => true
+  var readCode = (meth: MemberInfo) => false
+}
+
 
 /** This abstract class implements a class file parser.
  *
  *  @author Martin Odersky
  *  @version 1.0
  */
-abstract class ClassfileParser {
+abstract class ClassfileParser(definitions: Definitions) {
+  import ClassfileParser._
 
   /** Configuration:
    */
@@ -32,7 +40,6 @@ abstract class ClassfileParser {
   var in: BufferReader = _  // the class file reader
   private var thepool: ConstantPool = _
   protected var parsedClass: ClassInfo = _
-  var parsed: Int = 0
 
   def pool: ConstantPool = thepool
 
@@ -127,7 +134,7 @@ abstract class ClassfileParser {
         val start = starts(index)
         if (in.buf(start).toInt != CONSTANT_CLASS) errorBadTag(start)
         val name = getExternalName(in.getChar(start + 1))
-        c = ClassInfo.fromName(name)
+        c = definitions.fromName(name)
         //if (c == ClassInfo.NoClass) println("warning: missing class "+name+" referenced from "+parsedClass.file)
         values(index) = c
       }
@@ -237,13 +244,13 @@ abstract class ClassfileParser {
     val externalName = pool.getClassName(nameIdx)
 
     def parseSuperClass(): ClassInfo = 
-      if (hasAnnotation(clazz.flags)) { in.nextChar; ClassInfo.AnnotationClass }
+      if (hasAnnotation(clazz.flags)) { in.nextChar; definitions.AnnotationClass }
       else pool.getSuperClass(in.nextChar)
 
     def parseInterfaces(): List[ClassInfo] = {
       val rawInterfaces = 
         for (i <- List.range(0, in.nextChar)) yield pool.getSuperClass(in.nextChar)
-      rawInterfaces filter (_ != ClassInfo.NoClass)
+      rawInterfaces filter (_ != NoClass)
     }
 
     clazz.superClass = parseSuperClass()
@@ -326,6 +333,10 @@ abstract class ClassfileParser {
       }
     }
   }
+}
+
+object ClassfileParser {
+  var parsed: Int = 0
 
   @inline final def isPublic(flags: Int) =
     (flags & JAVA_ACC_PUBLIC) != 0

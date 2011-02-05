@@ -31,7 +31,7 @@ class FilePicker(_label: String, owner: Component, private var _selectedFile: Op
 	
 	contents += (label, Swing.HStrut(10))
 	contents += Button("Choose") {
-		val d = new ClassPathFileChooser
+		val d = new ClassPathFileChooser(selectedFile.map(_.getParentFile).getOrElse(null))
 		d.showOpenDialog(owner) match {
 			case Approve => 
 				fileNameLabel.text = d.selectedFile.getName

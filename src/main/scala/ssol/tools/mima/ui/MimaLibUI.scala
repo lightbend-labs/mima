@@ -20,7 +20,7 @@ object MimaLibUI extends SimpleSwingApplication {
 	
 	override def startup(args: Array[String]) {
 	  Config.setup("scala ssol.tools.misco.MiMaLibUI <old-dir> <new-dir>", args, { (xs) => residualArgs = xs; true }, "-fixall")
-	  initialClassPath = Config.classpath
+	  initialClassPath = Config.baseClassPath
 	  super.startup(args)
 	}
 
@@ -54,7 +54,7 @@ object MimaLibUI extends SimpleSwingApplication {
 		  case Next(`reportPage`) =>
 		    println("Reporting now")
 		    // set the new settings
-		    Config.classpath = configurationPage.classPath
+		    Config.baseClassPath= configurationPage.classPath
 		    val mima = new MiMaLib
 		    reportPage.doCompare(configurationPage.oldFile.getAbsolutePath, configurationPage.newFile.getAbsolutePath, mima)
 		    

@@ -19,9 +19,9 @@ class MemberInfo(val owner: ClassInfo, val name: String, val flags: Int, val sig
   def decodedName = NameTransformer.decode(name) 
 
   def fieldString = "field "+decodedName+" in "+owner.classString
-  def methodString = "method "+decodedName+Type.fromSig(sig)+" in "+owner.classString
+  def methodString = "method "+decodedName+tpe+" in "+owner.classString
 
-  def tpe: Type = Type.fromSig(sig)
+  def tpe: Type = owner.owner.definitions.fromSig(sig)
 
   def staticImpl = owner.implClass.staticImpl(this)
 

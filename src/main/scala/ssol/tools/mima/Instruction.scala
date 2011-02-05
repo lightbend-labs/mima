@@ -17,6 +17,6 @@ case class Instruction(offset: Int, instr: Int, argument: Int) {
   }
   def target(cp: ClassfileParser): Reference = 
     if (hasReference) cp.pool.getReference(argument)
-    else Reference(ClassInfo.NoClass, "", "")
+    else Reference(NoClass, "", "")
 }
 
