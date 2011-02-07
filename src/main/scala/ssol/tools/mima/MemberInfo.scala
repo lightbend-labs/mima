@@ -20,6 +20,8 @@ class MemberInfo(val owner: ClassInfo, val name: String, val flags: Int, val sig
 
   def fieldString = "field "+decodedName+" in "+owner.classString
   def methodString = "method "+decodedName+tpe+" in "+owner.classString
+  
+  def fullName = owner.fullName + "." + decodedName
 
   def tpe: Type = owner.owner.definitions.fromSig(sig)
 

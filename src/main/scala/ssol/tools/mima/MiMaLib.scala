@@ -132,6 +132,7 @@ class MiMaLib {
     val newRoot = root(newDir)      
     Config.info("[old version in: "+oldRoot+"]")
     Config.info("[new version in: "+newRoot+"]")
+    Config.info("classpath: " + Config.baseClassPath.asClasspathString)
     traversePackages(oldRoot.targetPackage, newRoot.targetPackage)
     val fixes = new ListBuffer[Fix]
     problems.toList

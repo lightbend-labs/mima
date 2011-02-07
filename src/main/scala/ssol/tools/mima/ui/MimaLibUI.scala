@@ -54,7 +54,7 @@ object MimaLibUI extends SimpleSwingApplication {
 		  case Next(`reportPage`) =>
 		    println("Reporting now")
 		    // set the new settings
-		    Config.baseClassPath= configurationPage.classPath
+		    Config.baseClassPath = configurationPage.classPath
 		    val mima = new MiMaLib
 		    reportPage.doCompare(configurationPage.oldFile.getAbsolutePath, configurationPage.newFile.getAbsolutePath, mima)
 		    

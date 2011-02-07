@@ -57,7 +57,7 @@ abstract class PackageInfo(val owner: PackageInfo) {
   
   lazy val root: PackageInfo = if (isRoot) this else owner.root
 
-  def fullName: String = if (isRoot) "<root>" 
+  def fullName: String = if (isRoot) "<root>"
                          else if (owner.isRoot) name
                          else owner.fullName + "." + name
 

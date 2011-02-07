@@ -20,7 +20,9 @@ class Definitions(val lib: Option[DirectoryClassPath], val classPath: JavaClassP
   
   /** Return all packages in the target library. */
   lazy val targetPackage: PackageInfo = {
-    val pkg = new SyntheticPackageInfo(root, "<root>")
+    val pkg = new SyntheticPackageInfo(root, "<root>") {
+      override def isRoot = true
+    }
     pkg.packages ++=  lib.get.packages map (cp => cp.name -> new ConcretePackageInfo(pkg, cp, this))
     
     Config.info("added packages to <root>: %s".format(pkg.packages.keys.mkString(", ")))

@@ -82,7 +82,7 @@ class ClassPathEditor(init: List[String]) extends GridBagPanel with WithConstrai
       val d = new ClassPathFileChooser
       d.showOpenDialog(this) match {
         case Result.Approve => 
-          listView.listData ++= List(d.selectedFile.getAbsolutePath)
+          listView.listData ++= d.selectedFiles map (_.getAbsolutePath)
         case _ =>
       }
       

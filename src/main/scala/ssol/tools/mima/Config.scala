@@ -52,8 +52,8 @@ object Config {
       
   def setup(cmd: String, args: Array[String], validate: List[String] => Boolean, specificOptions: String*): List[String] = {
     settings = new Settings(specificOptions: _*)
-    _classpath = new PathResolver(settings).mimaResult 
     val (_, resargs) = settings.processArguments(args.toList, true)
+    _classpath = new PathResolver(settings).mimaResult 
     if (settings.help.value) {
       println(usageMsg(cmd))
       System.exit(0)

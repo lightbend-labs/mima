@@ -12,6 +12,7 @@ import FileChooser._
 class ClassPathFileChooser(dir: File) extends FileChooser(dir) {
   def this() = this(null)
   
+  multiSelectionEnabled = true
   fileSelectionMode = SelectionMode.FilesAndDirectories
   fileFilter = new FileNameExtensionFilter("Jar files", "jar")
 }
