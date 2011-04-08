@@ -16,7 +16,7 @@ object ClassInfo {
  *  package.
  */
 class SyntheticClassInfo(owner: PackageInfo, val name: String) extends ClassInfo(owner) {
-  println("<synthetic> " + toString)
+  Config.info("<synthetic> " + toString)
   loaded = true
   def file: AbstractFile = throw new UnsupportedOperationException
 }
@@ -52,7 +52,7 @@ abstract class ClassInfo(val owner: PackageInfo) {
   private def ensureLoaded() =
     if (!loaded)
       try {
-        println("parsing " + file)
+        Config.info("parsing " + file)
         owner.definitions.ClassfileParser.parse(this)
       } finally {
         loaded = true

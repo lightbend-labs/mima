@@ -45,7 +45,7 @@ class MiMaLib {
 
   def raise(problem: Problem) = {
     problems += problem
-    println("Problem: "+problem.description+(
+    Config.info("Problem: "+problem.description+(
       if (problem.status != Problem.Status.Unfixable) " ("+problem.status+")" else ""))
   }
 

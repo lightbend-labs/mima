@@ -10,3 +10,5 @@ bin/
 .project
 .DS_Store
 **/DS_Store
+.settings
+.history
