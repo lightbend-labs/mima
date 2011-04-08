@@ -22,6 +22,7 @@ class Definitions(val lib: Option[DirectoryClassPath], val classPath: JavaClassP
   lazy val targetPackage: PackageInfo = {
     val pkg = new SyntheticPackageInfo(root, "<root>") {
       override def isRoot = true
+      override lazy val classes = Definitions.this.root.classes
     }
     pkg.packages ++=  lib.get.packages map (cp => cp.name -> new ConcretePackageInfo(pkg, cp, this))
     

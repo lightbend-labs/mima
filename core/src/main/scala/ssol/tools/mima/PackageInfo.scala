@@ -26,8 +26,8 @@ import PackageInfo._
 
 class SyntheticPackageInfo(owner: PackageInfo, val name: String) extends PackageInfo(owner) {
   def definitions: Definitions = error("Called definitions on synthetic package")
-  lazy val packages: mutable.Map[String, PackageInfo] = mutable.Map()
-  lazy val classes: mutable.Map[String, ClassInfo] = mutable.Map()
+  lazy val packages: mutable.Map[String, PackageInfo] = mutable.Map.empty
+  lazy val classes: mutable.Map[String, ClassInfo] = mutable.Map.empty
 }
 
 /** A concrete package. cp should be a directory classpath. 
@@ -78,7 +78,7 @@ abstract class PackageInfo(val owner: PackageInfo) {
     else vclasses union accessibleClassesUnder(vclasses)
   }
 
-  lazy val accessibleClasses: Set[ClassInfo] = accessibleClassesUnder(Set())
+  lazy val accessibleClasses: Set[ClassInfo] = accessibleClassesUnder(Set.empty)
   
   /** All implementation classes of traits (classes that end in '$class').
    */

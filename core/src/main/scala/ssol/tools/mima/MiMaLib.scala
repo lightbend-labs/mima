@@ -31,7 +31,7 @@ class MiMaLib {
 
   def root(name: String): Definitions = {
     val cp = classPath(name)
-    if (cp == null) Config.fatal("not a directory or jar file: "+name)
+    if (cp == null) fatal("not a directory or jar file: "+name)
     else new Definitions(Some(cp), Config.baseClassPath)
   }
 
@@ -45,7 +45,7 @@ class MiMaLib {
 
   def raise(problem: Problem) = {
     problems += problem
-    Config.info("Problem: "+problem.description+(
+    info("Problem: "+problem.description+(
       if (problem.status != Problem.Status.Unfixable) " ("+problem.status+")" else ""))
   }
 
@@ -53,7 +53,7 @@ class MiMaLib {
     methods.groupBy(_.parametersSig).values.map(_.head).toList
 
   def compareClasses(oldclazz: ClassInfo, newclazz: ClassInfo) {
-    Config.info("[compare] %s \t %s".format(oldclazz, newclazz))
+    info("[compare] %s \t %s".format(oldclazz, newclazz))
     for (oldfld <- oldclazz.fields.iterator)
       if (oldfld.isAccessible) {
         val newflds = newclazz.lookupFields(oldfld.name)
@@ -130,9 +130,9 @@ class MiMaLib {
   def collectProblems(oldDir: String, newDir: String): List[Problem] = {
     val oldRoot = root(oldDir)
     val newRoot = root(newDir)      
-    Config.info("[old version in: "+oldRoot+"]")
-    Config.info("[new version in: "+newRoot+"]")
-    Config.info("classpath: " + Config.baseClassPath.asClasspathString)
+    info("[old version in: "+oldRoot+"]")
+    info("[new version in: "+newRoot+"]")
+    info("classpath: " + Config.baseClassPath.asClasspathString)
     traversePackages(oldRoot.targetPackage, newRoot.targetPackage)
     val fixes = new ListBuffer[Fix]
     problems.toList
@@ -152,11 +152,11 @@ class MiMaLib {
 object MiMaLib extends MiMaLib {
   def main(args: Array[String]) = {
 //    setupClassfileParser()
-    val resargs = Config.setup("scala ssol.tools.misco.MiMaLib <old-dir> <new-dir>", args, _.length == 2, "-fixall")
+    val resargs = setup("scala ssol.tools.misco.MiMaLib <old-dir> <new-dir>", args, _.length == 2, "-fixall")
     val oldRoot = root(resargs(0))
     val newRoot = root(resargs(1))      
-    Config.info("[old version in: "+oldRoot+"]")
-    Config.info("[new version in: "+newRoot+"]")
+    info("[old version in: "+oldRoot+"]")
+    info("[new version in: "+newRoot+"]")
     traversePackages(oldRoot.targetPackage, newRoot.targetPackage)
     val fixes = new ListBuffer[Fix]
     if (Config.fixall) {

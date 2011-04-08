@@ -16,6 +16,7 @@ import java.awt.GridBagConstraints._
 /** Mima problem report page.
  */
 class ReportPage extends GridBagPanel with WithConstraints {
+  import Config.info
   
   val defaultFilterText = "<enter filter>"
 
@@ -39,7 +40,7 @@ class ReportPage extends GridBagPanel with WithConstraints {
   var sorter: TableRowSorter[ProblemsModel] = _
   
   def doCompare(oldDir: String, newDir: String, mimalib: MiMaLib) {
-    println("old: " + oldDir + " new: " + newDir)
+    info("old: " + oldDir + " new: " + newDir)
     val problems = mimalib.collectProblems(oldDir, newDir)
     val model = new ProblemsModel(problems)
     table.setModel(model)
