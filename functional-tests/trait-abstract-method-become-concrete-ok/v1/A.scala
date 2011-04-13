@@ -1,7 +1,7 @@
 trait A {
-  val buz: Int
+  def foo: Int
 }
 
 class B extends A {
-  val buz = 2
+  def foo = 2
 }

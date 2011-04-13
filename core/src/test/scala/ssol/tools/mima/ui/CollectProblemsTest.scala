@@ -9,7 +9,7 @@ class CollectProblemsTest  {
   def runTest(testName: String, oldJarPath: String, newJarPath: String, oraclePath: String): Unit = {
     // load test setup
     Config.setup("scala ssol.tools.misco.MiMaLibUI <old-dir> <new-dir>", Array(oldJarPath, newJarPath))
-    var scalaLib = "/Applications/dev-tools/eclipse/configuration/org.eclipse.osgi/bundles/390/1/.cp/lib/scala-library.jar"
+    var scalaLib = "regressions-tests/scala-library/scala-library-2.8.1.jar"
     val cp = scalaLib :: ClassPath.split(Config.baseClassPath.asClasspathString)
     val cpString = ClassPath.join(cp : _*)
     Config.baseClassPath = new JavaClassPath(ClassPath.DefaultJavaContext.classesInPath(cpString), ClassPath.DefaultJavaContext)    
