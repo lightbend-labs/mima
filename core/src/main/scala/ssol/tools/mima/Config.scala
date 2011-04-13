@@ -49,6 +49,9 @@ object Config {
   def setup(s: Settings) {
   	settings = s
   }
+  
+  def setup(cmd: String, args: Array[String], specificOptions: String*): List[String] =
+    setup(cmd, args, xs => true, specificOptions: _*)
       
   def setup(cmd: String, args: Array[String], validate: List[String] => Boolean, specificOptions: String*): List[String] = {
     settings = new Settings(specificOptions: _*)
