@@ -1,0 +1,3 @@
+This is not really an issue as the bytecode an overridden method is the same as for a standard method implementation.
+
+Although, it may be nice to provide the ability to inject a call super.foo in the migrated bytecode...

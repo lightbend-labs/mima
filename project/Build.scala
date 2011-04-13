@@ -14,8 +14,8 @@ object MimaBuild extends Build {
   // core contains the main migration manager code in src/main/scala and the test code in src/test/scala
   //  configs shouldn't be necessary: works around a bug in sbt
   lazy val core: Project = Project("core", file("core"))
-  	.configs(v1Config, v2Config)
-  	.settings(
+    .configs(v1Config, v2Config)
+    .settings(
       // add fun-tests that depends on all functional tests
       funTests <<= runAllTests,
       // make the main 'package' task depend on functional tests passing
@@ -61,22 +61,26 @@ object MimaBuild extends Build {
   // a,b,c
   lazy val runTests =
     (fullClasspath in (core, Test), // the test classpath from the core project for the test
-    	thisProjectRef, // gives us the ProjectRef this task is defined in
+      thisProjectRef, // gives us the ProjectRef this task is defined in
       scalaInstance, // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
       packageBin in v1Config, // package the v1 sources and get the configuration used
       packageBin in v2Config // same for v2
       ) map { (cp, proj, si, v1, v2) =>
-        // make our loader that we use to get the test running code
         val urls = data(cp).map(_.toURI.toURL).toArray
         val loader = new java.net.URLClassLoader(urls, si.loader)
 
         val testClass = loader.loadClass("ssol.tools.mima.ui.CollectProblemsTest")
-        val testRunner = testClass.newInstance().asInstanceOf[ { def runTest(testName: String, oldJarPath: String, newJarPath: String, oraclePath: String): Unit } ]
-        
+        val testRunner = testClass.newInstance().asInstanceOf[{ def runTest(testName: String, oldJarPath: String, newJarPath: String, oraclePath: String): Unit }]
+
         val projectPath = proj.build.getPath + "functional-tests" + "/" + proj.project
         val oraclePath = projectPath + "/problems.txt"
-          
-        testRunner.runTest(proj.project, v1.jar.getAbsolutePath, v2.jar.getAbsolutePath, oraclePath)
+
+        try {
+          testRunner.runTest(proj.project, v1.jar.getAbsolutePath, v2.jar.getAbsolutePath, oraclePath)
+        } catch {
+          case e => println("[fatal] Failed to run Test '" + proj.project + "'")
+        }
+
       }
 
   lazy val runAllTests =

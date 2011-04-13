@@ -1,0 +1,1 @@
+method this(Int)Unit in class A's type has changed; was (Int)Unit, is now: ()Unit

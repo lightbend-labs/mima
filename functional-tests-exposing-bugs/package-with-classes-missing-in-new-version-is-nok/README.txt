@@ -1,0 +1,1 @@
+This should simply report the missing class.

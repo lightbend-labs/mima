@@ -1,0 +1,1 @@
+A class that become final in the new version can break the user code because it can no longer be overidden.

@@ -1,0 +1,3 @@
+A trait containing an abstract val should not generate a bytecode incompatibility if the abstract val is replaced with a concrete implementation.
+
+An error is reported because a new method is added to the interface generated from the trait, therefore classes implementing the trait will have to provide the new method (i.e., something of the form; 'A$_setter_$foo_=(Int)Unit'), but this method will never be used so the concrete implementation could just throw a runtime exception...

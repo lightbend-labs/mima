@@ -1,14 +1,11 @@
 target/
+**/target
 *.scala_dependencies
 project/boot
-project/build/target
-lib_managed
-test/project/boot
-test/project/build/target
 bin/
 .classpath
 .project
 .DS_Store
-**/DS_Store
+**/.DS_Store
 .settings
 .history

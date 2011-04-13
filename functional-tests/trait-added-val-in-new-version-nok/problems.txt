@@ -1,0 +1,2 @@
+abstract method A$_setter_|_=(Int)Unit in trait A does not have a correspondent in old version
+abstract method bar()Int in trait A does not have a correspondent in old version
