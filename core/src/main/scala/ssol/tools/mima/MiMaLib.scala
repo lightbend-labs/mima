@@ -18,32 +18,22 @@ class MiMaLib {
   -i, -iinteractive
   -f, -fix
   */
-  
-  // make sure we initialize the classfile parser
-//  setupClassfileParser()
 
-  def classPath(name: String) = {
+  private def classPath(name: String) = {
     val f = new File(new java.io.File(name))
     val dir = AbstractFile.getDirectory(f)
-    if (dir == null) null
-    else new DirectoryClassPath(dir, DefaultJavaContext)
+    if (dir == null) None
+    else Some(new DirectoryClassPath(dir, DefaultJavaContext))
   }
 
-  def root(name: String): Definitions = {
-    val cp = classPath(name)
-    if (cp == null) fatal("not a directory or jar file: "+name)
-    else new Definitions(Some(cp), Config.baseClassPath)
+  private def root(name: String): Definitions = classPath(name) match {
+    case cp @ Some(_) => new Definitions(cp, Config.baseClassPath)
+    case None => fatal("not a directory or jar file: "+name)
   }
 
-//  def setupClassfileParser() {
-//    ClassfileParser.readFields = (clazz: ClassInfo) => true
-//    ClassfileParser.readMethods = (clazz: ClassInfo) => true
-//    ClassfileParser.readCode = (meth: MemberInfo) => false
-//  }
+  private val problems = new ListBuffer[Problem]
 
-  val problems = new ListBuffer[Problem]
-
-  def raise(problem: Problem) = {
+  private def raise(problem: Problem) = {
     problems += problem
     info("Problem: "+problem.description+(
       if (problem.status != Problem.Status.Unfixable) " ("+problem.status+")" else ""))
@@ -52,7 +42,7 @@ class MiMaLib {
   private def uniques(methods: List[MemberInfo]): List[MemberInfo] = 
     methods.groupBy(_.parametersSig).values.map(_.head).toList
 
-  def compareClasses(oldclazz: ClassInfo, newclazz: ClassInfo) {
+  private def compareClasses(oldclazz: ClassInfo, newclazz: ClassInfo) {
     info("[compare] %s \t %s".format(oldclazz, newclazz))
     for (oldfld <- oldclazz.fields.iterator)
       if (oldfld.isAccessible) {
@@ -97,7 +87,7 @@ class MiMaLib {
       }        
   }          
 
-  def comparePackages(oldpkg: PackageInfo, newpkg: PackageInfo) {
+  private def comparePackages(oldpkg: PackageInfo, newpkg: PackageInfo) {
     val traits = newpkg.traits // determine traits of new package first
     for (oldclazz <- oldpkg.accessibleClasses) {
       newpkg.classes get oldclazz.name match {
@@ -111,7 +101,7 @@ class MiMaLib {
     }
   }
 
-  def traversePackages(oldpkg: PackageInfo, newpkg: PackageInfo) {
+  private def traversePackages(oldpkg: PackageInfo, newpkg: PackageInfo) {
     info("* " + oldpkg.fullName + ": ")
     comparePackages(oldpkg, newpkg)
     indented {
@@ -139,14 +129,14 @@ class MiMaLib {
   }
   
   /** Return a list of fixes for the given problems. */
-  def fixesFor(problems: List[IncompatibleResultTypeProblem]): List[Fix] = {
+  /*private def fixesFor(problems: List[IncompatibleResultTypeProblem]): List[Fix] = {
   	val fixes = new ListBuffer[Fix]
   	
     for ((clazz, problems) <- problems groupBy (_.newmeth.owner)) {
       fixes += new Fix(clazz).lib(problems map (p => (p.newmeth, p.oldmeth.sig)))
     } 
   	fixes.toList
-  }
+  }*/
 }
 
 object MiMaLib extends MiMaLib {

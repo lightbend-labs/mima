@@ -22,6 +22,7 @@ class Definitions(val lib: Option[DirectoryClassPath], val classPath: JavaClassP
   lazy val targetPackage: PackageInfo = {
     val pkg = new SyntheticPackageInfo(root, "<root>") {
       override def isRoot = true
+      /** Needed to fetch classes located in the root (empty package) */
       override lazy val classes = Definitions.this.root.classes
     }
     pkg.packages ++=  lib.get.packages map (cp => cp.name -> new ConcretePackageInfo(pkg, cp, this))
@@ -32,7 +33,6 @@ class Definitions(val lib: Option[DirectoryClassPath], val classPath: JavaClassP
   
   lazy val ObjectClass = fromName("java.lang.Object")
   lazy val AnnotationClass = fromName("java.lang.annotation.Annotation")
-//  val NoClass = new SyntheticClassInfo(null, "<noclass>", this)
 
   lazy val ClassfileParser = new LibClassfileParser(this)
   

@@ -15,3 +15,4 @@ class Members(val members: TraversableOnce[MemberInfo]) {
 }
 
 
+object NoMembers extends Members(Nil)

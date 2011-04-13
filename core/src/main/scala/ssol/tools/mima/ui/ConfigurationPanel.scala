@@ -8,6 +8,7 @@ import util._
 import io.AbstractFile
 
 import scala.swing._
+import ssol.tools.mima.Config
 
 import Swing._
 import GridBagPanel._
@@ -58,7 +59,7 @@ class ConfigurationPanel(initialClassPath: JavaClassPath, f1: Option[File] = Non
   
   def classPath: JavaClassPath = {
 	  val cpString = cpEditor.classPathString
-	  println(cpString)
+	  Config.debugLog(cpString)
 	  new JavaClassPath(DefaultJavaContext.classesInPath(cpString), DefaultJavaContext)
 	}
   

@@ -19,7 +19,7 @@ object MimaLibUI extends SimpleSwingApplication {
 	private var residualArgs: List[String] = Nil  
 	
 	override def startup(args: Array[String]) {
-	  Config.setup("scala ssol.tools.misco.MiMaLibUI <old-dir> <new-dir>", args, { (xs) => residualArgs = xs; true }, "-fixall")
+	  residualArgs = Config.setup("scala ssol.tools.misco.MiMaLibUI <old-dir> <new-dir>", args, "-fixall")
 	  initialClassPath = Config.baseClassPath
 	  super.startup(args)
 	}

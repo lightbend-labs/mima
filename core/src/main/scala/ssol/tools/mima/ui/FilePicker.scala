@@ -4,6 +4,7 @@ import java.io.File
 
 import scala.swing._
 import Swing._
+import ssol.tools.mima.Config
 
 import FileChooser._
 import FileChooser.Result._
@@ -21,7 +22,7 @@ class FilePicker(_label: String, owner: Component, private var _selectedFile: Op
   private val fileNameLabel = new Label("Please select a file")
 
 	if (selectedFile.isDefined) {
-	  println("starting with initial file: " + selectedFile.get.getAbsolutePath)
+	  Config.debugLog("starting with initial file: " + selectedFile.get.getAbsolutePath)
 	  fileNameLabel.text = selectedFile.get.getName
 	}
 	

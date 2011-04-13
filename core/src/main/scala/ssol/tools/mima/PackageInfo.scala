@@ -17,9 +17,6 @@ object PackageInfo {
     assert(iclassName endsWith implClassSuffix)
     iclassName.substring(0, iclassName.length - implClassSuffix.length)
   }
-//  lazy val classpath = Config.classpath
-//  lazy val root = new ConcretePackageInfo(null, classpath)
-//  Config.info("baseClasspath = "+Config.baseClassPath)
 }
 
 import PackageInfo._
@@ -55,7 +52,7 @@ abstract class PackageInfo(val owner: PackageInfo) {
   
   def isRoot = owner == null
   
-  lazy val root: PackageInfo = if (isRoot) this else owner.root
+  private lazy val root: PackageInfo = if (isRoot) this else owner.root
 
   def fullName: String = if (isRoot) "<root>"
                          else if (owner.isRoot) name
@@ -66,12 +63,13 @@ abstract class PackageInfo(val owner: PackageInfo) {
 
   private def isAccessible(clazz: ClassInfo, prefix: Set[ClassInfo]) = {
     val idx = clazz.name.lastIndexOf("$")
-    val isReachable = 
-      if (idx < 0) prefix.isEmpty // class name contains no $
-      else (prefix exists (_.name == clazz.name.substring(0, idx))) // prefix before dollar is an accessible class detected previously
-    isReachable && clazz.isPublic
+    lazy val isReachable = 
+    	if (idx < 0) prefix.isEmpty // class name contains no $
+    	else (prefix exists (_.name == clazz.name.substring(0, idx))) // prefix before dollar is an accessible class detected previously
+    clazz.isPublic && isReachable
   }
 
+  /** Fixed point iteration for finding all accessible classes. */
   private def accessibleClassesUnder(prefix: Set[ClassInfo]): Set[ClassInfo] = {
     val vclasses = (classes.valuesIterator filter (isAccessible(_, prefix))).toSet
     if (vclasses.isEmpty) vclasses
@@ -80,8 +78,7 @@ abstract class PackageInfo(val owner: PackageInfo) {
 
   lazy val accessibleClasses: Set[ClassInfo] = accessibleClassesUnder(Set.empty)
   
-  /** All implementation classes of traits (classes that end in '$class').
-   */
+  /** All implementation classes of traits (classes that end in '$class'). */
   lazy val implClasses: mutable.Map[String, ClassInfo] = 
     classes filter { case (name, _) => name endsWith implClassSuffix }
 

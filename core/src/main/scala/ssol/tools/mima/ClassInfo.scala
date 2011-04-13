@@ -19,12 +19,12 @@ class SyntheticClassInfo(owner: PackageInfo, val name: String) extends ClassInfo
   Config.info("<synthetic> " + toString)
   loaded = true
   def file: AbstractFile = throw new UnsupportedOperationException
+  override lazy val allTraits = Set.empty[ClassInfo]
 }
 
 /** As the name implies. */
 object NoClass extends SyntheticClassInfo(null, "<noclass>") {
   override lazy val superClasses = List(this)
-  override lazy val allTraits = Set(): Set[ClassInfo]
 }
 
 /** A class for which we have the classfile. */
@@ -59,9 +59,9 @@ abstract class ClassInfo(val owner: PackageInfo) {
       }
       
   private var _superClass: ClassInfo = NoClass
-  private var _interfaces: List[ClassInfo] = List()
-  private var _fields: Members = null
-  private var _methods: Members = null
+  private var _interfaces: List[ClassInfo] = Nil
+  private var _fields: Members = NoMembers
+  private var _methods: Members = NoMembers
   private var _flags: Int = 0
   private var _isScala: Boolean = false
 
@@ -87,7 +87,7 @@ abstract class ClassInfo(val owner: PackageInfo) {
   def lookupFields(name: String): Iterator[MemberInfo] =
     superClasses.iterator flatMap (_.fields.get(name))
 
-  def lookupMethods(name: String): Iterator[MemberInfo] =
+  def lookupMethods(name: String): Iterator[MemberInfo] = 
     superClasses.iterator flatMap (_.methods.get(name))
 
   /** Is this class a non-trait that inherits !from a trait */
@@ -126,7 +126,7 @@ abstract class ClassInfo(val owner: PackageInfo) {
 
   /** All traits inherited directly or indirectly by this class */ 
   lazy val allTraits: Set[ClassInfo] =
-    if (this == ClassInfo.ObjectClass || this == NoClass) Set()
+    if (this == ClassInfo.ObjectClass) Set.empty
     else superClass.allTraits ++ directTraits
 
   /** All traits in the transitive, reflexive inheritance closure of given trait `t' */

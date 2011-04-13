@@ -9,8 +9,8 @@ object Config {
   private var settings: Settings = _
   private var _classpath: JavaClassPath = _
   
-  def info(str: String) = if (settings.verbose.value) println(str)
-  def debugLog(str: String) = if (settings.debug.value) println(str) 
+  def info(str: String) = if (verbose) println(str)
+  def debugLog(str: String) = if (debug) println(str) 
 
   def inPlace = settings.mimaOutDir.isDefault
   def verbose = settings.verbose.value
@@ -49,7 +49,10 @@ object Config {
   def setup(s: Settings) {
   	settings = s
   }
-      
+   
+  def setup(cmd: String, args: Array[String], specificOptions: String*): List[String] = 
+    setup(cmd, args, xs => true, specificOptions: _*)
+  
   def setup(cmd: String, args: Array[String], validate: List[String] => Boolean, specificOptions: String*): List[String] = {
     settings = new Settings(specificOptions: _*)
     val (_, resargs) = settings.processArguments(args.toList, true)
