@@ -23,8 +23,8 @@ import PackageInfo._
 
 class SyntheticPackageInfo(owner: PackageInfo, val name: String) extends PackageInfo(owner) {
   def definitions: Definitions = error("Called definitions on synthetic package")
-  lazy val packages: mutable.Map[String, PackageInfo] = mutable.Map.empty
-  lazy val classes: mutable.Map[String, ClassInfo] = mutable.Map.empty
+  lazy val packages = mutable.Map.empty[String, PackageInfo]
+  lazy val classes = mutable.Map.empty[String, ClassInfo]
 }
 
 /** A concrete package. cp should be a directory classpath. 
@@ -61,22 +61,24 @@ abstract class PackageInfo(val owner: PackageInfo) {
   def packages: mutable.Map[String, PackageInfo]
   def classes: mutable.Map[String, ClassInfo]
 
-  private def isAccessible(clazz: ClassInfo, prefix: Set[ClassInfo]) = {
-    val idx = clazz.name.lastIndexOf("$")
-    lazy val isReachable = 
-    	if (idx < 0) prefix.isEmpty // class name contains no $
-    	else (prefix exists (_.name == clazz.name.substring(0, idx))) // prefix before dollar is an accessible class detected previously
-    clazz.isPublic && isReachable
+  lazy val accessibleClasses: Set[ClassInfo] = {
+    /** Fixed point iteration for finding all accessible classes. */
+    def accessibleClassesUnder(prefix: Set[ClassInfo]): Set[ClassInfo] = {
+      val vclasses = (classes.valuesIterator filter (isAccessible(_, prefix))).toSet
+      if (vclasses.isEmpty) vclasses
+      else vclasses union accessibleClassesUnder(vclasses)
+    }
+    
+    def isAccessible(clazz: ClassInfo, prefix: Set[ClassInfo]) = {
+      val idx = clazz.name.lastIndexOf("$")
+      lazy val isReachable = 
+      	if (idx < 0) prefix.isEmpty // class name contains no $
+      	else (prefix exists (_.name == clazz.name.substring(0, idx))) // prefix before dollar is an accessible class detected previously
+      clazz.isPublic && isReachable
+    }
+    
+    accessibleClassesUnder(Set.empty)
   }
-
-  /** Fixed point iteration for finding all accessible classes. */
-  private def accessibleClassesUnder(prefix: Set[ClassInfo]): Set[ClassInfo] = {
-    val vclasses = (classes.valuesIterator filter (isAccessible(_, prefix))).toSet
-    if (vclasses.isEmpty) vclasses
-    else vclasses union accessibleClassesUnder(vclasses)
-  }
-
-  lazy val accessibleClasses: Set[ClassInfo] = accessibleClassesUnder(Set.empty)
   
   /** All implementation classes of traits (classes that end in '$class'). */
   lazy val implClasses: mutable.Map[String, ClassInfo] = 

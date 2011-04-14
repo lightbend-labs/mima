@@ -19,13 +19,12 @@ class SyntheticClassInfo(owner: PackageInfo, val name: String) extends ClassInfo
   Config.info("<synthetic> " + toString)
   loaded = true
   def file: AbstractFile = throw new UnsupportedOperationException
+  override lazy val superClasses = Nil
   override lazy val allTraits = Set.empty[ClassInfo]
 }
 
 /** As the name implies. */
-object NoClass extends SyntheticClassInfo(null, "<noclass>") {
-  override lazy val superClasses = List(this)
-}
+object NoClass extends SyntheticClassInfo(null, "<noclass>")
 
 /** A class for which we have the classfile. */
 class ConcreteClassInfo(owner: PackageInfo, val file: AbstractFile) extends ClassInfo(owner) {
@@ -82,7 +81,7 @@ abstract class ClassInfo(val owner: PackageInfo) {
   def isScala_=(x: Boolean) = _isScala = x
 
   lazy val superClasses: List[ClassInfo] = 
-    this :: (if (this == ClassInfo.ObjectClass) List() else superClass.superClasses)
+    this :: (if (this == ClassInfo.ObjectClass) Nil else superClass.superClasses)
 
   def lookupFields(name: String): Iterator[MemberInfo] =
     superClasses.iterator flatMap (_.fields.get(name))
@@ -122,21 +121,35 @@ abstract class ClassInfo(val owner: PackageInfo) {
    *  except any traits inherited by its superclass.
    *  Traits appear in linearization order of this class or trait.
    */
-  lazy val directTraits: List[ClassInfo] = parentsClosure(this)
+  lazy val directTraits: List[ClassInfo] = {
+    def parentsClosure(c: ClassInfo) =
+    	(c.interfaces flatMap traitClosure).distinct
+   
+    /** All traits in the transitive, reflexive inheritance closure of given trait `t' */
+    def traitClosure(t: ClassInfo): List[ClassInfo] =  
+      if (superClass.allTraits contains t) Nil
+      else if (t.isTrait) parentsClosure(t) :+ t
+      else parentsClosure(t)
+    	
+    parentsClosure(this)
+    
+    /** 
+     * FIXME:[mirco] 
+     * Check the implementation, is this the way it is supposed to work?
+     * 
+     * Example:
+     *  
+     * class A extends B with C
+     * class B with C
+     * 
+     * calling `directTraits` on classfile A, seems to me it will return Nil. However, I would expect it to return List(C). Is that ok?
+     */
+  }
 
   /** All traits inherited directly or indirectly by this class */ 
   lazy val allTraits: Set[ClassInfo] =
     if (this == ClassInfo.ObjectClass) Set.empty
     else superClass.allTraits ++ directTraits
-
-  /** All traits in the transitive, reflexive inheritance closure of given trait `t' */
-  private def traitClosure(t: ClassInfo): List[ClassInfo] =  
-    if (superClass.allTraits contains t) List()
-    else if (t.isTrait) parentsClosure(t) :+ t
-    else parentsClosure(t)
-
-  def parentsClosure(c: ClassInfo) =
-    (c.interfaces flatMap traitClosure).distinct
 
   private def unimplemented(sel: ClassInfo => Traversable[MemberInfo]): List[MemberInfo] = {
     ensureLoaded()
@@ -146,7 +159,7 @@ abstract class ClassInfo(val owner: PackageInfo) {
         m <- sel(t)
         if !hasInstanceImpl(m)
       } yield m
-    }  else List()
+    }  else Nil
   }
     
   /** The methods that should be implemented by this class but aren't */
@@ -156,7 +169,7 @@ abstract class ClassInfo(val owner: PackageInfo) {
   lazy val unimplementedSetters = unimplemented(_.traitSetters) 
 
   /** Does this class have an implementation (forwarder or accessor) of given method `m'? */
-  def hasInstanceImpl(m: MemberInfo) =
+  private def hasInstanceImpl(m: MemberInfo) =
     methods.get(m.name) exists (_.sig == m.sig)
 
   /** Does this implementation class have a static implementation of given method `m'? */

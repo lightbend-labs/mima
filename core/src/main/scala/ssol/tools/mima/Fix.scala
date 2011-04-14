@@ -16,7 +16,7 @@ class Fix(val clazz: ClassInfo) {
   final val Vcat = 5
 
   /** Returns the file with the given suffix for the given class. */
-  def outputFile(clazz: ClassInfo): File = {
+  private def outputFile(clazz: ClassInfo): File = {
     var outdir = Config.outDir.jfile
     val filename = clazz.fullName
     var start = 0

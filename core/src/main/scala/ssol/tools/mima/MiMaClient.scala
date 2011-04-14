@@ -23,15 +23,15 @@ object MiMaClient {
           printLine("      "+m)
     }
     if (clazz.unimplementedMethods.nonEmpty || clazz.unimplementedSetters.nonEmpty) {
-      println(clazz+" at "+clazz.file+" needs to be fixed")
+      Config.info(clazz+" at "+clazz.file+" needs to be fixed")
       if (clazz.unimplementedMethods.nonEmpty)
-        println("  has unimplemented methods: \n    "+clazz.unimplementedMethods.map(_.description).mkString("\n    "))
+        Config.info("  has unimplemented methods: \n    "+clazz.unimplementedMethods.map(_.description).mkString("\n    "))
       if (clazz.unimplementedSetters.nonEmpty)
-        println("  has unimplemented fields with setters:\n   "+clazz.unimplementedSetters.map(_.description).mkString("\n    "))
-      println(clazz.superClass.description)
-      println(clazz.directTraits map (_.description))
-      println(clazz.superClass.allTraits map (_.description))
-      println(clazz.superClass.allTraits map (_.interfaces))
+        Config.info("  has unimplemented fields with setters:\n   "+clazz.unimplementedSetters.map(_.description).mkString("\n    "))
+      Config.info(clazz.superClass.description)
+      Config.info(clazz.directTraits map (_.description) toString)
+      Config.info(clazz.superClass.allTraits map (_.description) toString)
+      Config.info(clazz.superClass.allTraits map (_.interfaces) toString)
       fixes += new Fix(clazz).client()
     }
   }
