@@ -30,11 +30,10 @@ class ReportPage extends GridBagPanel with WithConstraints {
   
   // the problem table
   val table = new JTable() {
-    /** Display a tooltip*/
     override def prepareRenderer(renderer: TableCellRenderer , row: Int, column: Int): java.awt.Component = { 
       val component = super.prepareRenderer(renderer, row, column) 
       component match {
-        case jc: javax.swing.JComponent => 
+        case jc: javax.swing.JComponent => /** Display a tooltip*/
           jc.setToolTipText(getValueAt(row, column).toString)
         case _ => ()
       }
