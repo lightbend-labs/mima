@@ -29,7 +29,18 @@ class ReportPage extends GridBagPanel with WithConstraints {
   withConstraints(insets = ins, gridx = 0, fill = Fill.Horizontal)(add(filter, _))
   
   // the problem table
-  val table = new JTable
+  val table = new JTable() {
+    /** Display a tooltip*/
+    override def prepareRenderer(renderer: TableCellRenderer , row: Int, column: Int): java.awt.Component = { 
+      val component = super.prepareRenderer(renderer, row, column) 
+      component match {
+        case jc: javax.swing.JComponent => 
+          jc.setToolTipText(getValueAt(row, column).toString)
+        case _ => ()
+      }
+      component
+    }
+  }
   
   withConstraints(gridx = 0, fill = Fill.Both, weighty = 1.0, weightx = 1.0, gridwidth = REMAINDER, insets = ins) {
     add(new ScrollPane(new Component { 
