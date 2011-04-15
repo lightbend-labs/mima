@@ -31,8 +31,14 @@ class Wizard extends BorderPanel {
 	/** Switch to the given wizard page number. */
 	def switchTo(page: Int) {
 		centerPane.swap(pages(page))
+		updateButtonsForPage(page)
 		revalidate()
 		repaint()
+	}
+	
+	def updateButtonsForPage(currentPage: Int) {
+	  backButton.visible = currentPage > 0
+	  nextButton.visible = currentPage < pages.size
 	}
 		
 	private val backButton = new Button("Back")
@@ -48,7 +54,6 @@ class Wizard extends BorderPanel {
 			_contents += pages(currentPage)
 			revalidate()
 		}
-
 	}
 	
 	def currentPage = _currentPage

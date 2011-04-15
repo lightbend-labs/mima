@@ -34,7 +34,7 @@ class ReportPage extends GridBagPanel with WithConstraints {
       val component = super.prepareRenderer(renderer, row, column) 
       component match {
         case jc: javax.swing.JComponent => /** Display a tooltip*/
-          jc.setToolTipText(getValueAt(row, column).toString)
+          jc.setToolTipText(getValueAt(row, column).toString.grouped(80).mkString("<html>", "<br>", "</html>"))
         case _ => ()
       }
       component
