@@ -7,33 +7,48 @@ import wizard.Wizard
 class MimaPanel extends MainFrame {
 
   title = "Scala Bytecode Migration Manager"
-  location = (300, 250)
-  preferredSize = (1000, 500)
+  preferredSize = (600, 400)
+  minimumSize = preferredSize
+  //resizable = false
+  location = centered
 
-  private val container = new BorderPanel {
+  def centered = {
+    import java.awt.Toolkit;
+    import java.awt.Dimension;
+    val tk = Toolkit.getDefaultToolkit();
+    val screenSize = tk.getScreenSize();
+    val screenHeight = screenSize.height;
+    val screenWidth = screenSize.width;
+    ((screenWidth - preferredSize.width) / 2,
+      (screenHeight - preferredSize.height) / 2);
+  }
+
+  private val mainContainer = new BorderPanel {
     border = EmptyBorder(10)
     add(ScalaInstall, BorderPanel.Position.West)
 
-    def replaceCenter(c: Component) = add(c, BorderPanel.Position.Center)
+    def setContent(c: Component): Unit = add(c, BorderPanel.Position.Center)
   }
 
-  contents = container
-  
-  
+  contents = mainContainer
+
+  mainContainer.setContent(WelcomeScreen)
+
+  /*
   lazy val reportPage = new ReportPage
 
   val wizard = new Wizard {
-    //pages += configurationPage
+    pages += configurationPage
     pages += reportPage
 
     switchTo(0)
   }
 
-  container.replaceCenter(wizard)
+  mainContainer.setContent(wizard)
   listenTo(wizard)
-  
-  
- /*
+  */
+
+  /*
   reactions += {
     case Next(`reportPage`) =>
       println("Reporting now")
