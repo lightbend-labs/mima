@@ -142,9 +142,9 @@ class MiMaLib {
 object MiMaLib extends MiMaLib {
   def main(args: Array[String]) = {
 //    setupClassfileParser()
-    val resargs = setup("scala ssol.tools.misco.MiMaLib <old-dir> <new-dir>", args, _.length == 2, "-fixall")
-    val oldRoot = root(resargs(0))
-    val newRoot = root(resargs(1))      
+    setup("scala ssol.tools.misco.MiMaLib <old-dir> <new-dir>", args, _.length == 2, "-fixall")
+    val oldRoot = root(Config.oldLib.get.getAbsolutePath)
+    val newRoot = root(Config.newLib.get.getAbsolutePath)      
     info("[old version in: "+oldRoot+"]")
     info("[new version in: "+newRoot+"]")
     traversePackages(oldRoot.targetPackage, newRoot.targetPackage)

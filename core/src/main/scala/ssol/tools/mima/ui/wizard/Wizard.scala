@@ -5,6 +5,7 @@ import scala.collection.mutable
 import scala.swing._
 import scala.swing.event._
 import Swing._
+import ssol.tools.mima.ui.Exit
 
 /** A simple wizard interface. It consist of a center panel that displays
  *  the current page. There are three buttons for navigating forward, back
@@ -24,29 +25,37 @@ import Swing._
  */
 class Wizard extends BorderPanel {
 	import BorderPanel._
-
+	
+	private type WizardPanel = Component with WizardAction
+	
 	/** The current wizard pages. */
-	val pages: mutable.Buffer[Panel] = new mutable.ArrayBuffer[Panel]
+	protected val pages: mutable.Buffer[WizardPanel] = new mutable.ArrayBuffer[WizardPanel]
 
 	/** Switch to the given wizard page number. */
-	def switchTo(page: Int) {
+	private def switchTo(page: Int) {
 		centerPane.swap(pages(page))
-		updateButtonsForPage(page)
+		updateButtons()
 		revalidate()
 		repaint()
 	}
 	
-	def updateButtonsForPage(currentPage: Int) {
-	  backButton.visible = currentPage > 0
-	  nextButton.visible = currentPage < pages.size
+	def start() = {
+	  assert (pages.size > 0 , "Empty Wizard cannot be started")
+	  switchTo(0)
+	}
+	
+	private def updateButtons() {
+	  val currentPanel = pages(currentPage)
+	  nextButton.enabled = currentPanel.isNextEnabled
+	  backButton.enabled = currentPanel.isBackEnabled
 	}
 		
 	private val backButton = new Button("Back")
 	private val nextButton = new Button("Next")
-	private val exitButton = new Button("Exit")
+	private val exitButton = new Button("Quit")
 	
 	// the main area where wizard pages are displayed
-	val centerPane = new BorderPanel {
+	private val centerPane = new BorderPanel {
 		preferredSize = (500, 300)
 		
 		def swap(page: Component) {
@@ -56,7 +65,7 @@ class Wizard extends BorderPanel {
 		}
 	}
 	
-	def currentPage = _currentPage
+	private def currentPage = _currentPage
 	private var _currentPage = 0
 	
 	// the bottom section where the navigation buttons are
@@ -77,23 +86,22 @@ class Wizard extends BorderPanel {
 	
 	reactions += {
 		case ButtonClicked(`nextButton`) =>
-		  if (currentPage + 1 < pages.length) _currentPage += 1
+		  assert (currentPage + 1 < pages.length)
+		  val panel = pages(currentPage)
+		  panel.onNext() 
+		  _currentPage += 1
 		  switchTo(currentPage)
-		  publish(PageChanged(pages(currentPage - 1), pages(currentPage)))
-      publish(Next(pages(currentPage)))
 
 		case ButtonClicked(`backButton`) =>
-		  if (currentPage > 0) _currentPage -= 1
-		  switchTo(currentPage)
-		  publish(PageChanged(pages(currentPage + 1), pages(currentPage)))
-		  publish(Back(pages(currentPage)))
+		  val panel = pages(currentPage)
+		  panel.onBack() 
+		  if(_currentPage > 0) {
+			  _currentPage -= 1
+			  switchTo(currentPage)
+		  }
 		  
 		case ButtonClicked(`exitButton`) =>
-		  publish(Cancelled())
+		  publish(Exit)
 	}
 }
 
-case class Back(newPage: Panel) extends Event
-case class Next(newPage: Panel) extends Event
-case class PageChanged(oldPage: Panel, newPage: Panel) extends Event
-case class Cancelled() extends Event

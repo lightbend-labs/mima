@@ -27,26 +27,20 @@ class ClassPathEditor(init: List[String]) extends GridBagPanel with WithConstrai
     contents = listView
   }
   
-  /** Load the icon from the given path, or EmptyIcon if not found. */
-  private def getIcon(path: String): javax.swing.Icon = {
-    val resource = Swing.Icon(getClass.getResource(path))
-    if (resource eq null) EmptyIcon else resource
-  }
-  
   val addEntry = new Button("Add Entry") {
-    icon = getIcon("/images/add.png")
+    icon = images.Icons.add
     horizontalAlignment = Alignment.Left
   }
   val removeEntry = new Button("Remove Entry") {
-    icon = getIcon("/images/remove.gif")
+    icon = images.Icons.remove
     horizontalAlignment = Alignment.Left
   }
   val moveUp      = new Button("Up") {
-    icon = getIcon("/images/up.gif")
+    icon = images.Icons.up
     horizontalAlignment = Alignment.Left
   }
   val moveDown    = new Button("Down") {
-    icon = getIcon("/images/down.gif")
+    icon = images.Icons.down
     horizontalAlignment = Alignment.Left
   }
   
