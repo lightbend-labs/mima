@@ -15,9 +15,7 @@ import javax.swing.filechooser.FileNameExtensionFilter
  * 
  */
 class FilePicker(_label: String, owner: Component, private var _selectedFile: Option[File]) extends FlowPanel(FlowPanel.Alignment.Left)() {
-	
-//	border = Swing.EtchedBorder
-
+  
 	def selectedFile: Option[File] = _selectedFile
   private val fileNameLabel = new Label("Please select a file")
 
@@ -26,9 +24,7 @@ class FilePicker(_label: String, owner: Component, private var _selectedFile: Op
 	  fileNameLabel.text = selectedFile.get.getName
 	}
 	
-	private val label = new Label(_label) {
-		preferredSize = (100, 20)
-	}
+	private val label = new Label(_label)
 	
 	contents += (label, Swing.HStrut(10))
 	contents += Button("Choose") {
@@ -37,9 +33,12 @@ class FilePicker(_label: String, owner: Component, private var _selectedFile: Op
 			case Approve => 
 				fileNameLabel.text = d.selectedFile.getName
 				_selectedFile = Some(d.selectedFile)
+				publish(FileSelected(this, d.selectedFile))
 			case _ =>
 		}
 	}
 	
 	contents += (fileNameLabel, Swing.HGlue)
 }
+
+case class FileSelected(source: FilePicker, file: File) extends event.Event

@@ -6,7 +6,7 @@ import wizard.Wizard
 import BorderPanel._
 import event._
 
-object WelcomeScreen extends GridBagPanel with WithConstraints {
+object WelcomeScreen extends GridBagPanel {
   case object MigrateBinaries extends Event
   case object CheckIncompatibilities extends Event 
   
@@ -21,7 +21,8 @@ object WelcomeScreen extends GridBagPanel with WithConstraints {
   }
 
   private def createButton(text: String, image: javax.swing.Icon) = {
-    val button = new Button(text) {
+    val formattedText = text.stripMargin
+    val button = new Button(formattedText) {
       icon = image
       opaque = false
       verticalAlignment = Alignment.Top
@@ -31,10 +32,14 @@ object WelcomeScreen extends GridBagPanel with WithConstraints {
     button
   }
 
-  private val migrateButtonText = "Migrate your classes to use a newer library"
+  private val migrateButtonText = """<html>Migrate binaries.<br><br>
+  																	|Use this option if you desire to use a library that is not <br>
+  																	|bytecode compatible with your project's dependencies.</html>"""
   private val migrate = createButton(migrateButtonText, images.Icons.migration)
 
-  private val checkIncompatibilitiesText = "Check for incompatibilities between two version of your library".grouped(60).mkString("<html>", "<br>", "</html>")
+  private val checkIncompatibilitiesText = """<html>Check for incompatibilities.<br><br>
+  																						|Use this option if you want to know whether two versions<br>
+  																						|of your library are bytecode compatible.</html>"""
   private val checkIncompatibilities = createButton(checkIncompatibilitiesText, images.Icons.check)
 
   private val exit = new Button("Quit")

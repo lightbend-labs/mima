@@ -16,14 +16,19 @@ import java.awt.GridBagConstraints._
 /**
  * Mima problem report page.
  */
-class ReportPage extends GridBagPanel with WithConstraints with wizard.WizardAction {
+class ReportPage extends GridBagPanel with WithConstraints with wizard.WizardPanel {
   import Config.info
 
-  val defaultFilterText = "<enter filter>"
-
-  val ins = new Insets(10, 10, 10, 10)
+  private val errorLabel = new Label("Unfortunately there are some unfixable incompatibilities.") {
+    foreground = java.awt.Color.RED
+  }
+  
+  val defaultFilterText = "<enter filter>"  
+    
+  val ins = new Insets(0, 10, 10, 10)
+  
   withConstraints(insets = ins, gridx = 0, gridy = RELATIVE, anchor = Anchor.West) {
-    add(new Label("Comparing the two jar files"), _)
+    add(errorLabel, _)
   }
   withConstraints(insets = ins, gridx = 0, fill = Fill.Both)(add(new Separator, _))
   val filter = new TextField(defaultFilterText)
@@ -55,6 +60,7 @@ class ReportPage extends GridBagPanel with WithConstraints with wizard.WizardAct
     info("old: " + oldDir + " new: " + newDir)
     val problems = mimalib.collectProblems(oldDir, newDir)
     val model = new ProblemsModel(problems)
+    errorLabel.visible = model.hasUnfixableProblems
     table.setModel(model)
     table.getColumnModel.getColumn(0).setPreferredWidth(70)
     table.getColumnModel.getColumn(1).setPreferredWidth(200)
@@ -78,12 +84,13 @@ class ReportPage extends GridBagPanel with WithConstraints with wizard.WizardAct
     case FocusGained(`filter`, _, _) if (filter.text == defaultFilterText) =>
       filter.text = ""
   }
+  
 
   private def escape(str: String): String = {
     str flatMap {
       case '$' => "\\$"
       case '+' => "\\+"
-      case c => c.toString
+      case c   => c.toString
     }
   }
 }
@@ -94,8 +101,8 @@ class ProblemsModel(problems: List[Problem]) extends AbstractTableModel {
   import scala.collection.JavaConversions._
   import java.util.Vector
 
-  //  dataVector = new Vector(problems.map(p => new Vector(List(p.status, getReferredMember(p), p.description, false))))
-
+  lazy val hasUnfixableProblems = problems.exists(_.status == Problem.Status.Unfixable)
+  
   override def getColumnName(n: Int) = columns(n)
 
   override def getColumnCount = columns.size
@@ -112,22 +119,17 @@ class ProblemsModel(problems: List[Problem]) extends AbstractTableModel {
 
   override def isCellEditable(i: Int, j: Int) = j == 3
 
-  //  override def getColumnClass(n: Int) = n match {
-  //    case 3 => classOf[Boolean]
-  //    case _ => classOf[String]
-  //  }
-
   private def getReferredMember(p: Problem): String = p match {
-    case MissingFieldProblem(oldfld) => oldfld.fullName
-    case MissingMethodProblem(oldmth) => oldmth.fullName
-    case MissingClassProblem(oldclz) => oldclz.toString
-    case MissingPackageProblem(oldpkg) => oldpkg.toString
-    case InaccessibleFieldProblem(newfld) => newfld.fullName
-    case InaccessibleMethodProblem(newmth) => newmth.fullName
-    case InaccessibleClassProblem(newcls) => newcls.toString
-    case IncompatibleFieldTypeProblem(oldfld, newfld) => oldfld.fullName
-    case IncompatibleMethTypeProblem(oldmth, newmth) => oldmth.fullName
+    case MissingFieldProblem(oldfld)                   => oldfld.fullName
+    case MissingMethodProblem(oldmth)                  => oldmth.fullName
+    case MissingClassProblem(oldclz)                   => oldclz.toString
+    case MissingPackageProblem(oldpkg)                 => oldpkg.toString
+    case InaccessibleFieldProblem(newfld)              => newfld.fullName
+    case InaccessibleMethodProblem(newmth)             => newmth.fullName
+    case InaccessibleClassProblem(newcls)              => newcls.toString
+    case IncompatibleFieldTypeProblem(oldfld, newfld)  => oldfld.fullName
+    case IncompatibleMethTypeProblem(oldmth, newmth)   => oldmth.fullName
     case IncompatibleResultTypeProblem(oldmth, newmth) => oldmth.fullName
-    case AbstractMethodProblem(oldmeth) => oldmeth.fullName
+    case AbstractMethodProblem(oldmeth)                => oldmeth.fullName
   }
 }

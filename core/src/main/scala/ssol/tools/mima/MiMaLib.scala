@@ -129,14 +129,14 @@ class MiMaLib {
   }
   
   /** Return a list of fixes for the given problems. */
-  /*private def fixesFor(problems: List[IncompatibleResultTypeProblem]): List[Fix] = {
+  private def fixesFor(problems: List[IncompatibleResultTypeProblem]): List[Fix] = {
   	val fixes = new ListBuffer[Fix]
   	
     for ((clazz, problems) <- problems groupBy (_.newmeth.owner)) {
       fixes += new Fix(clazz).lib(problems map (p => (p.newmeth, p.oldmeth.sig)))
     } 
   	fixes.toList
-  }*/
+  }
 }
 
 object MiMaLib extends MiMaLib {

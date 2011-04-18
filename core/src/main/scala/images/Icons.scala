@@ -25,7 +25,7 @@ object Icons {
   lazy val check = getIcon("check.jpg")
   
   lazy val add = getIcon("add.png")
-  lazy val remove = getIcon("remove.gif")
-  lazy val up = getIcon("up.gif")
-  lazy val down = getIcon("down.gif")
+  lazy val remove = getIcon("remove.png")
+  lazy val up = getIcon("up.png")
+  lazy val down = getIcon("down.png")
 }
