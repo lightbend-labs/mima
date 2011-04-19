@@ -8,11 +8,11 @@ import util._
 
 import ssol.tools.mima.Config
 
-class JavaClassPathEditor extends GridBagPanel with wizard.WizardPanel with WithConstraints {
+class JavaClassPathEditor extends GridBagPanel with WithConstraints {
 
   import ClassPath._
 
-  protected val cpEditor = new ClassPathEditor(split(Config.baseClassPath.asClasspathString)) {
+  val cpEditor = new ClassPathEditor(split(Config.baseClassPath.asClasspathString)) {
     classpathLabel.text = "Java classpath:"
   }
   

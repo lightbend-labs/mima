@@ -6,18 +6,7 @@ import scala.swing._
 import scala.swing.event._
 import Swing._
 import ssol.tools.mima.ui.Exit
-
-object Wizard {
-  object WizardExit extends Enumeration {
-    type WizardExit = Value
-    val Begin, End = Value
-  }
-  case class WizardExit(exit: WizardExit.WizardExit) extends event.Event
-
-  object LoadingPanel extends FlowPanel {
-    contents += new Label("Loading...")
-  }
-}
+import scala.actors.Actor
 
 /** A simple wizard interface. It consist of a center panel that displays
  *  the current page. There are three buttons for navigating forward, back
@@ -36,12 +25,17 @@ object Wizard {
  *  @see PageChanged, Cancelled
  */
 class Wizard extends BorderPanel {
+  private object LoadingPanel extends FlowPanel {
+    contents += new Label("Loading...")
+  }
+  
   import BorderPanel._
-  import Wizard._
 
   /** The current wizard pages. */
-  protected val pages: mutable.Buffer[WizardPanel] = new mutable.ArrayBuffer[WizardPanel]
-
+  private val pages: mutable.Buffer[WizardPage] = new mutable.ArrayBuffer[WizardPage]
+  
+  def +=(page: WizardPage) = pages += page
+  
   /** Switch to the given wizard page number. */
   private def switchTo(page: Int) {
     val panel = pages(page)
@@ -61,30 +55,31 @@ class Wizard extends BorderPanel {
 
   // the main area where wizard pages are displayed
   private val centerPane = new BorderPanel {
-    private def showLoadingPanel() {
-      _contents.clear()
-      _contents += LoadingPanel
-      buttonsPanel.visible = false
-      revalidate()
-    }
-
-    def swap(page: WizardPanel) {
+    def swap(page: WizardPage) {
       showLoadingPanel()
-      
-      val worker = new SwingWorker {
+
+      val worker = new Actor {
         def act() = {
           page.beforeDisplay()
-          showPage(page)
+          // use swing-event-thread for ui modifications
+          Swing onEDT {
+            setContent(page.content)
+            buttonsPanel.visible = true
+          }
         }
       }
 
       worker.start()
     }
 
-    private def showPage(page: WizardPanel) {
+    private def showLoadingPanel() {
+      buttonsPanel.visible = false
+      setContent(LoadingPanel)
+    }
+
+    private def setContent(content: Component) {
       _contents.clear()
-      _contents += page
-      buttonsPanel.visible = true
+      _contents += content
       revalidate()
     }
   }
@@ -110,17 +105,23 @@ class Wizard extends BorderPanel {
 
   reactions += {
     case ButtonClicked(`nextButton`) =>
+      val page = pages(currentPage)
+      page.onNext()
+      
       if (currentPage + 1 < pages.length) {
         _currentPage += 1
         switchTo(currentPage)
-      } else publish(WizardExit(WizardExit.End))
+      }
 
     case ButtonClicked(`backButton`) =>
+      val page = pages(currentPage)
+      page.onBack()
+      
       val panel = pages(currentPage)
       if (_currentPage > 0) {
         _currentPage -= 1
         switchTo(currentPage)
-      } else publish(WizardExit(WizardExit.Begin))
+      }
 
     case ButtonClicked(`exitButton`) =>
       publish(Exit)

@@ -2,7 +2,7 @@ package ssol.tools.mima.ui
 
 import scala.swing._
 import Swing._
-import wizard.Wizard
+import wizard._
 import ssol.tools.mima.{ Config, MiMaLib }
 import event.Event
 
@@ -54,39 +54,36 @@ class MimaFrame extends MainFrame {
     case WelcomeScreen.MigrateBinaries => ()
 
     case WelcomeScreen.CheckIncompatibilities =>
-      val wizard = new Wizard {
+      val wizard = new Wizard
 
-        pages += new JavaClassPathEditor {
-          override def onNext(): Unit = {
-            Config.baseClassPath = new JavaClassPath(DefaultJavaContext.classesInPath(cpEditor.classPathString), DefaultJavaContext)
-          }
+      wizard += new WizardPage {
+        override lazy val content = new JavaClassPathEditor
+        override def onNext() {
+          Config.baseClassPath = new JavaClassPath(DefaultJavaContext.classesInPath(content.cpEditor.classPathString), DefaultJavaContext)
         }
-
-        pages += new ConfigurationPanel(Config.oldLib, Config.newLib) {
-          override def onNext(): Unit = {
-            Config.baseClassPath = new JavaClassPath(DefaultJavaContext.classesInPath(cpEditor.classPathString + io.File.pathSeparator + Config.baseClassPath.asClasspathString), DefaultJavaContext)
-          }
-        }
-
-        pages += new ReportPage {
-          override def beforeDisplay() {
-            val mima = new MiMaLib
-            doCompare(Config.oldLib.get.getAbsolutePath, Config.newLib.get.getAbsolutePath, mima)
-          }
-        }
-      }
-
-      listenTo(wizard)
-      import Wizard._
-      reactions += {
-        case WizardExit(WizardExit.Begin) =>
+        override def onBack() {
           mainContainer.setContent(WelcomeScreen)
           deafTo(wizard)
-          
-        case WizardExit(WizardExit.End) =>
-          deafTo(wizard)
+        }
       }
 
+      wizard += new WizardPage {
+        override lazy val content = new ConfigurationPanel(Config.oldLib, Config.newLib)
+        override def onNext(): Unit = {
+          Config.baseClassPath = new JavaClassPath(DefaultJavaContext.classesInPath(content.cpEditor.classPathString + io.File.pathSeparator + Config.baseClassPath.asClasspathString), DefaultJavaContext)
+        }
+      }
+
+      wizard += new WizardPage {
+        override lazy val content = new ReportPage
+        override def beforeDisplay() {
+          val mima = new MiMaLib
+          content.doCompare(Config.oldLib.get.getAbsolutePath, Config.newLib.get.getAbsolutePath, mima)
+        }
+      }
+
+
+      listenTo(wizard)
       mainContainer.setContent(wizard)
       wizard.start()
   }

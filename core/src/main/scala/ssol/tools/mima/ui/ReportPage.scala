@@ -16,7 +16,7 @@ import java.awt.GridBagConstraints._
 /**
  * Mima problem report page.
  */
-class ReportPage extends GridBagPanel with WithConstraints with wizard.WizardPanel {
+class ReportPage extends GridBagPanel with WithConstraints {
 
   class ReportTable extends JTable with javax.swing.event.TableModelListener {
     override def prepareRenderer(renderer: TableCellRenderer, row: Int, column: Int): java.awt.Component = {
