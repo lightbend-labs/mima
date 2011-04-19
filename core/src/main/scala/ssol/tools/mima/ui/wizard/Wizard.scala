@@ -28,14 +28,15 @@ class Wizard extends BorderPanel {
   private object LoadingPanel extends FlowPanel {
     contents += new Label("Loading...")
   }
-  
+
   import BorderPanel._
 
   /** The current wizard pages. */
   private val pages: mutable.Buffer[WizardPage] = new mutable.ArrayBuffer[WizardPage]
-  
+
   def +=(page: WizardPage) = pages += page
-  
+  def ++=(pages: Seq[WizardPage]) = pages.foreach(+=(_))
+
   /** Switch to the given wizard page number. */
   private def switchTo(page: Int) {
     val panel = pages(page)
@@ -65,11 +66,14 @@ class Wizard extends BorderPanel {
           Swing onEDT {
             setContent(page.content)
             buttonsPanel.visible = true
+            nextButton.enabled = page.isForwardNavigationEnabled
+            backButton.enabled = page.isBackwardNavigationEnabled
           }
         }
       }
 
       worker.start()
+      entering(page)
     }
 
     private def showLoadingPanel() {
@@ -106,17 +110,19 @@ class Wizard extends BorderPanel {
   reactions += {
     case ButtonClicked(`nextButton`) =>
       val page = pages(currentPage)
-      page.onNext()
-      
-      if (currentPage + 1 < pages.length) {
-        _currentPage += 1
-        switchTo(currentPage)
+      if(page.canNavigateForward()) {
+        page.onNext()
+        leaving(page)
+        if (currentPage + 1 < pages.length) {
+          _currentPage += 1
+          switchTo(currentPage)
+        }
       }
 
     case ButtonClicked(`backButton`) =>
       val page = pages(currentPage)
       page.onBack()
-      
+      leaving(page)
       val panel = pages(currentPage)
       if (_currentPage > 0) {
         _currentPage -= 1
@@ -125,6 +131,19 @@ class Wizard extends BorderPanel {
 
     case ButtonClicked(`exitButton`) =>
       publish(Exit)
+  }
+
+  private def entering(page: WizardPage) = {
+    listenTo(page)
+    reactions += {
+      case WizardPage.CanGoNext => nextButton.enabled = page.isForwardNavigationEnabled
+    }
+    page.onEntering()
+  }
+  
+  private def leaving(page: WizardPage) = {
+    deafTo(page)
+    page.onLeaving()
   }
 }
 

@@ -124,12 +124,11 @@ class MiMaLib {
     info("[new version in: "+newRoot+"]")
     info("classpath: " + Config.baseClassPath.asClasspathString)
     traversePackages(oldRoot.targetPackage, newRoot.targetPackage)
-    val fixes = new ListBuffer[Fix]
     problems.toList
   }
   
   /** Return a list of fixes for the given problems. */
-  private def fixesFor(problems: List[IncompatibleResultTypeProblem]): List[Fix] = {
+  def fixesFor(problems: List[IncompatibleResultTypeProblem]): List[Fix] = {
   	val fixes = new ListBuffer[Fix]
   	
     for ((clazz, problems) <- problems groupBy (_.newmeth.owner)) {
@@ -141,7 +140,6 @@ class MiMaLib {
 
 object MiMaLib extends MiMaLib {
   def main(args: Array[String]) = {
-//    setupClassfileParser()
     setup("scala ssol.tools.misco.MiMaLib <old-dir> <new-dir>", args, _.length == 2, "-fixall")
     val oldRoot = root(Config.oldLib.get.getAbsolutePath)
     val newRoot = root(Config.newLib.get.getAbsolutePath)      

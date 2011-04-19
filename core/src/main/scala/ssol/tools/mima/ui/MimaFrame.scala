@@ -3,7 +3,7 @@ package ssol.tools.mima.ui
 import scala.swing._
 import Swing._
 import wizard._
-import ssol.tools.mima.{ Config, MiMaLib }
+import ssol.tools.mima.{Config, MiMaLib}
 import event.Event
 
 import scala.tools.nsc.{ util, io }
@@ -46,46 +46,97 @@ class MimaFrame extends MainFrame {
 
   contents = mainContainer
 
-  mainContainer.setContent(WelcomeScreen)
+  mainContainer.setContent(WelcomePage)
 
-  listenTo(WelcomeScreen)
+  listenTo(WelcomePage)
 
   reactions += {
-    case WelcomeScreen.MigrateBinaries => ()
+    case WelcomePage.MigrateBinaries => ()
 
-    case WelcomeScreen.CheckIncompatibilities =>
+    case WelcomePage.CheckIncompatibilities =>
       val wizard = new Wizard
-
+      listenTo(wizard)
+      
       wizard += new WizardPage {
         override lazy val content = new JavaClassPathEditor
+        
         override def onNext() {
           Config.baseClassPath = new JavaClassPath(DefaultJavaContext.classesInPath(content.cpEditor.classPathString), DefaultJavaContext)
         }
+        
         override def onBack() {
-          mainContainer.setContent(WelcomeScreen)
           deafTo(wizard)
+          mainContainer.setContent(WelcomePage)
         }
       }
 
       wizard += new WizardPage {
         override lazy val content = new ConfigurationPanel(Config.oldLib, Config.newLib)
+
+        isForwardNavigationEnabled = content.areFilesSelected
+        
+        override def onEntering() = {
+          listenTo(content)
+          reactions += {
+            case FilesSelected(oldLib, newLib) =>
+              Config.oldLib = Some(oldLib)
+              Config.newLib = Some(newLib)
+              isForwardNavigationEnabled = true
+          }
+        }
+        
+        override def onLeaving() = {
+          deafTo(content)
+        }
+        
         override def onNext(): Unit = {
           Config.baseClassPath = new JavaClassPath(DefaultJavaContext.classesInPath(content.cpEditor.classPathString + io.File.pathSeparator + Config.baseClassPath.asClasspathString), DefaultJavaContext)
         }
       }
 
-      wizard += new WizardPage {
+      val reportPage = new WizardPage {
+        import java.io.File
+        var mima: MiMaLib = null
         override lazy val content = new ReportPage
+        
+        var outputFile: Option[File] = None
+        
         override def beforeDisplay() {
-          val mima = new MiMaLib
+          mima = new MiMaLib
           content.doCompare(Config.oldLib.get.getAbsolutePath, Config.newLib.get.getAbsolutePath, mima)
         }
+        
+        override def canNavigateForward() = () => {
+          val fileName = Config.oldLib.get.getName.stripSuffix(".jar") + "-migrated.jar"
+          val file = new File(Config.oldLib.get.getParent, fileName)
+        	
+          val fileChooser = new FileChooser()
+          fileChooser.selectedFile = file
+        	
+          fileChooser.showSaveDialog(content) match {
+        	  case FileChooser.Result.Approve => 
+        	    outputFile = Some(fileChooser.selectedFile)
+        	    true
+        	    
+        	  case _ => false
+        	}
+        }
+        
+        override def onNext() {
+          //mima.fixesFor
+        }
       }
-
-
-      listenTo(wizard)
-      mainContainer.setContent(wizard)
+      
+      wizard += reportPage
+      
+      wizard += new WizardPage {
+        override val isBackwardNavigationEnabled = false
+        override lazy val content = new ThanksPage
+      }
+      
       wizard.start()
+      
+      mainContainer.setContent(wizard)
   }
 
   reactions += {

@@ -6,7 +6,7 @@ import wizard.Wizard
 import BorderPanel._
 import event._
 
-object WelcomeScreen extends GridBagPanel {
+object WelcomePage extends GridBagPanel {
   case object MigrateBinaries extends Event
   case object CheckIncompatibilities extends Event 
   
@@ -33,13 +33,13 @@ object WelcomeScreen extends GridBagPanel {
   }
 
   private val migrateButtonText = """<html>Migrate binaries.<br><br>
-  																	|Use this option if you desire to use a library that is not <br>
-  																	|bytecode compatible with your project's dependencies.</html>"""
+  																	|Use this option if you desire to migrate libraries that are <br>
+  																	|not bytecode compatible with your project.</html>"""
   private val migrate = createButton(migrateButtonText, images.Icons.migration)
 
   private val checkIncompatibilitiesText = """<html>Check for incompatibilities.<br><br>
-  																						|Use this option if you want to know whether two versions<br>
-  																						|of your library are bytecode compatible.</html>"""
+  																						|Use this option if you want to ensure that two versions<br>
+  																						|of a library are source compatible.</html>"""
   private val checkIncompatibilities = createButton(checkIncompatibilitiesText, images.Icons.check)
 
   private val exit = new Button("Quit")

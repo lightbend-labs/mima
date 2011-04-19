@@ -15,8 +15,21 @@ import GridBagPanel._
  */
 class ConfigurationPanel(f1: Option[File] = None, f2: Option[File] = None) extends GridBagPanel {
   
-  val oldFilePicker = new FilePicker("Old: ", this, f1)
-  val newFilePicker = new FilePicker("New:", this, f2)
+  private val oldFilePicker = new FilePicker("Old: ", this, f1)
+  private val newFilePicker = new FilePicker("New:", this, f2)
+  
+  def oldFile = oldFilePicker.selectedFile.get
+  def newFile = newFilePicker.selectedFile.get
+  
+  def areFilesSelected = oldFilePicker.selectedFile.isDefined && newFilePicker.selectedFile.isDefined
+  
+  listenTo(oldFilePicker)
+  listenTo(newFilePicker)
+  
+  reactions += {
+    case FileSelected(_,_) =>
+      if(areFilesSelected) publish(FilesSelected(oldFile, newFile))
+  }
   
   val c = new Constraints
   c.fill = Fill.Horizontal
@@ -32,8 +45,8 @@ class ConfigurationPanel(f1: Option[File] = None, f2: Option[File] = None) exten
   import java.awt.Color
   val files = new GridPanel(3, 1) {
     border = LineBorder(Color.lightGray)
-    contents += new Label("Select the two libraries' versions you would like to compare:") {
-      border = EmptyBorder(0, 3, 0, 0)
+    contents += new Label("Select the two libraries' versions you would like to compare") {
+      border = EmptyBorder(0, 5, 0, 0)
       horizontalAlignment = Alignment.Left
     }
     contents += oldFilePicker
@@ -49,7 +62,6 @@ class ConfigurationPanel(f1: Option[File] = None, f2: Option[File] = None) exten
     classpathLabel.text = "Library classpath:"
   }
   layout(cpEditor) = c
-
-  def oldFile = oldFilePicker.selectedFile.get
-  def newFile = newFilePicker.selectedFile.get
 }
+
+case class FilesSelected(oldLib: File, newLib: File) extends event.Event  

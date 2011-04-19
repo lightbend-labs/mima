@@ -15,6 +15,9 @@ object Config {
   def oldLib: Option[File] = _oldLib
   def newLib: Option[File] = _newLib
   
+  def oldLib_=(oldLib: Option[File]) = _oldLib = oldLib
+  def newLib_=(newLib: Option[File]) = _newLib = newLib
+  
   
   def info(str: String) = if (verbose) println(str)
   def debugLog(str: String) = if (debug) println(str)
