@@ -10,7 +10,6 @@ abstract class WizardPage extends Publisher {
   /** The displayed content of this page*/
   val content: Component
 
-  
   val isBackwardNavigationEnabled = true
   
   private var _isForwardNavigationEnabled = true

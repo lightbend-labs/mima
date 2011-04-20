@@ -1,19 +1,36 @@
 package ssol.tools.mima
 
 import java.io._
-import scala.tools.nsc.io.{AbstractFile, PlainFile}
+import scala.tools.nsc.io.{ AbstractFile, PlainFile }
 import scala.tools.nsc.symtab.classfile.ClassfileConstants._
 import scala.collection.mutable.ArrayBuffer
 import Config._
 
-class Fix(val clazz: ClassInfo) {
+object Fix {
+  import scala.collection.mutable.ListBuffer
 
-  final val Icat = 0
-  final val Lcat = 1
-  final val Fcat = 2
-  final val Dcat = 3
-  final val Acat = 4
-  final val Vcat = 5
+  /** Return a list of fixes for the given problems. */
+  def libFixesFor(problems: List[IncompatibleResultTypeProblem]): List[Fix] = {
+    val fixes = new ListBuffer[Fix]
+
+    
+    for ((clazz, problems) <- problems groupBy (_.newmeth.owner)) {
+      fixes += new LibFix(clazz)(problems map (p => (p.newmeth, p.oldmeth.sig))).fix()
+    }
+
+    fixes.toList
+  }
+
+}
+
+abstract class Fix(val clazz: ClassInfo) {
+  
+  private final val Icat = 0
+  private final val Lcat = 1
+  private final val Fcat = 2
+  private final val Dcat = 3
+  private final val Acat = 4
+  private final val Vcat = 5
 
   /** Returns the file with the given suffix for the given class. */
   private def outputFile(clazz: ClassInfo): File = {
@@ -31,43 +48,26 @@ class Fix(val clazz: ClassInfo) {
   }
 
   val (outputStream: OutputStream, outputFileName: String) =
-    if (Config.inPlace) 
+    if (Config.inPlace)
       (new ByteArrayOutputStream(), clazz.file.toString)
-      else {
-        val outFile = outputFile(clazz)
-        (new BufferedOutputStream(new FileOutputStream(outFile)), outFile.toString)
-      }
+    else {
+      val outFile = outputFile(clazz)
+      (new BufferedOutputStream(new FileOutputStream(outFile)), outFile.toString)
+    }
 
-  val trans = new ClassfileTransformer(new DataOutputStream(outputStream), clazz.owner.definitions)
+  protected val trans = new ClassfileTransformer(new DataOutputStream(outputStream), clazz.owner.definitions)
   import trans._
 
   parse(clazz)
 
-  def client(): this.type = {
-    val (fieldFixups, accessorFixups) = {
-      for (setter <- clazz.unimplementedSetters) yield {
-        val getter = setter.getter
-        val fld = addField(getter)
-        (fld, List(addGetter(getter, fld), addSetter(setter, fld)))
-      }
-    }.unzip
-    val methodFixups = clazz.unimplementedMethods map addForwarder
-    writeClassFile(fieldFixups, accessorFixups.flatten ++ methodFixups, fixInits)
-    this
-  }
+  def fix(): this.type
 
-  def lib(gaps: List[(MemberInfo, String)]): this.type = {
-    val methodFixups = for ((target, sig) <- gaps) yield addBridge(target, sig)
-    writeClassFile(List(), methodFixups, List())
-    this
-  }
-
-  def categories(sig: String): (List[Int], Int) = {
+  private def categories(sig: String): (List[Int], Int) = {
     def category(tag: Char) = tag match {
       case BYTE_TAG | CHAR_TAG | SHORT_TAG | INT_TAG | BOOL_TAG => Icat
-      case LONG_TAG => Lcat 
-      case FLOAT_TAG => Fcat 
-      case DOUBLE_TAG => Dcat 
+      case LONG_TAG => Lcat
+      case FLOAT_TAG => Fcat
+      case DOUBLE_TAG => Dcat
       case VOID_TAG => Vcat
       case 'L' => Acat
       case '[' => Acat
@@ -75,7 +75,7 @@ class Fix(val clazz: ClassInfo) {
     def loop(i: Int): (List[Int], Int) = sig(i) match {
       case ')' =>
         (List(), category(sig(i + 1)))
-      case 'L' => 
+      case 'L' =>
         val (cs, c) = loop(sig.indexOf(';', i + 1) + 1)
         (Acat :: cs, c)
       case '[' =>
@@ -88,22 +88,22 @@ class Fix(val clazz: ClassInfo) {
     loop(1)
   }
 
-  def numWords(cat: Int) = cat match {
+  private def numWords(cat: Int) = cat match {
     case Icat | Fcat | Acat => 1
-    case Lcat | Dcat => 2
-    case Vcat => 0
+    case Lcat | Dcat        => 2
+    case Vcat               => 0
   }
 
-  def load(category: Int, offset: Int) = 
+  private def load(category: Int, offset: Int) =
     if (offset <= 3) (iload_0 + category * 4 + offset).toByte
     else if (offset <= 255) Code(iload.toByte, offset.toByte)
     else Code(wide.toByte, iload.toByte, offset.toChar)
 
-  def loadArgs(argcats: List[Int], firstOffset: Int): Code =
+  private def loadArgs(argcats: List[Int], firstOffset: Int): Code =
     Code((for ((ac, idx) <- argcats.zipWithIndex) yield load(ac, idx + firstOffset)): _*)
 
-  def addField(getter: MemberInfo): Field = {
-    debugLog("add field for "+getter+":"+getter.sig)
+  protected def addField(getter: MemberInfo): Field = {
+    debugLog("add field for " + getter + ":" + getter.sig)
     new Field(
       namestr = getter.name,
       flags = getter.flags & JAVA_ACC_FINAL,
@@ -111,20 +111,20 @@ class Fix(val clazz: ClassInfo) {
     )
   }
 
-  def addGetter(missing: MemberInfo, fld: Field): Method = {
+  protected def addGetter(missing: MemberInfo, fld: Field): Method = {
     val (List(), rescat) = categories(missing.sig)
-    debugLog("add getter for "+missing+":"+missing.sig+": "+rescat)
+    debugLog("add getter for " + missing + ":" + missing.sig + ": " + rescat)
     val targetRef = new FieldRef(clazz, fld.namestr, fld.sigstr)
     val code = Code(
       aload_0.toByte,
       getfield.toByte, pool.index(targetRef).toChar,
       (ireturn + rescat).toByte)
     new Method(missing, numWords(rescat), 1, code)
-  } 
+  }
 
-  def addSetter(missing: MemberInfo, fld: Field): Method = {
+  protected def addSetter(missing: MemberInfo, fld: Field): Method = {
     val (List(argcat), Vcat) = categories(missing.sig)
-    debugLog("add setter for "+missing+":"+missing.sig+": "+argcat)
+    debugLog("add setter for " + missing + ":" + missing.sig + ": " + argcat)
     val targetRef = new FieldRef(clazz, fld.namestr, fld.sigstr)
     val code = Code(
       aload_0.toByte,
@@ -134,10 +134,10 @@ class Fix(val clazz: ClassInfo) {
     val stackSize = 1 + numWords(argcat)
     new Method(missing, stackSize, stackSize, code)
   }
-  
-  def addForwarder(missing: MemberInfo): Method = {
+
+  protected def addForwarder(missing: MemberInfo): Method = {
     val (argcats, rescat) = categories(missing.sig)
-    debugLog("add forwarder method for "+missing+":"+missing.sig+": "+argcats+"/"+rescat)
+    debugLog("add forwarder method for " + missing + ":" + missing.sig + ": " + argcats + "/" + rescat)
     val targetMeth = missing.staticImpl.get
     val targetRef = new MethodRef(targetMeth)
     val code = Code(
@@ -149,34 +149,34 @@ class Fix(val clazz: ClassInfo) {
     new Method(missing, stackSize, stackSize, code)
   }
 
-  def addBridge(existing: MemberInfo, sig: String): Method = {
+  protected def addBridge(existing: MemberInfo, sig: String): Method = {
     val (argcats, rescat) = categories(sig)
-    debugLog("add bridge method for "+existing+":"+sig)
+    debugLog("add bridge method for " + existing + ":" + sig)
     val bridge = new MemberInfo(clazz, existing.name, existing.flags & ~JAVA_ACC_ABSTRACT, sig)
     val targetRef = new MethodRef(existing)
-    val (code, stackSize) = 
+    val (code, stackSize) =
       if ((existing.flags & JAVA_ACC_STATIC) != 0)
         (Code(
           loadArgs(argcats, 0),
           invokestatic.toByte, pool.index(targetRef).toChar,
           (ireturn + rescat).toByte),
-         (argcats map numWords).sum + numWords(rescat))
-      else 
+          (argcats map numWords).sum + numWords(rescat))
+      else
         (Code(
           aload_0.toByte,
           loadArgs(argcats, 1),
           invokevirtual.toByte, pool.index(targetRef).toChar,
           (ireturn + rescat).toByte),
-         (argcats map numWords).sum + (1 max numWords(rescat)))
+          (argcats map numWords).sum + (1 max numWords(rescat)))
     new Method(bridge, stackSize, stackSize, code)
-  }          
+  }
 
-  def target(instr: Instruction) = instr.target(trans)
+  private def target(instr: Instruction) = instr.target(trans)
 
   /** A list of all instructions where this constructor calls another
    *  constructor of a class or implementation class
    */
-  def constrCalls(constructor: MemberInfo): List[Instruction] = {
+  private def constrCalls(constructor: MemberInfo): List[Instruction] = {
     val (start, end) = constructor.codeOpt.get
     val instrs = new InstructionIterator(start, end)
 
@@ -188,42 +188,43 @@ class Fix(val clazz: ClassInfo) {
         else if (i.instr == invokespecial && target(i).name == "<init>") {
           outstandingNews -= 1
           if (outstandingNews < 0) return i
-        } 
+        }
       }
-      throw new AssertionError("no super or self call found in "+constructor+" of "+clazz)
+      throw new AssertionError("no super or self call found in " + constructor + " of " + clazz)
     }
-    
+
     def implClassInits(): List[Instruction] =
       instrs.filter { i =>
         i.instr == invokestatic &&
-        target(i).clazz.isImplClass &&
-        target(i).name == implClassInitName }.toList
+          target(i).clazz.isImplClass &&
+          target(i).name == implClassInitName
+      }.toList
 
     superSelfCall :: implClassInits
   }
 
-  def isPrimary(supercalls: List[Instruction]) = 
+  private def isPrimary(supercalls: List[Instruction]) =
     target(supercalls.head).clazz == clazz.superClass
 
-  def implClassInitName = "$init$"
+  private def implClassInitName = "$init$"
 
-  def typeSigOfClass(clazz: ClassInfo): String = "L"+external(clazz.fullName)+";"
+  private def typeSigOfClass(clazz: ClassInfo): String = "L" + external(clazz.fullName) + ";"
 
-  def initPatch(iface: ClassInfo, offset: Int): Patch = {
-    debugLog("add init call to "+iface.implClass)
+  private def initPatch(iface: ClassInfo, offset: Int): Patch = {
+    debugLog("add init call to " + iface.implClass)
     val targetRef = new MethodRef(
-      iface.implClass, implClassInitName, "("+typeSigOfClass(iface)+")V")
+      iface.implClass, implClassInitName, "(" + typeSigOfClass(iface) + ")V")
     val code = Code(
       aload_0.toByte,
       invokestatic.toByte, pool.index(targetRef).toChar)
-    new Patch(offset, code.write) 
+    new Patch(offset, code.write)
   }
 
-  def fixInits(inherited: List[ClassInfo], initCalls: List[Instruction]): List[Patch] = {
+  private def fixInits(inherited: List[ClassInfo], initCalls: List[Instruction]): List[Patch] = {
     def corresponds(t: ClassInfo, call: Instruction) =
       t.implClass == target(call).clazz
     (inherited, initCalls) match {
-      case (List(), _) => 
+      case (List(), _) =>
         List()
       case (t :: ts, prev :: call :: calls) if corresponds(t, call) =>
         fixInits(ts, call :: calls)
@@ -233,20 +234,42 @@ class Fix(val clazz: ClassInfo) {
     }
   }
 
-  def fixInits(constr: MemberInfo): List[Patch] = {
+  private def fixInits(constr: MemberInfo): List[Patch] = {
     val ccalls = constrCalls(constr)
     if (isPrimary(ccalls)) {
       val newInits = fixInits(clazz.directTraits, ccalls)
       val incr = newInits.length * 4
       if (incr > 0) {
         val start = constr.codeOpt.get._1
-        incIntCountPatch(start - 12, incr) ::  // attr_length
-        incIntCountPatch(start - 4, incr) ::   // code_length
-        newInits
+        incIntCountPatch(start - 12, incr) :: // attr_length
+          incIntCountPatch(start - 4, incr) :: // code_length
+          newInits
       } else List()
     } else List()
   }
 
-  def fixInits: List[Patch] = clazz.constructors flatMap fixInits
+  protected def fixInits: List[Patch] = clazz.constructors flatMap fixInits
 }
 
+class LibFix(clazz: ClassInfo)(gaps: List[(MemberInfo, String)]) extends Fix(clazz) {
+  override def fix(): this.type = {
+    val methodFixups = for ((target, sig) <- gaps) yield addBridge(target, sig)
+    trans.writeClassFile(List(), methodFixups, List())
+    this
+  }
+}
+
+class ClientFix(clazz: ClassInfo) extends Fix(clazz) {
+  override def fix(): this.type = {
+    val (fieldFixups, accessorFixups) = {
+      for (setter <- clazz.unimplementedSetters) yield {
+        val getter = setter.getter
+        val fld = addField(getter)
+        (fld, List(addGetter(getter, fld), addSetter(setter, fld)))
+      }
+    }.unzip
+    val methodFixups = clazz.unimplementedMethods map addForwarder
+    trans.writeClassFile(fieldFixups, accessorFixups.flatten ++ methodFixups, fixInits)
+    this
+  }
+}

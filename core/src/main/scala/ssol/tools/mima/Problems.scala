@@ -57,4 +57,3 @@ case class AbstractMethodProblem(newmeth: MemberInfo) extends
   Problem("abstract "+newmeth.methodString+" does not have a correspondent in old version",
           if (newmeth.owner.isTrait && newmeth.owner.implClass.hasStaticImpl(newmeth)) Problem.Status.Upgradable
           else Problem.Status.Unfixable)
-

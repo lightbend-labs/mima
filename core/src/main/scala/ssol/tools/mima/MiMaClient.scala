@@ -32,7 +32,7 @@ object MiMaClient {
       Config.info(clazz.directTraits map (_.description) toString)
       Config.info(clazz.superClass.allTraits map (_.description) toString)
       Config.info(clazz.superClass.allTraits map (_.interfaces) toString)
-      fixes += new Fix(clazz).client()
+      fixes += new ClientFix(clazz).fix()
     }
   }
 

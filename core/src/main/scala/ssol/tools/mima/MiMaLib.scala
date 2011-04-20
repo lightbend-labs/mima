@@ -126,33 +126,4 @@ class MiMaLib {
     traversePackages(oldRoot.targetPackage, newRoot.targetPackage)
     problems.toList
   }
-  
-  /** Return a list of fixes for the given problems. */
-  def fixesFor(problems: List[IncompatibleResultTypeProblem]): List[Fix] = {
-  	val fixes = new ListBuffer[Fix]
-  	
-    for ((clazz, problems) <- problems groupBy (_.newmeth.owner)) {
-      fixes += new Fix(clazz).lib(problems map (p => (p.newmeth, p.oldmeth.sig)))
-    } 
-  	fixes.toList
-  }
-}
-
-object MiMaLib extends MiMaLib {
-  def main(args: Array[String]) = {
-    setup("scala ssol.tools.misco.MiMaLib <old-dir> <new-dir>", args, _.length == 2, "-fixall")
-    val oldRoot = root(Config.oldLib.get.getAbsolutePath)
-    val newRoot = root(Config.newLib.get.getAbsolutePath)      
-    info("[old version in: "+oldRoot+"]")
-    info("[new version in: "+newRoot+"]")
-    traversePackages(oldRoot.targetPackage, newRoot.targetPackage)
-    val fixes = new ListBuffer[Fix]
-    if (Config.fixall) {
-      val resultTypeProblems = problems.toList collect { case x: IncompatibleResultTypeProblem => x }
-      for ((clazz, problems) <- resultTypeProblems groupBy (_.newmeth.owner)) {
-        fixes += new Fix(clazz).lib(problems map (p => (p.newmeth, p.oldmeth.sig)))
-      } 
-      new Writer(fixes).writeOut()
-    }
-  }
 }
