@@ -12,26 +12,14 @@ import ClassPath._
 
 case object Exit extends Event
 
-class MimaFrame extends MainFrame {
-
+class MimaFrame extends MainFrame with CenterFrame {
+  
   object ScalaInstall extends ImagePanel(images.Icons.install)
-
-  title = "Scala Bytecode Migration Manager"
-  preferredSize = (600, 403)
+  
+  title = "Scala Migration Manager"
+  preferredSize = (800, 600)
   minimumSize = preferredSize
-  resizable = false
-  location = center
-
-  def center = {
-    import java.awt.Toolkit;
-    import java.awt.Dimension;
-    val tk = Toolkit.getDefaultToolkit();
-    val screenSize = tk.getScreenSize();
-    val screenHeight = screenSize.height;
-    val screenWidth = screenSize.width;
-    ((screenWidth - preferredSize.width) / 2,
-      (screenHeight - preferredSize.height) / 2);
-  }
+  resizable = true
 
   private val mainContainer = new BorderPanel {
     border = EmptyBorder(10)
@@ -54,9 +42,9 @@ class MimaFrame extends MainFrame {
   private var outFile: java.io.File = _
   
   reactions += {
-    case WelcomePage.MigrateBinaries => ()
+    case WelcomePage.MigrateProject => ()
 
-    case WelcomePage.CheckIncompatibilities =>
+    case WelcomePage.MigrateLibrary =>
       val wizard = new Wizard
       listenTo(wizard)
       

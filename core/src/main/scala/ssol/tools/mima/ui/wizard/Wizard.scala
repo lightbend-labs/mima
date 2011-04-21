@@ -50,10 +50,6 @@ class Wizard extends BorderPanel {
     switchTo(0)
   }
 
-  private val backButton = new Button("Back")
-  private val nextButton = new Button("Next")
-  private val exitButton = new Button("Quit")
-
   // the main area where wizard pages are displayed
   private val centerPane = new BorderPanel {
     def swap(page: WizardPage) {
@@ -66,8 +62,8 @@ class Wizard extends BorderPanel {
           Swing onEDT {
             setContent(page.content)
             buttonsPanel.visible = true
-            nextButton.enabled = page.isForwardNavigationEnabled
-            backButton.enabled = page.isBackwardNavigationEnabled
+            buttonsBox.nextButton.enabled = page.isForwardNavigationEnabled
+            buttonsBox.backButton.enabled = page.isBackwardNavigationEnabled
           }
         }
       }
@@ -91,11 +87,9 @@ class Wizard extends BorderPanel {
   private def currentPage = _currentPage
   private var _currentPage = 0
 
+  import ssol.tools.mima.ui.NavigationPanel
   // the bottom section where the navigation buttons are
-  private val buttonsBox = new BoxPanel(Orientation.Horizontal) {
-    contents += Swing.HGlue
-    contents += (backButton, nextButton, Swing.HStrut(20), exitButton)
-  }
+  private val buttonsBox = new NavigationPanel
 
   private val buttonsPanel = new BorderPanel {
     add(new Separator, Position.North)
@@ -105,42 +99,39 @@ class Wizard extends BorderPanel {
   add(centerPane, Position.Center)
   add(buttonsPanel, Position.South)
 
-  listenTo(backButton, nextButton, exitButton)
-
-  reactions += {
-    case ButtonClicked(`nextButton`) =>
-      val page = pages(currentPage)
-      if(page.canNavigateForward()) {
-        page.onNext()
-        leaving(page)
-        if (currentPage + 1 < pages.length) {
-          _currentPage += 1
-          switchTo(currentPage)
-        }
-      }
-
-    case ButtonClicked(`backButton`) =>
-      val page = pages(currentPage)
-      page.onBack()
+  buttonsBox.nextButton.action = Action("Next") {
+    val page = pages(currentPage)
+    if (page.canNavigateForward()) {
+      page.onNext()
       leaving(page)
-      val panel = pages(currentPage)
-      if (_currentPage > 0) {
-        _currentPage -= 1
+      if (currentPage + 1 < pages.length) {
+        _currentPage += 1
         switchTo(currentPage)
       }
-
-    case ButtonClicked(`exitButton`) =>
-      publish(Exit)
+    }
   }
+
+  buttonsBox.backButton.action = Action("Back") {
+    val page = pages(currentPage)
+    page.onBack()
+    leaving(page)
+    val panel = pages(currentPage)
+    if (_currentPage > 0) {
+      _currentPage -= 1
+      switchTo(currentPage)
+    }
+  }
+  
+  buttonsBox.exitButton.action = Action("Quit") { publish(Exit) }
 
   private def entering(page: WizardPage) = {
     listenTo(page)
     reactions += {
-      case WizardPage.CanGoNext => nextButton.enabled = page.isForwardNavigationEnabled
+      case WizardPage.CanGoNext => buttonsBox.nextButton.enabled = page.isForwardNavigationEnabled
     }
     page.onEntering()
   }
-  
+
   private def leaving(page: WizardPage) = {
     deafTo(page)
     page.onLeaving()

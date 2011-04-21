@@ -6,18 +6,17 @@ import wizard.Wizard
 import BorderPanel._
 import event._
 
-object WelcomePage extends GridBagPanel {
-  case object MigrateBinaries extends Event
-  case object CheckIncompatibilities extends Event 
-  
-  // create ui elements
-  
-  private val titleText = "Welcome to the Scala bytecode Migration Manager tool"
+object WelcomePage extends GridBagPanel with WithConstraints {
+  case object MigrateProject extends Event
+  case object MigrateLibrary extends Event
 
-  private val title = new TextArea(titleText) {
-    editable = false
+  private val titleText = "Welcome to the Scala Migration Manager"
+
+  private val title = new Label(titleText) {
     opaque = false
-    border = EmptyBorder(20, 12, 0, 0)
+    font = font.deriveFont(font.getSize2D * 2)
+    border = EmptyBorder(20, 0, 20, 0)
+    horizontalAlignment = Alignment.Center
   }
 
   private def createButton(text: String, image: javax.swing.Icon) = {
@@ -32,53 +31,41 @@ object WelcomePage extends GridBagPanel {
     button
   }
 
-  private val migrateButtonText = """<html>Migrate binaries.<br><br>
-  																	|Use this option if you desire to migrate libraries that are <br>
+  private val migrateButtonText = """<html>Migrate project.<br>
+  																	|Use this option if you desire to migrate libraries that are
   																	|not bytecode compatible with your project.</html>"""
   private val migrate = createButton(migrateButtonText, images.Icons.migration)
 
-  private val checkIncompatibilitiesText = """<html>Check for incompatibilities.<br><br>
-  																						|Use this option if you want to ensure that two versions<br>
+  private val checkIncompatibilitiesText = """<html>Migrate library.<br>
+  																						|Use this option if you want to migrate 
   																						|of a library are source compatible.</html>"""
   private val checkIncompatibilities = createButton(checkIncompatibilitiesText, images.Icons.check)
 
-  private val exit = new Button("Quit")
-  listenTo(exit)
-  
   reactions += {
-    case ButtonClicked(`migrate`) => publish(MigrateBinaries)
-    case ButtonClicked(`checkIncompatibilities`) => publish(CheckIncompatibilities)
-    case ButtonClicked(`exit`) => publish(Exit)
+    case ButtonClicked(`migrate`)                => publish(MigrateProject)
+    case ButtonClicked(`checkIncompatibilities`) => publish(MigrateLibrary)
   }
-  
+
   // position elements in GridBagPanel
-  
+
   import GridBagPanel._
   import java.awt.GridBagConstraints._
 
-  private val c = new Constraints
+  val ins = new Insets(0, 0, 50, 0)
 
-  c.fill = Fill.Horizontal // expands added elements to fill the horizontal space
-  c.gridx = 0 // grid position in cartesian coordinates (x,y)
-  c.gridy = 0
-  c.weightx = 1 // fill horizontal space when the container is resized
-  c.weighty = 0.1 // this puts some space between the title and the next element 
-  c.anchor = Anchor.North
-  layout(title) = c // apply constraints to title
+  withConstraints(gridy = 0, weightx = 1, fill = Fill.Horizontal, insets = ins, anchor = Anchor.South) {
+    add(title, _)
+  }
 
-  c.weighty = 0 // reset vertical space (following elements will keep fixed distance)
-  c.insets = new Insets(0, 8, 40, 0) // margin (top, left, bottom, right) 
-  c.gridy = 1 // position element in the second row (0,1)
+  withConstraints(gridy = 1, weightx = 1, fill = Fill.Horizontal, insets = ins) {
+    add(migrate, _)
+  }
 
-  layout(migrate) = c
-
-  c.gridy = 2 // position element in the third row (0,2)
-  layout(checkIncompatibilities) = c
+  withConstraints(gridy = 2, weightx = 1, fill = Fill.Horizontal, insets = ins) {
+    add(checkIncompatibilities, _)
+  }
   
-  c.fill = Fill.None
-  c.insets = new Insets(0,0,0,0)
-  c.gridy = 3
-  c.weightx = 0
-  c.anchor = Anchor.SouthEast
-  layout(exit) = c
+  withConstraints(gridy = 3, weighty = 1, fill = Fill.Both) {
+    add(Swing.VGlue, _)
+  }
 }
