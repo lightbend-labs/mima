@@ -6,9 +6,12 @@ import wizard.Wizard
 import BorderPanel._
 import event._
 
-object WelcomePage extends GridBagPanel with WithConstraints {
+object WelcomePage {
   case object MigrateProject extends Event
   case object MigrateLibrary extends Event
+}
+
+class WelcomePage extends GridBagPanel with WithConstraints {
 
   private val titleText = "Welcome to the Scala Migration Manager"
 
@@ -41,6 +44,7 @@ object WelcomePage extends GridBagPanel with WithConstraints {
   																						|of a library are source compatible.</html>"""
   private val checkIncompatibilities = createButton(checkIncompatibilitiesText, images.Icons.check)
 
+  import WelcomePage._
   reactions += {
     case ButtonClicked(`migrate`)                => publish(MigrateProject)
     case ButtonClicked(`checkIncompatibilities`) => publish(MigrateLibrary)

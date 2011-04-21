@@ -12,7 +12,7 @@ class JavaClassPathEditor extends GridBagPanel with WithConstraints {
 
   import ClassPath._
 
-  val cpEditor = new ClassPathEditor(split(Config.baseClassPath.asClasspathString)) {
+  protected val cpEditor = new ClassPathEditor(split(Config.baseClassPath.asClasspathString)) {
     classpathLabel.text = "Java classpath:"
   }
   

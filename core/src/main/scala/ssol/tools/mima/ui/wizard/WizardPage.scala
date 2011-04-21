@@ -1,12 +1,35 @@
 package ssol.tools.mima.ui.wizard
 
-import scala.swing._
+import scala.swing.Component
 
+/*
 object WizardPage {
   object CanGoNext extends event.Event
-}
+}*/
 
-abstract class WizardPage extends Publisher {
+trait WizardPage extends Component {
+  /** data model for the page */
+    val data = collection.mutable.Map.empty[String, Any]
+    
+    /** is called before the page is displayed. Long-running task should be 
+     * executed here (a loading panel is automatically displayed).*/
+    def onLoad() {}
+    
+    /** is called whenever the page was not visible on screen and becomes visible. 
+     * */
+    def onReveal() {}
+    
+    /** is called whenever the page was visible on screen and is being hidden. */
+    def onHide() {}
+    
+    /** is called before switching to the next page. */
+    def onNext() {}
+    
+    /** is called before switching to the previous page. */
+    def onBack() {}
+  
+  
+  /*
   /** The displayed content of this page*/
   val content: Component
 
@@ -44,4 +67,5 @@ abstract class WizardPage extends Publisher {
    *  Mind that it uses the swing event thread.
    */
   def onBack() = ()
+  */
 }

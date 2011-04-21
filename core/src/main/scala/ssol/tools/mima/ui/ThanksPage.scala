@@ -5,7 +5,7 @@ import event._
 
 class ThanksPage extends GridBagPanel {
 
-  val thanksLabel = new Label("Congratulations, your classes have been succesfully migrated")
+  val thanksLabel = new Label("Congratulations, your classes have been succesfully migrated.")
   
   // position elements in GridBagPanel
   

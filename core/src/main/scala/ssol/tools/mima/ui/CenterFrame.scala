@@ -15,6 +15,5 @@ trait CenterFrame { self: Frame =>
       (screenHeight - preferredSize.height) / 2);
   }
   
-  
-  location = center
+  def centerFrame = location = center
 }
