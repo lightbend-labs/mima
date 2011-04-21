@@ -36,7 +36,7 @@ class ReportPage extends GridBagPanel with WithConstraints {
           /** Display a tooltip*/
           if(isUnavailableFixCell(row, column))
             jc.setToolTipText("no fix exists for this issue")
-          else if(column != 3) // don't show tooltip on checkbox
+          else if(column != 3) // column == 3 --> don't show tooltip on checkbox
           	jc.setToolTipText(getValueAt(row, column).toString.grouped(80).mkString("<html>", "<br>", "</html>"))
         case _ => ()
       }
@@ -68,8 +68,11 @@ class ReportPage extends GridBagPanel with WithConstraints {
   
   private val defaultFilterText = "<enter filter>"
   private val filter = new TextField(defaultFilterText)
+  
   withConstraints(insets = ins, gridx = 0, gridy = 1, weightx = .5, fill = Fill.Both)(add(filter, _))
+  
   private val fixAll = new CheckBox()
+  
   fixAll.action = new Action("Fix all") {
     override def apply() {
       (0 until table.getRowCount).filter(table.isCellEditable(_, 3)).foreach(table.setValueAt(fixAll.selected, _, 3))
@@ -175,7 +178,6 @@ class ProblemsModel(problems: Array[Array[AnyRef]]) extends AbstractTableModel {
   
   override def setValueAt(value: AnyRef, row: Int, col: Int) = {
     problems(row)(col) = value
-    //println("("+row+","+col+") -> " +value)
     fireTableCellUpdated(row, col)
   }
 }

@@ -110,9 +110,8 @@ class MimaFrame extends MainFrame {
         }
         
         override def canNavigateForward() = () => { true
-          
-          val fileName = Config.oldLib.get.getName.stripSuffix(".jar") + "-migrated.jar"
-          val file = new File(Config.oldLib.get.getParent, fileName)
+          val fileName = Config.newLib.get.getName.stripSuffix(".jar") + "-migrated.jar"
+          val file = new File(Config.newLib.get.getParent, fileName)
         	
           val fileChooser = new FileChooser()
           fileChooser.selectedFile = file
@@ -144,7 +143,7 @@ class MimaFrame extends MainFrame {
         
         override def beforeDisplay() {
           val fixes = Fix.libFixesFor(MimaFrame.this.problems)
-          new ssol.tools.mima.Writer(fixes).writeOut()
+          new ssol.tools.mima.Writer(fixes, Map(Config.newLib.get -> outFile)).writeOut()
         }
         
       }

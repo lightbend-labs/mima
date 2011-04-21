@@ -32,7 +32,12 @@ class FilePicker(_label: String, owner: Component, private var _selectedFile: Op
 
 	if (selectedFile.isDefined) {
 	  Config.debugLog("starting with initial file: " + selectedFile.get.getAbsolutePath)
-	  fileNameLabel.text = selectedFile.get.getName
+	  FilePicker.lastSelectedFile = _selectedFile
+	  fileNameLabel.text = strippedFileName(selectedFile.get)
+	}
+	
+	private def strippedFileName(file: File): String = {
+	  if(file.getName.length > 40) "..."+file.getName.takeRight(35) else file.getName
 	}
 	
 	private val label = new Label(_label)
@@ -43,7 +48,7 @@ class FilePicker(_label: String, owner: Component, private var _selectedFile: Op
 		d.showOpenDialog(owner) match {
 			case Approve => 
 			  val fileName = d.selectedFile.getName
-			  fileNameLabel.text  = if(fileName.length > 40) "[...]"+d.selectedFile.getName.takeRight(35) else fileName
+			  fileNameLabel.text  = strippedFileName(d.selectedFile)
 				selectedFile = d.selectedFile
 				publish(FileSelected(this, d.selectedFile))
 			case _ =>
