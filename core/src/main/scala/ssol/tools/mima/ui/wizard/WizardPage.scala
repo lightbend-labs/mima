@@ -23,7 +23,7 @@ trait WizardPage extends Component {
    */
   protected[wizard] val model: WizardPage.Model
 
-  /** enables forward navigation. */
+  /** is forward navigation enabled. */
   def canNavigateForward = true
 
   /** is called before the page is displayed. Long-running task should be

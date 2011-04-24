@@ -55,11 +55,11 @@ class WelcomePage extends GridBagPanel with WithConstraints {
   import GridBagPanel._
   import java.awt.GridBagConstraints._
 
-  val ins = new Insets(0, 0, 50, 0)
-
-  withConstraints(gridy = 0, weightx = 1, fill = Fill.Horizontal, insets = ins, anchor = Anchor.South) {
+  withConstraints(gridy = 0, weightx = 1, fill = Fill.Horizontal, anchor = Anchor.South) {
     add(title, _)
   }
+
+  val ins = new Insets(50, 10, 50, 0)
 
   withConstraints(gridy = 1, weightx = 1, fill = Fill.Horizontal, insets = ins) {
     add(migrate, _)
