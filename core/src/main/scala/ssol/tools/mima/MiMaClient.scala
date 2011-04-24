@@ -60,6 +60,6 @@ object MiMaClient {
     Config.setup("scala ssol.mima.MiMaClient", args, _.isEmpty)
     // TODO: Check this is the right base classpath to give it
     traversePackage(Config.baseDefinitions.root)
-    new Writer(fixes).writeOut()
+    //new Writer(fixes).writeOut()
   }
 }

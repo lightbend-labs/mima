@@ -6,8 +6,10 @@ import java.io._
 import java.util.zip._
 import collection.mutable
 
-class Writer(fixes: Seq[Fix], mappings: Map[File,File] = Map.empty) {
 
+class Writer(fixes: Seq[Fix], config: WriterConfig) {
+
+  /** All class files that belongs in a zip for which a `Fix` exists */
   private def zippedClassFiles: Seq[AbstractFile] = fixes.map(_.clazz.file).filter(_.isInstanceOf[ZipArchive#FileEntry])
 
   /** get the zip container of the provided `entry` file */
@@ -32,9 +34,13 @@ class Writer(fixes: Seq[Fix], mappings: Map[File,File] = Map.empty) {
   }
 
   def writeOut() {
-    if (Config.inPlace && jarfiles.nonEmpty) {
-      println("[jars to fix: " + jarfiles.mkString(", ") + "]")
+    if (jarfiles.isEmpty)  {
+      println("Nothing to fix.")
+      return
     }
+    
+    println("[jars to fix: " + jarfiles.mkString(", ") + "]")
+      
     val jarPatches: Map[ZipArchive, JarCopy.Patches] = (jarfiles map (_ -> new JarCopy.Patches)).toMap
     for (fix <- fixes) {
       val data = fix.outputStream.asInstanceOf[ByteArrayOutputStream].toByteArray
@@ -42,7 +48,7 @@ class Writer(fixes: Seq[Fix], mappings: Map[File,File] = Map.empty) {
         case ze: ZipArchive#FileEntry =>
           jarPatches(archive(ze)) += ze.entry.getName -> data
         case pf: PlainFile =>
-          assert(false, "never here")
+          assert(false, "never here") //FIXME: Why is this needed in the first place?
           writeTo(pf.file) { f =>
             val os = new FileOutputStream(f)
             os.write(data)
@@ -54,9 +60,9 @@ class Writer(fixes: Seq[Fix], mappings: Map[File,File] = Map.empty) {
       val fis = new FileInputStream(jarfile.file)
       val zis = new ZipInputStream(new BufferedInputStream(fis))
       
-      val jarFile = mappings.getOrElse(jarfile.file, jarfile.file)
+      val targetJarFile = config.rename(jarfile.file)
       
-      writeTo(jarFile) { f =>
+      writeTo(targetJarFile) { f =>
         val fos = new FileOutputStream(f)
         val zos = new ZipOutputStream(new BufferedOutputStream(fos))
         JarCopy.patch(zis, zos, patches)

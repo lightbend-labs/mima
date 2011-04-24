@@ -19,28 +19,69 @@ import java.awt.event.{ MouseListener, ItemListener }
  */
 class ReportPage extends GridBagPanel with WithConstraints {
   import javax.swing.event._
+  import javax.swing._
+
+  /** Automatically check/uncheck the selected row when the user clicks the Space key. */
+  class CheckRow(table: JTable) extends java.awt.event.KeyAdapter {
+    override def keyPressed(e: java.awt.event.KeyEvent) {
+      if (e.getKeyCode != java.awt.event.KeyEvent.VK_SPACE) return
+
+      var index = table.getSelectedRow
+      if (index < 0) return
+      
+      
+      if(!table.isCellEditable(index, ProblemsModel.CheckBoxColumn)) return
+      
+      val checkboxValue = table.getValueAt(index, ProblemsModel.CheckBoxColumn).asInstanceOf[Boolean]
+      table.setValueAt(!checkboxValue, index, ProblemsModel.CheckBoxColumn)
+    }
+  }
+
+  /** Show problem description panel when the user selects a row. */
+  class RowSelection(table: JTable) extends ListSelectionListener {
+    override def valueChanged(e: ListSelectionEvent) {
+      var index = table.getSelectedRow
+
+      if (e.getValueIsAdjusting) return // skip
+
+      if (index >= 0) { 
+        val modelRow = table.convertRowIndexToModel(index)
+        problemPanel.problem_=(table.getModel.getValueAt(modelRow, ProblemsModel.ProblemDataColumn).asInstanceOf[Problem])
+      }
+    	  
+      problemPanel.visible = index >= 0
+    }
+  }
+
   protected class ReportTable extends JTable with TableModelListener {
+    /** Special renderer for unfixable issues, checkbox is rendered as "-" */
     object UnavailableFixCellRenderer extends TableCellRenderer {
       private val label = new Label("-")
-      
-      override def getTableCellRendererComponent(table: JTable , value: AnyRef, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int): java.awt.Component 	= {
-        return label.peer  
-      } 
+
+      override def getTableCellRendererComponent(table: JTable, value: AnyRef, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int): java.awt.Component = {
+        label.peer
+      }
     }
-    
+
+    // it makes sense to allow only single selection
+    setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+
+    //overriden to set tooltip
     override def prepareRenderer(renderer: TableCellRenderer, row: Int, column: Int): java.awt.Component = {
       val component = super.prepareRenderer(renderer, row, column)
       
       component match {
         case jc: javax.swing.JComponent =>
           /** Display a tooltip*/
-          if(isUnavailableFixCell(row, column))
+          if (isUnavailableFixCell(row, column))
             jc.setToolTipText("no fix exists for this issue")
-          else if(column != 3) // column == 3 --> don't show tooltip on checkbox
-          	jc.setToolTipText(getValueAt(row, column).toString.grouped(80).mkString("<html>", "<br>", "</html>"))
+          else if (column == ProblemsModel.CheckBoxColumn)
+        	jc.setToolTipText(if(table.getValueAt(row, column).asInstanceOf[Boolean]) "checked" else "unchecked")
+          else
+            jc.setToolTipText(table.getValueAt(row, column).toString.grouped(80).mkString("<html>", "<br>", "</html>"))
         case _ => ()
       }
-      
+
       component
     }
 
@@ -50,40 +91,48 @@ class ReportPage extends GridBagPanel with WithConstraints {
       else
         super.getCellRenderer(row, column)
     }
-    
-    private def isUnavailableFixCell(row: Int, column: Int): Boolean = 
-      getModel.getValueAt(row, column).isInstanceOf[Boolean] && !getModel.isCellEditable(row, column)
-    
-  }
 
-  private val errorLabel = new Label("Unfortunately there are some unfixable incompatibilities") {
-    foreground = java.awt.Color.RED
+    private def isUnavailableFixCell(row: Int, column: Int): Boolean = {
+      getValueAt(row, column).isInstanceOf[Boolean] && !isCellEditable(row, column)
+    }
+
   }
 
   private val ins = new Insets(0, 10, 10, 10)
 
-  withConstraints(insets = ins, gridwidth = 2, gridx = REMAINDER, gridy = REMAINDER, fill = Fill.Horizontal) {
-    add(errorLabel, _)
-  }
-  
   private val defaultFilterText = "<enter filter>"
   private val filter = new TextField(defaultFilterText)
-  
-  withConstraints(insets = ins, gridx = 0, gridy = 1, weightx = .5, fill = Fill.Both)(add(filter, _))
-  
-  private val fixAll = new CheckBox()
-  
-  fixAll.action = new Action("Fix all") {
-    override def apply() {
-      (0 until table.getRowCount).filter(table.isCellEditable(_, 3)).foreach(table.setValueAt(fixAll.selected, _, 3))
-    }
+
+  withConstraints(insets = ins, gridx = 0, gridy = 0, weightx = .4, fill = Fill.Both)(add(filter, _))
+
+  private val fixAll = new CheckBox
+
+  fixAll.action = scala.swing.Action("Fix all") {
+    (0 until table.getRowCount).filter(table.isCellEditable(_, ProblemsModel.CheckBoxColumn)).foreach(table.setValueAt(fixAll.selected, _, ProblemsModel.CheckBoxColumn))
   }
-  withConstraints(insets = ins, gridx=1, gridy = 1, weightx = .5)(add(fixAll, _))
+  withConstraints(insets = ins, gridx = 1, gridy = 0)(add(fixAll, _))
+
+  private val errorLabel = new Label("Unfortunately there are unfixable incompatibilities") {
+    foreground = java.awt.Color.RED
+  }
+  withConstraints(insets = new Insets(4, 10, 10, 10), gridx = 2, gridy = 0, anchor = Anchor.North) {
+    add(errorLabel, _)
+  }
 
   // the problem table
   private val table = new ReportTable
+  val selectionListener = new RowSelection(table)
+  table.getSelectionModel.addListSelectionListener(selectionListener)
+  table.addKeyListener(new CheckRow(table))
 
-  withConstraints(gridx = 0, fill = Fill.Both, weighty = 1.0, weightx = 1.0, gridwidth = REMAINDER, insets = ins) {
+  // when the table loose its focus hide the problem description panel
+  table.addFocusListener(new java.awt.event.FocusAdapter {
+    override def focusLost(e: java.awt.event.FocusEvent) {
+      table.getSelectionModel.clearSelection()
+    }
+  })
+
+  withConstraints(gridx = 0, fill = Fill.Both, weighty = 0.6, weightx = 1.0, gridwidth = REMAINDER, insets = ins) {
     add(new ScrollPane(new Component {
       override lazy val peer = table
     }), _)
@@ -91,34 +140,36 @@ class ReportPage extends GridBagPanel with WithConstraints {
 
   private var sorter: TableRowSorter[AbstractTableModel] = _
 
-  def model: ProblemsModel = table.getModel.asInstanceOf[ProblemsModel]
+  def setTableModel(_model: ProblemsModel) = {
+    errorLabel.visible = _model.hasUnfixableProblems
 
-  def model_=(model: ProblemsModel) = {
-    errorLabel.visible = model.hasUnfixableProblems
-    
-    table.setModel(model)
+    table.setModel(_model)
     table.getColumnModel.getColumn(0).setPreferredWidth(50)
     table.getColumnModel.getColumn(1).setPreferredWidth(100)
-    table.getColumnModel.getColumn(2).setPreferredWidth(100)
-    table.getColumnModel.getColumn(3).setPreferredWidth(40)
+    table.getColumnModel.getColumn(2).setPreferredWidth(150)
+    table.getColumnModel.getColumn(ProblemsModel.CheckBoxColumn).setPreferredWidth(40)
 
-    sorter = new TableRowSorter(model)
+    sorter = new TableRowSorter(_model)
     table.setRowSorter(sorter)
   }
 
   // filtering
   listenTo(filter)
-
+  
   reactions += {
-    case ValueChanged(`filter`) =>
+    case ValueChanged(`filter`)=>
       try {
-        val rf: RowFilter[AbstractTableModel, Integer] = RowFilter.regexFilter(escape(filter.text), 1, 2)
+        val rf: RowFilter[AbstractTableModel, Integer] = if (filter.text != defaultFilterText)  RowFilter.regexFilter(escape(filter.text), 1, 2) else RowFilter.regexFilter("*")
         sorter.setRowFilter(rf)
       } catch {
         case _ => () // swallow any illegal regular expressions
       }
     case FocusGained(`filter`, _, _) if (filter.text == defaultFilterText) =>
       filter.text = ""
+        
+    case FocusLost(`filter`, _, _) if (filter.text.trim.isEmpty) =>
+      filter.text = defaultFilterText
+        
   }
 
   private def escape(str: String): String = {
@@ -128,16 +179,83 @@ class ReportPage extends GridBagPanel with WithConstraints {
       case c   => c.toString
     }
   }
+
+  private val problemPanel = new GridBagPanel with WithConstraints {
+    private val backgroundColor = new Color(247, 255, 199) // light-yellow
+    visible = false
+    background = backgroundColor
+    border = LineBorder(Color.lightGray, 1)
+
+    private var _problem: Problem = _
+    def problem_=(problem: Problem) = {
+      status.text = problem.status.toString
+      member.text = ProblemsModel.getReferredMember(problem)
+      description.text = problem.description
+    }
+
+    val statusLabel = new Label("Status:")
+    val status = new Label
+    val memberLabel = new Label("Member:")
+    val member = new Label
+
+    val descriptionLabel = new Label("Description:")
+    var description = new TextArea {
+      editable = false
+      background = backgroundColor
+      lineWrap = true
+      charWrap = true
+    }
+
+    val ins = new Insets(5, 5, 5, 5)
+
+    withConstraints(gridx = 0, gridy = 0, insets = ins) {
+      add(statusLabel, _)
+    }
+
+    withConstraints(gridx = 1, gridy = 0, weightx = 1, insets = ins) {
+      add(status, _)
+    }
+
+    withConstraints(gridx = 0, gridy = 1, insets = ins) {
+      add(memberLabel, _)
+    }
+
+    withConstraints(gridx = 1, gridy = 1, weightx = 1, insets = ins) {
+      add(member, _)
+    }
+
+    withConstraints(gridx = 0, gridy = 2, insets = ins) {
+      add(descriptionLabel, _)
+    }
+
+    withConstraints(gridx = 1, gridy = 2, weightx = 1, weighty = 1, fill = Fill.Both, insets = ins) {
+      add(new ScrollPane(new Component {
+        override lazy val peer = description.peer
+      }) {
+        horizontalScrollBarPolicy = ScrollPane.BarPolicy.AsNeeded
+        border = EmptyBorder(0)
+      }, _)
+    }
+
+  }
+
+  withConstraints(gridx = 0, fill = Fill.Both, weighty = 0.4, weightx = 1.0, gridwidth = REMAINDER, anchor = Anchor.SouthWest, insets = ins) {
+    add(problemPanel, _)
+  }
+
 }
 
 object ProblemsModel {
+  val CheckBoxColumn = 3
+  val ProblemDataColumn = 4
+
   def apply(problems: List[Problem]) =
     new ProblemsModel(problems.toArray.map(toArray(_)))
 
   private def toArray(problem: Problem): Array[AnyRef] =
     Array(problem.status, getReferredMember(problem), problem.description, false.asInstanceOf[AnyRef], problem)
 
-  private def getReferredMember(p: Problem): String = p match {
+  def getReferredMember(p: Problem): String = p match {
     case MissingFieldProblem(oldfld)                   => oldfld.fullName
     case MissingMethodProblem(oldmth)                  => oldmth.fullName
     case MissingClassProblem(oldclz)                   => oldclz.toString
@@ -154,7 +272,7 @@ object ProblemsModel {
 
 class ProblemsModel(problems: Array[Array[AnyRef]]) extends AbstractTableModel {
   private val columns = Array("Status", "Member", "Description", "Fix?")
-  private val columnsType = Array(classOf[String], classOf[String], classOf[String], classOf[java.lang.Boolean])
+  private val columnsType = Array(classOf[Problem.Status.Value], classOf[String], classOf[String], classOf[java.lang.Boolean])
 
   import scala.collection.JavaConversions._
   import java.util.Vector
@@ -170,13 +288,16 @@ class ProblemsModel(problems: Array[Array[AnyRef]]) extends AbstractTableModel {
   override def getValueAt(x: Int, y: Int): AnyRef = problems(x)(y)
 
   override def isCellEditable(i: Int, j: Int) =
-    j == 3 && isFixableProblem(problems(i))
-  
+    j == ProblemsModel.CheckBoxColumn && isFixableProblem(problems(i))
+
   override def getColumnClass(col: Int) = columnsType(col)
 
-  def selectedProblems: Traversable[Problem] = problems.filter(_(3).asInstanceOf[Boolean]).map(_(4).asInstanceOf[Problem])
-  
-  override def setValueAt(value: AnyRef, row: Int, col: Int) = {
+  def selectedProblems: Traversable[Problem] =
+    problems.filter(_(ProblemsModel.CheckBoxColumn).asInstanceOf[Boolean]).map(_(ProblemsModel.ProblemDataColumn).asInstanceOf[Problem])
+
+  override def setValueAt(value: AnyRef, row: Int, col: Int): Unit = {
+    assert (isCellEditable(row, col))
+
     problems(row)(col) = value
     fireTableCellUpdated(row, col)
   }

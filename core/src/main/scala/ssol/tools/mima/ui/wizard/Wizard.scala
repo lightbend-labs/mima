@@ -39,36 +39,68 @@ class Wizard extends BorderPanel {
 
   /** Switch to the given wizard page number. */
   private def switchTo(page: Int) {
-    val panel = pages(page)
-    centerPane.swap(panel)
+    _currentPage = page
+
+    val content = pages(_currentPage)
+
+    centerPane.swap(content)
+    updateNavigationButtons()
+
+    // explicitly redraw the container
     revalidate()
     repaint()
   }
 
+  private def updateNavigationButtons() {
+    navigation.next.enabled = pages(_currentPage).canNavigateForward
+    navigation.next.visible = currentIsNotLastPage
+    navigation.back.visible = currentIsNotFirstPage
+  }
+
+  private def currentIsNotLastPage: Boolean =
+    _currentPage < pages.length - 1
+
+  private def currentIsNotFirstPage: Boolean =
+    _currentPage > 0
+
+  private var started = false
+
   def start() = {
+    assert(!started, "Wizard cannot be started twice")
     assert(pages.size > 0, "Empty Wizard cannot be started")
+
+    started = true
     switchTo(0)
   }
 
-  def next() {
+  private def next() {
+    checkStarted
+    assert(currentPage + 1 < pages.length)
+
     val page = pages(currentPage)
+    val nextPage = pages(currentPage + 1)
     page.onNext()
     notifyHide(page)
-    if (currentPage + 1 < pages.length) {
-      _currentPage += 1
-      switchTo(currentPage)
-    }
+    nextPage.model ++= page.model
+
+    switchTo(currentPage + 1)
   }
 
-  def back() {
+  private def back() {
+    checkStarted
+    assert(currentPage - 1 >= 0)
+
     val page = pages(currentPage)
+    val previousPage = pages(currentPage - 1)
     page.onBack()
     notifyHide(page)
-    val panel = pages(currentPage)
-    if (_currentPage > 0) {
-      _currentPage -= 1
-      switchTo(currentPage)
-    }
+    page.model.clear
+
+    switchTo(currentPage - 1)
+  }
+
+  private def checkStarted {
+    assert(started, "Wizard was not started.")
   }
 
   // the main area where wizard pages are displayed
@@ -76,21 +108,20 @@ class Wizard extends BorderPanel {
     def swap(page: WizardPage) {
       showLoadingPanel()
 
-      val worker = new Actor {
+      worker(page.onLoad()) {
+        hideLoadingPanel()
+        setContent(page)
+        notifyReveal(page)
+      }.start()
+    }
+
+    private def worker(task: => Unit)(onEDT: => Unit): Actor = {
+      new Actor {
         def act() = {
-          page.onLoad()
-          // use swing-event-thread for ui modifications
-          Swing onEDT {
-            hideLoadingPanel()
-            setContent(page)
-            //buttonsBox.nextButton.enabled = page.isForwardNavigationEnabled
-            //buttonsBox.backButton.enabled = page.isBackwardNavigationEnabled
-          }
+          task
+          Swing onEDT { onEDT }
         }
       }
-
-      worker.start()
-      notifyReveal(page)
     }
 
     private def showLoadingPanel() {
@@ -114,28 +145,34 @@ class Wizard extends BorderPanel {
 
   import ssol.tools.mima.ui.NavigationPanel
   // the bottom section where the navigation buttons are
-  private val buttonsBox = new NavigationPanel
+  private val navigation = new NavigationPanel
 
   private val buttonsPanel = new BorderPanel {
     add(new Separator, Position.North)
-    add(buttonsBox, Position.South)
+    add(navigation, Position.South)
   }
 
   add(centerPane, Position.Center)
   add(buttonsPanel, Position.South)
 
-  buttonsBox.nextButton.action = Action("Next") { next() }
+  navigation.next.action = Action("Next") { next() }
 
-  buttonsBox.backButton.action = Action("Back") { back() }
+  navigation.back.action = Action("Back") { back() }
 
-  buttonsBox.exitButton.action = Action("Quit") { publish(Exit) }
+  navigation.exit.action = Action("Quit") { publish(Exit) }
 
   private def notifyReveal(page: WizardPage) = {
+    listenTo(page)
     page.onReveal()
   }
 
   private def notifyHide(page: WizardPage) = {
+    deafTo(page)
     page.onHide()
+  }
+
+  reactions += {
+    case WizardPage.CanGoNext => updateNavigationButtons
   }
 }
 

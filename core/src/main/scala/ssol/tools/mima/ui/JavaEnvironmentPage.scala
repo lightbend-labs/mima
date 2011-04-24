@@ -8,12 +8,12 @@ import util._
 
 import ssol.tools.mima.Config
 
-class JavaClassPathEditor extends GridBagPanel with WithConstraints {
+class JavaEnvironmentPage extends GridBagPanel with WithConstraints {
 
   import ClassPath._
 
   protected val cpEditor = new ClassPathEditor(split(Config.baseClassPath.asClasspathString)) {
-    classpathLabel.text = "Java classpath:"
+    classpathLabel.text = "Make sure that the right Java environment is selected"
   }
   
   import GridBagPanel._

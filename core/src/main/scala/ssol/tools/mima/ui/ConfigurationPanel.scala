@@ -13,7 +13,7 @@ import GridBagPanel._
  * A Panel used to configure MiMa. It allows jar file selection
  *  and setting up the classpath.
  */
-class ConfigurationPanel(f1: Option[File] = None, f2: Option[File] = None) extends GridBagPanel {
+class ConfigurationPanel(f1: Option[File] = None, f2: Option[File] = None) extends GridBagPanel with WithConstraints {
   
   private val oldFilePicker = new FilePicker("Old: ", this, f1)
   private val newFilePicker = new FilePicker("New:", this, f2)
@@ -21,7 +21,7 @@ class ConfigurationPanel(f1: Option[File] = None, f2: Option[File] = None) exten
   def oldFile = oldFilePicker.selectedFile.get
   def newFile = newFilePicker.selectedFile.get
   
-  def areFilesSelected = oldFilePicker.selectedFile.isDefined && newFilePicker.selectedFile.isDefined
+  def areFilesSelected: Boolean = oldFilePicker.selectedFile.isDefined && newFilePicker.selectedFile.isDefined
   
   listenTo(oldFilePicker)
   listenTo(newFilePicker)
@@ -31,17 +31,8 @@ class ConfigurationPanel(f1: Option[File] = None, f2: Option[File] = None) exten
       if(areFilesSelected) publish(FilesSelected(oldFile, newFile))
   }
   
-  val c = new Constraints
-  c.fill = Fill.Horizontal
-
-  c.gridx = 0
-  c.gridy = 0
-  c.anchor = Anchor.PageEnd
-  c.weightx = 1.0
-  c.fill = Fill.Both
-
-  c.insets = new Insets(0, 10, 10, 10)
-
+  val ins = new Insets(0, 10, 10, 10)
+  
   import java.awt.Color
   val files = new GridPanel(3, 1) {
     border = LineBorder(Color.lightGray)
@@ -52,16 +43,19 @@ class ConfigurationPanel(f1: Option[File] = None, f2: Option[File] = None) exten
     contents += oldFilePicker
     contents += newFilePicker
   }
-  layout(files) = c
-
-  c.gridy = 1
-  c.fill = Fill.Both
-  c.weighty = 1.0
-
+  
+  
+  withConstraints(gridx = 0, gridy = 0, weightx = 1, fill = Fill.Both, anchor = Anchor.PageEnd, insets = ins) {
+    add(files, _)
+  }
+  
   val cpEditor = new ClassPathEditor(Nil) {
     classpathLabel.text = "Library classpath:"
   }
-  layout(cpEditor) = c
+  
+  withConstraints(gridx = 0, gridy = 1, weightx = 1, weighty = 1, fill = Fill.Both, anchor = Anchor.PageEnd, insets = ins) {
+    add(cpEditor, _)
+  }
 }
 
 case class FilesSelected(oldLib: File, newLib: File) extends event.Event  

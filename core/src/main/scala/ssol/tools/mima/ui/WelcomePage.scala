@@ -13,7 +13,7 @@ object WelcomePage {
 
 class WelcomePage extends GridBagPanel with WithConstraints {
 
-  private val titleText = "Welcome to the Scala Migration Manager"
+  private val titleText = "Welcome to Scala Migration Manager"
 
   private val title = new Label(titleText) {
     opaque = false
@@ -35,13 +35,13 @@ class WelcomePage extends GridBagPanel with WithConstraints {
   }
 
   private val migrateButtonText = """<html>Migrate project.<br>
-  																	|Use this option if you desire to migrate libraries that are
-  																	|not bytecode compatible with your project.</html>"""
+  								    |Use this option if you desire to migrate libraries that are
+  									|not bytecode compatible with your project.</html>"""
   private val migrate = createButton(migrateButtonText, images.Icons.migration)
 
   private val checkIncompatibilitiesText = """<html>Migrate library.<br>
-  																						|Use this option if you want to migrate 
-  																						|of a library are source compatible.</html>"""
+  											 |Use this option if you want to migrate 
+  											 |of a library are source compatible.</html>"""
   private val checkIncompatibilities = createButton(checkIncompatibilitiesText, images.Icons.check)
 
   import WelcomePage._
@@ -68,7 +68,7 @@ class WelcomePage extends GridBagPanel with WithConstraints {
   withConstraints(gridy = 2, weightx = 1, fill = Fill.Horizontal, insets = ins) {
     add(checkIncompatibilities, _)
   }
-  
+
   withConstraints(gridy = 3, weighty = 1, fill = Fill.Both) {
     add(Swing.VGlue, _)
   }

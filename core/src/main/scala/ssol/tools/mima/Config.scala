@@ -9,15 +9,6 @@ object Config {
 
   private var settings: Settings = _
   private var _classpath: JavaClassPath = _
-  private var _oldLib: Option[File] = None
-  private var _newLib: Option[File] = None
-
-  def oldLib: Option[File] = _oldLib
-  def newLib: Option[File] = _newLib
-  
-  def oldLib_=(oldLib: Option[File]) = _oldLib = oldLib
-  def newLib_=(newLib: Option[File]) = _newLib = newLib
-  
   
   def info(str: String) = if (verbose) println(str)
   def debugLog(str: String) = if (debug) println(str)
@@ -60,10 +51,10 @@ object Config {
     settings = s
   }
 
-  def setup(cmd: String, args: Array[String], specificOptions: String*): Unit =
+  def setup(cmd: String, args: Array[String], specificOptions: String*): List[String] =
     setup(cmd, args, _ => true, specificOptions: _*)
 
-  def setup(cmd: String, args: Array[String], validate: List[String] => Boolean, specificOptions: String*): Unit = {
+  def setup(cmd: String, args: Array[String], validate: List[String] => Boolean, specificOptions: String*): List[String] = {
     settings = new Settings(specificOptions: _*)
     val (_, resargs) = settings.processArguments(args.toList, true)
     _classpath = new PathResolver(settings).mimaResult
@@ -71,14 +62,7 @@ object Config {
       println(usageMsg(cmd))
       System.exit(0)
     }
-    if (validate(resargs)) initFiles(resargs)
+    if (validate(resargs)) resargs
     else fatal(usageMsg(cmd))
-  }
-
-  private def initFiles(files: List[String]) = files match {
-    case List(f1, f2) => 
-      _oldLib = Some(new File(f1)) 
-      _newLib = Some(new File(f2))
-    case _ => ()
   }
 }

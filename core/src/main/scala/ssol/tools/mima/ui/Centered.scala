@@ -3,7 +3,7 @@ package ssol.tools.mima.ui
 import scala.swing.Frame
 import scala.swing.Swing._
 
-trait CenterFrame { self: Frame =>
+trait Centered { self: Frame =>
   def center = {
     import java.awt.Toolkit;
     import java.awt.Dimension;
