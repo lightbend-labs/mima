@@ -34,14 +34,16 @@ class WelcomePage extends GridBagPanel with WithConstraints {
     button
   }
 
-  private val migrateButtonText = """<html>Migrate project.<br>
-  								    |Use this option if you desire to migrate libraries that are
-  									|not bytecode compatible with your project.</html>"""
+  private val migrateButtonText = """<html>Mima Client<br><br>
+  								    |Use this option if your project has dependencies that are not bytecode compatible among themselves 
+  									|and you want to migrate them as a all-in-one step.</html>"""
   private val migrate = createButton(migrateButtonText, images.Icons.migration)
 
-  private val checkIncompatibilitiesText = """<html>Migrate library.<br>
-  											 |Use this option if you want to migrate 
-  											 |of a library are source compatible.</html>"""
+  private val checkIncompatibilitiesText = """<html>Mima Lib<br><br>
+  											 |Use this option if you want to compare two versions of a same library to know what binary 
+	  										 |incompatibilities affect them.  
+  											 |You will also be given a chance to fix issues so that you can use the newer library without 
+	  										 |having to recompile your project.</html>"""
   private val checkIncompatibilities = createButton(checkIncompatibilitiesText, images.Icons.check)
 
   import WelcomePage._

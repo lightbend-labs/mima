@@ -7,7 +7,7 @@ import java.util.zip._
 import util.IndentedOutput._
 import collection.mutable
 
-object MiMaClient {
+class MiMaClient {
   import PackageInfo._
 
   private var ignore = Set("java", "javax", "sun")

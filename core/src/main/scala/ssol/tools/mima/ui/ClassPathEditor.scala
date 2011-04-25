@@ -12,7 +12,7 @@ import BorderPanel._
 /** A simple interface for interacting with the classpath. Allows
  *  one to reorder and add/remove entries using a list view.
  */
-class ClassPathEditor(init: List[String]) extends GridBagPanel with WithConstraints {
+class ClassPathEditor(init: List[String] = Nil) extends GridBagPanel with WithConstraints {
   private var elements = mutable.ListBuffer(init: _*)
 
   import java.awt.Color

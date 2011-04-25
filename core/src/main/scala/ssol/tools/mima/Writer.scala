@@ -48,7 +48,7 @@ class Writer(fixes: Seq[Fix], config: WriterConfig) {
         case ze: ZipArchive#FileEntry =>
           jarPatches(archive(ze)) += ze.entry.getName -> data
         case pf: PlainFile =>
-          assert(false, "never here") //FIXME: Why is this needed in the first place?
+          assert(false, "never here") //FIXME[mirco]: Why is this needed in the first place? PlainFile are never processed...
           writeTo(pf.file) { f =>
             val os = new FileOutputStream(f)
             os.write(data)
