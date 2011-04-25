@@ -35,7 +35,7 @@ class SaveMigrationPage extends GridBagPanel with WithConstraints {
 
     def selected: File = _selected
 
-    private val directory = new FileChooser {
+    private def chooseDirectory(dir: File) = new FileChooser(dir) {
       fileSelectionMode = FileChooser.SelectionMode.DirectoriesOnly
     }
 
@@ -54,9 +54,10 @@ class SaveMigrationPage extends GridBagPanel with WithConstraints {
     listenTo(dir.mouse.clicks)
     reactions += {
       case e: MouseClicked =>
-        directory.showOpenDialog(dir) match {
+        val dirPicker = chooseDirectory(selected)
+        dirPicker.showOpenDialog(dir) match {
           case FileChooser.Result.Approve =>
-            selected = directory.selectedFile
+            selected = dirPicker.selectedFile
           case _ => ()
         }
     }

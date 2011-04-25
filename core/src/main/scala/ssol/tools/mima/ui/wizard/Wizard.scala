@@ -172,7 +172,7 @@ class Wizard extends BorderPanel {
   }
 
   reactions += {
-    case WizardPage.CanGoNext => updateNavigationButtons
+    case WizardPage.CanGoNext(allowed) => navigation.next.enabled = allowed
   }
 }
 

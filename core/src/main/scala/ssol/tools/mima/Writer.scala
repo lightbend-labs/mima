@@ -26,9 +26,9 @@ class Writer(fixes: Seq[Fix], config: WriterConfig) {
     op(out)
     
     if (out.renameTo(file)) {
-      println(out+" was correctly patched")
+      Config.info(file+" was correctly patched")
     } else {
-      println("*** cannot rename " + out + " to " + file + ";\n" +
+      Config.info("*** cannot rename " + out + " to " + file + ";\n" +
         "leaving patched file in " + out)
     }
   }
@@ -39,7 +39,7 @@ class Writer(fixes: Seq[Fix], config: WriterConfig) {
       return
     }
     
-    println("[jars to fix: " + jarfiles.mkString(", ") + "]")
+    Config.info("[jars to fix: " + jarfiles.mkString(", ") + "]")
       
     val jarPatches: Map[ZipArchive, JarCopy.Patches] = (jarfiles map (_ -> new JarCopy.Patches)).toMap
     for (fix <- fixes) {
@@ -77,6 +77,6 @@ class Writer(fixes: Seq[Fix], config: WriterConfig) {
       case 1 => "one class fixed"
       case n => n + " classes fixed"
     }
-    println("[" + ClassfileParser.parsed + " classes parsed, " + fixesStr + "]")
+    Config.info("[" + ClassfileParser.parsed + " classes parsed, " + fixesStr + "]")
   }
 }

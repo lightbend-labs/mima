@@ -34,7 +34,7 @@ object JarCopy {
     }
 
     def writePatch(data: Array[Byte], outEntry: ZipEntry) {
-      println("Patching: " +outEntry+":"+outEntry.getSize+" "+outEntry.getTime+" "+outEntry.getCrc+" "+outEntry.getMethod)
+      Config.info("Patching: " +outEntry+":"+outEntry.getSize+" "+outEntry.getTime+" "+outEntry.getCrc+" "+outEntry.getMethod)
       outEntry.setSize(data.size)
       outEntry.setCompressedSize(-1)
       zos.putNextEntry(outEntry)
@@ -43,7 +43,7 @@ object JarCopy {
     }
 
     def copyEntry(entry: ZipEntry, outEntry: ZipEntry) {
-      println("Copying: " +entry+":"+entry.getSize+" "+entry.getTime+" "+entry.getCrc+" "+entry.getMethod)
+      Config.info("Copying: " +entry+":"+entry.getSize+" "+entry.getTime+" "+entry.getCrc+" "+entry.getMethod)
       zos.putNextEntry(outEntry)
       var count = zis.read(buf, 0, BUFFER)
       while (count != -1) {

@@ -1,6 +1,7 @@
 package ssol.tools.mima.ui
 
 import ssol.tools.mima.{ Config, MiMaLib, WriterConfig}
+import ui._
 import wizard._
 import scala.tools.nsc.{ util, io }
 import util._
@@ -77,7 +78,7 @@ class MimaLibWizard extends Wizard {
       case FilesSelected(oldLib, newLib) =>
         MimaLibWizard.oldLib = Some(oldLib)
         MimaLibWizard.newLib = Some(newLib)
-        publish(WizardPage.CanGoNext)
+        publish(WizardPage.CanGoNext(true))
     }
   }
 
