@@ -42,16 +42,10 @@ class MimaFrame extends MainFrame with Centered {
   listenTo(welcome)
 
   reactions += {
-    case WelcomePage.MigrateProject => ()
+    case WelcomePage.MigrateProject => startWizard(new MimaClientWizard)
 
-    case WelcomePage.MigrateLibrary =>
-      val wizard = new MimaLibWizard
-      listenTo(wizard)
-      wizard.start()
-      mainContainer.setContent(wizard)
-  }
+    case WelcomePage.MigrateLibrary => startWizard(new MimaLibWizard)
 
-  reactions += {
     case Exit =>
       Dialog.showConfirmation(parent = null,
         title = "Exit Mimalib",
@@ -60,4 +54,11 @@ class MimaFrame extends MainFrame with Centered {
           case _                => ()
         }
   }
+
+  private def startWizard(wizard: Wizard) {
+    listenTo(wizard)
+    wizard.start()
+    mainContainer.setContent(wizard)
+  }
+
 }

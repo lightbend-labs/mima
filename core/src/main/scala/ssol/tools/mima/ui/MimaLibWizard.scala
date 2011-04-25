@@ -1,7 +1,6 @@
 package ssol.tools.mima.ui
 
 import ssol.tools.mima.{ Config, MiMaLib, WriterConfig}
-import ui._
 import wizard._
 import scala.tools.nsc.{ util, io }
 import util._
