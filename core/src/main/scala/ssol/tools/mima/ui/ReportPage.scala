@@ -28,10 +28,9 @@ class ReportPage extends GridBagPanel with WithConstraints {
 
       var index = table.getSelectedRow
       if (index < 0) return
-      
-      
-      if(!table.isCellEditable(index, ProblemsModel.CheckBoxColumn)) return
-      
+
+      if (!table.isCellEditable(index, ProblemsModel.CheckBoxColumn)) return
+
       val checkboxValue = table.getValueAt(index, ProblemsModel.CheckBoxColumn).asInstanceOf[Boolean]
       table.setValueAt(!checkboxValue, index, ProblemsModel.CheckBoxColumn)
     }
@@ -44,23 +43,25 @@ class ReportPage extends GridBagPanel with WithConstraints {
 
       if (e.getValueIsAdjusting) return // skip
 
-      if (index >= 0) { 
+      if (index >= 0) {
         val modelRow = table.convertRowIndexToModel(index)
         problemPanel.problem_=(table.getModel.getValueAt(modelRow, ProblemsModel.ProblemDataColumn).asInstanceOf[Problem])
       }
-    	  
+
       problemPanel.visible = index >= 0
     }
   }
 
   protected class ReportTable extends JTable with TableModelListener {
     /** Special renderer for unfixable issues, checkbox is rendered as "-" */
-    object UnavailableFixCellRenderer extends TableCellRenderer {
-      private val label = new Label("-")
-
+    object UnavailableFixCellRenderer extends DefaultTableCellRenderer {
+      private val UnavailableFix = "-"
+      
       override def getTableCellRendererComponent(table: JTable, value: AnyRef, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int): java.awt.Component = {
-        label.peer
+        super.getTableCellRendererComponent(table, UnavailableFix, isSelected, hasFocus, row, column)
       }
+      
+      setHorizontalAlignment(javax.swing.SwingConstants.CENTER)
     }
 
     // it makes sense to allow only single selection
@@ -69,14 +70,14 @@ class ReportPage extends GridBagPanel with WithConstraints {
     //overriden to set tooltip
     override def prepareRenderer(renderer: TableCellRenderer, row: Int, column: Int): java.awt.Component = {
       val component = super.prepareRenderer(renderer, row, column)
-      
+
       component match {
         case jc: javax.swing.JComponent =>
           /** Display a tooltip*/
           if (isUnavailableFixCell(row, column))
             jc.setToolTipText("no fix exists for this issue")
           else if (column == ProblemsModel.CheckBoxColumn)
-        	jc.setToolTipText(if(table.getValueAt(row, column).asInstanceOf[Boolean]) "checked" else "unchecked")
+            jc.setToolTipText(if (table.getValueAt(row, column).asInstanceOf[Boolean]) "checked" else "unchecked")
           else
             jc.setToolTipText(table.getValueAt(row, column).toString.grouped(80).mkString("<html>", "<br>", "</html>"))
         case _ => ()
@@ -155,21 +156,21 @@ class ReportPage extends GridBagPanel with WithConstraints {
 
   // filtering
   listenTo(filter)
-  
+
   reactions += {
-    case ValueChanged(`filter`)=>
+    case ValueChanged(`filter`) =>
       try {
-        val rf: RowFilter[AbstractTableModel, Integer] = if (filter.text != defaultFilterText)  RowFilter.regexFilter(escape(filter.text), 1, 2) else RowFilter.regexFilter("*")
+        val rf: RowFilter[AbstractTableModel, Integer] = if (filter.text != defaultFilterText) RowFilter.regexFilter(escape(filter.text), 1, 2) else RowFilter.regexFilter("*")
         sorter.setRowFilter(rf)
       } catch {
         case _ => () // swallow any illegal regular expressions
       }
     case FocusGained(`filter`, _, _) if (filter.text == defaultFilterText) =>
       filter.text = ""
-        
+
     case FocusLost(`filter`, _, _) if (filter.text.trim.isEmpty) =>
       filter.text = defaultFilterText
-        
+
   }
 
   private def escape(str: String): String = {
@@ -296,7 +297,7 @@ class ProblemsModel(problems: Array[Array[AnyRef]]) extends AbstractTableModel {
     problems.filter(_(ProblemsModel.CheckBoxColumn).asInstanceOf[Boolean]).map(_(ProblemsModel.ProblemDataColumn).asInstanceOf[Problem])
 
   override def setValueAt(value: AnyRef, row: Int, col: Int): Unit = {
-    assert (isCellEditable(row, col))
+    assert(isCellEditable(row, col))
 
     problems(row)(col) = value
     fireTableCellUpdated(row, col)
