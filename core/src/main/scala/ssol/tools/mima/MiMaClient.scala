@@ -7,6 +7,19 @@ import java.util.zip._
 import util.IndentedOutput._
 import collection.mutable
 
+import scala.tools.nsc.{ util, io }
+import util._
+import ClassPath._
+
+object MiMaClient {
+  def apply(cp: JavaClassPath): List[Fix] = {
+    val baseDef = new Definitions(None, cp)
+    val mimaClient = new MiMaClient
+    mimaClient.traversePackage(baseDef.root)
+    mimaClient.fixes.toList
+  }
+}
+
 class MiMaClient {
   import PackageInfo._
 
