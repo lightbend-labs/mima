@@ -1,0 +1,1 @@
+method foo()Int in class A has now a different result type; was: java.lang.Object, is now: Int

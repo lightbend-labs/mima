@@ -52,7 +52,13 @@ case class IncompatibleResultTypeProblem(oldmeth: MemberInfo, newmeth: MemberInf
   Problem(oldmeth.methodString+" has now a different result type; was: "+
           oldmeth.tpe.resultType+", is now: "+newmeth.tpe.resultType) {
   
-  status = if(newmeth.tpe.isSubtypeOf(oldmeth.tpe)) Problem.Status.Fixable else Problem.Status.Unfixable  
+  status = {
+    val newMethResTpe = newmeth.tpe.asInstanceOf[MethodType].resultType
+    val oldMethResTpe = oldmeth.tpe.asInstanceOf[MethodType].resultType
+    if(newMethResTpe.isSubtypeOf(oldMethResTpe)) 
+      Problem.Status.Fixable 
+    else Problem.Status.Unfixable  
+  }
 }
 
 case class AbstractMethodProblem(newmeth: MemberInfo) extends

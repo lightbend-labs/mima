@@ -14,7 +14,7 @@ object MemberInfo {
 }
 
 class MemberInfo(val owner: ClassInfo, val name: String, val flags: Int, val sig: String) {
-  override def toString = "def "+name+": "+sig
+  override def toString = "def "+name+": "+ sig
 
   def decodedName = NameTransformer.decode(name) 
 
@@ -42,6 +42,8 @@ class MemberInfo(val owner: ClassInfo, val name: String, val flags: Int, val sig
     assert(sig(0) == '(')
     sig substring ((sig indexOf ")") + 1)
   }
+  
+  
   var codeOpt: Option[(Int, Int)] = None
 
   def isClassConstructor = name == "<init>"

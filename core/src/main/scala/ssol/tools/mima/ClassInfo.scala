@@ -38,9 +38,11 @@ abstract class ClassInfo(val owner: PackageInfo) {
 
   def name: String
   
-  def fullName: String = 
+  lazy val fullName: String = {
+    assert(name != null)
     if (owner.isRoot) name
     else owner.fullName + "." + name
+  }
 
   def classString = 
     if (name.endsWith("$")) "object "+formatClassName(fullName.init) 

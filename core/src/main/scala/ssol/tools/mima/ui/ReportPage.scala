@@ -41,11 +41,11 @@ class ReportPage extends GridBagPanel with WithConstraints {
     /** Special renderer for unfixable issues, checkbox is rendered as "-" */
     object UnavailableFixCellRenderer extends DefaultTableCellRenderer {
       private val UnavailableFix = "-"
-      
+
       override def getTableCellRendererComponent(table: JTable, value: AnyRef, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int): java.awt.Component = {
         super.getTableCellRendererComponent(table, UnavailableFix, isSelected, hasFocus, row, column)
       }
-      
+
       setHorizontalAlignment(javax.swing.SwingConstants.CENTER)
     }
 
@@ -85,7 +85,7 @@ class ReportPage extends GridBagPanel with WithConstraints {
   private val table = new ReportTable
   val selectionListener = new RowSelection(table)
   table.getSelectionModel.addListSelectionListener(selectionListener)
-  
+
   // when the table loose its focus hide the problem description panel
   table.addFocusListener(new java.awt.event.FocusAdapter {
     override def focusLost(e: java.awt.event.FocusEvent) {
@@ -151,6 +151,19 @@ class ReportPage extends GridBagPanel with WithConstraints {
       status.text = problem.status.toString
       member.text = ProblemsModel.getReferredMember(problem)
       description.text = problem.description
+      FixHint(problem) match {
+        case Some(hint) =>
+          fixHint.text = "To fix this incompatibility consider adding the following bridge " +
+            "method in the class source code:\n\n" + hint.toSourceCode
+          showFixPanel(true)
+        case None =>
+          showFixPanel(false)
+      }
+    }
+
+    private def showFixPanel(show: Boolean) = {
+      fixHintLabel.visible = show
+      fixHint.visible = show
     }
 
     val statusLabel = new Label("Status:")
@@ -160,6 +173,14 @@ class ReportPage extends GridBagPanel with WithConstraints {
 
     val descriptionLabel = new Label("Description:")
     var description = new TextArea {
+      editable = false
+      background = backgroundColor
+      lineWrap = true
+      charWrap = true
+    }
+
+    val fixHintLabel = new Label("Fix Hint:")
+    var fixHint = new TextArea {
       editable = false
       background = backgroundColor
       lineWrap = true
@@ -197,6 +218,13 @@ class ReportPage extends GridBagPanel with WithConstraints {
       }, _)
     }
 
+    withConstraints(gridx = 0, gridy = 3, insets = ins) {
+      add(fixHintLabel, _)
+    }
+
+    withConstraints(gridx = 1, gridy = 3, weightx = 1, fill = Fill.Horizontal, anchor = Anchor.South, insets = ins) {
+      add(fixHint, _)
+    }
   }
 
   withConstraints(gridx = 0, fill = Fill.Both, weighty = 0.4, weightx = 1.0, gridwidth = REMAINDER, anchor = Anchor.SouthWest, insets = ins) {
