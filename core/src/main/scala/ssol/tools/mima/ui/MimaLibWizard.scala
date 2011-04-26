@@ -99,35 +99,4 @@ class MimaLibWizard extends Wizard {
       setTableModel(model.tableModel)
     }
   }
-
-  // step 4 - selected a migration target directory and jar files qualifier
-  this += new SaveMigrationPage with Page {
-    override def onReveal() {
-      if (!model.hasTargetDir) {
-        selectDirectory.selected = MimaLibWizard.newLib.get.getParentFile
-      }
-    }
-
-    override def onNext() {
-      model.targetDir = selectDirectory.selected
-      model.qualifier = qualifierPanel.qualifier.text
-    }
-  }
-
-  // step 5 - carry out the migration
-  this += new ThanksPage with Page {
-    override def onLoad() {
-      val problems = model.tableModel.selectedProblems
-      val fixableProblems = problems.toList collect { case x: ssol.tools.mima.IncompatibleResultTypeProblem => x }
-
-      assert(problems.size == fixableProblems.size, "Only fixable issues should be selectable. Found " + problems.size + " problems, but only " + fixableProblems.size + " can be fixed")
-      fixableProblems match {
-        case Nil => Swing onEDT { thanksLabel.text = "No fixes where selected." }
-        case _ =>
-          val fixes = ssol.tools.mima.Fix.libFixesFor(fixableProblems)
-          val config = new WriterConfig(model.targetDir, model.qualifier)
-          new ssol.tools.mima.Writer(fixes, config).writeOut()
-      }
-    }
-  }
 }

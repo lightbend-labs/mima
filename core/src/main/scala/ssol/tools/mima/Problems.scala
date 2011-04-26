@@ -50,8 +50,10 @@ case class IncompatibleMethTypeProblem(oldmeth: MemberInfo, newmeths: List[Membe
 
 case class IncompatibleResultTypeProblem(oldmeth: MemberInfo, newmeth: MemberInfo) extends
   Problem(oldmeth.methodString+" has now a different result type; was: "+
-          oldmeth.tpe.resultType+", is now: "+newmeth.tpe.resultType,
-          Problem.Status.Fixable)
+          oldmeth.tpe.resultType+", is now: "+newmeth.tpe.resultType) {
+  
+  status = if(newmeth.tpe.isSubtypeOf(oldmeth.tpe)) Problem.Status.Fixable else Problem.Status.Unfixable  
+}
 
 case class AbstractMethodProblem(newmeth: MemberInfo) extends
   Problem("abstract "+newmeth.methodString+" does not have a correspondent in old version",
