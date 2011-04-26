@@ -18,7 +18,7 @@ class WelcomePage extends GridBagPanel with WithConstraints {
   private val title = new Label(titleText) {
     opaque = false
     font = font.deriveFont(font.getSize2D * 2)
-    border = EmptyBorder(20, 0, 20, 0)
+    border = EmptyBorder(20, 0, 0, 0)
     horizontalAlignment = Alignment.Center
   }
 
@@ -61,7 +61,7 @@ class WelcomePage extends GridBagPanel with WithConstraints {
     add(title, _)
   }
 
-  val ins = new Insets(50, 10, 50, 0)
+  val ins = new Insets(50, 0, 50, 0)
 
   withConstraints(gridy = 1, weightx = 1, fill = Fill.Horizontal, insets = ins) {
     add(migrate, _)

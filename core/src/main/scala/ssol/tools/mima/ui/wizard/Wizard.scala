@@ -148,7 +148,6 @@ class Wizard extends BorderPanel {
   private val navigation = new NavigationPanel
 
   private val buttonsPanel = new BorderPanel {
-    border = EmptyBorder(0, 10, 0, 0) 
     add(new Separator, Position.North)
     add(navigation, Position.South)
   }

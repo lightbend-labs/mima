@@ -28,4 +28,6 @@ object Icons {
   lazy val remove = getIcon("remove.png")
   lazy val up = getIcon("up.png")
   lazy val down = getIcon("down.png")
+  
+  lazy val close = getIcon("close.gif")
 }

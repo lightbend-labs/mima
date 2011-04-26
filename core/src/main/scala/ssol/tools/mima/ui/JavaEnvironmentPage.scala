@@ -21,5 +21,5 @@ class JavaEnvironmentPage extends GridBagPanel with WithConstraints {
   import GridBagConstraints._
   
   
-  withConstraints(gridx = 0, gridy = 1, fill = Fill.Both, insets = new Insets(10, 10, 10, 10), weightx = 1.0, weighty = 1.0)(add(cpEditor, _))
+  withConstraints(gridx = 0, gridy = 1, fill = Fill.Both, weightx = 1.0, weighty = 1.0)(add(cpEditor, _))
 }

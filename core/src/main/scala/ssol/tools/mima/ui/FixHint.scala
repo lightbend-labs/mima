@@ -23,7 +23,6 @@ private case class AddBridgeMethod(oldmeth: MemberInfo, newmeth: MemberInfo) ext
     "@bridge " + sourceMethod(oldmeth) + " = (" + newmeth.name + sourceParams(oldmeth) + ": " + newMethResType + ").asInstanceOf[" + oldMethResType + "]"
   }
   
-  
   private def sourceMethod(meth: MemberInfo) = 
     "def "+ meth.name + sourceParams(meth) + ": " + meth.tpe.resultType
   

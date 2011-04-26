@@ -34,6 +34,17 @@ class ReportPage extends GridBagPanel with WithConstraints {
       }
 
       problemPanel.visible = index >= 0
+
+      // if we don't force the container to redraw the problem panel won't show up.
+      revalidate()
+      
+       
+      if(problemPanel.visible) {
+        // always set scroll the top. Delaying call because it has to happen after the container has run `revalidate`
+        Swing onEDT {  
+          problemPanel.peer.getViewport.setViewPosition((0,0))
+        }
+      }
     }
   }
 
@@ -67,7 +78,7 @@ class ReportPage extends GridBagPanel with WithConstraints {
     }
   }
 
-  private val ins = new Insets(0, 10, 10, 10)
+  private val ins = new Insets(0, 0, 10, 0)
 
   private val defaultFilterText = "<enter filter>"
   private val filter = new TextField(defaultFilterText)
@@ -77,7 +88,7 @@ class ReportPage extends GridBagPanel with WithConstraints {
   private val errorLabel = new Label("Unfortunately there are unfixable incompatibilities") {
     foreground = java.awt.Color.RED
   }
-  withConstraints(insets = new Insets(4, 10, 10, 10), gridx = 2, gridy = 0, anchor = Anchor.North) {
+  withConstraints(gridx = 2, gridy = 0, anchor = Anchor.North, insets = new Insets(4, 10, 0, 0)) {
     add(errorLabel, _)
   }
 
@@ -86,14 +97,7 @@ class ReportPage extends GridBagPanel with WithConstraints {
   val selectionListener = new RowSelection(table)
   table.getSelectionModel.addListSelectionListener(selectionListener)
 
-  // when the table loose its focus hide the problem description panel
-  table.addFocusListener(new java.awt.event.FocusAdapter {
-    override def focusLost(e: java.awt.event.FocusEvent) {
-      table.getSelectionModel.clearSelection()
-    }
-  })
-
-  withConstraints(gridx = 0, fill = Fill.Both, weighty = 0.6, weightx = 1.0, gridwidth = REMAINDER, insets = ins) {
+  withConstraints(gridx = 0, fill = Fill.Both, weighty = 0.6, weightx = 1.0, gridwidth = REMAINDER) {
     add(new ScrollPane(new Component {
       override lazy val peer = table
     }), _)
@@ -105,9 +109,6 @@ class ReportPage extends GridBagPanel with WithConstraints {
     errorLabel.visible = _model.hasUnfixableProblems
 
     table.setModel(_model)
-    table.getColumnModel.getColumn(0).setPreferredWidth(50)
-    table.getColumnModel.getColumn(1).setPreferredWidth(100)
-    table.getColumnModel.getColumn(2).setPreferredWidth(150)
 
     sorter = new TableRowSorter(_model)
     table.setRowSorter(sorter)
@@ -139,95 +140,123 @@ class ReportPage extends GridBagPanel with WithConstraints {
       case c   => c.toString
     }
   }
+  private val problemPanel = {
+    val panel = new GridBagPanel with WithConstraints {
+      private val backgroundColor = new Color(247, 255, 199) // light-yellow
+      background = backgroundColor
+      border = EmptyBorder(3)
 
-  private val problemPanel = new GridBagPanel with WithConstraints {
-    private val backgroundColor = new Color(247, 255, 199) // light-yellow
-    visible = false
-    background = backgroundColor
-    border = LineBorder(Color.lightGray, 1)
+      val closeButton = ui.closeButton
 
-    private var _problem: Problem = _
-    def problem_=(problem: Problem) = {
-      status.text = problem.status.toString
-      member.text = ProblemsModel.getReferredMember(problem)
-      description.text = problem.description
-      FixHint(problem) match {
-        case Some(hint) =>
-          fixHint.text = "To fix this incompatibility consider adding the following bridge " +
-            "method in the class source code:\n\n" + hint.toSourceCode
-          showFixPanel(true)
-        case None =>
-          showFixPanel(false)
+      val statusLabel = new Label("Status:")
+      val status = new Label
+      val memberLabel = new Label("Member:")
+      val member = new Label
+
+      val descriptionLabel = new Label("Description:")
+      var description = new TextArea {
+        editable = false
+        background = backgroundColor
+        lineWrap = true
+        charWrap = true
+      }
+
+      val fixHintLabel = new Label("Fix Hint:")
+      var fixHint = new TextArea {
+        editable = false
+        background = backgroundColor
+        lineWrap = true
+        charWrap = true
+      }
+
+      val leftIns = new Insets(0, 9, 10, 5)
+      val rightIns = new Insets(0, 0, 10, 9)
+      
+
+      withConstraints(gridwidth = 2, anchor = Anchor.FirstLineEnd, insets = new Insets(0, 0, 0, 12)) {
+        add(closeButton, _)
+      }
+
+      withConstraints(gridx = 0, gridy = 0, insets = leftIns) {
+        add(statusLabel, _)
+      }
+
+      withConstraints(gridx = 1, gridy = 0, weightx = 1, insets = rightIns) {
+        add(status, _)
+      }
+
+      withConstraints(gridx = 0, gridy = 1, insets = leftIns) {
+        add(memberLabel, _)
+      }
+
+      withConstraints(gridx = 1, gridy = 1, weightx = 1, insets = rightIns) {
+        add(member, _)
+      }
+
+      withConstraints(gridx = 0, gridy = 2, insets = leftIns) {
+        add(descriptionLabel, _)
+      }
+
+      withConstraints(gridx = 1, gridy = 2, fill = Fill.Horizontal, insets = rightIns) {
+        add(description, _)
+      }
+
+      withConstraints(gridx = 0, gridy = 3, insets = new Insets(0, 9, 0, 5)) {
+        add(fixHintLabel, _)
+      }
+
+      withConstraints(gridx = 1, gridy = 3, weightx = 1, fill = Fill.Horizontal, insets = new Insets(0, 0, 0, 9)) {
+        add(fixHint, _)
+      }
+
+      withConstraints(gridx = 0, gridy = 4, gridwidth = 2, weightx = 1, weighty = 1, fill = Fill.Both) {
+        add(Swing.VGlue, _)
       }
     }
 
-    private def showFixPanel(show: Boolean) = {
-      fixHintLabel.visible = show
-      fixHint.visible = show
-    }
+    new ScrollPane {
+      private val view = new Component {
+        override lazy val peer = panel.peer
+      }
 
-    val statusLabel = new Label("Status:")
-    val status = new Label
-    val memberLabel = new Label("Member:")
-    val member = new Label
+      contents = view
 
-    val descriptionLabel = new Label("Description:")
-    var description = new TextArea {
-      editable = false
-      background = backgroundColor
-      lineWrap = true
-      charWrap = true
-    }
+      visible = false
 
-    val fixHintLabel = new Label("Fix Hint:")
-    var fixHint = new TextArea {
-      editable = false
-      background = backgroundColor
-      lineWrap = true
-      charWrap = true
-    }
+      import javax.swing.ScrollPaneConstants._
+      horizontalScrollBarPolicy = new ScrollPane.BarPolicy.Value(HORIZONTAL_SCROLLBAR_NEVER, VERTICAL_SCROLLBAR_AS_NEEDED)
+      border = LineBorder(Color.lightGray, 1)
 
-    val ins = new Insets(5, 5, 5, 5)
+      private var _problem: Problem = _
+      def problem_=(problem: Problem) = {
+        panel.status.text = problem.status.toString
+        panel.member.text = ProblemsModel.getReferredMember(problem)
+        panel.description.text = problem.description
+        FixHint(problem) match {
+          case Some(hint) =>
+            panel.fixHint.text = "To fix this incompatibility consider adding the following bridge " +
+              "method in the class source code:\n\n" + hint.toSourceCode
+            showFixPanel(true)
+          case None =>
+            showFixPanel(false)
+        }
+      }
 
-    withConstraints(gridx = 0, gridy = 0, insets = ins) {
-      add(statusLabel, _)
-    }
+      listenTo(panel.closeButton)
+      reactions += {
+        case ButtonClicked(panel.`closeButton`) => {
+          table.clearSelection()
+        }
+      }
 
-    withConstraints(gridx = 1, gridy = 0, weightx = 1, insets = ins) {
-      add(status, _)
-    }
-
-    withConstraints(gridx = 0, gridy = 1, insets = ins) {
-      add(memberLabel, _)
-    }
-
-    withConstraints(gridx = 1, gridy = 1, weightx = 1, insets = ins) {
-      add(member, _)
-    }
-
-    withConstraints(gridx = 0, gridy = 2, insets = ins) {
-      add(descriptionLabel, _)
-    }
-
-    withConstraints(gridx = 1, gridy = 2, weightx = 1, weighty = 1, fill = Fill.Both, insets = ins) {
-      add(new ScrollPane(new Component {
-        override lazy val peer = description.peer
-      }) {
-        horizontalScrollBarPolicy = ScrollPane.BarPolicy.AsNeeded
-        border = EmptyBorder(0)
-      }, _)
-    }
-
-    withConstraints(gridx = 0, gridy = 3, insets = ins) {
-      add(fixHintLabel, _)
-    }
-
-    withConstraints(gridx = 1, gridy = 3, weightx = 1, fill = Fill.Horizontal, anchor = Anchor.South, insets = ins) {
-      add(fixHint, _)
+      private def showFixPanel(show: Boolean) = {
+        panel.fixHintLabel.visible = show
+        panel.fixHint.visible = show
+      }
     }
   }
 
-  withConstraints(gridx = 0, fill = Fill.Both, weighty = 0.4, weightx = 1.0, gridwidth = REMAINDER, anchor = Anchor.SouthWest, insets = ins) {
+  withConstraints(gridx = 0, fill = Fill.Both, weightx = 1.0, weighty = .4, gridwidth = REMAINDER, anchor = Anchor.SouthWest) {
     add(problemPanel, _)
   }
 

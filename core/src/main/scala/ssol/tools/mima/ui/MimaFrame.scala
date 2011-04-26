@@ -27,6 +27,7 @@ class MimaFrame extends MainFrame with Centered {
     add(ScalaInstall, BorderPanel.Position.West)
 
     def setContent(c: Component): Unit = {
+      c.border = EmptyBorder(0,10,0,0) // always insert 10px left-border
       add(c, BorderPanel.Position.Center)
       revalidate()
       repaint()

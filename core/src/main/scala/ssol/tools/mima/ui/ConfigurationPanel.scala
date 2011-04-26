@@ -31,7 +31,7 @@ class ConfigurationPanel(f1: Option[File] = None, f2: Option[File] = None) exten
       if(areFilesSelected) publish(FilesSelected(oldFile, newFile))
   }
   
-  val ins = new Insets(0, 10, 10, 10)
+  val ins = new Insets(0, 0, 10, 0)
   
   import java.awt.Color
   val files = new GridPanel(3, 1) {
@@ -53,7 +53,7 @@ class ConfigurationPanel(f1: Option[File] = None, f2: Option[File] = None) exten
     classpathLabel.text = "Library classpath:"
   }
   
-  withConstraints(gridx = 0, gridy = 1, weightx = 1, weighty = 1, fill = Fill.Both, anchor = Anchor.PageEnd, insets = ins) {
+  withConstraints(gridx = 0, gridy = 1, weightx = 1, weighty = 1, fill = Fill.Both, anchor = Anchor.PageEnd) {
     add(cpEditor, _)
   }
 }
