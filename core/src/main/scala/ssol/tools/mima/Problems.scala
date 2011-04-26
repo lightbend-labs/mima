@@ -45,7 +45,7 @@ case class IncompatibleMethTypeProblem(oldmeth: MemberInfo, newmeths: List[Membe
     if (newmeths.tail.isEmpty)
       "'s type has changed; was "+oldmeth.tpe+", is now: "+newmeths.head.tpe
     else
-      "does not have a correspondent with same parameter signature among "+
+      " does not have a correspondent with same parameter signature among "+
       (newmeths map (_.tpe) mkString ", ")))
 
 case class IncompatibleResultTypeProblem(oldmeth: MemberInfo, newmeth: MemberInfo) extends
