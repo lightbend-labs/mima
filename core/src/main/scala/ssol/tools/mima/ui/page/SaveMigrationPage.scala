@@ -1,10 +1,12 @@
-package ssol.tools.mima.ui
+package ssol.tools.mima.ui.page
 
 import scala.swing._
 import event._
 import Swing._
 import GridBagPanel._
 import java.awt.GridBagConstraints._
+
+import ssol.tools.mima.ui.WithConstraints
 
 class SaveMigrationPage extends GridBagPanel with WithConstraints {
 

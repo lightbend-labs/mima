@@ -1,4 +1,4 @@
-package ssol.tools.mima.ui
+package ssol.tools.mima.ui.widget
 
 import scala.swing._
 import event._

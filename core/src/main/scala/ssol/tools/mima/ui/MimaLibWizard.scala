@@ -7,6 +7,7 @@ import wizard._
 import scala.tools.nsc.{ util, io }
 import util._
 import ClassPath._
+import ssol.tools.mima.ui.page._
 
 object MimaLibWizard {
   import java.io.File

@@ -1,4 +1,4 @@
-package ssol.tools.mima.ui
+package ssol.tools.mima.ui.widget
 
 import scala.collection.mutable
 
@@ -8,6 +8,7 @@ import scala.swing._
 import event._
 import Swing._
 import BorderPanel._
+import ssol.tools.mima.ui.WithConstraints
 
 /** A simple interface for interacting with the classpath. Allows
  *  one to reorder and add/remove entries using a list view.

@@ -1,5 +1,4 @@
-package ssol.tools.mima
-package ui
+package ssol.tools.mima.ui.page
 
 import java.io.File
 
@@ -8,6 +7,9 @@ import ssol.tools.mima.Config
 
 import Swing._
 import GridBagPanel._
+
+import ssol.tools.mima.ui.widget.{FilePicker, ClassPathEditor, FileSelected}
+import ssol.tools.mima.ui.WithConstraints
 
 /**
  * A Panel used to configure MiMa. It allows jar file selection

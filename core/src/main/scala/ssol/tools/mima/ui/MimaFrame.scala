@@ -4,6 +4,7 @@ import scala.swing._
 import Swing._
 import wizard._
 import ssol.tools.mima.{ Config, MiMaLib, Fix, Problem, IncompatibleResultTypeProblem }
+import ssol.tools.mima.ui.page._
 import event.Event
 
 import scala.tools.nsc.{ util, io }
@@ -14,7 +15,7 @@ case object Exit extends Event
 
 class MimaFrame extends MainFrame with Centered {
 
-  object ScalaInstall extends ImagePanel(images.Icons.install)
+  object ScalaInstall extends widget.ImagePanel(images.Icons.install)
 
   title = "Scala Migration Manager"
   preferredSize = (800, 600)

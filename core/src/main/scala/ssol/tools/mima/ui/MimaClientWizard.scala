@@ -2,6 +2,7 @@ package ssol.tools.mima.ui
 
 import scala.swing._
 import ssol.tools.mima.{ Config, MiMaClient, WriterConfig, MiMaLib }
+import ssol.tools.mima.ui.page._
 import wizard._
 import scala.tools.nsc.{ util, io }
 import util._
@@ -54,12 +55,11 @@ class MimaClientWizard extends Wizard {
   }
 
   // step 2 - edit project classpath
-  this += new ClassPathEditor with Page {
-    classpathLabel.text = "Project classpath:"
+  this += new ProjectConfigurationPage with Page {
 
     override def onNext(): Unit = {
       val cp = model.classpath
-      model.classpath = new JavaClassPath(DefaultJavaContext.classesInPath(classPathString + io.File.pathSeparator + cp.asClasspathString), DefaultJavaContext)
+      model.classpath = new JavaClassPath(DefaultJavaContext.classesInPath(cpEditor.classPathString + io.File.pathSeparator + cp.asClasspathString), DefaultJavaContext)
     }
   }
 

@@ -1,9 +1,12 @@
-package ssol.tools.mima
-package ui
+package ssol.tools.mima.ui.page
 
 import scala.swing._
 import Swing._
 import GridBagPanel._
+
+import ssol.tools.mima.ui.{WithConstraints,FixHint}
+import ssol.tools.mima._
+import ssol.tools.mima.ui.widget.CloseButton
 import scala.swing.event._
 
 import javax.swing.table._
@@ -146,7 +149,7 @@ class ReportPage extends GridBagPanel with WithConstraints {
       background = backgroundColor
       border = EmptyBorder(3)
 
-      val closeButton = ui.closeButton
+      val closeButton = new CloseButton
 
       val statusLabel = new Label("Status:")
       val status = new Label

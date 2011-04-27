@@ -1,4 +1,4 @@
-package ssol.tools.mima.ui
+package ssol.tools.mima.ui.widget
 
 import java.awt.Graphics;
 import java.awt.image.BufferedImage

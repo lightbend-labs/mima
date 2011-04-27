@@ -1,4 +1,4 @@
-package ssol.tools.mima.ui
+package ssol.tools.mima.ui.widget
 
 import javax.swing.filechooser._
 import java.io.File

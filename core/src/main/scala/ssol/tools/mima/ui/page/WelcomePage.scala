@@ -1,10 +1,12 @@
-package ssol.tools.mima.ui
+package ssol.tools.mima.ui.page
 
 import scala.swing._
 import Swing._
-import wizard.Wizard
 import BorderPanel._
 import event._
+
+import ssol.tools.mima.ui.WithConstraints
+import ssol.tools.mima.ui.wizard.Wizard
 
 object WelcomePage {
   case object MigrateProject extends Event

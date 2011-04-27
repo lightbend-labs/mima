@@ -2,11 +2,14 @@ package ssol.tools.mima.ui.wizard
 
 import scala.collection.mutable
 
+import scala.actors.Actor
+
 import scala.swing._
 import scala.swing.event._
 import Swing._
+
 import ssol.tools.mima.ui.Exit
-import scala.actors.Actor
+import ssol.tools.mima.ui.widget.NavigationPanel
 
 /** A simple wizard interface. It consist of a center panel that displays
  *  the current page. There are three buttons for navigating forward, back
@@ -142,8 +145,7 @@ class Wizard extends BorderPanel {
 
   private def currentPage = _currentPage
   private var _currentPage = 0
-
-  import ssol.tools.mima.ui.NavigationPanel
+  
   // the bottom section where the navigation buttons are
   private val navigation = new NavigationPanel
 
