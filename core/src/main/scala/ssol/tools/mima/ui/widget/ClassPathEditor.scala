@@ -21,6 +21,14 @@ class ClassPathEditor(init: List[String] = Nil) extends GridBagPanel with WithCo
 
   protected val classpathLabel = new Label("Classpath:")
 
+  def classpath_=(_classpath: List[String]) =  listView.listData = _classpath
+  def classpath = listView.listData
+  
+  /** Return the string of current classpath in this editor. */
+  def classPathString = {
+    ClassPath.join(listView.listData: _*)
+  }
+  
   private val listView = new ListView(elements.toList) {
     border = LineBorder(Color.gray)
     selection.intervalMode = ListView.IntervalMode.SingleInterval
@@ -106,11 +114,6 @@ class ClassPathEditor(init: List[String] = Nil) extends GridBagPanel with WithCo
       val (prefix, suffix) = listView.listData.splitAt(sel.indices.max + 1)
       listView.listData = prefix.dropRight(sel.indices.size) ++ List(suffix.first) ++ sel.items ++ suffix.drop(1)
       listView.selectIndices((indices map (_ + 1)).toSeq: _*)
-  }
-
-  /** Return the string of current classpath in this editor. */
-  def classPathString = {
-    ClassPath.join(listView.listData: _*)
   }
 
   /** Enable/disable buttons according to the list selection. */

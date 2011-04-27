@@ -49,6 +49,15 @@ class MimaClientWizard extends Wizard {
 
   // step 1 - select java environment
   this += new JavaEnvironmentPage with Page {
+    import scala.tools.nsc.{ util, io }
+    import util._
+    import ClassPath._
+    model.classpath = Config.baseClassPath
+
+    override def onReveal() {
+      cpEditor.classpath = split(model.classpath.asClasspathString)
+    }
+
     override def onNext() {
       model.classpath = new JavaClassPath(DefaultJavaContext.classesInPath(cpEditor.classPathString), DefaultJavaContext)
     }

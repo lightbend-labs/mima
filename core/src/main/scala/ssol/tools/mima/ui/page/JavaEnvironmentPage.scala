@@ -3,15 +3,11 @@ package ssol.tools.mima.ui.page
 import scala.swing._
 import Swing._
 
-import scala.tools.nsc.{ util, io }
-import util._
-
 import ssol.tools.mima.ui.widget.ClassPathEditor
 import ssol.tools.mima.ui.WithConstraints
 
 class JavaEnvironmentPage extends GridBagPanel with WithConstraints {
 
-  import ClassPath._
 
   protected val cpEditor = new ClassPathEditor {
     classpathLabel.text = "Make sure that the right Java environment is selected"
