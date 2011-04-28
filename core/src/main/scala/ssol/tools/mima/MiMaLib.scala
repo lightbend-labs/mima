@@ -129,18 +129,3 @@ class MiMaLib {
     problems.toList
   }
 }
-
-object ClassInfoComparer {
-
-  def apply(oldClazz: ClassInfo, newClazz: ClassInfo): Option[Problem] = {
-    if (oldClazz.isTrait == newClazz.isTrait)
-      TraitComparer(oldClazz, newClazz)
-    null
-  }
-}
-
-object TraitComparer {
-  def apply(oldClazz: ClassInfo, newClazz: ClassInfo): Option[Problem] = {
-    None
-  }
-}
