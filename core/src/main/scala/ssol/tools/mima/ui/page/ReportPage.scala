@@ -123,7 +123,7 @@ class ReportPage extends GridBagPanel with WithConstraints {
   reactions += {
     case ValueChanged(`filter`) =>
       try {
-        val rf: RowFilter[AbstractTableModel, Integer] = if (filter.text != defaultFilterText) RowFilter.regexFilter(escape(filter.text), 1, 2) else RowFilter.regexFilter("*")
+        val rf: RowFilter[AbstractTableModel, Integer] = if (filter.text != defaultFilterText) RowFilter.regexFilter(escape(filter.text), 1) else RowFilter.regexFilter("*")
         sorter.setRowFilter(rf)
       } catch {
         case _ => () // swallow any illegal regular expressions

@@ -3,11 +3,9 @@ package ssol.tools.mima
 object Problem {
   object Status extends Enumeration {
     val Unfixable = Value("unfixable")
-    val Upgradable = Value("upgradable") 
-    val Fixable = Value("fixable")
-    val ToFix = Value("to be fixed") 
+    val Upgradable = Value("upgradable") // means mima client can fix the bytecode
+    val SourceFixable = Value("source fixable")
     val Ignored = Value("ignored")
-    val Fixed = Value("fixed")
   }
 }
 
@@ -46,22 +44,17 @@ case class IncompatibleMethTypeProblem(oldmeth: MemberInfo, newmeths: List[Membe
       "'s type has changed; was "+oldmeth.tpe+", is now: "+newmeths.head.tpe
     else
       " does not have a correspondent with same parameter signature among "+
-      (newmeths map (_.tpe) mkString ", ")))
+      (newmeths map (_.tpe) mkString ", ")), Problem.Status.SourceFixable)
 
 case class IncompatibleResultTypeProblem(oldmeth: MemberInfo, newmeth: MemberInfo) extends
   Problem(oldmeth.methodString+" has now a different result type; was: "+
-          oldmeth.tpe.resultType+", is now: "+newmeth.tpe.resultType) {
-  
-  status = {
-    val newMethResTpe = newmeth.tpe.asInstanceOf[MethodType].resultType
-    val oldMethResTpe = oldmeth.tpe.asInstanceOf[MethodType].resultType
-    if(newMethResTpe.isSubtypeOf(oldMethResTpe)) 
-      Problem.Status.Fixable 
-    else Problem.Status.Unfixable  
-  }
-}
+          oldmeth.tpe.resultType+", is now: "+newmeth.tpe.resultType, Problem.Status.SourceFixable)
 
 case class AbstractMethodProblem(newmeth: MemberInfo) extends
   Problem("abstract "+newmeth.methodString+" does not have a correspondent in old version",
           if (newmeth.owner.isTrait && newmeth.owner.implClass.hasStaticImpl(newmeth)) Problem.Status.Upgradable
           else Problem.Status.Unfixable)
+
+case class ClassAndTraitNotComparableProblem(oldClazz: ClassInfo, newClazz: ClassInfo) extends
+  Problem("declaration of " + oldClazz.description + " has changed to " + newClazz.description +
+      " in new version; changing " + oldClazz.declarationPrefix +" to " + newClazz.declarationPrefix + " breaks client code")

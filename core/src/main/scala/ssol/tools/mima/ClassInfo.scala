@@ -44,11 +44,14 @@ abstract class ClassInfo(val owner: PackageInfo) {
     else owner.fullName + "." + name
   }
 
-  def classString = 
-    if (name.endsWith("$")) "object "+formatClassName(fullName.init) 
-    else if (isTrait || loaded && isInterface) "trait "+formatClassName(fullName)
-    else "class "+formatClassName(fullName)
-
+  def declarationPrefix = 
+    if (name.endsWith("$")) "object"
+    else if (isScala && (isTrait || loaded && isInterface)) "trait"
+    else if(isInterface) "interface" // java interface
+    else "class"
+  
+  def classString = declarationPrefix + " " + formatClassName(fullName.init) 
+    
   protected var loaded = false
   private def ensureLoaded() =
     if (!loaded)
@@ -85,11 +88,20 @@ abstract class ClassInfo(val owner: PackageInfo) {
   lazy val superClasses: List[ClassInfo] = 
     this :: (if (this == ClassInfo.ObjectClass) Nil else superClass.superClasses)
 
-  def lookupFields(name: String): Iterator[MemberInfo] =
+  def lookupClassFields(name: String): Iterator[MemberInfo] =
     superClasses.iterator flatMap (_.fields.get(name))
 
-  def lookupMethods(name: String): Iterator[MemberInfo] = 
+  def lookupClassMethods(name: String): Iterator[MemberInfo] = 
     superClasses.iterator flatMap (_.methods.get(name))
+  
+  def lookupTraitMethods(name: String): Iterator[MemberInfo] = 
+    allTraits.iterator flatMap (_.methods.get(name))
+  
+  def lookupInterfaceMethods(name: String): Iterator[MemberInfo] = 
+    interfaces.iterator flatMap (_.methods.get(name))
+  
+  def lookupMethods(name: String): Iterator[MemberInfo] = 
+    lookupClassMethods(name) ++ lookupTraitMethods(name) ++ lookupInterfaceMethods(name)
 
   /** Is this class a non-trait that inherits !from a trait */
   lazy val isClassInheritsTrait = !isInterface && _interfaces.exists(_.isTrait)
@@ -124,28 +136,16 @@ abstract class ClassInfo(val owner: PackageInfo) {
    *  Traits appear in linearization order of this class or trait.
    */
   lazy val directTraits: List[ClassInfo] = {
-    def parentsClosure(c: ClassInfo) =
-    	(c.interfaces flatMap traitClosure).distinct
-   
     /** All traits in the transitive, reflexive inheritance closure of given trait `t' */
     def traitClosure(t: ClassInfo): List[ClassInfo] =  
       if (superClass.allTraits contains t) Nil
       else if (t.isTrait) parentsClosure(t) :+ t
       else parentsClosure(t)
+      
+    def parentsClosure(c: ClassInfo) =
+    	(c.interfaces flatMap traitClosure).distinct
     	
     parentsClosure(this)
-    
-    /** 
-     * FIXME:[mirco] 
-     * Check the implementation, is this the way it is supposed to work?
-     * 
-     * Example:
-     *  
-     * class A extends B with C
-     * class B with C
-     * 
-     * calling `directTraits` on classfile A, seems to me it will return Nil. However, I would expect it to return List(C). Is that ok?
-     */
   }
 
   /** All traits inherited directly or indirectly by this class */ 
@@ -216,10 +216,13 @@ abstract class ClassInfo(val owner: PackageInfo) {
     _implClass
   }
 
+  /** is this a class, an object or a trait's implementation class*/
+  def isClass: Boolean = !isTrait && !isInterface
+  
   /** Is this class a trait with some concrete methods or fields? */
   def isTrait: Boolean = implClass ne NoClass
 
-  /** Is this class a trait or interface? */
+  /** Is this class a trait without concrete methods or a java interface? */
   def isInterface: Boolean = { 
     ensureLoaded()
     ClassfileParser.isInterface(flags) 
@@ -239,7 +242,7 @@ abstract class ClassInfo(val owner: PackageInfo) {
     !ClassfileParser.isPrivate(flags)
   }
 
-  override def toString = "class "+name
+  override def toString = declarationPrefix + " " + name
 
-  def description: String = (if (isTrait) "trait " else "class ") + fullName
+  def description: String = declarationPrefix + " " + fullName
 }
