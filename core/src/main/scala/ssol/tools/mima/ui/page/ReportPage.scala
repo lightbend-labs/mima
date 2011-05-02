@@ -4,7 +4,7 @@ import scala.swing._
 import Swing._
 import GridBagPanel._
 
-import ssol.tools.mima.ui.{WithConstraints,FixHint}
+import ssol.tools.mima.ui.{ WithConstraints, FixHint }
 import ssol.tools.mima._
 import ssol.tools.mima.ui.widget.CloseButton
 import scala.swing.event._
@@ -40,12 +40,11 @@ class ReportPage extends GridBagPanel with WithConstraints {
 
       // if we don't force the container to redraw the problem panel won't show up.
       revalidate()
-      
-       
-      if(problemPanel.visible) {
+
+      if (problemPanel.visible) {
         // always set scroll the top. Delaying call because it has to happen after the container has run `revalidate`
-        Swing onEDT {  
-          problemPanel.peer.getViewport.setViewPosition((0,0))
+        Swing onEDT {
+          problemPanel.peer.getViewport.setViewPosition((0, 0))
         }
       }
     }
@@ -174,7 +173,6 @@ class ReportPage extends GridBagPanel with WithConstraints {
 
       val leftIns = new Insets(0, 9, 10, 5)
       val rightIns = new Insets(0, 0, 10, 9)
-      
 
       withConstraints(gridwidth = 2, anchor = Anchor.FirstLineEnd, insets = new Insets(0, 0, 0, 12)) {
         add(closeButton, _)
@@ -286,6 +284,7 @@ object ProblemsModel {
     case IncompatibleMethTypeProblem(oldmth, newmth)   => oldmth.fullName
     case IncompatibleResultTypeProblem(oldmth, newmth) => oldmth.fullName
     case AbstractMethodProblem(oldmeth)                => oldmeth.fullName
+    case ClassAndTraitNotComparableProblem(oldclz, _)  => oldclz.fullName
   }
 }
 

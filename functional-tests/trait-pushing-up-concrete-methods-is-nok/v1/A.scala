@@ -1,9 +1,7 @@
-trait A {
-  def foo: Int
-}
+trait A
 
 
 
 trait B extends A {
-  override def foo: Int = 2
+  def foo: Int = 2
 }

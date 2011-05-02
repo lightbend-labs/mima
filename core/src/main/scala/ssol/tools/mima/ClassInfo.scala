@@ -44,13 +44,14 @@ abstract class ClassInfo(val owner: PackageInfo) {
     else owner.fullName + "." + name
   }
 
-  def declarationPrefix = 
+  def declarationPrefix = {
     if (name.endsWith("$")) "object"
-    else if (isScala && (isTrait || loaded && isInterface)) "trait"
-    else if(isInterface) "interface" // java interface
+    else if (isTrait || loaded && isInterface) "trait"
+    else if(loaded && isInterface) "interface" // java interface
     else "class"
+  }
   
-  def classString = declarationPrefix + " " + formatClassName(fullName.init) 
+  def classString = declarationPrefix + " " + formatClassName(if(isObject) fullName.init else fullName)
     
   protected var loaded = false
   private def ensureLoaded() =
@@ -242,7 +243,7 @@ abstract class ClassInfo(val owner: PackageInfo) {
     !ClassfileParser.isPrivate(flags)
   }
 
-  override def toString = declarationPrefix + " " + name
+  override def toString = "class " + name
 
   def description: String = declarationPrefix + " " + fullName
 }

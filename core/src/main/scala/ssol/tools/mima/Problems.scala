@@ -4,12 +4,12 @@ object Problem {
   object Status extends Enumeration {
     val Unfixable = Value("unfixable")
     val Upgradable = Value("upgradable") // means mima client can fix the bytecode
-    val SourceFixable = Value("source fixable")
+    val SourceFixable = Value("source fixable") // means that the break can be easily fixed in the source
     val Ignored = Value("ignored")
   }
 }
 
-abstract class Problem(val description: String, initialStatus: Problem.Status.Value = Problem.Status.Unfixable) {
+sealed abstract class Problem(val description: String, initialStatus: Problem.Status.Value = Problem.Status.Unfixable) {
   var status: Problem.Status.Value = initialStatus
 }
 
@@ -17,7 +17,8 @@ case class MissingFieldProblem(oldfld: MemberInfo) extends
   Problem(oldfld.fieldString+" does not have a correspondent in new version")
 
 case class MissingMethodProblem(oldmeth: MemberInfo) extends
-  Problem(oldmeth.methodString+" does not have a correspondent in new version")
+  Problem(oldmeth.methodString+" does not have a correspondent in new version",
+      if(oldmeth.owner.isTrait) Problem.Status.Upgradable else Problem.Status.Unfixable)
 
 case class MissingClassProblem(oldclazz: ClassInfo) extends
   Problem(oldclazz.classString+" does not have a correspondent in new version")
@@ -37,23 +38,21 @@ case class InaccessibleClassProblem(newclazz: ClassInfo) extends
 case class IncompatibleFieldTypeProblem(oldfld: MemberInfo, newfld: MemberInfo) extends
   Problem(newfld.fieldString+"'s type has changed; was: "+oldfld.tpe+", is now: "+newfld.tpe)
 
-case class IncompatibleMethTypeProblem(oldmeth: MemberInfo, newmeths: List[MemberInfo]) extends
+case class IncompatibleMethTypeProblem(oldmeth: MemberInfo, newmeths: List[MemberInfo])(implicit status: Problem.Status.Value = Problem.Status.SourceFixable) extends
   Problem(
     oldmeth.methodString+(
     if (newmeths.tail.isEmpty)
       "'s type has changed; was "+oldmeth.tpe+", is now: "+newmeths.head.tpe
     else
       " does not have a correspondent with same parameter signature among "+
-      (newmeths map (_.tpe) mkString ", ")), Problem.Status.SourceFixable)
+      (newmeths map (_.tpe) mkString ", ")), status)
 
-case class IncompatibleResultTypeProblem(oldmeth: MemberInfo, newmeth: MemberInfo) extends
+case class IncompatibleResultTypeProblem(oldmeth: MemberInfo, newmeth: MemberInfo)(implicit status: Problem.Status.Value = Problem.Status.SourceFixable) extends
   Problem(oldmeth.methodString+" has now a different result type; was: "+
-          oldmeth.tpe.resultType+", is now: "+newmeth.tpe.resultType, Problem.Status.SourceFixable)
+          oldmeth.tpe.resultType+", is now: "+newmeth.tpe.resultType,  status)
 
 case class AbstractMethodProblem(newmeth: MemberInfo) extends
-  Problem("abstract "+newmeth.methodString+" does not have a correspondent in old version",
-          if (newmeth.owner.isTrait && newmeth.owner.implClass.hasStaticImpl(newmeth)) Problem.Status.Upgradable
-          else Problem.Status.Unfixable)
+  Problem("abstract "+newmeth.methodString+" does not have a correspondent in old version", Problem.Status.Upgradable)
 
 case class ClassAndTraitNotComparableProblem(oldClazz: ClassInfo, newClazz: ClassInfo) extends
   Problem("declaration of " + oldClazz.description + " has changed to " + newClazz.description +

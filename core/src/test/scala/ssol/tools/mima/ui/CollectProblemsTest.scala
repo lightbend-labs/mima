@@ -13,7 +13,7 @@ class CollectProblemsTest  {
     val cp = scalaLib :: ClassPath.split(Config.baseClassPath.asClasspathString)
     val cpString = ClassPath.join(cp : _*)
     Config.baseClassPath = new JavaClassPath(ClassPath.DefaultJavaContext.classesInPath(cpString), ClassPath.DefaultJavaContext)    
-        
+    
     val mima = new MiMaLib
     
     // SUT

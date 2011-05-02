@@ -18,7 +18,7 @@ class MiMaLib {
   -i, -iinteractive
   -f, -fix
   */
-
+  
   private def classPath(name: String) = {
     val f = new File(new java.io.File(name))
     val dir = AbstractFile.getDirectory(f)
@@ -38,53 +38,6 @@ class MiMaLib {
     info("Problem: " + problem.description + (if (problem.status != Problem.Status.Unfixable) " (" + problem.status + ")" else ""))
   }
 
-  private def uniques(methods: List[MemberInfo]): List[MemberInfo] =
-    methods.groupBy(_.parametersSig).values.map(_.head).toList
-
-  private def compareClasses(oldclazz: ClassInfo, newclazz: ClassInfo) {
-    info("[compare] %s \t %s".format(oldclazz, newclazz))
-    for (oldfld <- oldclazz.fields.iterator)
-      if (oldfld.isAccessible) {
-        val newflds = newclazz.lookupClassFields(oldfld.name)
-        if (newflds.hasNext) {
-          val newfld = newflds.next
-          if (!newfld.isPublic)
-            raise(InaccessibleFieldProblem(newfld))
-          else if (oldfld.sig != newfld.sig)
-            raise(IncompatibleFieldTypeProblem(oldfld, newfld))
-        } else
-          raise(MissingFieldProblem(oldfld))
-      }
-    for (oldmeth <- oldclazz.methods.iterator)
-      if (oldmeth.isAccessible) {
-        val newmeths = newclazz.lookupMethods(oldmeth.name).toList
-        if (newmeths.nonEmpty)
-          newmeths find (_.sig == oldmeth.sig) match {
-            case None =>
-              newmeths find (oldmeth matchesType _) match {
-                case None =>
-                  raise(IncompatibleMethTypeProblem(oldmeth, uniques(newmeths)))
-                case Some(newmeth) =>
-                  raise(IncompatibleResultTypeProblem(oldmeth, newmeth))
-              }
-            case Some(newmeth) =>
-              if (!newmeth.isPublic)
-                raise(InaccessibleMethodProblem(newmeth))
-          }
-        else
-          raise(MissingMethodProblem(oldmeth))
-      }
-    for (newmeth <- newclazz.methods.iterator)
-      if (newmeth.isDeferred) {
-        val oldmeths = oldclazz.lookupMethods(newmeth.name)
-        oldmeths find (oldmeth => oldmeth.isDeferred && oldmeth.sig == newmeth.sig) match {
-          case Some(oldmeth) => ()
-
-          case _ =>
-            raise(AbstractMethodProblem(newmeth))
-        }
-      }
-  }
 
   private def comparePackages(oldpkg: PackageInfo, newpkg: PackageInfo) {
     val traits = newpkg.traits // determine traits of new package first
@@ -94,11 +47,14 @@ class MiMaLib {
           // if it is missing a trait implementation class, then no error should be reported 
           // since there should be already errors, i.e., missing methods...
           ()
+        
         case None => raise(MissingClassProblem(oldclazz))
-        case Some(newclazz) =>
-          if (!newclazz.isPublic)
-            raise(InaccessibleClassProblem(newclazz))
-          compareClasses(oldclazz, newclazz)
+        
+        case Some(newclazz) => 
+          analyze.ClassInfoAnalyzer(oldclazz, newclazz) match {
+            case None => ()
+            case Some(probs) => probs.foreach(raise) 
+          }
       }
     }
   }
