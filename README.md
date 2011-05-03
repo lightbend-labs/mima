@@ -15,6 +15,12 @@ Make sure to build the sources of branch 0.9, installation notes can be found [h
 
 [xsbt]: https://github.com/harrah/xsbt/tree/0.9
 
+
+Launch MiMa
+-------
+
+	$ xsbt run
+
 Functional Tests
 -------
 
