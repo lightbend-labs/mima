@@ -69,7 +69,9 @@ object JarCopy {
     zos.close()
   }
 
+  /*
   def main(args: Array[String]) {
     copy(args(0), args(1), new Patches)
   }
+  */
 }
