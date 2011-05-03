@@ -76,11 +76,11 @@ object MimaBuild extends Build {
         val oraclePath = projectPath + "/problems.txt"
 
         try {
-          testRunner.runTest(proj.project, v1.jar.getAbsolutePath, v2.jar.getAbsolutePath, oraclePath)
+          testRunner.runTest(proj.project, v1.getAbsolutePath, v2.getAbsolutePath, oraclePath)
         } catch {
           case e => println("[fatal] Failed to run Test '" + proj.project + "'")
         }
-
+        ()
       }
 
   lazy val runAllTests =
