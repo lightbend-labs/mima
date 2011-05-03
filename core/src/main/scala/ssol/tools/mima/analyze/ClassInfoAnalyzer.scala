@@ -1,6 +1,6 @@
 package ssol.tools.mima.analyze
 
-import ssol.tools.mima.{ClassInfo, Problem, ClassAndTraitNotComparableProblem}
+import ssol.tools.mima.{ClassInfo, Problem, IncompatibleClassDeclarationProblem}
 
 /** common interface for analyzing classes. */
 trait ClassInfoAnalyzer extends Analyzer[ClassInfo, ClassInfo] {
@@ -17,7 +17,7 @@ object ClassInfoAnalyzer {
     //FIXME[mirco]: what about other declaration at the class level? Any special case to watch out...
     if( (oldClazz.isClass && newClazz.isTrait) || (oldClazz.isTrait && newClazz.isClass) ) {
       // don't go any further as this is a major breaking change...
-      Some(ClassAndTraitNotComparableProblem(oldClazz, newClazz) :: Nil)
+      Some(IncompatibleClassDeclarationProblem(oldClazz, newClazz) :: Nil)
     }
     
     // FIXME[mirco]: should we handle java interface and scala trait separately? Need to think about it... 

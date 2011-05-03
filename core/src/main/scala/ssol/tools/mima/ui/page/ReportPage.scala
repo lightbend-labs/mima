@@ -284,7 +284,7 @@ object ProblemsModel {
     case IncompatibleMethTypeProblem(oldmth, newmth)   => oldmth.fullName
     case IncompatibleResultTypeProblem(oldmth, newmth) => oldmth.fullName
     case AbstractMethodProblem(oldmeth)                => oldmeth.fullName
-    case ClassAndTraitNotComparableProblem(oldclz, _)  => oldclz.fullName
+    case IncompatibleClassDeclarationProblem(oldclz, _)  => oldclz.fullName
   }
 }
 

@@ -54,6 +54,6 @@ case class IncompatibleResultTypeProblem(oldmeth: MemberInfo, newmeth: MemberInf
 case class AbstractMethodProblem(newmeth: MemberInfo) extends
   Problem("abstract "+newmeth.methodString+" does not have a correspondent in old version", Problem.Status.Upgradable)
 
-case class ClassAndTraitNotComparableProblem(oldClazz: ClassInfo, newClazz: ClassInfo) extends
+case class IncompatibleClassDeclarationProblem(oldClazz: ClassInfo, newClazz: ClassInfo) extends
   Problem("declaration of " + oldClazz.description + " has changed to " + newClazz.description +
       " in new version; changing " + oldClazz.declarationPrefix +" to " + newClazz.declarationPrefix + " breaks client code")
