@@ -2,19 +2,21 @@ package ssol.tools.mima.analyze
 
 import ssol.tools.mima.Problem
 
-/** Top trait for all Analyzer classes. Analyzers should be immutable, 
- *  this is why the trait is marked as @Immutable. */
+/** Top trait for all Analyzer classes. Mind that in the current implementation 
+ * analyzers are NOT thread-safe. */
 trait Analyzer[T, S] extends Immutable {
   
-  protected def reporterFactory: ReporterFactory = new DefaultReporterFactory
+  private lazy val _problems = collection.mutable.ListBuffer.empty[Problem]
+  
+  protected[analyze] def raise(problem: Problem) = _problems += problem
   
   final def analyze(left: T, right: S): Option[List[Problem]] = {
-    val reporter = reporterFactory.createReporter
-    analyze(reporter)(left, right)
+    runAnalysis(left, right)
     
-    val problems = reporter.problems
+    val problems = _problems.toList
+    _problems.clear()
     if(problems.isEmpty) None else Some(problems)
   }
   
-  protected def analyze(reporter: Reporter)(left: T, right: S): Unit
+  protected def runAnalysis(left: T, right: S): Unit
 }

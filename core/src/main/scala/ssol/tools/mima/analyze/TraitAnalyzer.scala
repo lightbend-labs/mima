@@ -11,12 +11,12 @@ private class TraitAnalyzer extends BaseClassAnalyzer {
     super.analyze(oldClazz, newClazz)
   }*/
 
-  override protected def checkOldMethods(reporter: Reporter)(oldclazz: ClassInfo, newclazz: ClassInfo) {
-    checkConcreteMethods(reporter)(oldclazz, newclazz)
-    checkDeferredMethods(reporter)(oldclazz, newclazz)
+  override protected def checkOldMethods(oldclazz: ClassInfo, newclazz: ClassInfo) {
+    checkConcreteMethods(oldclazz, newclazz)
+    checkDeferredMethods(oldclazz, newclazz)
   }
 
-  private def checkConcreteMethods(reporter: Reporter)(oldclazz: ClassInfo, newclazz: ClassInfo) {
+  private def checkConcreteMethods(oldclazz: ClassInfo, newclazz: ClassInfo) {
     val oldmeths = if(oldclazz.isTrait) oldclazz.concreteMethods else Nil
     val newmeths = (old: MemberInfo) => if(newclazz.isTrait) newclazz.concreteMethods.filter(_.name == old.name) else Nil
     
@@ -30,23 +30,23 @@ private class TraitAnalyzer extends BaseClassAnalyzer {
   	    for(problem <- problems) problem match {
   	      case IncompatibleResultTypeProblem(oldmeth, newmeth) =>
   	        methodAnalyzer.analyze(List(oldmeth), (meth: MemberInfo) => newclazz.lookupMethods(meth.name).toList) match {
-  	          case None => reporter.raise(IncompatibleResultTypeProblem(oldmeth, newmeth)(Problem.Status.Upgradable))
-  	          case Some(p) => reporter.raise(problem)
+  	          case None => raise(IncompatibleResultTypeProblem(oldmeth, newmeth)(Problem.Status.Upgradable))
+  	          case Some(p) => raise(problem)
   	        }
   	      
   	      case IncompatibleMethTypeProblem(oldmeth, newmeths) => 
   	        methodAnalyzer.analyze(List(oldmeth), (meth: MemberInfo) => newclazz.lookupMethods(meth.name).toList) match {
-  	          case None => reporter.raise(IncompatibleMethTypeProblem(oldmeth, newmeths)(Problem.Status.Upgradable))
-  	          case Some(p) => reporter.raise(problem)
+  	          case None => raise(IncompatibleMethTypeProblem(oldmeth, newmeths)(Problem.Status.Upgradable))
+  	          case Some(p) => raise(problem)
   	        }
   	        
-  	      case _ => reporter.raise(problem)
+  	      case _ => raise(problem)
   	    }
   	}   
   }
   
-  private def checkDeferredMethods(reporter: Reporter)(oldclazz: ClassInfo, newclazz: ClassInfo) {
-    checkMethods(reporter)(if(oldclazz.isTrait) oldclazz.methods.iterator.toList -- oldclazz.concreteMethods else oldclazz.methods.iterator.toList, 
+  private def checkDeferredMethods(oldclazz: ClassInfo, newclazz: ClassInfo) {
+    checkMethods(if(oldclazz.isTrait) oldclazz.methods.iterator.toList -- oldclazz.concreteMethods else oldclazz.methods.iterator.toList, 
         oldMeth => newclazz.lookupMethods(oldMeth.name).toList)
   }
 }
