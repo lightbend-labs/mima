@@ -1,0 +1,1 @@
+deprecated method foo2()Int in class A does not have a correspondent in new version
