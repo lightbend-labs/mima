@@ -30,4 +30,6 @@ object Icons {
   lazy val down = getIcon("down.png")
   
   lazy val close = getIcon("close.gif")
+  
+  lazy val fixHint = getIcon("light-bulb.png")
 }

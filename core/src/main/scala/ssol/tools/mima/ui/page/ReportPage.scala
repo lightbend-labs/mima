@@ -25,7 +25,7 @@ class ReportPage extends GridBagPanel with WithConstraints {
   import javax.swing._
 
   /** Show problem description panel when the user selects a row. */
-  class RowSelection(table: JTable) extends ListSelectionListener {
+  private[ReportPage] class RowSelection(table: JTable) extends ListSelectionListener {
     override def valueChanged(e: ListSelectionEvent) {
       var index = table.getSelectedRow
 
@@ -50,18 +50,45 @@ class ReportPage extends GridBagPanel with WithConstraints {
     }
   }
 
-  protected class ReportTable extends JTable with TableModelListener {
-    /** Special renderer for unfixable issues, checkbox is rendered as "-" */
-    object UnavailableFixCellRenderer extends DefaultTableCellRenderer {
-      private val UnavailableFix = "-"
-
-      override def getTableCellRendererComponent(table: JTable, value: AnyRef, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int): java.awt.Component = {
-        super.getTableCellRendererComponent(table, UnavailableFix, isSelected, hasFocus, row, column)
-      }
-
-      setHorizontalAlignment(javax.swing.SwingConstants.CENTER)
+  private object StatusColumnCellRenderer extends DefaultTableCellRenderer {
+    private val container = new BorderPanel {
+      opaque = true
+    	val text = new Label
+      val icon = new Label { icon = EmptyIcon} 
+      
+      add(text, BorderPanel.Position.West)
+      add(icon, BorderPanel.Position.East)
     }
 
+    
+    opaque = true
+
+    override def getTableCellRendererComponent(table: JTable, color: Any,
+      isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int): java.awt.Component = {
+      val base = super.getTableCellRendererComponent(table, color, isSelected, hasFocus, row, column)
+      container.background = base.getBackground
+      container.foreground = base.getForeground
+      
+      container.text.foreground = if(isSelected) Color.white else Color.black
+      
+      container.text.text = (table.getValueAt(row,column).toString)
+
+      val icon = table.getModel.getValueAt(row, ProblemsModel.ProblemDataColumn) match {
+        case p: Problem if p.fixHint.isDefined => images.Icons.fixHint
+        case _                                 => EmptyIcon
+      }
+      
+      container.icon.icon = icon
+      
+      
+      
+      container.peer
+    }
+
+  }
+
+  private[ReportPage] class ReportTable extends JTable with TableModelListener {
+    //setAutoResizeMode(JTable.AUTO_RESIZE_OFF)
     // it makes sense to allow only single selection
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
 
@@ -111,6 +138,14 @@ class ReportPage extends GridBagPanel with WithConstraints {
     errorLabel.visible = _model.hasUnfixableProblems
 
     table.setModel(_model)
+    
+    table.getColumnModel.getColumn(0).setCellRenderer(StatusColumnCellRenderer)
+    table.getColumnModel.getColumn(0).setMinWidth(100)
+    /*table.getColumnModel.getColumn(0).setPreferredWidth(110)
+    table.getColumnModel.getColumn(1).setPreferredWidth(200)
+    table.getColumnModel.getColumn(2).setPreferredWidth(Int.MaxValue)*/
+    
+    table.doLayout
 
     sorter = new TableRowSorter(_model)
     table.setRowSorter(sorter)
@@ -152,6 +187,10 @@ class ReportPage extends GridBagPanel with WithConstraints {
 
       val statusLabel = new Label("Status:")
       val status = new Label
+
+      val fileLabel = new Label("File:")
+      val file = new Label
+
       val memberLabel = new Label("Member:")
       val member = new Label
 
@@ -187,30 +226,38 @@ class ReportPage extends GridBagPanel with WithConstraints {
       }
 
       withConstraints(gridx = 0, gridy = 1, insets = leftIns) {
-        add(memberLabel, _)
+        add(fileLabel, _)
       }
 
       withConstraints(gridx = 1, gridy = 1, weightx = 1, insets = rightIns) {
-        add(member, _)
+        add(file, _)
       }
 
       withConstraints(gridx = 0, gridy = 2, insets = leftIns) {
+        add(memberLabel, _)
+      }
+
+      withConstraints(gridx = 1, gridy = 2, weightx = 1, insets = rightIns) {
+        add(member, _)
+      }
+
+      withConstraints(gridx = 0, gridy = 3, insets = leftIns) {
         add(descriptionLabel, _)
       }
 
-      withConstraints(gridx = 1, gridy = 2, fill = Fill.Horizontal, insets = rightIns) {
+      withConstraints(gridx = 1, gridy = 3, fill = Fill.Horizontal, insets = rightIns) {
         add(description, _)
       }
 
-      withConstraints(gridx = 0, gridy = 3, insets = new Insets(0, 9, 0, 5)) {
+      withConstraints(gridx = 0, gridy = 4, insets = new Insets(0, 9, 0, 5)) {
         add(fixHintLabel, _)
       }
 
-      withConstraints(gridx = 1, gridy = 3, weightx = 1, fill = Fill.Horizontal, insets = new Insets(0, 0, 0, 9)) {
+      withConstraints(gridx = 1, gridy = 4, weightx = 1, fill = Fill.Horizontal, insets = new Insets(0, 0, 0, 9)) {
         add(fixHint, _)
       }
 
-      withConstraints(gridx = 0, gridy = 4, gridwidth = 2, weightx = 1, weighty = 1, fill = Fill.Both) {
+      withConstraints(gridx = 0, gridy = 5, gridwidth = 2, weightx = 1, weighty = 1, fill = Fill.Both) {
         add(Swing.VGlue, _)
       }
     }
@@ -231,9 +278,10 @@ class ReportPage extends GridBagPanel with WithConstraints {
       private var _problem: Problem = _
       def problem_=(problem: Problem) = {
         panel.status.text = problem.status.toString
+        panel.file.text = problem.fileName
         panel.member.text = ProblemsModel.getReferredMember(problem)
         panel.description.text = problem.description
-        FixHint(problem) match {
+        problem.fixHint match {
           case Some(hint) =>
             panel.fixHint.text = "To fix this incompatibility consider adding the following bridge " +
               "method in the class source code:\n\n" + hint.toSourceCode
@@ -273,18 +321,18 @@ object ProblemsModel {
     Array(problem.status, getReferredMember(problem), problem.description, problem)
 
   def getReferredMember(p: Problem): String = p match {
-    case MissingFieldProblem(oldfld)                   => oldfld.fullName
-    case MissingMethodProblem(oldmth)                  => oldmth.fullName
-    case MissingClassProblem(oldclz)                   => oldclz.toString
-    case MissingPackageProblem(oldpkg)                 => oldpkg.toString
-    case InaccessibleFieldProblem(newfld)              => newfld.fullName
-    case InaccessibleMethodProblem(newmth)             => newmth.fullName
-    case InaccessibleClassProblem(newcls)              => newcls.toString
-    case IncompatibleFieldTypeProblem(oldfld, newfld)  => oldfld.fullName
-    case IncompatibleMethTypeProblem(oldmth, newmth)   => oldmth.fullName
-    case IncompatibleResultTypeProblem(oldmth, newmth) => oldmth.fullName
-    case AbstractMethodProblem(oldmeth)                => oldmeth.fullName
-    case IncompatibleClassDeclarationProblem(oldclz, _)  => oldclz.fullName
+    case MissingFieldProblem(oldfld)                    => oldfld.fullName
+    case MissingMethodProblem(oldmth)                   => oldmth.fullName
+    case MissingClassProblem(oldclz)                    => oldclz.shortDescription
+    case InaccessibleFieldProblem(newfld)               => newfld.fullName
+    case InaccessibleMethodProblem(newmth)              => newmth.fullName
+    case InaccessibleClassProblem(newcls)               => newcls.shortDescription
+    case IncompatibleFieldTypeProblem(oldfld, newfld)   => oldfld.fullName
+    case IncompatibleMethTypeProblem(oldmth, newmth)    => oldmth.fullName
+    case IncompatibleResultTypeProblem(oldmth, newmth)  => oldmth.fullName
+    case AbstractMethodProblem(oldmeth)                 => oldmeth.fullName
+    case IncompatibleClassDeclarationProblem(oldclz, _) => oldclz.shortDescription
+    case UpdateForwarderBodyProblem(meth)               => meth.fullName
   }
 }
 

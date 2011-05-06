@@ -1,8 +1,9 @@
 package ssol.tools
 package mima
 
-import Config._
 
+import Config._
+import analyze.ClassInfoAnalyzer
 import util.IndentedOutput._
 import scala.tools.nsc.io.{ File, AbstractFile }
 import scala.tools.nsc.util.{ DirectoryClassPath, JavaClassPath }
@@ -51,10 +52,7 @@ class MiMaLib {
         case None => raise(MissingClassProblem(oldclazz))
         
         case Some(newclazz) => 
-          analyze.ClassInfoAnalyzer(oldclazz, newclazz) match {
-            case None => ()
-            case Some(probs) => probs.foreach(raise) 
-          }
+          ClassInfoAnalyzer(oldclazz, newclazz).foreach(raise)
       }
     }
   }
@@ -66,7 +64,7 @@ class MiMaLib {
       for (p <- oldpkg.packages.valuesIterator) {
         newpkg.packages get p.name match {
           case None =>
-            raise(MissingPackageProblem(oldpkg))
+            traversePackages(p, NoPackageInfo)
           case Some(q) =>
             traversePackages(p, q)
         }

@@ -5,7 +5,7 @@ import scala.reflect.NameTransformer
 
 object ClassInfo {
   def formatClassName(str: String) = NameTransformer.decode(str).replace('$', '#')
-  
+
   /** We assume there can be only one java.lang.Object class, and that comes from the configuration
    *  class path.
    */
@@ -36,23 +36,32 @@ abstract class ClassInfo(val owner: PackageInfo) {
 
   def file: AbstractFile
 
+  private var _sourceFileName = ""
+  def sourceFileName_=(fileName: String) = _sourceFileName = fileName
+  def sourceFileName = this match {
+    case c: ConcreteClassInfo => _sourceFileName
+    case _                    => "compiler generated"
+  }
+
   def name: String
-  
+
   lazy val fullName: String = {
     assert(name != null)
     if (owner.isRoot) name
     else owner.fullName + "." + name
   }
 
+  def formattedFullName = formatClassName(if (isObject) fullName.init else fullName)
+
   def declarationPrefix = {
-    if (name.endsWith("$")) "object"
+    if (name endsWith "$") "object"
     else if (isTrait || loaded && isInterface) "trait"
-    else if(loaded && isInterface) "interface" // java interface
+    else if (loaded && isInterface) "interface" // java interface
     else "class"
   }
-  
-  def classString = declarationPrefix + " " + formatClassName(if(isObject) fullName.init else fullName)
-    
+
+  def classString = declarationPrefix + " " + formattedFullName
+
   protected var loaded = false
   private def ensureLoaded() =
     if (!loaded)
@@ -62,7 +71,7 @@ abstract class ClassInfo(val owner: PackageInfo) {
       } finally {
         loaded = true
       }
-      
+
   private var _superClass: ClassInfo = NoClass
   private var _interfaces: List[ClassInfo] = Nil
   private var _fields: Members = NoMembers
@@ -86,23 +95,23 @@ abstract class ClassInfo(val owner: PackageInfo) {
   def flags_=(x: Int) = _flags = x
   def isScala_=(x: Boolean) = _isScala = x
 
-  lazy val superClasses: List[ClassInfo] = 
+  lazy val superClasses: List[ClassInfo] =
     this :: (if (this == ClassInfo.ObjectClass) Nil else superClass.superClasses)
 
   def lookupClassFields(name: String): Iterator[MemberInfo] =
     superClasses.iterator flatMap (_.fields.get(name))
 
-  def lookupClassMethods(name: String): Iterator[MemberInfo] = 
+  def lookupClassMethods(name: String): Iterator[MemberInfo] =
     superClasses.iterator flatMap (_.methods.get(name))
-  
-  def lookupTraitMethods(name: String): Iterator[MemberInfo] = 
+
+  def lookupInterfaceMethods(name: String): Iterator[MemberInfo] =
+    allInterfaces.iterator flatMap (_.methods.get(name))
+
+  def lookupMethods(name: String): Iterator[MemberInfo] =
+    lookupClassMethods(name) ++ lookupInterfaceMethods(name)
+
+  def lookupTraitMethods(name: String): Iterator[MemberInfo] =
     allTraits.iterator flatMap (_.methods.get(name))
-  
-  def lookupInterfaceMethods(name: String): Iterator[MemberInfo] = 
-    interfaces.iterator flatMap (_.methods.get(name))
-  
-  def lookupMethods(name: String): Iterator[MemberInfo] = 
-    lookupClassMethods(name) ++ lookupTraitMethods(name) ++ lookupInterfaceMethods(name)
 
   /** Is this class a non-trait that inherits !from a trait */
   lazy val isClassInheritsTrait = !isInterface && _interfaces.exists(_.isTrait)
@@ -113,7 +122,7 @@ abstract class ClassInfo(val owner: PackageInfo) {
   /** The constructors of this class
    *  pre: methodsAreRelevant
    */
-  def constructors: List[MemberInfo] = 
+  def constructors: List[MemberInfo] =
     if (methods == null) null
     else methods.iterator.filter(_.isClassConstructor).toList
 
@@ -128,9 +137,13 @@ abstract class ClassInfo(val owner: PackageInfo) {
 
   /** The concrete methods of this trait */
   lazy val concreteMethods: List[MemberInfo] = {
-    assert(isTrait)
-    methods.iterator filter (implClass.hasStaticImpl(_)) toList
+    if(isTrait) methods.iterator filter (hasStaticImpl(_)) toList
+    else Nil
   }
+  
+  /** The deferred methods of this trait */
+  lazy val deferredMethods: List[MemberInfo] = 
+    methods.iterator.toList -- concreteMethods
 
   /** The inherited traits in the linearization of this class or trait,
    *  except any traits inherited by its superclass.
@@ -138,21 +151,26 @@ abstract class ClassInfo(val owner: PackageInfo) {
    */
   lazy val directTraits: List[ClassInfo] = {
     /** All traits in the transitive, reflexive inheritance closure of given trait `t' */
-    def traitClosure(t: ClassInfo): List[ClassInfo] =  
+    def traitClosure(t: ClassInfo): List[ClassInfo] =
       if (superClass.allTraits contains t) Nil
       else if (t.isTrait) parentsClosure(t) :+ t
       else parentsClosure(t)
-      
+
     def parentsClosure(c: ClassInfo) =
-    	(c.interfaces flatMap traitClosure).distinct
-    	
+      (c.interfaces flatMap traitClosure).distinct
+
     parentsClosure(this)
   }
 
-  /** All traits inherited directly or indirectly by this class */ 
+  /** All traits inherited directly or indirectly by this class */
   lazy val allTraits: Set[ClassInfo] =
     if (this == ClassInfo.ObjectClass) Set.empty
     else superClass.allTraits ++ directTraits
+
+  /** All traits inherited directly or indirectly by this class */
+  lazy val allInterfaces: Set[ClassInfo] =
+    if (this == ClassInfo.ObjectClass) Set.empty
+    else superClass.allInterfaces ++ interfaces ++ (interfaces flatMap (_.allInterfaces))
 
   private def unimplemented(sel: ClassInfo => Traversable[MemberInfo]): List[MemberInfo] = {
     ensureLoaded()
@@ -162,14 +180,14 @@ abstract class ClassInfo(val owner: PackageInfo) {
         m <- sel(t)
         if !hasInstanceImpl(m)
       } yield m
-    }  else Nil
+    } else Nil
   }
-    
+
   /** The methods that should be implemented by this class but aren't */
   lazy val unimplementedMethods = unimplemented(_.concreteMethods)
 
   /** The fields that should be implemented by this class but aren't */
-  lazy val unimplementedSetters = unimplemented(_.traitSetters) 
+  lazy val unimplementedSetters = unimplemented(_.traitSetters)
 
   /** Does this class have an implementation (forwarder or accessor) of given method `m'? */
   private def hasInstanceImpl(m: MemberInfo) =
@@ -180,8 +198,16 @@ abstract class ClassInfo(val owner: PackageInfo) {
 
   /** Optionally, the static implementation method corresponding to trait member `m' */
   def staticImpl(m: MemberInfo): Option[MemberInfo] = {
-    assert(isImplClass, this)
-    methods.get(m.name) find (im => hasImplSig(im.sig, m.sig))
+    if(isTrait) {
+      implClass match {
+        case impl: ConcreteClassInfo =>
+          assert(impl.isImplClass, impl)
+          impl.methods.get(m.name) find (im => hasImplSig(im.sig, m.sig))
+  
+        case _ => None
+      }
+    } 
+    else None
   }
 
   /** Does `isig' correspond to `tsig' if seen as the signature of the static
@@ -219,31 +245,38 @@ abstract class ClassInfo(val owner: PackageInfo) {
 
   /** is this a class, an object or a trait's implementation class*/
   def isClass: Boolean = !isTrait && !isInterface
-  
+
   /** Is this class a trait with some concrete methods or fields? */
   def isTrait: Boolean = implClass ne NoClass
 
   /** Is this class a trait without concrete methods or a java interface? */
-  def isInterface: Boolean = { 
+  def isInterface: Boolean = {
     ensureLoaded()
-    ClassfileParser.isInterface(flags) 
+    ClassfileParser.isInterface(flags)
   }
 
   def isObject: Boolean = name.endsWith("$")
 
   /** Is this class public? */
-  def isPublic: Boolean = { 
-    ensureLoaded() 
-    ClassfileParser.isPublic(flags) 
+  def isPublic: Boolean = {
+    ensureLoaded()
+    ClassfileParser.isPublic(flags)
   }
 
   /** Is this class public? */
   def isPackageVisible: Boolean = {
-    ensureLoaded() 
+    ensureLoaded()
     !ClassfileParser.isPrivate(flags)
   }
 
   override def toString = "class " + name
 
-  def description: String = declarationPrefix + " " + fullName
+  def shortDescription = {
+    // using 'description' because elsewhere objects' name are not correctly translated.
+    // In fact, formatClassName(name) would have a suffixed '#' for an object name, which is annoying.
+    val descr = description
+    val index = descr.lastIndexOf(descr)
+    if (index < 0) descr else descr.substring(index)
+  }
+  def description: String = declarationPrefix + " " + formattedFullName
 }

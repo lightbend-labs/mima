@@ -1,22 +1,23 @@
 package ssol.tools.mima.analyze
 
-import ssol.tools.mima.Problem
+import ssol.tools.mima.{Problem, ClassInfo}
 
-/** Top trait for all Analyzer classes. Mind that in the current implementation 
- * analyzers are NOT thread-safe. */
-trait Analyzer[T, S] extends Immutable {
+/** Common trait for analyzers. 
+ *  This class is NOT thread-safe. */
+trait Analyzer {
+
+  private val _problems = collection.mutable.ListBuffer.empty[Problem]
   
-  private lazy val _problems = collection.mutable.ListBuffer.empty[Problem]
+  protected def raise(problem: Problem) { _problems += problem }
   
-  protected[analyze] def raise(problem: Problem) = _problems += problem
-  
-  final def analyze(left: T, right: S): Option[List[Problem]] = {
-    runAnalysis(left, right)
+  final def analyze(): List[Problem] = {
+    runAnalysis()
     
     val problems = _problems.toList
     _problems.clear()
-    if(problems.isEmpty) None else Some(problems)
+    
+    problems
   }
   
-  protected def runAnalysis(left: T, right: S): Unit
+  protected def runAnalysis(): Unit
 }

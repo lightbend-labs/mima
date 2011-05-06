@@ -16,12 +16,20 @@ object MemberInfo {
 class MemberInfo(val owner: ClassInfo, val name: String, val flags: Int, val sig: String) {
   override def toString = "def "+name+": "+ sig
 
-  def decodedName = NameTransformer.decode(name) 
+  def decodedName = NameTransformer.decode(name)
 
   def fieldString = "field "+decodedName+" in "+owner.classString
-  def methodString = "method "+decodedName+tpe+" in "+owner.classString
+  def shortMethodString = (if(hasSyntheticName) "synthetic " else "") + (if(isDeprecated) "deprecated " else "") + "method "+decodedName + tpe
+  def methodString = shortMethodString + " in " + owner.classString
+  def defString = (if(isDeprecated) "@deprecated " else "") + "def " + decodedName + params.mkString("(", ",", ")") + ": " + tpe.resultType + " = " 
+  def applyString = decodedName + params.mkString("(", ",", ")")
   
-  def fullName = owner.fullName + "." + decodedName
+  lazy val params: List[String] = tpe match {
+    case MethodType(paramTypes, resultType) =>
+      for ((ptype, index) <- paramTypes.zipWithIndex) yield "par" + index + ": " + ptype
+  }
+  
+  def fullName = owner.formattedFullName + "." + decodedName
 
   def tpe: Type = owner.owner.definitions.fromSig(sig)
 
@@ -54,9 +62,11 @@ class MemberInfo(val owner: ClassInfo, val name: String, val flags: Int, val sig
 
   var isTraitSetter = maybeSetter(name) && setterIdx(name) >= 0
 
-  def isPublic: Boolean = ClassfileParser.isPublic(flags) 
+  def isPublic: Boolean = ClassfileParser.isPublic(flags)
+  
+  var isDeprecated = false	
 
-  def isDeferred: Boolean = ClassfileParser.isDeferred(flags) 
+  def isDeferred: Boolean = ClassfileParser.isDeferred(flags)
 
   def hasSyntheticName: Boolean = decodedName contains '$'
   

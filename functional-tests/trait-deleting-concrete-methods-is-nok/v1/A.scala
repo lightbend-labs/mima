@@ -7,3 +7,5 @@ trait A {
 trait B extends A {
   override def foo: Int = 2
 }
+
+class C extends B

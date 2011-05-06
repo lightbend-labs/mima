@@ -28,12 +28,12 @@ class CollectProblemsTest  {
     val mess = new StringBuilder
     
     if(!unexpectedProblems.isEmpty)
-      mess ++= "\tThe following problems were not expected\n" + unexpectedProblems.mkString("\t- ", "\n","")
+      mess ++= "\tThe following problems were not expected\n" + unexpectedProblems.mkString("\t- ", "\n\t- ","")
     
     if(!mess.isEmpty) mess ++= "\n\n" 
     
     if(!unreportedProblem.isEmpty)
-      mess ++=  "\tThe following expected problems were not reported\n" + unreportedProblem.mkString("\t- ", "\n","\n")
+      mess ++=  "\tThe following expected problems were not reported\n" + unreportedProblem.mkString("\t- ", "\n\t- ","\n")
       
     if (!mess.isEmpty) 
       println("[error] Test '" + testName + "' failed.\n" + mess)

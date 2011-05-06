@@ -1,52 +1,55 @@
 package ssol.tools.mima.analyze
 
 import ssol.tools.mima._
+import MethodAnalyzer._
 
-private class TraitAnalyzer extends BaseClassAnalyzer {
+private class TraitAnalyzer(oldClazz: ClassInfo, newClazz: ClassInfo) extends BaseClassAnalyzer(oldClazz, newClazz) {
 
-  /*
-  override def analyze(oldClazz: ClassInfo, newClazz: ClassInfo): Option[List[Problem]] = {
-    assert(oldClazz.isTrait && newClazz.isTrait, "either `" + oldClazz.fullName + "` or `"+
-         newClazz.fullName + "` are not traits")
-    super.analyze(oldClazz, newClazz)
-  }*/
-
-  override protected def checkOldMethods(oldclazz: ClassInfo, newclazz: ClassInfo) {
-    checkConcreteMethods(oldclazz, newclazz)
-    checkDeferredMethods(oldclazz, newclazz)
+  override protected def checkOldMethods() {
+    checkConcreteMethods(Problem.ClassVersion.New, oldClazz, newClazz)
+    checkDeferredMethods(Problem.ClassVersion.New, oldClazz, newClazz)
   }
 
-  private def checkConcreteMethods(oldclazz: ClassInfo, newclazz: ClassInfo) {
-    val oldmeths = if(oldclazz.isTrait) oldclazz.concreteMethods else Nil
-    val newmeths = (old: MemberInfo) => if(newclazz.isTrait) newclazz.concreteMethods.filter(_.name == old.name) else Nil
-    
-    
-    //checkMethods(reporter)(oldmeths, newmeths)
-    
-    val methodAnalyzer = new MethodsAnalyzer
-  	methodAnalyzer.analyze(oldmeths, newmeths) match {
-  	  case None => ()
-  	  case Some(problems) => 
-  	    for(problem <- problems) problem match {
-  	      case IncompatibleResultTypeProblem(oldmeth, newmeth) =>
-  	        methodAnalyzer.analyze(List(oldmeth), (meth: MemberInfo) => newclazz.lookupMethods(meth.name).toList) match {
-  	          case None => raise(IncompatibleResultTypeProblem(oldmeth, newmeth)(Problem.Status.Upgradable))
-  	          case Some(p) => raise(problem)
-  	        }
-  	      
-  	      case IncompatibleMethTypeProblem(oldmeth, newmeths) => 
-  	        methodAnalyzer.analyze(List(oldmeth), (meth: MemberInfo) => newclazz.lookupMethods(meth.name).toList) match {
-  	          case None => raise(IncompatibleMethTypeProblem(oldmeth, newmeths)(Problem.Status.Upgradable))
-  	          case Some(p) => raise(problem)
-  	        }
-  	        
-  	      case _ => raise(problem)
-  	    }
-  	}   
+  private def checkConcreteMethods(classVersion: Problem.ClassVersion.Value, baseClazz: ClassInfo, againstClazz: ClassInfo) {
+    val meths = baseClazz.concreteMethods
+    for (meth <- meths) {
+
+      val p = analyzeMethod(AnalyzeTraitImplMethod(classVersion) _)(meth, againstClazz)
+      p
+    }
   }
-  
-  private def checkDeferredMethods(oldclazz: ClassInfo, newclazz: ClassInfo) {
-    checkMethods(if(oldclazz.isTrait) oldclazz.methods.iterator.toList -- oldclazz.concreteMethods else oldclazz.methods.iterator.toList, 
-        oldMeth => newclazz.lookupMethods(oldMeth.name).toList)
+
+  private def checkDeferredMethods(classVersion: Problem.ClassVersion.Value, baseClazz: ClassInfo, againstClazz: ClassInfo) {
+    val meths = baseClazz.deferredMethods
+    for (meth <- meths)
+      analyzeMethod(AnalyzeDeferredMethod(classVersion) _)(meth, againstClazz)
+  }
+
+  override protected def checkNewMethods() {
+    for (newmeth <- newClazz.concreteMethods if !oldClazz.hasStaticImpl(newmeth)) {
+      if (!oldClazz.lookupMethods(newmeth.name).exists(_.sig == newmeth.sig)) {
+        // this means that the method is brand new and therefore the implementation 
+        // has to be injected 
+        val problem = MissingMethodProblem(newmeth)(Problem.ClassVersion.Old)
+        problem.status = Problem.Status.Upgradable
+        raise(problem)
+      }
+      // else a static implementation for the same method existed already, therefore 
+      // class that mixed-in the trait already have a forwarder to the implementation 
+      // class. Mind that despite no binary incompatibility arises, but program's 
+      // semantic may be severely affected.
+    }
+
+    for (newmeth <- newClazz.deferredMethods) {
+      val oldmeths = oldClazz.lookupMethods(newmeth.name)
+      oldmeths find (_.sig == newmeth.sig) match {
+        case Some(oldmeth) =>
+          ;
+        case _ =>
+          val problem = MissingMethodProblem(newmeth)(Problem.ClassVersion.Old)
+          problem.status = Problem.Status.Upgradable
+          raise(problem)
+      }
+    }
   }
 }

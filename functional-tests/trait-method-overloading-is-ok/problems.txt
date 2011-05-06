@@ -1,1 +1,1 @@
-abstract method foo(java.lang.Object)Int in trait A does not have a correspondent in old version
+method foo(java.lang.Object)Int in trait A does not have a correspondent in old version

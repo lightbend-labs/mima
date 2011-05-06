@@ -5,3 +5,5 @@ trait A {
 
 
 trait B extends A
+
+class C extends B

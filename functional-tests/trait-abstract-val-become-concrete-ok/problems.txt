@@ -1,1 +1,1 @@
-abstract method A$_setter_$foo_=(Int)Unit in trait A does not have a correspondent in old version
+synthetic method A$_setter_$foo_=(Int)Unit in trait A does not have a correspondent in old version

@@ -27,6 +27,8 @@ class SyntheticPackageInfo(owner: PackageInfo, val name: String) extends Package
   lazy val classes = mutable.Map.empty[String, ClassInfo]
 }
 
+object NoPackageInfo extends SyntheticPackageInfo(null, "<no package>")
+
 /** A concrete package. cp should be a directory classpath. 
  */
 class ConcretePackageInfo(owner: PackageInfo, cp: ClassPath[AbstractFile], val defs: Definitions) extends PackageInfo(owner) {

@@ -1,2 +1,2 @@
-abstract method foo()Int in trait A does not have a correspondent in old version
-method foo()Int in trait B does not have a correspondent in new version
+method foo()Int in trait A does not have a correspondent in old version
+classes mixing B needs to update body of method foo()Int

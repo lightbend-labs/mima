@@ -257,6 +257,7 @@ abstract class ClassfileParser(definitions: Definitions) {
     clazz.interfaces = parseInterfaces()
     parseFields(clazz)
     parseMethods(clazz)
+    parseAttributes(clazz)
   }
 
   def skipAttributes() {
@@ -265,7 +266,25 @@ abstract class ClassfileParser(definitions: Definitions) {
       in.skip(2); in.skip(in.nextInt)
     }
   }
-
+  
+  def parseAttributes(c: ClassInfo) {
+    val attrCount = in.nextChar
+     for (i <- 0 until attrCount) {
+      val attrIndex = in.nextChar
+      val attrName = pool.getName(attrIndex)
+      val attrLen = in.nextInt
+      val attrEnd = in.bp + attrLen
+      if (attrName == "SourceFile") {
+        if(in.bp + 1 <= attrEnd) {
+        	val attrNameIndex = in.nextChar
+          c.sourceFileName = pool.getName(attrNameIndex)
+        }
+      }
+      
+      in.bp = attrEnd
+     }
+  }
+  
   /** Return true iff TraitSetter annotation found among attributes */
   def parseAttributes(m: MemberInfo) {
     val maybeTraitSetter = MemberInfo.maybeSetter(m.name)
@@ -293,6 +312,8 @@ abstract class ClassfileParser(definitions: Definitions) {
         val maxLocals = in.nextChar
         val codeLength = in.nextInt
         m.codeOpt = Some((in.bp, in.bp + codeLength))
+      } else if (attrName == "Deprecated") {
+        m.isDeprecated = true
       }
       in.bp = attrEnd
     }
