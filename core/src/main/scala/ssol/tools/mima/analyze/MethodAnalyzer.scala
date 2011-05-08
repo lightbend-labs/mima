@@ -3,6 +3,20 @@ package ssol.tools.mima.analyze
 import ssol.tools.mima._
 
 object MethodAnalyzer {
+  
+  trait Rule {
+    def check: Boolean
+  }
+  trait MethodRule extends Rule
+  
+  case class ExistsMethod(m: MemberInfo, in: List[MemberInfo]) extends MethodRule {
+    def check = {
+      val meths = in filter (m.params.size == _.params.size)
+      meths.nonEmpty
+    }
+  }
+  
+  //case class 
 
   private object MethodProblemBuilder {
     //FIXME[mirco]: We need to watch for flags. A public method that becomes private is an issue,

@@ -31,7 +31,7 @@ class ConcreteClassInfo(owner: PackageInfo, val file: AbstractFile) extends Clas
   def name = PackageInfo.className(file.name)
 }
 
-abstract class ClassInfo(val owner: PackageInfo) {
+abstract class ClassInfo(val owner: PackageInfo) extends AcessModifierInfo {
   import ClassInfo._
 
   def file: AbstractFile
@@ -63,7 +63,7 @@ abstract class ClassInfo(val owner: PackageInfo) {
   def classString = declarationPrefix + " " + formattedFullName
 
   protected var loaded = false
-  private def ensureLoaded() =
+  override protected def ensureLoaded() =
     if (!loaded)
       try {
         Config.info("parsing " + file)
@@ -83,7 +83,7 @@ abstract class ClassInfo(val owner: PackageInfo) {
   def interfaces: List[ClassInfo] = { ensureLoaded(); _interfaces }
   def fields: Members = { ensureLoaded(); _fields }
   def methods: Members = { ensureLoaded(); _methods }
-  def flags: Int = _flags
+  override def flags: Int = _flags
 
   /** currently not set! */
   def isScala: Boolean = { ensureLoaded(); _isScala }
@@ -258,16 +258,11 @@ abstract class ClassInfo(val owner: PackageInfo) {
   def isObject: Boolean = name.endsWith("$")
 
   /** Is this class public? */
-  def isPublic: Boolean = {
-    ensureLoaded()
-    ClassfileParser.isPublic(flags)
-  }
-
-  /** Is this class public? */
+  /*
   def isPackageVisible: Boolean = {
     ensureLoaded()
     !ClassfileParser.isPrivate(flags)
-  }
+  }*/
 
   override def toString = "class " + name
 

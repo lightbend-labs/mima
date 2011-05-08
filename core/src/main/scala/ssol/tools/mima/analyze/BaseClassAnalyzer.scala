@@ -51,6 +51,8 @@ private abstract class BaseClassAnalyzer(oldClazz: ClassInfo, newClazz: ClassInf
   }
 
   protected def checkOldMethods() {
+    // Forall(oldClazz.methods).Exists
+    
     for (oldmeth <- oldClazz.methods.iterator.toList)
       analyzeMethod(AnalyzeClassMethod(Problem.ClassVersion.New) _)(oldmeth, newClazz)
   }

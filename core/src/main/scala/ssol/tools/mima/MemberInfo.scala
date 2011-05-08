@@ -13,7 +13,7 @@ object MemberInfo {
   def maybeSetter(name: String) = name.endsWith(setterSuffix)
 }
 
-class MemberInfo(val owner: ClassInfo, val name: String, val flags: Int, val sig: String) {
+class MemberInfo(val owner: ClassInfo, val name: String, override val flags: Int, val sig: String) extends AcessModifierInfo {
   override def toString = "def "+name+": "+ sig
 
   def decodedName = NameTransformer.decode(name)
@@ -62,16 +62,6 @@ class MemberInfo(val owner: ClassInfo, val name: String, val flags: Int, val sig
 
   var isTraitSetter = maybeSetter(name) && setterIdx(name) >= 0
 
-  def isPublic: Boolean = ClassfileParser.isPublic(flags)
-  
-  private def isProtected: Boolean = ClassfileParser.isProtected(flags)
-  
-  private def isPrivate: Boolean = ClassfileParser.isPrivate(flags)
-  
-  def hasNarrowerAccessModifier(that: MemberInfo) = {
-    (isPublic && !that.isPublic) || (isProtected && that.isPrivate) 
-  }
-  
   var isDeprecated = false	
 
   def isDeferred: Boolean = ClassfileParser.isDeferred(flags)
