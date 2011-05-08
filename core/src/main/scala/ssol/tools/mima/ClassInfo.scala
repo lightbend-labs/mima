@@ -31,7 +31,7 @@ class ConcreteClassInfo(owner: PackageInfo, val file: AbstractFile) extends Clas
   def name = PackageInfo.className(file.name)
 }
 
-abstract class ClassInfo(val owner: PackageInfo) extends AcessModifierInfo {
+abstract class ClassInfo(val owner: PackageInfo) extends WithAccessModifier {
   import ClassInfo._
 
   def file: AbstractFile

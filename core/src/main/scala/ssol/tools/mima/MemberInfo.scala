@@ -13,7 +13,7 @@ object MemberInfo {
   def maybeSetter(name: String) = name.endsWith(setterSuffix)
 }
 
-class MemberInfo(val owner: ClassInfo, val name: String, override val flags: Int, val sig: String) extends AcessModifierInfo {
+class MemberInfo(val owner: ClassInfo, val name: String, override val flags: Int, val sig: String) extends WithAccessModifier {
   override def toString = "def "+name+": "+ sig
 
   def decodedName = NameTransformer.decode(name)

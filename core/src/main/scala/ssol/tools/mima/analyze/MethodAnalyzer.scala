@@ -33,7 +33,7 @@ object MethodAnalyzer {
                 Some(IncompatibleResultTypeProblem(m, found))
             }
 
-          case Some(found) if (found.hasNarrowerAccessModifier(m)) =>
+          case Some(found) if (found.isLessVisibleThan(m)) =>
             Some(InaccessibleMethodProblem(found))
 
           case Some(found) if (!m.isDeferred && found.isDeferred) =>

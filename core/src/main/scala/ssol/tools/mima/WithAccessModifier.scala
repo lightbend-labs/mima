@@ -1,6 +1,6 @@
 package ssol.tools.mima
 
-trait AcessModifierInfo {
+trait WithAccessModifier {
 
   protected def flags: Int
 
@@ -19,7 +19,7 @@ trait AcessModifierInfo {
     ClassfileParser.isPrivate(flags)
   }
   
-  def hasNarrowerAccessModifier(that: AcessModifierInfo) = {
+  def isLessVisibleThan(that: WithAccessModifier) = {
     (!isPublic && that.isPublic) || (isPrivate && that.isProtected) 
   }
   
