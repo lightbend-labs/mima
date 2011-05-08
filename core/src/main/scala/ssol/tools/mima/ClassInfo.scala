@@ -54,9 +54,9 @@ abstract class ClassInfo(val owner: PackageInfo) {
   def formattedFullName = formatClassName(if (isObject) fullName.init else fullName)
 
   def declarationPrefix = {
-    if (name endsWith "$") "object"
-    else if (isTrait || loaded && isInterface) "trait"
-    else if (loaded && isInterface) "interface" // java interface
+    if (isObject) "object"
+    else if (isTrait) "trait"
+    else if (loaded && isInterface) "interface" // java interfaces and traits with no implementation methods
     else "class"
   }
 
@@ -85,7 +85,7 @@ abstract class ClassInfo(val owner: PackageInfo) {
   def methods: Members = { ensureLoaded(); _methods }
   def flags: Int = _flags
 
-  /** currently never set! */
+  /** currently not set! */
   def isScala: Boolean = { ensureLoaded(); _isScala }
 
   def superClass_=(x: ClassInfo) = _superClass = x

@@ -64,6 +64,14 @@ class MemberInfo(val owner: ClassInfo, val name: String, val flags: Int, val sig
 
   def isPublic: Boolean = ClassfileParser.isPublic(flags)
   
+  private def isProtected: Boolean = ClassfileParser.isProtected(flags)
+  
+  private def isPrivate: Boolean = ClassfileParser.isPrivate(flags)
+  
+  def hasNarrowerAccessModifier(that: MemberInfo) = {
+    (isPublic && !that.isPublic) || (isProtected && that.isPrivate) 
+  }
+  
   var isDeprecated = false	
 
   def isDeferred: Boolean = ClassfileParser.isDeferred(flags)

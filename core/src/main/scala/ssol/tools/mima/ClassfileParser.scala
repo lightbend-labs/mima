@@ -361,6 +361,8 @@ object ClassfileParser {
 
   @inline final def isPublic(flags: Int) =
     (flags & JAVA_ACC_PUBLIC) != 0
+  @inline final def isProtected(flags: Int) =
+    (flags & JAVA_ACC_PROTECTED) != 0
   @inline final def isPrivate(flags: Int) =
     (flags & JAVA_ACC_PRIVATE) != 0
   @inline final private def isStatic(flags: Int) =
