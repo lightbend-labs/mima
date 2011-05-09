@@ -51,6 +51,7 @@ private[analyze] abstract class BaseClassAnalyzer extends Analyzer {
         case Some(p) => 
           val p = MissingMethodProblem(newAbstrMeth)
           p.affectedVersion = Problem.ClassVersion.Old
+          p.status = Problem.Status.Upgradable
           raise(p)
         case None => ()
       }

@@ -1,0 +1,3 @@
+class A was concrete; is declared abstract in new version
+method apply()java.lang.Object in object A does not have a correspondent in new version
+method apply()A in object A does not have a correspondent in new version

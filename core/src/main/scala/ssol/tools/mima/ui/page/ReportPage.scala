@@ -329,6 +329,7 @@ object ProblemsModel {
     case IncompatibleResultTypeProblem(oldmth, newmth) => oldmth.fullName
     case AbstractMethodProblem(oldmeth)                => oldmeth.fullName
     case AbstractClassProblem(oldclazz)                => oldclazz.shortDescription
+    case FinalClassProblem(oldclazz)                   => oldclazz.shortDescription
     case IncompatibleTemplateDefProblem(oldclz, _)     => oldclz.shortDescription
     case UpdateForwarderBodyProblem(meth)              => meth.fullName
   }

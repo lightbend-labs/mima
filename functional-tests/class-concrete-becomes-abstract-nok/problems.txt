@@ -1,0 +1,1 @@
+class A was concrete; is declared abstract in new version

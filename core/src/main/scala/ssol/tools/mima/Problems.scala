@@ -49,7 +49,12 @@ case class MissingClassProblem(oldclazz: ClassInfo) extends Problem {
 
 case class AbstractClassProblem(oldclazz: ClassInfo) extends Problem {
   override val fileName: String = oldclazz.sourceFileName
-  override def description = oldclazz.classString + " was concrete; is declared as abstract in " + affectedVersion + " version"
+  override def description = oldclazz.classString + " was concrete; is declared abstract in " + affectedVersion + " version"
+}
+
+case class FinalClassProblem(oldclazz: ClassInfo) extends Problem {
+  override val fileName: String = oldclazz.sourceFileName
+  override def description = oldclazz.classString + " is declared final in " + affectedVersion + " version"
 }
 
 case class InaccessibleFieldProblem(newfld: MemberInfo) extends Problem {
