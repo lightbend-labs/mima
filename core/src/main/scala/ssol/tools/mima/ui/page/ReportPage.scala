@@ -53,14 +53,13 @@ class ReportPage extends GridBagPanel with WithConstraints {
   private object StatusColumnCellRenderer extends DefaultTableCellRenderer {
     private val container = new BorderPanel {
       opaque = true
-    	val text = new Label
-      val icon = new Label { icon = EmptyIcon} 
-      
+      val text = new Label
+      val icon = new Label { icon = EmptyIcon }
+
       add(text, BorderPanel.Position.West)
       add(icon, BorderPanel.Position.East)
     }
 
-    
     opaque = true
 
     override def getTableCellRendererComponent(table: JTable, color: Any,
@@ -68,20 +67,18 @@ class ReportPage extends GridBagPanel with WithConstraints {
       val base = super.getTableCellRendererComponent(table, color, isSelected, hasFocus, row, column)
       container.background = base.getBackground
       container.foreground = base.getForeground
-      
-      container.text.foreground = if(isSelected) Color.white else Color.black
-      
-      container.text.text = (table.getValueAt(row,column).toString)
+
+      container.text.foreground = if (isSelected) Color.white else Color.black
+
+      container.text.text = (table.getValueAt(row, column).toString)
 
       val icon = table.getModel.getValueAt(row, ProblemsModel.ProblemDataColumn) match {
         case p: Problem if p.fixHint.isDefined => images.Icons.fixHint
         case _                                 => EmptyIcon
       }
-      
+
       container.icon.icon = icon
-      
-      
-      
+
       container.peer
     }
 
@@ -138,13 +135,13 @@ class ReportPage extends GridBagPanel with WithConstraints {
     errorLabel.visible = _model.hasUnfixableProblems
 
     table.setModel(_model)
-    
+
     table.getColumnModel.getColumn(0).setCellRenderer(StatusColumnCellRenderer)
     table.getColumnModel.getColumn(0).setMinWidth(100)
     /*table.getColumnModel.getColumn(0).setPreferredWidth(110)
     table.getColumnModel.getColumn(1).setPreferredWidth(200)
     table.getColumnModel.getColumn(2).setPreferredWidth(Int.MaxValue)*/
-    
+
     table.doLayout
 
     sorter = new TableRowSorter(_model)
@@ -321,18 +318,19 @@ object ProblemsModel {
     Array(problem.status, getReferredMember(problem), problem.description, problem)
 
   def getReferredMember(p: Problem): String = p match {
-    case MissingFieldProblem(oldfld)                    => oldfld.fullName
-    case MissingMethodProblem(oldmth)                   => oldmth.fullName
-    case MissingClassProblem(oldclz)                    => oldclz.shortDescription
-    case InaccessibleFieldProblem(newfld)               => newfld.fullName
-    case InaccessibleMethodProblem(newmth)              => newmth.fullName
-    case InaccessibleClassProblem(newcls)               => newcls.shortDescription
-    case IncompatibleFieldTypeProblem(oldfld, newfld)   => oldfld.fullName
-    case IncompatibleMethTypeProblem(oldmth, newmth)    => oldmth.fullName
-    case IncompatibleResultTypeProblem(oldmth, newmth)  => oldmth.fullName
-    case AbstractMethodProblem(oldmeth)                 => oldmeth.fullName
-    case IncompatibleClassDeclarationProblem(oldclz, _) => oldclz.shortDescription
-    case UpdateForwarderBodyProblem(meth)               => meth.fullName
+    case MissingFieldProblem(oldfld)                   => oldfld.fullName
+    case MissingMethodProblem(oldmth)                  => oldmth.fullName
+    case MissingClassProblem(oldclz)                   => oldclz.shortDescription
+    case InaccessibleFieldProblem(newfld)              => newfld.fullName
+    case InaccessibleMethodProblem(newmth)             => newmth.fullName
+    case InaccessibleClassProblem(newcls)              => newcls.shortDescription
+    case IncompatibleFieldTypeProblem(oldfld, newfld)  => oldfld.fullName
+    case IncompatibleMethTypeProblem(oldmth, newmth)   => oldmth.fullName
+    case IncompatibleResultTypeProblem(oldmth, newmth) => oldmth.fullName
+    case AbstractMethodProblem(oldmeth)                => oldmeth.fullName
+    case AbstractClassProblem(oldclazz)                => oldclazz.shortDescription
+    case IncompatibleTemplateDefProblem(oldclz, _)     => oldclz.shortDescription
+    case UpdateForwarderBodyProblem(meth)              => meth.fullName
   }
 }
 

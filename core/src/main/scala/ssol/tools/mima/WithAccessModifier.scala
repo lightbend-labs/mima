@@ -1,8 +1,6 @@
 package ssol.tools.mima
 
-trait WithAccessModifier {
-
-  protected def flags: Int
+trait WithAccessModifier extends HasAccessFlags {
 
   def isPublic: Boolean = {
     ensureLoaded()
@@ -24,5 +22,10 @@ trait WithAccessModifier {
   }
   
   protected def ensureLoaded() {}
-
+  
+  def accessModifier = {
+    if(isProtected) "protected"
+    else if(isPrivate) "private"
+    else ""
+  }
 }

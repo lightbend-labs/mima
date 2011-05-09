@@ -9,9 +9,13 @@ trait Analyzer {
   private val _problems = collection.mutable.ListBuffer.empty[Problem]
   
   protected def raise(problem: Problem) { _problems += problem }
+  protected def raise(problem: Option[Problem]): Unit = problem match { 
+    case Some(p) => raise(p) 
+    case _ => () 
+  }
   
-  final def analyze(): List[Problem] = {
-    runAnalysis()
+  final def analyze(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
+    runAnalysis(oldclazz, newclazz)
     
     val problems = _problems.toList
     _problems.clear()
@@ -19,5 +23,5 @@ trait Analyzer {
     problems
   }
   
-  protected def runAnalysis(): Unit
+  protected def runAnalysis(oldclazz: ClassInfo, newclazz: ClassInfo): Unit
 }

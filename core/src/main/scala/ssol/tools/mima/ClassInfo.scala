@@ -31,7 +31,7 @@ class ConcreteClassInfo(owner: PackageInfo, val file: AbstractFile) extends Clas
   def name = PackageInfo.className(file.name)
 }
 
-abstract class ClassInfo(val owner: PackageInfo) extends WithAccessModifier {
+abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
   import ClassInfo._
 
   def file: AbstractFile
@@ -60,7 +60,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessModifier {
     else "class"
   }
 
-  def classString = declarationPrefix + " " + formattedFullName
+  def classString = (accessModifier + " " + declarationPrefix + " " + formattedFullName).trim
 
   protected var loaded = false
   override protected def ensureLoaded() =
@@ -103,15 +103,15 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessModifier {
 
   def lookupClassMethods(name: String): Iterator[MemberInfo] =
     superClasses.iterator flatMap (_.methods.get(name))
-
-  def lookupInterfaceMethods(name: String): Iterator[MemberInfo] =
+    
+  private def lookupInterfaceMethods(name: String): Iterator[MemberInfo] =
     allInterfaces.iterator flatMap (_.methods.get(name))
 
   def lookupMethods(name: String): Iterator[MemberInfo] =
     lookupClassMethods(name) ++ lookupInterfaceMethods(name)
 
-  def lookupTraitMethods(name: String): Iterator[MemberInfo] =
-    allTraits.iterator flatMap (_.methods.get(name))
+  def lookupConcreteTraitMethods(name: String): Iterator[MemberInfo] =
+    allTraits.toList.flatten(_.concreteMethods).filter(_.name == name).toIterator
 
   /** Is this class a non-trait that inherits !from a trait */
   lazy val isClassInheritsTrait = !isInterface && _interfaces.exists(_.isTrait)
@@ -138,6 +138,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessModifier {
   /** The concrete methods of this trait */
   lazy val concreteMethods: List[MemberInfo] = {
     if(isTrait) methods.iterator filter (hasStaticImpl(_)) toList
+    else if(isClass) methods.iterator filter (!_.isDeferred) toList
     else Nil
   }
   

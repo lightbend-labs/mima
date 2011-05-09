@@ -16,19 +16,20 @@ object Problem {
 
 sealed abstract class Problem {
   var status = Problem.Status.Unfixable
+  var affectedVersion = Problem.ClassVersion.New 
   val fileName: String
-  val description: String
+  def description: String
   val fixHint: Option[ui.FixHint] = None
 }
 
 case class MissingFieldProblem(oldfld: MemberInfo) extends Problem {
   override val fileName: String = oldfld.owner.sourceFileName
-  override val description = oldfld.fieldString + " does not have a correspondent in new version"
+  override def description = oldfld.fieldString + " does not have a correspondent in " + affectedVersion + " version"
 }
 
-case class MissingMethodProblem(meth: MemberInfo)(implicit affectedClassVersion: Problem.ClassVersion.Value = Problem.ClassVersion.New) extends Problem {
+case class MissingMethodProblem(meth: MemberInfo) extends Problem {
   override val fileName: String = meth.owner.sourceFileName
-  override val description = (if (meth.isDeferred && !meth.owner.isTrait) "abstract " else "") + meth.methodString + " does not have a correspondent in " + affectedClassVersion + " version"
+  override def description = (if (meth.isDeferred && !meth.owner.isTrait) "abstract " else "") + meth.methodString + " does not have a correspondent in " + affectedVersion + " version"
 }
 
 case class UpdateForwarderBodyProblem(meth: MemberInfo) extends Problem {
@@ -37,33 +38,38 @@ case class UpdateForwarderBodyProblem(meth: MemberInfo) extends Problem {
   
   status = Problem.Status.Upgradable
   override val fileName: String = meth.owner.sourceFileName
-  override val description = "classes mixing " + meth.owner.fullName + " needs to update body of " + meth.shortMethodString 
+  override def description = "classes mixing " + meth.owner.fullName + " needs to update body of " + meth.shortMethodString 
   
 }
 
 case class MissingClassProblem(oldclazz: ClassInfo) extends Problem {
   override val fileName: String = oldclazz.sourceFileName
-  override val description = oldclazz.classString + " does not have a correspondent in new version"
+  override def description = oldclazz.classString + " does not have a correspondent in " + affectedVersion + " version"
+}
+
+case class AbstractClassProblem(oldclazz: ClassInfo) extends Problem {
+  override val fileName: String = oldclazz.sourceFileName
+  override def description = oldclazz.classString + " was concrete; is declared as abstract in " + affectedVersion + " version"
 }
 
 case class InaccessibleFieldProblem(newfld: MemberInfo) extends Problem {
   override val fileName: String = newfld.owner.sourceFileName
-  override val description = newfld.fieldString + " was public; is inaccessible in new version"
+  override def description = newfld.fieldString + " was public; is inaccessible in " + affectedVersion + " version"
 }
 
 case class InaccessibleMethodProblem(newmeth: MemberInfo) extends Problem {
   override val fileName: String = newmeth.owner.sourceFileName
-  override val description = newmeth.methodString + " was public; is inaccessible in new version"
+  override def description = newmeth.methodString + " was public; is inaccessible in " + affectedVersion + " version"
 }
 
 case class InaccessibleClassProblem(newclazz: ClassInfo) extends Problem {
   override val fileName: String = newclazz.sourceFileName
-  override val description = newclazz.classString + " was public; is inaccessible in new version"
+  override def description = newclazz.classString + " was public; is inaccessible in " + affectedVersion + " version"
 }
 
 case class IncompatibleFieldTypeProblem(oldfld: MemberInfo, newfld: MemberInfo) extends Problem {
   override val fileName: String = oldfld.owner.sourceFileName
-  override val description = newfld.fieldString + "'s type has changed; was: " + oldfld.tpe + ", is now: " + newfld.tpe
+  override def description = newfld.fieldString + "'s type has changed; was: " + oldfld.tpe + ", is now: " + newfld.tpe
 }
 
 case class IncompatibleMethTypeProblem(oldmeth: MemberInfo, newmeths: List[MemberInfo]) extends Problem {
@@ -112,7 +118,7 @@ case class AbstractMethodProblem(newmeth: MemberInfo) extends Problem {
   override val description = "abstract " + newmeth.methodString + " does not have a correspondent in old version"
 }
 
-case class IncompatibleClassDeclarationProblem(oldClazz: ClassInfo, newClazz: ClassInfo) extends Problem {
+case class IncompatibleTemplateDefProblem(oldClazz: ClassInfo, newClazz: ClassInfo) extends Problem {
   override val fileName: String = oldClazz.sourceFileName
   override val description = {
     "declaration of " + oldClazz.description + " has changed to " + newClazz.description +

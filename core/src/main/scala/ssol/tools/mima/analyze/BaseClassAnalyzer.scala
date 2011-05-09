@@ -2,31 +2,28 @@ package ssol.tools.mima.analyze
 
 import ssol.tools.mima._
 import Config._
-import MethodAnalyzer._
 
-private abstract class BaseClassAnalyzer(oldClazz: ClassInfo, newClazz: ClassInfo) extends Analyzer {
-
-  override protected def runAnalysis() {
-    assert(oldClazz.name == newClazz.name)
-    if (oldClazz.isPublic && !newClazz.isPublic)
-      raise(InaccessibleClassProblem(newClazz))
-    else {
-      analyzeMembers()
-    }
+private[analyze] abstract class BaseClassAnalyzer extends Analyzer {
+  override protected def runAnalysis(oldclazz: ClassInfo, newclazz: ClassInfo) {
+    assert(oldclazz.name == newclazz.name)
+    InaccessibleClassCheck(oldclazz, newclazz) match {
+      case None => analyzeMembers(oldclazz, newclazz)
+      case Some(p) => raise(p)
+    }  
   }
 
-  private def analyzeMembers() {
-    info("[compare] %s \t %s".format(oldClazz, newClazz))
+  private def analyzeMembers(oldclazz: ClassInfo, newclazz: ClassInfo) {
+    info("[compare] %s \t %s".format(oldclazz, newclazz))
 
-    analyzeFields()
-    analyzeMethods()
+    analyzeFields(oldclazz, newclazz)
+    analyzeMethods(oldclazz, newclazz)
   }
 
-  protected def analyzeFields() {
+  protected def analyzeFields(oldclazz: ClassInfo, newclazz: ClassInfo) {
     // comparing fields in old class versus new class
-    for (oldfld <- oldClazz.fields.iterator)
+    for (oldfld <- oldclazz.fields.iterator)
       if (oldfld.isAccessible) {
-        val newflds = newClazz.lookupClassFields(oldfld.name)
+        val newflds = newclazz.lookupClassFields(oldfld.name)
         if (newflds.hasNext) {
           val newfld = newflds.next
           if (!newfld.isPublic)
@@ -38,35 +35,25 @@ private abstract class BaseClassAnalyzer(oldClazz: ClassInfo, newClazz: ClassInf
       }
   }
 
-  protected def analyzeMethods() {
-    checkOldMethods()
-    checkNewMethods()
+  protected def analyzeMethods(oldclazz: ClassInfo, newclazz: ClassInfo) {
+    checkOldMethods(oldclazz, newclazz)
+    checkNewMethods(oldclazz, newclazz)
   }
 
-  protected def analyzeMethod(analyzer: Function2[MemberInfo, ClassInfo, Option[Problem]])(m: MemberInfo, clazz: ClassInfo) {
-    analyzer(m, clazz) match {
-      case Some(p) => raise(p)
-      case _       => ()
-    }
+  protected def checkOldMethods(oldclazz: ClassInfo, newclazz: ClassInfo) {
+    for (meth <- oldclazz.methods.iterator) 
+      raise(MethodCheck(meth, newclazz))
   }
 
-  protected def checkOldMethods() {
-    // Forall(oldClazz.methods).Exists
-    
-    for (oldmeth <- oldClazz.methods.iterator.toList)
-      analyzeMethod(AnalyzeClassMethod(Problem.ClassVersion.New) _)(oldmeth, newClazz)
-  }
-
-  protected def checkNewMethods() {
-    for (newmeth <- newClazz.methods.iterator if newmeth.isDeferred) {
-      val oldmeths = oldClazz.lookupMethods(newmeth.name)
-      oldmeths find (_.sig == newmeth.sig) match {
-        case Some(oldmeth) =>
-          ;
-        case _ =>
-          raise(MissingMethodProblem(newmeth)(Problem.ClassVersion.Old))
+  protected def checkNewMethods(oldclazz: ClassInfo, newclazz: ClassInfo) {
+    for (newAbstrMeth <- newclazz.deferredMethods) {
+      MethodCheck(newAbstrMeth, oldclazz) match {
+        case Some(p) => 
+          val p = MissingMethodProblem(newAbstrMeth)
+          p.affectedVersion = Problem.ClassVersion.Old
+          raise(p)
+        case None => ()
       }
     }
   }
-
 }

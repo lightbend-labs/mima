@@ -373,4 +373,6 @@ object ClassfileParser {
     (flags & JAVA_ACC_INTERFACE) != 0
   @inline final def isDeferred(flags: Int) =
     (flags & JAVA_ACC_ABSTRACT) != 0
+  @inline final def isFinal(flags: Int) =
+    (flags & JAVA_ACC_FINAL) != 0
 }

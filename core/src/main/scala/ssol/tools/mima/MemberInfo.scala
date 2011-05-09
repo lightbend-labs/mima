@@ -13,7 +13,7 @@ object MemberInfo {
   def maybeSetter(name: String) = name.endsWith(setterSuffix)
 }
 
-class MemberInfo(val owner: ClassInfo, val name: String, override val flags: Int, val sig: String) extends WithAccessModifier {
+class MemberInfo(val owner: ClassInfo, val name: String, override val flags: Int, val sig: String) extends WithAccessFlags {
   override def toString = "def "+name+": "+ sig
 
   def decodedName = NameTransformer.decode(name)
@@ -63,8 +63,6 @@ class MemberInfo(val owner: ClassInfo, val name: String, override val flags: Int
   var isTraitSetter = maybeSetter(name) && setterIdx(name) >= 0
 
   var isDeprecated = false	
-
-  def isDeferred: Boolean = ClassfileParser.isDeferred(flags)
 
   def hasSyntheticName: Boolean = decodedName contains '$'
   
