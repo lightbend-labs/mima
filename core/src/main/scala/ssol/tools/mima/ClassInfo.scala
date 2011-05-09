@@ -21,6 +21,7 @@ class SyntheticClassInfo(owner: PackageInfo, val name: String) extends ClassInfo
   def file: AbstractFile = throw new UnsupportedOperationException
   override lazy val superClasses = Nil
   override lazy val allTraits = Set.empty[ClassInfo]
+  override lazy val allInterfaces: Set[ClassInfo] = Set.empty[ClassInfo] 
 }
 
 /** As the name implies. */
