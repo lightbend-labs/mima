@@ -26,9 +26,9 @@ private[analyze] abstract class BaseClassAnalyzer extends Analyzer {
         val newflds = newclazz.lookupClassFields(oldfld.name)
         if (newflds.hasNext) {
           val newfld = newflds.next
-          if (!newfld.isPublic)
+          /*if (!newfld.isPublic)
             raise(InaccessibleFieldProblem(newfld))
-          else if (oldfld.sig != newfld.sig)
+          else*/ if (oldfld.sig != newfld.sig)
             raise(IncompatibleFieldTypeProblem(oldfld, newfld))
         } else
           raise(MissingFieldProblem(oldfld))
@@ -36,16 +36,16 @@ private[analyze] abstract class BaseClassAnalyzer extends Analyzer {
   }
 
   protected def analyzeMethods(oldclazz: ClassInfo, newclazz: ClassInfo) {
-    checkOldMethods(oldclazz, newclazz)
-    checkNewMethods(oldclazz, newclazz)
+    analyzeOldClassMethods(oldclazz, newclazz)
+    analyzeNewClassMethods(oldclazz, newclazz)
   }
 
-  protected def checkOldMethods(oldclazz: ClassInfo, newclazz: ClassInfo) {
+  protected def analyzeOldClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo) {
     for (meth <- oldclazz.methods.iterator) 
       raise(MethodCheck(meth, newclazz))
   }
 
-  protected def checkNewMethods(oldclazz: ClassInfo, newclazz: ClassInfo) {
+  protected def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo) {
     for (newAbstrMeth <- newclazz.deferredMethods) {
       MethodCheck(newAbstrMeth, oldclazz) match {
         case Some(p) => 

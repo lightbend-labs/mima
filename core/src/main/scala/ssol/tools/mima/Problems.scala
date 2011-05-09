@@ -57,19 +57,9 @@ case class FinalClassProblem(oldclazz: ClassInfo) extends Problem {
   override def description = oldclazz.classString + " is declared final in " + affectedVersion + " version"
 }
 
-case class InaccessibleFieldProblem(newfld: MemberInfo) extends Problem {
-  override val fileName: String = newfld.owner.sourceFileName
-  override def description = newfld.fieldString + " was public; is inaccessible in " + affectedVersion + " version"
-}
-
-case class InaccessibleMethodProblem(newmeth: MemberInfo) extends Problem {
-  override val fileName: String = newmeth.owner.sourceFileName
-  override def description = newmeth.methodString + " was public; is inaccessible in " + affectedVersion + " version"
-}
-
-case class InaccessibleClassProblem(newclazz: ClassInfo) extends Problem {
-  override val fileName: String = newclazz.sourceFileName
-  override def description = newclazz.classString + " was public; is inaccessible in " + affectedVersion + " version"
+case class FinalMethodProblem(newmemb: MemberInfo) extends Problem {
+  override val fileName: String = newmemb.owner.sourceFileName
+  override def description = newmemb.methodString + " is declared final in " + affectedVersion + " version"
 }
 
 case class IncompatibleFieldTypeProblem(oldfld: MemberInfo, newfld: MemberInfo) extends Problem {
@@ -130,3 +120,23 @@ case class IncompatibleTemplateDefProblem(oldClazz: ClassInfo, newClazz: ClassIn
       " in new version; changing " + oldClazz.declarationPrefix + " to " + newClazz.declarationPrefix + " breaks client code"
   }
 }
+
+/* FIXME: The following are never used because (1) in the ClassfileParser private members are skipped and, (2) private 
+ *        classes are always compiled as public by scalac
+ *        
+case class InaccessibleFieldProblem(newfld: MemberInfo) extends Problem {
+  override val fileName: String = newfld.owner.sourceFileName
+  override def description = newfld.fieldString + " was public; is inaccessible in " + affectedVersion + " version"
+}
+
+
+case class InaccessibleMethodProblem(newmeth: MemberInfo) extends Problem {
+  override val fileName: String = newmeth.owner.sourceFileName
+  override def description = newmeth.methodString + " was public; is inaccessible in " + affectedVersion + " version"
+}
+
+case class InaccessibleClassProblem(newclazz: ClassInfo) extends Problem {
+  override val fileName: String = newclazz.sourceFileName
+  override def description = newclazz.classString + " was public; is inaccessible in " + affectedVersion + " version"
+}*/
+
