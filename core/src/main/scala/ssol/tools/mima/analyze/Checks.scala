@@ -52,7 +52,6 @@ object FinalModifierCheck {
   */
 }
 
-
 trait AccessModifierCheck[T <: WithAccessModifier] {
   def apply(thisElement: T, thatElement: T): Option[Problem] = {
     if (thatElement.isLessVisibleThan(thisElement)) Some(createInaccessibleProblem(thisElement, thatElement))
@@ -88,20 +87,25 @@ object MethodCheck {
     if (m.isDeferred) check(m, clazz.lookupMethods(m.name)) else check(m, clazz.lookupClassMethods(m.name))
 
   private def checkTraitMethod(m: MemberInfo, clazz: ClassInfo) = {
-    if (clazz.hasStaticImpl(m)) {
-      // then it's ok, the method it is still there
-      None
-    } // if a concrete method exists on some inherited trait, then we report the missing method 
-    // but we can upgrade the bytecode for this specific issue
-    else {
-      if (clazz.allTraits.exists(_.hasStaticImpl(m))) {
-        Some(UpdateForwarderBodyProblem(m))
-      } else {
-        val allConcreteMeths = clazz.lookupConcreteTraitMethods(m.name).toList
-        val res = check(m, allConcreteMeths)
-        assert(res.isDefined)
-        res
+    if (m.owner.hasStaticImpl(m)) {
+      if (clazz.hasStaticImpl(m)) {
+        // then it's ok, the method it is still there
+        None
+      } // if a concrete method exists on some inherited trait, then we report the missing method 
+      // but we can upgrade the bytecode for this specific issue
+      else {
+        if (clazz.allTraits.exists(_.hasStaticImpl(m))) {
+          Some(UpdateForwarderBodyProblem(m))
+        } else {
+          val allConcreteMeths = clazz.lookupConcreteTraitMethods(m.name).toList
+          val res = check(m, allConcreteMeths)
+          assert(res.isDefined)
+          res
+        }
       }
+    }
+    else {
+      check(m, clazz.lookupMethods(m.name)) 
     }
   }
 
