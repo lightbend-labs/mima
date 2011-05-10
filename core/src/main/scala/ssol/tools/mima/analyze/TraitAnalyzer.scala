@@ -4,7 +4,7 @@ import ssol.tools.mima._
 
 private[analyze] class TraitAnalyzer extends BaseClassAnalyzer {
 
-  override protected def checkNewMethods(oldclazz: ClassInfo, newclazz: ClassInfo) {
+  override protected def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo) {
     for (newmeth <- newclazz.concreteMethods if !oldclazz.hasStaticImpl(newmeth)) {
       if (!oldclazz.lookupMethods(newmeth.name).exists(_.sig == newmeth.sig)) {
         // this means that the method is brand new and therefore the implementation 

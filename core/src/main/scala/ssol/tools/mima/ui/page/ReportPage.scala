@@ -321,15 +321,13 @@ object ProblemsModel {
     case MissingFieldProblem(oldfld)                   => oldfld.fullName
     case MissingMethodProblem(oldmth)                  => oldmth.fullName
     case MissingClassProblem(oldclz)                   => oldclz.shortDescription
-    case InaccessibleFieldProblem(newfld)              => newfld.fullName
-    case InaccessibleMethodProblem(newmth)             => newmth.fullName
-    case InaccessibleClassProblem(newcls)              => newcls.shortDescription
     case IncompatibleFieldTypeProblem(oldfld, newfld)  => oldfld.fullName
     case IncompatibleMethTypeProblem(oldmth, newmth)   => oldmth.fullName
     case IncompatibleResultTypeProblem(oldmth, newmth) => oldmth.fullName
     case AbstractMethodProblem(oldmeth)                => oldmeth.fullName
     case AbstractClassProblem(oldclazz)                => oldclazz.shortDescription
     case FinalClassProblem(oldclazz)                   => oldclazz.shortDescription
+    case FinalMethodProblem(newmth)                    => newmth.fullName
     case IncompatibleTemplateDefProblem(oldclz, _)     => oldclz.shortDescription
     case UpdateForwarderBodyProblem(meth)              => meth.fullName
   }

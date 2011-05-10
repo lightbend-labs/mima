@@ -19,37 +19,35 @@ object AbstractModifierCheck {
     else None
   }
 
-  /*
+  
   def apply(thisMember: MemberInfo, thatMember: MemberInfo): Option[Problem] = {
     // A concrete member that is made abstract entail a binary incompatibilities because client
     // code may be calling it when no concrete implementation exists
-    if(!thisMember.isDeferred && thatMember.isDeferred) Some(problem)
+    if(!thisMember.isDeferred && thatMember.isDeferred) Some(AbstractMethodProblem(thatMember))
     // note: Conversely, an abstract member that is made concrete does not entail incompatibilities 
     // because no client code relied on it.
     else None
   }
-  */
 }
 
 object FinalModifierCheck {
   def apply(thisClass: ClassInfo, thatClass: ClassInfo): Option[Problem] = {
-    // a concrete class that is made abstract may entails binary incompatibility
-    // because it can't be instantiated anymore
+    // A non-final class that is made final entails a binary incompatibilities because client
+    // code may be subclassing it
     if (!thisClass.isFinal && thatClass.isFinal) Some(FinalClassProblem(thisClass))
-    // note: Conversely, an abstract class that is made concrete entails no issue
+    // note: Conversely, a final class that is made non-final entails no issue
     else None
   }
 
-  /*
+  
   def apply(thisMember: MemberInfo, thatMember: MemberInfo): Option[Problem] = {
-    // A concrete member that is made abstract entail a binary incompatibilities because client
-    // code may be calling it when no concrete implementation exists
-    if(!thisMember.isDeferred && thatMember.isDeferred) Some(problem)
-    // note: Conversely, an abstract member that is made concrete does not entail incompatibilities 
-    // because no client code relied on it.
+    // A non-final member that is made final entails a binary incompatibilities because client
+    // code may be overriding it
+    if(!thisMember.isFinal && thatMember.isFinal) Some(FinalMethodProblem(thatMember))
+    // note: Conversely, a final member that is made non-final does not entail incompatibilities
     else None
   }
-  */
+  
 }
 
 trait AccessModifierCheck[T <: WithAccessModifier] {
@@ -58,22 +56,28 @@ trait AccessModifierCheck[T <: WithAccessModifier] {
     else None
   }
 
-  def createInaccessibleProblem(thisElement: T, thatElement: T): Problem
-}
-
-object InaccessibleMemberCheck extends AccessModifierCheck[MemberInfo] {
-  def createInaccessibleProblem(thisElement: MemberInfo, thatElement: MemberInfo): Problem = {
-    assert(thisElement.isMethod == thatElement.isMethod)
-    if (thisElement.isMethod) InaccessibleMethodProblem(thatElement) else InaccessibleFieldProblem(thatElement)
+  def createInaccessibleProblem(thisElement: T, thatElement: T): Problem = {
+    assert(false, "ClassFileParser.parseMember is not swallowing private members")
+    null
   }
 }
 
-object InaccessibleClassCheck extends AccessModifierCheck[ClassInfo] {
-  def createInaccessibleProblem(thisElement: ClassInfo, thatElement: ClassInfo): Problem =
-    InaccessibleClassProblem(thatElement)
+object InaccessibleMemberCheck extends AccessModifierCheck[MemberInfo] {
+  /*def createInaccessibleProblem(thisElement: MemberInfo, thatElement: MemberInfo): Problem = {
+    assert(thisElement.isMethod == thatElement.isMethod)
+    if (thisElement.isMethod) InaccessibleMethodProblem(thatElement) else InaccessibleFieldProblem(thatElement)
+  }*/
 }
 
+object InaccessibleClassCheck extends AccessModifierCheck[ClassInfo] {
+  /*def createInaccessibleProblem(thisElement: ClassInfo, thatElement: ClassInfo): Problem =
+    InaccessibleClassProblem(thatElement)
+   */
+}
+
+
 object MethodCheck {
+
   def apply(m: MemberInfo, clazz: ClassInfo): Option[Problem] = {
     assert(m.isMethod)
     assert(m.owner.isClass == clazz.isClass)
@@ -124,12 +128,9 @@ object MethodCheck {
               Some(IncompatibleResultTypeProblem(m, found))
           }
 
-        case Some(found) if (found.isLessVisibleThan(m)) =>
-          Some(InaccessibleMethodProblem(found))
-
-        case Some(found) if (!m.isDeferred && found.isDeferred) =>
-          Some(AbstractMethodProblem(found))
-
+        case Some(found) =>
+          InaccessibleMemberCheck(m, found).orElse(FinalModifierCheck(m, found))
+          
         case _ => None
       }
     }
