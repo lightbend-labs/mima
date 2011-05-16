@@ -1,18 +1,18 @@
 package ssol.tools.mima.analyze
 
-import ssol.tools.mima.{ Problem, MissingMethodProblem, IncompatibleTemplateDefProblem, CyclicTypeReferenceProblem, ClassInfo }
+import ssol.tools.mima.{ Problem, MissingMethodProblem, AbstractMethodProblem, IncompatibleTemplateDefProblem, CyclicTypeReferenceProblem, ClassInfo }
 import ssol.tools.mima.analyze.field.BaseFieldChecker
 import ssol.tools.mima.analyze.method.BaseMethodChecker
 import ssol.tools.mima.analyze.template.TemplateChecker
 
 object Analyzer {
   def apply(oldclz: ClassInfo, newclz: ClassInfo): List[Problem] = {
-    if(oldclz.isClass && newclz.isClass) ClassAnalyzer(oldclz, newclz)
-    else TraitAnalyzer(oldclz,newclz)
+    if (oldclz.isClass && newclz.isClass) ClassAnalyzer(oldclz, newclz)
+    else TraitAnalyzer(oldclz, newclz)
   }
 }
 
-private[analyze] trait Analyzer extends Function2[ClassInfo, ClassInfo, List[Problem]]{
+private[analyze] trait Analyzer extends Function2[ClassInfo, ClassInfo, List[Problem]] {
 
   implicit def option2list(v: Option[Problem]): List[Problem] = v match {
     case None    => Nil
@@ -25,17 +25,17 @@ private[analyze] trait Analyzer extends Function2[ClassInfo, ClassInfo, List[Pro
   protected val fieldChecker: BaseFieldChecker
   protected val methodChecker: BaseMethodChecker
 
-  def apply(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = 
+  def apply(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] =
     analyze(oldclazz, newclazz)
-  
+
   def analyze(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
     assert(oldclazz.name == newclazz.name)
-    val templateProblems = analyzeTemplateDecl(oldclazz, newclazz) 
-    
-    if(templateProblems.exists(p => p.isInstanceOf[IncompatibleTemplateDefProblem] || 
-    								p.isInstanceOf[CyclicTypeReferenceProblem]))
+    val templateProblems = analyzeTemplateDecl(oldclazz, newclazz)
+
+    if (templateProblems.exists(p => p.isInstanceOf[IncompatibleTemplateDefProblem] ||
+      p.isInstanceOf[CyclicTypeReferenceProblem]))
       templateProblems // IncompatibleTemplateDefProblem implies major incompatibility, does not make sense to continue
-    else 
+    else
       templateProblems ::: analyzeMembers(oldclazz, newclazz)
   }
 
@@ -52,24 +52,12 @@ private[analyze] trait Analyzer extends Function2[ClassInfo, ClassInfo, List[Pro
   def analyzeMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] =
     analyzeOldClassMethods(oldclazz, newclazz) ::: analyzeNewClassMethods(oldclazz, newclazz)
 
-  /** Analyze incompatibilities that may derive from methods in the `oldclazz` that are no longer 
-   * declared in `newclazz`*/
+  /** Analyze incompatibilities that may derive from methods in the `oldclazz`*/
   def analyzeOldClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
     for (oldmeth <- oldclazz.methods.iterator.toList) yield methodChecker.check(oldmeth, newclazz)
   }
 
-  /** Analyze incompatibilities that may derive from methods added in the `newclazz` */
-  def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
-    for (newAbstrMeth <- newclazz.deferredMethods) yield 
-      methodChecker.check(newAbstrMeth, oldclazz) match {
-        case Some(_) =>
-          val p = MissingMethodProblem(newAbstrMeth)
-          p.affectedVersion = Problem.ClassVersion.Old
-          p.status = Problem.Status.Upgradable
-          Some(p)
-        case none => none
-    }
-  }
+  def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem]
 }
 
 private[analyze] object ClassAnalyzer extends Analyzer {
@@ -77,12 +65,34 @@ private[analyze] object ClassAnalyzer extends Analyzer {
   import ssol.tools.mima.analyze.method.ClassMethodChecker
   protected val fieldChecker = ClassFieldChecker
   protected val methodChecker = ClassMethodChecker
-  
+
   override def analyze(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
-    if (oldclazz.isImplClass)  
+    if (oldclazz.isImplClass)
       Nil // do not analyze trait's implementation classes
     else
-      super.analyze(oldclazz,newclazz)
+      super.analyze(oldclazz, newclazz)
+  }
+  
+  /** Analyze incompatibilities that may derive from methods in the `newclazz` */
+  override def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
+    for (newAbstrMeth <- newclazz.deferredMethods) yield {
+      oldclazz.lookupMethods(newAbstrMeth.name).find(_.sig == newAbstrMeth.sig) match {
+        case None =>
+          val p = MissingMethodProblem(newAbstrMeth)
+          p.affectedVersion = Problem.ClassVersion.Old
+          p.status = Problem.Status.Upgradable
+          Some(p)
+        case Some(found) =>
+          if(found.isConcrete) {
+        	val p = AbstractMethodProblem(newAbstrMeth)
+        	p.affectedVersion = Problem.ClassVersion.Old
+        	p.status = Problem.Status.Unfixable
+        	Some(p)
+          }
+          else
+        	None
+      }
+    }
   }
 }
 
@@ -91,11 +101,11 @@ private[analyze] object TraitAnalyzer extends Analyzer {
   import ssol.tools.mima.analyze.method.TraitMethodChecker
   protected val fieldChecker = ClassFieldChecker
   protected val methodChecker = TraitMethodChecker
-  
+
   override def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
     val res = collection.mutable.ListBuffer.empty[Problem]
-    
-    for (newmeth <- newclazz.concreteMethods if !oldclazz.hasStaticImpl(newmeth))  {
+
+    for (newmeth <- newclazz.concreteMethods if !oldclazz.hasStaticImpl(newmeth)) {
       if (!oldclazz.lookupMethods(newmeth.name).exists(_.sig == newmeth.sig)) {
         // this means that the method is brand new and therefore the implementation 
         // has to be injected 
@@ -109,8 +119,8 @@ private[analyze] object TraitAnalyzer extends Analyzer {
       // class. Mind that, despite no binary incompatibility arises, program's 
       // semantic may be severely affected.
     }
-    
-    for(newmeth <- newclazz.deferredMethods) {
+
+    for (newmeth <- newclazz.deferredMethods) {
       val oldmeths = oldclazz.lookupMethods(newmeth.name)
       oldmeths find (_.sig == newmeth.sig) match {
         case Some(oldmeth) => ()
@@ -121,7 +131,7 @@ private[analyze] object TraitAnalyzer extends Analyzer {
           res += problem
       }
     }
-    
-    res.toList 
+
+    res.toList
   }
 }

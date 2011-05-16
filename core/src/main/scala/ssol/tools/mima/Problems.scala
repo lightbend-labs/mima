@@ -101,7 +101,7 @@ case class IncompatibleResultTypeProblem(oldmeth: MemberInfo, newmeth: MemberInf
 case class AbstractMethodProblem(newmeth: MemberInfo) extends Problem {
   status = Problem.Status.Upgradable
   override val fileName: String = newmeth.owner.sourceFileName
-  override val description = "abstract " + newmeth.methodString + " does not have a correspondent in old version"
+  override def description = "abstract " + newmeth.methodString + " does not have a correspondent in " + affectedVersion + " version"
   override def referredMember = newmeth.fullName
 }
 
