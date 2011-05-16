@@ -1,4 +1,6 @@
-trait A
+trait A {
+  def bar = 2
+}
 
 trait B {
   def foo = 2

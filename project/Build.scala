@@ -33,7 +33,7 @@ object MimaBuild extends Build {
     Project(base.name, base, settings = testProjectSettings).configs(v1Config, v2Config)
 
   lazy val testProjectSettings =
-    Defaults.defaultSettings ++ // normal project defaults; can be trimmed later- test and run aren't needed, for example.
+    (Defaults.defaultSettings :+ (scalaVersion := "2.9.0"))++ // normal project defaults; can be trimmed later- test and run aren't needed, for example.
       inConfig(v1Config)(perConfig) ++ // add compile/package for the v1 sources
       inConfig(v2Config)(perConfig) :+ // add compile/package for the v2 sources
       (funTests <<= runTests) // add the fun-tests task.
@@ -47,7 +47,7 @@ object MimaBuild extends Build {
 
   // these are settings defined for each configuration (v1 and v2).
   // We use the normal per-configuration settings, but modify the source directory to be just v1/ instead of src/v1/scala/
-  lazy val perConfig = Defaults.configSettings :+ shortSourceDir
+  lazy val perConfig = Defaults.configSettings :+ shortSourceDir 
 
   // sets the source directory in this configuration to be: testN / vN
   // scalaSource is the setting key that defines the directory for Scala sources

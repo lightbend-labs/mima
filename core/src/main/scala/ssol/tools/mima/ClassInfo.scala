@@ -34,7 +34,7 @@ class ConcreteClassInfo(owner: PackageInfo, val file: AbstractFile) extends Clas
 
 abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
   import ClassInfo._
-
+  
   def file: AbstractFile
 
   private var _sourceFileName = ""
@@ -97,13 +97,13 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
   def isScala_=(x: Boolean) = _isScala = x
 
   lazy val superClasses: List[ClassInfo] =
-    this :: (if (this == ClassInfo.ObjectClass) Nil else superClass.superClasses)
+    (if (this == ClassInfo.ObjectClass) Nil else superClass :: superClass.superClasses)
 
   def lookupClassFields(name: String): Iterator[MemberInfo] =
-    superClasses.iterator flatMap (_.fields.get(name))
+    (Iterator.single(this) ++ superClasses.iterator) flatMap (_.fields.get(name))
 
   def lookupClassMethods(name: String): Iterator[MemberInfo] =
-    superClasses.iterator flatMap (_.methods.get(name))
+    (Iterator.single(this) ++ superClasses.iterator) flatMap (_.methods.get(name))
     
   private def lookupInterfaceMethods(name: String): Iterator[MemberInfo] =
     allInterfaces.iterator flatMap (_.methods.get(name))
@@ -275,5 +275,6 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
     val index = descr.lastIndexOf(descr)
     if (index < 0) descr else descr.substring(index)
   }
+  
   def description: String = declarationPrefix + " " + formattedFullName
 }

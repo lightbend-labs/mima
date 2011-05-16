@@ -4,7 +4,7 @@ name := "mima"
 
 version = "1.0"
 
-scalaVersion := "2.8.1"
+scalaVersion := "2.9.0"
 
 
 mainClass in (Compile, packageBin) := Some("ssol.tools.mima.ui.MimaApp")

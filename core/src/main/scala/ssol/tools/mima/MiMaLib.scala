@@ -3,7 +3,7 @@ package mima
 
 
 import Config._
-import analyze.ClassInfoAnalyzer
+import analyze.Analyzer
 import util.IndentedOutput._
 import scala.tools.nsc.io.{ File, AbstractFile }
 import scala.tools.nsc.util.{ DirectoryClassPath, JavaClassPath }
@@ -51,8 +51,7 @@ class MiMaLib {
         
         case None => raise(MissingClassProblem(oldclazz))
         
-        case Some(newclazz) => 
-          ClassInfoAnalyzer(oldclazz, newclazz).foreach(raise)
+        case Some(newclazz) =>  Analyzer(oldclazz, newclazz).foreach(raise)
       }
     }
   }

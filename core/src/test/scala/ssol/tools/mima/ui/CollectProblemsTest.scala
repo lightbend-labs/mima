@@ -7,9 +7,10 @@ import scala.tools.nsc.util._
 class CollectProblemsTest  {
   
   def runTest(testName: String, oldJarPath: String, newJarPath: String, oraclePath: String): Unit = {
+    try {
     // load test setup
     Config.setup("scala ssol.tools.misco.MiMaLibUI <old-dir> <new-dir>", Array(oldJarPath, newJarPath))
-    var scalaLib = "regressions-tests/scala-library/scala-library-2.8.1.jar"
+    var scalaLib = "regressions-tests/scala-library/scala-library-2.9.0.jar"
     val cp = scalaLib :: ClassPath.split(Config.baseClassPath.asClasspathString)
     val cpString = ClassPath.join(cp : _*)
     Config.baseClassPath = new JavaClassPath(ClassPath.DefaultJavaContext.classesInPath(cpString), ClassPath.DefaultJavaContext)    
@@ -39,5 +40,8 @@ class CollectProblemsTest  {
       println("[error] Test '" + testName + "' failed.\n" + mess)
     else 
       println("[info] Test '" + testName + "' succeeded.")
+    } catch {
+      case e => e.printStackTrace
+    }
   }
 }

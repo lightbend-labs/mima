@@ -276,7 +276,7 @@ class ReportPage extends GridBagPanel with WithConstraints {
       def problem_=(problem: Problem) = {
         panel.status.text = problem.status.toString
         panel.file.text = problem.fileName
-        panel.member.text = ProblemsModel.getReferredMember(problem)
+        panel.member.text = problem.referredMember
         panel.description.text = problem.description
         problem.fixHint match {
           case Some(hint) =>
@@ -315,22 +315,7 @@ object ProblemsModel {
     new ProblemsModel(problems.toArray.map(toArray(_)))
 
   private def toArray(problem: Problem): Array[AnyRef] =
-    Array(problem.status, getReferredMember(problem), problem.description, problem)
-
-  def getReferredMember(p: Problem): String = p match {
-    case MissingFieldProblem(oldfld)                   => oldfld.fullName
-    case MissingMethodProblem(oldmth)                  => oldmth.fullName
-    case MissingClassProblem(oldclz)                   => oldclz.shortDescription
-    case IncompatibleFieldTypeProblem(oldfld, newfld)  => oldfld.fullName
-    case IncompatibleMethTypeProblem(oldmth, newmth)   => oldmth.fullName
-    case IncompatibleResultTypeProblem(oldmth, newmth) => oldmth.fullName
-    case AbstractMethodProblem(oldmeth)                => oldmeth.fullName
-    case AbstractClassProblem(oldclazz)                => oldclazz.shortDescription
-    case FinalClassProblem(oldclazz)                   => oldclazz.shortDescription
-    case FinalMethodProblem(newmth)                    => newmth.fullName
-    case IncompatibleTemplateDefProblem(oldclz, _)     => oldclz.shortDescription
-    case UpdateForwarderBodyProblem(meth)              => meth.fullName
-  }
+    Array(problem.status, problem.referredMember, problem.description, problem)
 }
 
 class ProblemsModel(problems: Array[Array[AnyRef]]) extends AbstractTableModel {

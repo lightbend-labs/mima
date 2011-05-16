@@ -1,4 +1,6 @@
-trait A extends B
+trait A extends B {
+  val bar = 2
+}
 
 class B {
   def foo: Int = 2
