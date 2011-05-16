@@ -4,7 +4,7 @@ import scala.swing._
 import Swing._
 import GridBagPanel._
 
-import ssol.tools.mima.ui.{ WithConstraints, FixHint }
+import ssol.tools.mima.ui.WithConstraints
 import ssol.tools.mima._
 import ssol.tools.mima.ui.widget.CloseButton
 import scala.swing.event._
@@ -48,40 +48,6 @@ class ReportPage extends GridBagPanel with WithConstraints {
         }
       }
     }
-  }
-
-  private object StatusColumnCellRenderer extends DefaultTableCellRenderer {
-    private val container = new BorderPanel {
-      opaque = true
-      val text = new Label
-      val icon = new Label { icon = EmptyIcon }
-
-      add(text, BorderPanel.Position.West)
-      add(icon, BorderPanel.Position.East)
-    }
-
-    opaque = true
-
-    override def getTableCellRendererComponent(table: JTable, color: Any,
-      isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int): java.awt.Component = {
-      val base = super.getTableCellRendererComponent(table, color, isSelected, hasFocus, row, column)
-      container.background = base.getBackground
-      container.foreground = base.getForeground
-
-      container.text.foreground = if (isSelected) Color.white else Color.black
-
-      container.text.text = (table.getValueAt(row, column).toString)
-
-      val icon = table.getModel.getValueAt(row, ProblemsModel.ProblemDataColumn) match {
-        case p: Problem if p.fixHint.isDefined => images.Icons.fixHint
-        case _                                 => EmptyIcon
-      }
-
-      container.icon.icon = icon
-
-      container.peer
-    }
-
   }
 
   private[ReportPage] class ReportTable extends JTable with TableModelListener {
@@ -135,13 +101,6 @@ class ReportPage extends GridBagPanel with WithConstraints {
     errorLabel.visible = _model.hasUnfixableProblems
 
     table.setModel(_model)
-
-    table.getColumnModel.getColumn(0).setCellRenderer(StatusColumnCellRenderer)
-    table.getColumnModel.getColumn(0).setMinWidth(100)
-    /*table.getColumnModel.getColumn(0).setPreferredWidth(110)
-    table.getColumnModel.getColumn(1).setPreferredWidth(200)
-    table.getColumnModel.getColumn(2).setPreferredWidth(Int.MaxValue)*/
-
     table.doLayout
 
     sorter = new TableRowSorter(_model)
@@ -199,6 +158,7 @@ class ReportPage extends GridBagPanel with WithConstraints {
         charWrap = true
       }
 
+      /*
       val fixHintLabel = new Label("Fix Hint:")
       var fixHint = new TextArea {
         editable = false
@@ -206,6 +166,7 @@ class ReportPage extends GridBagPanel with WithConstraints {
         lineWrap = true
         charWrap = true
       }
+      */
 
       val leftIns = new Insets(0, 9, 10, 5)
       val rightIns = new Insets(0, 0, 10, 9)
@@ -246,6 +207,7 @@ class ReportPage extends GridBagPanel with WithConstraints {
         add(description, _)
       }
 
+      /*
       withConstraints(gridx = 0, gridy = 4, insets = new Insets(0, 9, 0, 5)) {
         add(fixHintLabel, _)
       }
@@ -253,8 +215,9 @@ class ReportPage extends GridBagPanel with WithConstraints {
       withConstraints(gridx = 1, gridy = 4, weightx = 1, fill = Fill.Horizontal, insets = new Insets(0, 0, 0, 9)) {
         add(fixHint, _)
       }
+      */
 
-      withConstraints(gridx = 0, gridy = 5, gridwidth = 2, weightx = 1, weighty = 1, fill = Fill.Both) {
+      withConstraints(gridx = 0, gridy = 4, gridwidth = 2, weightx = 1, weighty = 1, fill = Fill.Both) {
         add(Swing.VGlue, _)
       }
     }
@@ -278,14 +241,6 @@ class ReportPage extends GridBagPanel with WithConstraints {
         panel.file.text = problem.fileName
         panel.member.text = problem.referredMember
         panel.description.text = problem.description
-        problem.fixHint match {
-          case Some(hint) =>
-            panel.fixHint.text = "To fix this incompatibility consider adding the following bridge " +
-              "method in the class source code:\n\n" + hint.toSourceCode
-            showFixPanel(true)
-          case None =>
-            showFixPanel(false)
-        }
       }
 
       listenTo(panel.closeButton)
@@ -293,11 +248,6 @@ class ReportPage extends GridBagPanel with WithConstraints {
         case ButtonClicked(panel.`closeButton`) => {
           table.clearSelection()
         }
-      }
-
-      private def showFixPanel(show: Boolean) = {
-        panel.fixHintLabel.visible = show
-        panel.fixHint.visible = show
       }
     }
   }

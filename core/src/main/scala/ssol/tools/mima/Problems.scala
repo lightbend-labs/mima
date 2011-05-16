@@ -4,7 +4,6 @@ object Problem {
   object Status extends Enumeration {
     val Unfixable = Value("unfixable")
     val Upgradable = Value("upgradable") // means MiMa Client can fix the bytecode
-    //val SourceFixable = Value("source fixable") // means that the break may be easily fixed in the source
     val Ignored = Value("ignored")
   }
 
@@ -20,7 +19,6 @@ sealed abstract class Problem {
   val fileName: String
   def description: String
   def referredMember: String
-  val fixHint: Option[ui.FixHint] = None
 }
 
 case class MissingFieldProblem(oldfld: MemberInfo) extends Problem {
@@ -76,15 +74,6 @@ case class IncompatibleFieldTypeProblem(oldfld: MemberInfo, newfld: MemberInfo) 
 }
 
 case class IncompatibleMethTypeProblem(oldmeth: MemberInfo, newmeths: List[MemberInfo]) extends Problem {
-  override val fixHint = {
-    if (!oldmeth.hasSyntheticName) {
-      newmeths.find(_.params.size == oldmeth.params.size) match {
-        case None       => None
-        case Some(meth) => Some(ui.AddBridgeMethod(oldmeth, meth))
-      }
-    } else None
-  }
-
   override val fileName: String = oldmeth.owner.sourceFileName
 
   override val description = {
@@ -99,14 +88,6 @@ case class IncompatibleMethTypeProblem(oldmeth: MemberInfo, newmeths: List[Membe
 }
 
 case class IncompatibleResultTypeProblem(oldmeth: MemberInfo, newmeth: MemberInfo) extends Problem {
-
-  override val fixHint = {
-    if (oldmeth.hasSyntheticName)
-      None
-    else
-      Some(ui.AddBridgeMethod(oldmeth, newmeth))
-  }
-
   override val fileName: String = oldmeth.owner.sourceFileName
 
   override val description = {
