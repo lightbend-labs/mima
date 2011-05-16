@@ -158,16 +158,6 @@ class ReportPage extends GridBagPanel with WithConstraints {
         charWrap = true
       }
 
-      /*
-      val fixHintLabel = new Label("Fix Hint:")
-      var fixHint = new TextArea {
-        editable = false
-        background = backgroundColor
-        lineWrap = true
-        charWrap = true
-      }
-      */
-
       val leftIns = new Insets(0, 9, 10, 5)
       val rightIns = new Insets(0, 0, 10, 9)
 

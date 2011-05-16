@@ -1,1 +1,0 @@
-A class method that become final in the new version can break client code because it can no longer be overidden.

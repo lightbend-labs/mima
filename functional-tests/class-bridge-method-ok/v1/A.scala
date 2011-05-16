@@ -1,5 +1,5 @@
 package scala
 
-trait A {
+class A {
   def foo: Int = 2
 }

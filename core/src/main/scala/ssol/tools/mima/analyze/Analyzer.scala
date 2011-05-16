@@ -60,13 +60,14 @@ private[analyze] trait Analyzer extends Function2[ClassInfo, ClassInfo, List[Pro
 
   /** Analyze incompatibilities that may derive from methods added in the `newclazz` */
   def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
-    for (newAbstrMeth <- newclazz.deferredMethods) yield methodChecker.check(newAbstrMeth, newclazz) match {
-      case Some(_) =>
-        val p = MissingMethodProblem(newAbstrMeth)
-        p.affectedVersion = Problem.ClassVersion.Old
-        p.status = Problem.Status.Upgradable
-        Some(p)
-      case none => none
+    for (newAbstrMeth <- newclazz.deferredMethods) yield 
+      methodChecker.check(newAbstrMeth, oldclazz) match {
+        case Some(_) =>
+          val p = MissingMethodProblem(newAbstrMeth)
+          p.affectedVersion = Problem.ClassVersion.Old
+          p.status = Problem.Status.Upgradable
+          Some(p)
+        case none => none
     }
   }
 }
