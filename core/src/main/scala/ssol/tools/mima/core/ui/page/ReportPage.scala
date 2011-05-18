@@ -52,7 +52,6 @@ class ReportPage extends GridBagPanel with WithConstraints {
   }
 
   private[ReportPage] class ReportTable extends JTable with TableModelListener {
-    //setAutoResizeMode(JTable.AUTO_RESIZE_OFF)
     // it makes sense to allow only single selection
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
 
@@ -71,10 +70,57 @@ class ReportPage extends GridBagPanel with WithConstraints {
     }
   }
 
+  private[ReportPage] class PopupTableDisplay(val contents: java.awt.Component) extends java.awt.event.MouseAdapter {
+    private lazy val factory = new javax.swing.PopupFactory
+    
+    override def mouseReleased(e: java.awt.event.MouseEvent) {
+      if (e.isPopupTrigger()) {
+        val source = e.getSource().asInstanceOf[JTable]
+        val row = source.rowAtPoint(e.getPoint());
+        val column = source.columnAtPoint(e.getPoint());
+
+        if (!source.isRowSelected(row))
+          source.changeSelection(row, column, false, false);
+
+        val popup = factory.getPopup(e.getComponent(), contents, e.getX(), e.getY())
+        popup.show()
+      }
+    }
+  }
+  
+  
+  
   private val ins = new Insets(0, 0, 10, 0)
 
   private val defaultFilterText = "<enter filter>"
   private val filter = new TextField(defaultFilterText)
+
+  // filtering
+  listenTo(filter)
+
+  reactions += {
+    case ValueChanged(`filter`) =>
+      try {
+        val rf: RowFilter[AbstractTableModel, Integer] = if (filter.text != defaultFilterText) RowFilter.regexFilter(escape(filter.text), 1) else RowFilter.regexFilter("*")
+        sorter.setRowFilter(rf)
+      } catch {
+        case _ => () // swallow any illegal regular expressions
+      }
+    case FocusGained(`filter`, _, _) if (filter.text == defaultFilterText) =>
+      filter.text = ""
+
+    case FocusLost(`filter`, _, _) if (filter.text.trim.isEmpty) =>
+      filter.text = defaultFilterText
+
+  }
+
+  private def escape(str: String): String = {
+    str flatMap {
+      case '$' => "\\$"
+      case '+' => "\\+"
+      case c   => c.toString
+    }
+  }
 
   withConstraints(insets = ins, gridx = 0, gridy = 0, weightx = .4, fill = Fill.Both)(add(filter, _))
 
@@ -108,32 +154,6 @@ class ReportPage extends GridBagPanel with WithConstraints {
     table.setRowSorter(sorter)
   }
 
-  // filtering
-  listenTo(filter)
-
-  reactions += {
-    case ValueChanged(`filter`) =>
-      try {
-        val rf: RowFilter[AbstractTableModel, Integer] = if (filter.text != defaultFilterText) RowFilter.regexFilter(escape(filter.text), 1) else RowFilter.regexFilter("*")
-        sorter.setRowFilter(rf)
-      } catch {
-        case _ => () // swallow any illegal regular expressions
-      }
-    case FocusGained(`filter`, _, _) if (filter.text == defaultFilterText) =>
-      filter.text = ""
-
-    case FocusLost(`filter`, _, _) if (filter.text.trim.isEmpty) =>
-      filter.text = defaultFilterText
-
-  }
-
-  private def escape(str: String): String = {
-    str flatMap {
-      case '$' => "\\$"
-      case '+' => "\\+"
-      case c   => c.toString
-    }
-  }
   private val problemPanel = {
     val panel = new GridBagPanel with WithConstraints {
       private val backgroundColor = new Color(247, 255, 199) // light-yellow
@@ -197,16 +217,6 @@ class ReportPage extends GridBagPanel with WithConstraints {
       withConstraints(gridx = 1, gridy = 3, fill = Fill.Horizontal, insets = rightIns) {
         add(description, _)
       }
-
-      /*
-      withConstraints(gridx = 0, gridy = 4, insets = new Insets(0, 9, 0, 5)) {
-        add(fixHintLabel, _)
-      }
-
-      withConstraints(gridx = 1, gridy = 4, weightx = 1, fill = Fill.Horizontal, insets = new Insets(0, 0, 0, 9)) {
-        add(fixHint, _)
-      }
-      */
 
       withConstraints(gridx = 0, gridy = 4, gridwidth = 2, weightx = 1, weighty = 1, fill = Fill.Both) {
         add(Swing.VGlue, _)
