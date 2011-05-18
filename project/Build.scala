@@ -69,7 +69,7 @@ object MimaBuild extends Build {
         val urls = data(cp).map(_.toURI.toURL).toArray
         val loader = new java.net.URLClassLoader(urls, si.loader)
 
-        val testClass = loader.loadClass("ssol.tools.mima.ui.CollectProblemsTest")
+        val testClass = loader.loadClass("ssol.tools.mima.lib.CollectProblemsTest")
         val testRunner = testClass.newInstance().asInstanceOf[{ def runTest(testName: String, oldJarPath: String, newJarPath: String, oraclePath: String): Unit }]
 
         val projectPath = proj.build.getPath + "functional-tests" + "/" + proj.project

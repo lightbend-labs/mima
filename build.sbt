@@ -13,5 +13,5 @@ jarName <<= (name, version) {
 }
 
 
-mainClass in (Compile, packageBin) := Some("ssol.tools.mima.ui.MimaApp")
-mainClass in (Compile, run) := Some("ssol.tools.mima.ui.MimaApp")
+mainClass in (Compile, packageBin) := Some("ssol.tools.mima.lib.ui.MimaApp")
+mainClass in (Compile, run) := Some("ssol.tools.mima.lib.ui.MimaApp")
