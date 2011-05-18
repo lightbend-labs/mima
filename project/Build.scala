@@ -17,9 +17,9 @@ object MimaBuild extends Build {
     .configs(v1Config, v2Config)
     .settings(
       // add fun-tests that depends on all functional tests
-      funTests <<= runAllTests,
+      functionalTests <<= runAllTests,
       // make the main 'package' task depend on functional tests passing
-      packageBin in Compile <<= packageBin in Compile dependsOn funTests)
+      packageBin in Compile <<= packageBin in Compile dependsOn functionalTests)
 
   // select all testN directories.
   lazy val bases = file("functional-tests") * (DirectoryFilter)
@@ -36,10 +36,10 @@ object MimaBuild extends Build {
     (Defaults.defaultSettings :+ (scalaVersion := "2.9.0"))++ // normal project defaults; can be trimmed later- test and run aren't needed, for example.
       inConfig(v1Config)(perConfig) ++ // add compile/package for the v1 sources
       inConfig(v2Config)(perConfig) :+ // add compile/package for the v2 sources
-      (funTests <<= runTests) // add the fun-tests task.
+      (functionalTests <<= runTests) // add the fun-tests task.
 
   // this is the key for the task that runs a test
-  lazy val funTests = TaskKey[Unit]("fun-tests")
+  lazy val functionalTests = TaskKey[Unit]("test-functional")
 
   // define configurations for the v1 and v2 sources
   lazy val v1Config = config("v1")
@@ -64,8 +64,8 @@ object MimaBuild extends Build {
       thisProjectRef, // gives us the ProjectRef this task is defined in
       scalaInstance, // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
       packageBin in v1Config, // package the v1 sources and get the configuration used
-      packageBin in v2Config // same for v2
-      ) map { (cp, proj, si, v1, v2) =>
+      packageBin in v2Config, // same for v2
+      streams) map { (cp, proj, si, v1, v2, streams) =>
         val urls = data(cp).map(_.toURI.toURL).toArray
         val loader = new java.net.URLClassLoader(urls, si.loader)
 
@@ -77,8 +77,9 @@ object MimaBuild extends Build {
 
         try {
           testRunner.runTest(proj.project, v1.getAbsolutePath, v2.getAbsolutePath, oraclePath)
+          streams.log.info("Test '" + proj.project + "' succeeded.")
         } catch {
-          case e => println("[fatal] Failed to run Test '" + proj.project + "'")
+          case e: Exception =>  streams.log.error(e.toString)
         }
         ()
       }
@@ -92,7 +93,7 @@ object MimaBuild extends Build {
         val structure = Project.structure(s)
         val allProjects = structure.units(proj.build).defined.values filter (_.id != proj.project)
         // get the fun-tests task in each project
-        val allTests = allProjects.toSeq flatMap { p => funTests in ProjectRef(proj.build, p.id) get structure.data }
+        val allTests = allProjects.toSeq flatMap { p => functionalTests in ProjectRef(proj.build, p.id) get structure.data }
         // depend on all fun-tests
         allTests.join.map(_ => ())
       }
