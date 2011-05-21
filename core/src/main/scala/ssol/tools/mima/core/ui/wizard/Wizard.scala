@@ -27,6 +27,20 @@ import ssol.tools.mima.core.ui.widget.NavigationPanel
  *  @see PageChanged, Cancelled
  */
 class Wizard extends BorderPanel {
+  private[Wizard] object WizardPageProxy {
+    def apply(_page: => WizardPage) = new WizardPageProxy { override def page = _page }
+  }
+  private[Wizard] abstract class WizardPageProxy {
+    private var cached: Option[WizardPage] = None 
+    protected def page: WizardPage
+    def get = cached match {
+      case None =>
+        cached = Some(page)
+        cached.get
+      case Some(page) => page
+    }
+  }
+  
   private object LoadingPanel extends FlowPanel {
     contents += new Label("Loading...")
   }
@@ -34,18 +48,17 @@ class Wizard extends BorderPanel {
   import BorderPanel._
 
   /** The current wizard pages. */
-  private val pages: mutable.Buffer[WizardPage] = new mutable.ArrayBuffer[WizardPage]
+  private val pages: mutable.Buffer[WizardPageProxy] = new mutable.ArrayBuffer[WizardPageProxy]
 
-  def +=(page: WizardPage) = pages += page
-  def ++=(pages: Seq[WizardPage]) = pages.foreach(+=(_))
+  def +=(_page: => WizardPage) = pages += WizardPageProxy(_page)
 
   /** Switch to the given wizard page number. */
   private def switchTo(page: Int) {
     _currentPage = page
 
-    val content = pages(_currentPage)
+    val current = pages(_currentPage).get
 
-    centerPane.swap(content)
+    centerPane.swap(current)
     updateNavigationButtons()
 
     // explicitly redraw the container
@@ -54,7 +67,7 @@ class Wizard extends BorderPanel {
   }
 
   private def updateNavigationButtons() {
-    navigation.next.enabled = pages(_currentPage).canNavigateForward
+    navigation.next.enabled = pages(_currentPage).get.canNavigateForward
     navigation.next.visible = currentIsNotLastPage
     navigation.back.visible = currentIsNotFirstPage
   }
@@ -79,8 +92,8 @@ class Wizard extends BorderPanel {
     checkStarted
     assert(currentPage + 1 < pages.length)
 
-    val page = pages(currentPage)
-    val nextPage = pages(currentPage + 1)
+    val page = pages(currentPage).get
+    val nextPage = pages(currentPage + 1).get
     page.onNext()
     notifyHide(page)
     nextPage.model ++= page.model
@@ -92,8 +105,8 @@ class Wizard extends BorderPanel {
     checkStarted
     assert(currentPage - 1 >= 0)
 
-    val page = pages(currentPage)
-    val previousPage = pages(currentPage - 1)
+    val page = pages(currentPage).get
+    val previousPage = pages(currentPage - 1).get
     page.onBack()
     notifyHide(page)
     page.model.clear

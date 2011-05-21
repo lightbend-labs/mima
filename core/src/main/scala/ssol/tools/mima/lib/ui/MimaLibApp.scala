@@ -4,5 +4,5 @@ import ssol.tools.mima.core.ui.MimaSwingApp
 
 object MimaLibApp extends MimaSwingApp {
   override protected def launcherClassName = "ssol.tools.mima.lib.ui.MimaLibApp"
-  override val top = new LibFrame
+  override lazy val top = new LibFrame
 }

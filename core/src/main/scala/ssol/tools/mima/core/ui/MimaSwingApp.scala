@@ -19,5 +19,5 @@ trait MimaSwingApp extends SimpleSwingApplication {
 
   protected def launcherClassName: String
   
-  override def top: MainFrame with Centered
+  override def top: MimaFrame
 }
