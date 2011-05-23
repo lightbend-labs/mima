@@ -35,7 +35,7 @@ private[analyze] abstract class BaseMethodChecker extends Checker[MemberInfo, Cl
     methods.groupBy(_.parametersSig).values.map(_.head).toList
 }
 
-private[analyze] object ClassMethodChecker extends BaseMethodChecker {
+private[analyze] class ClassMethodChecker extends BaseMethodChecker {
   def check(method: MemberInfo, inclazz: ClassInfo): Option[Problem] = {
     if (method.isDeferred)
       super.check(method, inclazz.lookupMethods(method.name))
@@ -44,7 +44,7 @@ private[analyze] object ClassMethodChecker extends BaseMethodChecker {
   }
 }
 
-private[analyze] object TraitMethodChecker extends BaseMethodChecker {
+private[analyze] class TraitMethodChecker extends BaseMethodChecker {
   def check(method: MemberInfo, inclazz: ClassInfo): Option[Problem] = {
     if (method.owner.hasStaticImpl(method)) {
       checkStaticImplMethod(method, inclazz)

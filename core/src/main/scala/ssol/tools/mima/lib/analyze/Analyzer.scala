@@ -7,8 +7,8 @@ import ssol.tools.mima.lib.analyze.template.TemplateChecker
 
 object Analyzer {
   def apply(oldclz: ClassInfo, newclz: ClassInfo): List[Problem] = {
-    if (oldclz.isClass && newclz.isClass) ClassAnalyzer(oldclz, newclz)
-    else TraitAnalyzer(oldclz, newclz)
+    if (oldclz.isClass && newclz.isClass) new ClassAnalyzer().apply(oldclz, newclz)
+    else new TraitAnalyzer().apply(oldclz, newclz)
   }
 }
 
@@ -60,12 +60,12 @@ private[analyze] trait Analyzer extends Function2[ClassInfo, ClassInfo, List[Pro
   def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem]
 }
 
-private[analyze] object ClassAnalyzer extends Analyzer {
+private[analyze] class ClassAnalyzer extends Analyzer {
   import ssol.tools.mima.lib.analyze.field.ClassFieldChecker
   import ssol.tools.mima.lib.analyze.method.ClassMethodChecker
   
-  protected val fieldChecker = ClassFieldChecker
-  protected val methodChecker = ClassMethodChecker
+  protected val fieldChecker = new ClassFieldChecker
+  protected val methodChecker = new ClassMethodChecker
 
   override def analyze(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
     if (oldclazz.isImplClass)
@@ -97,12 +97,12 @@ private[analyze] object ClassAnalyzer extends Analyzer {
   }
 }
 
-private[analyze] object TraitAnalyzer extends Analyzer {
+private[analyze] class TraitAnalyzer extends Analyzer {
   import ssol.tools.mima.lib.analyze.field.ClassFieldChecker
   import ssol.tools.mima.lib.analyze.method.TraitMethodChecker
   
-  protected val fieldChecker = ClassFieldChecker
-  protected val methodChecker = TraitMethodChecker
+  protected val fieldChecker = new ClassFieldChecker
+  protected val methodChecker = new TraitMethodChecker
 
   override def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
     val res = collection.mutable.ListBuffer.empty[Problem]

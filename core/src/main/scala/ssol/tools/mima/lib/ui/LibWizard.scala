@@ -5,6 +5,7 @@ import scala.swing._
 import ssol.tools.mima.core.Config
 import ssol.tools.mima.lib.MiMaLib
 import ssol.tools.mima.core.ui.wizard._
+import ssol.tools.mima.core.ui.model.ReportTableModel
 import scala.tools.nsc.{ util, io }
 import util._
 import ClassPath._
@@ -29,8 +30,8 @@ object LibWizard {
     def classpath_=(classpath: ClassPath[_]) = data += Classpath -> classpath
     def classpath = data.get(Classpath).get.asInstanceOf[ClassPath[_]]
 
-    def tableModel_=(tableModel: ProblemsModel) = data += TableModel -> tableModel
-    def tableModel = data.get(TableModel).get.asInstanceOf[ProblemsModel]
+    def tableModel_=(tableModel: ReportTableModel) = data += TableModel -> tableModel
+    def tableModel = data.get(TableModel).get.asInstanceOf[ReportTableModel]
     def hasTableModel = data.get(TableModel).isDefined
 
     def targetDir_=(target: File) = {
@@ -102,7 +103,7 @@ class LibWizard extends Wizard {
       if (!model.hasTableModel) {
         val mima = new MiMaLib
         val problems = mima.collectProblems(LibWizard.oldLib.get.getAbsolutePath, LibWizard.newLib.get.getAbsolutePath)
-        model.tableModel = ProblemsModel(problems)
+        model.tableModel = ReportTableModel(problems)
       }
     }
 

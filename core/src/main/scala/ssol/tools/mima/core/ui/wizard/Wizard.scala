@@ -32,6 +32,7 @@ class Wizard extends BorderPanel {
   }
   private[Wizard] abstract class WizardPageProxy {
     private var cached: Option[WizardPage] = None 
+    def clear() = cached = None
     protected def page: WizardPage
     def get = cached match {
       case None =>

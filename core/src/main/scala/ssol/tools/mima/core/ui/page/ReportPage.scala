@@ -4,6 +4,9 @@ import scala.swing._
 import Swing._
 import GridBagPanel._
 
+import ssol.tools.mima.core.ui.model.ReportTableModel
+import ssol.tools.mima.core.ui.widget.{ReportTable, PopupTableComponent}
+
 import ssol.tools.mima.core.ui.WithConstraints
 import ssol.tools.mima._
 import ssol.tools.mima.core.Problem
@@ -22,8 +25,7 @@ import java.awt.event.{ MouseListener, ItemListener }
 /** Mima problem report page.
  */
 class ReportPage extends GridBagPanel with WithConstraints {
-  import javax.swing.event._
-  import javax.swing._
+  import javax.swing.event.{ListSelectionListener,ListSelectionEvent} 
 
   /** Show problem description panel when the user selects a row. */
   private[ReportPage] class RowSelection(table: JTable) extends ListSelectionListener {
@@ -34,7 +36,7 @@ class ReportPage extends GridBagPanel with WithConstraints {
 
       if (index >= 0) {
         val modelRow = table.convertRowIndexToModel(index)
-        problemPanel.problem_=(table.getModel.getValueAt(modelRow, ProblemsModel.ProblemDataColumn).asInstanceOf[Problem])
+        problemPanel.problem_=(table.getModel.getValueAt(modelRow, ReportTableModel.ProblemDataColumn).asInstanceOf[Problem])
       }
 
       problemPanel.visible = index >= 0
@@ -43,7 +45,7 @@ class ReportPage extends GridBagPanel with WithConstraints {
       revalidate()
 
       if (problemPanel.visible) {
-        // always set scroll the top. Delaying call because it has to happen after the container has run `revalidate`
+        // always set scroll at the top. Delaying call because it has to happen after the container has run `revalidate`
         Swing onEDT {
           problemPanel.peer.getViewport.setViewPosition((0, 0))
         }
@@ -51,45 +53,6 @@ class ReportPage extends GridBagPanel with WithConstraints {
     }
   }
 
-  private[ReportPage] class ReportTable extends JTable with TableModelListener {
-    // it makes sense to allow only single selection
-    setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
-
-    //overriden to set tooltip
-    override def prepareRenderer(renderer: TableCellRenderer, row: Int, column: Int): java.awt.Component = {
-      val component = super.prepareRenderer(renderer, row, column)
-
-      component match {
-        case jc: javax.swing.JComponent =>
-          /** Display a tooltip*/
-          jc.setToolTipText(table.getValueAt(row, column).toString.grouped(80).mkString("<html>", "<br>", "</html>"))
-        case _ => ()
-      }
-
-      component
-    }
-  }
-
-  private[ReportPage] class PopupTableDisplay(val contents: java.awt.Component) extends java.awt.event.MouseAdapter {
-    private lazy val factory = new javax.swing.PopupFactory
-    
-    override def mouseReleased(e: java.awt.event.MouseEvent) {
-      if (e.isPopupTrigger()) {
-        val source = e.getSource().asInstanceOf[JTable]
-        val row = source.rowAtPoint(e.getPoint());
-        val column = source.columnAtPoint(e.getPoint());
-
-        if (!source.isRowSelected(row))
-          source.changeSelection(row, column, false, false);
-
-        val popup = factory.getPopup(e.getComponent(), contents, e.getX(), e.getY())
-        popup.show()
-      }
-    }
-  }
-  
-  
-  
   private val ins = new Insets(0, 0, 10, 0)
 
   private val defaultFilterText = "<enter filter>"
@@ -132,19 +95,22 @@ class ReportPage extends GridBagPanel with WithConstraints {
   }
 
   // the problem table
-  private val table = new ReportTable
-  val selectionListener = new RowSelection(table)
-  table.getSelectionModel.addListSelectionListener(selectionListener)
-
-  withConstraints(gridx = 0, fill = Fill.Both, weighty = 0.6, weightx = 1.0, gridwidth = REMAINDER) {
-    add(new ScrollPane(new Component {
-      override lazy val peer = table
-    }), _)
+  private val table =  {
+    val t = new ReportTable
+    val selectionListener = new RowSelection(t)
+    t.getSelectionModel.addListSelectionListener(selectionListener)
+    //t.addMouseListener(new PopupTableComponent(new Label("Add Filter").peer))
+    t
   }
+  
+
+  val tablePane = new ScrollPane(new Component {
+      override lazy val peer = table
+    })
 
   private var sorter: TableRowSorter[AbstractTableModel] = _
 
-  def setTableModel(_model: ProblemsModel) = {
+  def setTableModel(_model: ReportTableModel) = {
     errorLabel.visible = _model.hasUnfixableProblems
 
     table.setModel(_model)
@@ -156,7 +122,8 @@ class ReportPage extends GridBagPanel with WithConstraints {
 
   private val problemPanel = {
     val panel = new GridBagPanel with WithConstraints {
-      private val backgroundColor = new Color(247, 255, 199) // light-yellow
+      private var lightYellow = new Color(247, 255, 199)
+      private val backgroundColor = lightYellow
       background = backgroundColor
       border = EmptyBorder(3)
 
@@ -246,49 +213,18 @@ class ReportPage extends GridBagPanel with WithConstraints {
 
       listenTo(panel.closeButton)
       reactions += {
-        case ButtonClicked(panel.`closeButton`) => {
+        case ButtonClicked(panel.`closeButton`) => 
           table.clearSelection()
-        }
       }
     }
   }
-
-  withConstraints(gridx = 0, fill = Fill.Both, weightx = 1.0, weighty = .4, gridwidth = REMAINDER, anchor = Anchor.SouthWest) {
-    add(problemPanel, _)
+  
+  
+  
+  val splitPanel: Component = new SplitPane(Orientation.Horizontal, tablePane, problemPanel) 
+  
+  withConstraints(gridx = 0, fill = Fill.Both, weighty = 1, weightx = 1.0, gridwidth = REMAINDER) {
+    add(splitPanel, _)
   }
 
-}
-
-object ProblemsModel {
-  val ProblemDataColumn = 3
-
-  def apply(problems: List[Problem]) =
-    new ProblemsModel(problems.toArray.map(toArray(_)))
-
-  private def toArray(problem: Problem): Array[AnyRef] =
-    Array(problem.status, problem.referredMember, problem.description, problem)
-}
-
-class ProblemsModel(problems: Array[Array[AnyRef]]) extends AbstractTableModel {
-  private val columns = Array("Status", "Member", "Description")
-  private val columnsType = Array(classOf[Problem.Status.Value], classOf[String], classOf[String])
-
-  def hasUnfixableProblems = problems.exists(_(0) == Problem.Status.Unfixable)
-
-  override def getColumnName(n: Int) = columns(n)
-
-  override def getColumnCount = columns.size
-  override def getRowCount = problems.size
-  override def getValueAt(x: Int, y: Int): AnyRef = problems(x)(y)
-
-  override def isCellEditable(i: Int, j: Int) = false
-
-  override def getColumnClass(col: Int) = columnsType(col)
-
-  override def setValueAt(value: AnyRef, row: Int, col: Int): Unit = {
-    assert(isCellEditable(row, col))
-
-    problems(row)(col) = value
-    fireTableCellUpdated(row, col)
-  }
 }

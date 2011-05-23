@@ -24,4 +24,4 @@ private[analyze] abstract class BaseFieldChecker extends Checker[MemberInfo, Cla
   }
 }
 
-private[analyze] object ClassFieldChecker extends BaseFieldChecker
+private[analyze] class ClassFieldChecker extends BaseFieldChecker
