@@ -6,8 +6,12 @@ import javax.swing.event.TableModelListener
 import javax.swing.ListSelectionModel
 
 private[ui] class ReportTable extends JTable with TableModelListener {
+  
   // allow only single selection
   setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+  
+  // display a popup 
+  addMouseListener(new PopupTableComponent(new PopupContent()))
   
   override def prepareRenderer(renderer: TableCellRenderer, row: Int, column: Int): java.awt.Component = {
     val component = super.prepareRenderer(renderer, row, column)
@@ -30,4 +34,11 @@ private[ui] class ReportTable extends JTable with TableModelListener {
     else
       value.toString.grouped(80).mkString("<html>", "<br>", "</html>")
   }
+}
+
+import scala.swing.{Label, BoxPanel, Orientation}
+
+class PopupContent extends BoxPanel(Orientation.Vertical) {
+  contents += new Label("Add Filter")
+  
 }

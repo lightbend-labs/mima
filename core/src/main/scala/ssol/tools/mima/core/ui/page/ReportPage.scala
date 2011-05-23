@@ -29,6 +29,8 @@ class ReportPage extends GridBagPanel with WithConstraints {
 
   /** Show problem description panel when the user selects a row. */
   private[ReportPage] class RowSelection(table: JTable) extends ListSelectionListener {
+    private val LowPanelSplitterHeight = 150
+    
     override def valueChanged(e: ListSelectionEvent) {
       var index = table.getSelectedRow
 
@@ -47,7 +49,9 @@ class ReportPage extends GridBagPanel with WithConstraints {
       if (problemPanel.visible) {
         // always set scroll at the top. Delaying call because it has to happen after the container has run `revalidate`
         Swing onEDT {
-          problemPanel.peer.getViewport.setViewPosition((0, 0))
+          val origin = (0,0)
+          problemPanel.peer.getViewport.setViewPosition(origin)
+          splitPanel.dividerLocation = splitPanel.size.height - LowPanelSplitterHeight
         }
       }
     }
@@ -99,7 +103,6 @@ class ReportPage extends GridBagPanel with WithConstraints {
     val t = new ReportTable
     val selectionListener = new RowSelection(t)
     t.getSelectionModel.addListSelectionListener(selectionListener)
-    //t.addMouseListener(new PopupTableComponent(new Label("Add Filter").peer))
     t
   }
   
@@ -221,7 +224,7 @@ class ReportPage extends GridBagPanel with WithConstraints {
   
   
   
-  val splitPanel: Component = new SplitPane(Orientation.Horizontal, tablePane, problemPanel) 
+  val splitPanel = new SplitPane(Orientation.Horizontal, tablePane, problemPanel) 
   
   withConstraints(gridx = 0, fill = Fill.Both, weighty = 1, weightx = 1.0, gridwidth = REMAINDER) {
     add(splitPanel, _)
