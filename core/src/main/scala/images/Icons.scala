@@ -20,7 +20,7 @@ object Icons {
     }
   }
   
-  lazy val install = getIcon("install.png")
+  lazy val typesafe = getIcon("typesafe.png")
   lazy val migration = getIcon("migration.jpg")
   lazy val check = getIcon("check.jpg")
   

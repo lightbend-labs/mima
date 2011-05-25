@@ -4,7 +4,7 @@ import ssol.tools.mima.core.Problem
 import javax.swing.table.AbstractTableModel
 
 object ReportTableModel {
-  val ProblemDataColumn = 3
+  private val ProblemDataColumn = 3
 
   def apply(problems: List[Problem]) =
     new ReportTableModel(problems.toArray.map(toArray(_)))
@@ -19,11 +19,15 @@ class ReportTableModel(problems: Array[Array[AnyRef]]) extends AbstractTableMode
 
   def hasUnfixableProblems = problems.exists(_(0) == Problem.Status.Unfixable)
 
+  def countUnfixableProblems = problems.count(_(0) == Problem.Status.Unfixable)
+  
   override def getColumnName(n: Int) = columns(n)
 
   override def getColumnCount = columns.size
   override def getRowCount = problems.size
   override def getValueAt(x: Int, y: Int): AnyRef = problems(x)(y)
+  
+  def getProblem(row: Int) = getValueAt(row, ReportTableModel.ProblemDataColumn).asInstanceOf[Problem]
 
   override def isCellEditable(i: Int, j: Int) = false
 

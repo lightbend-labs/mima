@@ -13,8 +13,8 @@ import util._
 import ClassPath._
 
 abstract class MimaFrame extends MainFrame with Centered {
-
-  object ScalaInstall extends widget.ImagePanel(images.Icons.install)
+  
+  object TypesafeLogo extends widget.ImagePanel(images.Icons.typesafe)
 
   title = "Scala Migration Manager"
   preferredSize = (800, 600)
@@ -25,10 +25,14 @@ abstract class MimaFrame extends MainFrame with Centered {
 
   protected val mainContainer = new BorderPanel {
     border = EmptyBorder(10)
-    add(ScalaInstall, BorderPanel.Position.West)
-
+    
+    private val leftPanel = new BorderPanel {
+      add(TypesafeLogo, BorderPanel.Position.East)
+    }
+    add(leftPanel, BorderPanel.Position.North)
+    
     def setContent(c: Component): Unit = {
-      c.border = EmptyBorder(0, 10, 0, 0) // always insert 10px left-border
+      c.border = EmptyBorder(10, 0, 0, 0)
       add(c, BorderPanel.Position.Center)
       revalidate()
       repaint()
@@ -40,7 +44,7 @@ abstract class MimaFrame extends MainFrame with Centered {
   reactions += {
     case Exit =>
       Dialog.showConfirmation(parent = null,
-        title = "Exit Mimalib",
+        title = "Exit",
         message = "Are you sure you want to quit?") match {
           case Dialog.Result.Ok => exit(0)
           case _                => ()
