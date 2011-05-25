@@ -5,7 +5,7 @@ import Swing._
 import GridBagPanel._
 
 import ssol.tools.mima.core.ui.model.ReportTableModel
-import ssol.tools.mima.core.ui.widget.{ ProblemInfoView, ReportTable, FilterTextField }
+import ssol.tools.mima.core.ui.widget._
 
 import ssol.tools.mima.core.ui.WithConstraints
 import ssol.tools.mima._
@@ -23,7 +23,7 @@ import javax.swing.{ JCheckBox, UIManager }
 import java.awt.event.{ MouseListener, ItemListener }
 
 /** Mima problem report page. */
-class ReportPage extends GridBagPanel with WithConstraints {
+class ReportPage extends BorderPanel /*GridBagPanel with WithConstraints*/ {
   import javax.swing.event.{ ListSelectionListener, ListSelectionEvent }
 
   /** When the user selects a row show a description panel for the problem. */
@@ -65,37 +65,94 @@ class ReportPage extends GridBagPanel with WithConstraints {
     }
   }
 
-  private val ins = new Insets(0, 0, 10, 0)
+  private[ReportPage] class FilterConstraint extends FlowPanel(FlowPanel.Alignment.Left)() {
+    vGap = 0
+    abstract class Comparer {
+      def comparer: String => Boolean
+    }
+    object Is extends Comparer {
+      def comparer = _ == value.text
+      override def toString = "is"
+    }
+    object Contains extends Comparer {
+      def comparer = _ contains value.text
+      override def toString = "contains"
+    }
+    object StartsWith extends Comparer {
+      def comparer = _ startsWith value.text
+      override def toString = "startsWith"
+    }
+    object EndsWith extends Comparer {
+      def comparer = _ endsWith value.text
+      override def toString = "endsWith"
+    }
+    
+    object Not{
+      def apply(c: Comparer) = new Not(c)
+    }
+    
+    class Not(c: Comparer) extends Comparer {
+      override def comparer = value => !c.comparer(value) 
+      
+      override def toString = c.toString + " not"
+    }
 
-  private val filter = new FilterTextField
+    private val verbs = List(Contains, StartsWith, EndsWith, Is, 
+        							Not(Contains), Not(StartsWith), Not(EndsWith), Not(Is))
 
-  withConstraints(insets = ins, gridx = 0, gridy = 0, weightx = .4, fill = Fill.Both)(add(filter, _))
+    private val listNames = new ComboBox(table.getModel.getColumnNames)
+    private val listVerbs = new ComboBox(verbs)
+    val value = new TextField(40)
 
-  listenTo(filter)
+    def createColumnTextFilter: RowFilter[AbstractTableModel, Integer] =
+      if(value.text.trim.isEmpty)
+        NoFilter
+      else
+      	new ColumnTextFilter(listNames.selection.index, listVerbs.selection.item.comparer)
 
-  reactions += {
-    case ValueChanged(`filter`) =>
-      try {
-        val rf = {
-          if (!filter.isDefaultFilterText)
-            RegExFilter(filter.text, (0 until table.getModel.getColumnCount): _*)
-          else
-            NoFilter
-        }
-        sorter.setRowFilter(rf.rowFilter)
-      } catch {
-        case e: Exception => () // swallow
-      }
+    contents ++= Seq(listNames, listVerbs, value)
   }
-  
+
+  class FilterConstraintsPanel extends ListItemsPanel {
+    type Item = FilterConstraint
+    private val constraints = new collection.mutable.ArrayBuffer[FilterConstraint]()
+
+    addConstraint()
+
+    override protected def create() = {
+      val fc = new FilterConstraint
+      constraints += fc
+      listenTo(fc.value)
+
+      fc
+    }
+
+    reactions += {
+      case ValueChanged(_) =>
+        computeFilter()
+    }
+
+    override protected def remove(c: FilterConstraint) {
+      constraints -= c
+      deafTo(c)
+      computeFilter()
+    }
+
+    private def computeFilter() {
+      val filter = constraints.foldRight[RowFilter[AbstractTableModel, Integer]](NoFilter)((a, b) => RowFilter.andFilter(java.util.Arrays.asList(a.createColumnTextFilter, b)))
+      sorter.setRowFilter(filter)
+    }
+  }
+
+  private val constraintsPanel = new FilterConstraintsPanel()
+  add(constraintsPanel, BorderPanel.Position.North)
+
   private val errorLabel = new Label { foreground = java.awt.Color.RED }
 
-  withConstraints(gridx = 2, gridy = 0, anchor = Anchor.North, insets = new Insets(4, 10, 0, 0)) {
-    add(errorLabel, _)
-  }
+  add(errorLabel, BorderPanel.Position.South)
 
   // the problem table
-  private val table = {
+  private lazy val table = {
     val t = new ReportTable
     val selectionListener = new RowSelection(t)
     t.getSelectionModel.addListSelectionListener(selectionListener)
@@ -129,39 +186,16 @@ class ReportPage extends GridBagPanel with WithConstraints {
 
   val splitPanel = new SplitPane(Orientation.Horizontal, tableContainer, problemInfo)
 
-  withConstraints(gridx = 0, fill = Fill.Both, weighty = 1, weightx = 1.0, gridwidth = REMAINDER) {
-    add(splitPanel, _)
-  }
+  add(splitPanel, BorderPanel.Position.Center)
 }
 
-trait TableFilter[T, I] {
-  val rowFilter: RowFilter[T, I]
-  def &(that: TableFilter[T, I]) = new TableFilter[T, I] { val rowFilter = RowFilter.andFilter(java.util.Arrays.asList(TableFilter.this.rowFilter, that.rowFilter)) }
-  def |(that: TableFilter[T, I]) = new TableFilter[T, I] { val rowFilter = RowFilter.orFilter(java.util.Arrays.asList(TableFilter.this.rowFilter, that.rowFilter)) }
-  def ~ = new TableFilter[T, I] { val rowFilter = RowFilter.notFilter(TableFilter.this.rowFilter) }
+object NoFilter extends RowFilter[AbstractTableModel, Integer] {
+  def include(entry: RowFilter.Entry[T, I] forSome { type T <: AbstractTableModel; type I <: Integer }) =
+    true
 }
 
-object NoFilter extends TableFilter[AbstractTableModel, Integer] {
-  val rowFilter = new RowFilter[AbstractTableModel, Integer] {
-    def include(entry: RowFilter.Entry[T, I] forSome { type T <: AbstractTableModel; type I <: Integer }) =
-      true
+class ColumnTextFilter(colIndex: Int, pred: String => Boolean) extends RowFilter[AbstractTableModel, Integer] {
+  def include(entry: RowFilter.Entry[T, I] forSome { type T <: AbstractTableModel; type I <: Integer }) = {
+    pred(entry.getStringValue(colIndex))
   }
 }
-
-object RegExFilter {
-  def apply(text: String, columns: Int*) = {
-    new TableFilter[AbstractTableModel, Integer] {
-      val rowFilter: RowFilter[AbstractTableModel, Integer] = RowFilter.regexFilter(escape(text), columns: _*)
-    }
-  }
-
-  private def escape(str: String): String = {
-    str flatMap {
-      case '$' => "\\$"
-      case '+' => "\\+"
-      case c   => c.toString
-    }
-  }
-}
-
-class IgnoreDialog(owner: Window) extends Dialog(owner)
