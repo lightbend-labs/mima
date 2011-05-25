@@ -5,7 +5,7 @@ import Swing._
 import GridBagPanel._
 
 import ssol.tools.mima.core.ui.model.ReportTableModel
-import ssol.tools.mima.core.ui.widget.{ ProblemInfoView, ReportTable, PopupTableComponent, FilterTextField }
+import ssol.tools.mima.core.ui.widget.{ ProblemInfoView, ReportTable, FilterTextField }
 
 import ssol.tools.mima.core.ui.WithConstraints
 import ssol.tools.mima._
@@ -38,14 +38,16 @@ class ReportPage extends GridBagPanel with WithConstraints {
       val wasVisible = problemInfo.visible
       problemInfo.visible = index >= 0
 
-      if (!problemInfo.visible) return 
+      if (!problemInfo.visible) {
+        splitPanel.dividerLocation = splitPanel.size.height
+        return
+      }
 
       updateProblemInfo(index)
-      
+
       if (!wasVisible) // adjust the split location only if the panel was not visible	  
         splitPanel.dividerLocation = splitPanel.size.height - LowPanelSplitterHeight
-      
-        // always set scroll at the top. Delaying call because it has to happen after the container has run `revalidate`
+
       scrollToTop()
     }
 
@@ -55,6 +57,7 @@ class ReportPage extends GridBagPanel with WithConstraints {
     }
 
     private def scrollToTop() {
+      // scrolling has to be delayed or it won't work, go figure...
       Swing onEDT {
         val origin = (0, 0)
         problemInfo.peer.getViewport.setViewPosition(origin)
@@ -64,23 +67,23 @@ class ReportPage extends GridBagPanel with WithConstraints {
 
   private val ins = new Insets(0, 0, 10, 0)
 
-  private val filter = new FilterTextField
+  val filter = new FilterTextField
 
   withConstraints(insets = ins, gridx = 0, gridy = 0, weightx = .4, fill = Fill.Both)(add(filter, _))
-  
+
   listenTo(filter)
 
   reactions += {
-    case ValueChanged(`filter`) => 
+    case ValueChanged(`filter`) =>
       val rf = {
         if (!filter.isDefaultFilterText)
-          RegExFilter(filter.text, 0, 1, 2)
+          RegExFilter(filter.text, (0 until table.getModel.getColumnCount): _*)
         else
           NoFilter
       }
-      sorter.setRowFilter(rf)
+      sorter.setRowFilter(rf.rowFilter)
   }
-
+  
   private val errorLabel = new Label { foreground = java.awt.Color.RED }
 
   withConstraints(gridx = 2, gridy = 0, anchor = Anchor.North, insets = new Insets(4, 10, 0, 0)) {
@@ -127,17 +130,24 @@ class ReportPage extends GridBagPanel with WithConstraints {
   }
 }
 
-object NoFilter extends RowFilter[AbstractTableModel, Integer] {
-  def include(entry: RowFilter.Entry[T, I] forSome { type T <: AbstractTableModel; type I <: Integer }) =
-    true
+trait TableFilter[T, I] {
+  val rowFilter: RowFilter[T, I]
+  def &(that: TableFilter[T, I]) = new TableFilter[T, I] { val rowFilter = RowFilter.andFilter(java.util.Arrays.asList(TableFilter.this.rowFilter, that.rowFilter)) }
+  def |(that: TableFilter[T, I]) = new TableFilter[T, I] { val rowFilter = RowFilter.orFilter(java.util.Arrays.asList(TableFilter.this.rowFilter, that.rowFilter)) }
+  def ~ = new TableFilter[T, I] { val rowFilter = RowFilter.notFilter(TableFilter.this.rowFilter) }
+}
+
+object NoFilter extends TableFilter[AbstractTableModel, Integer] {
+  val rowFilter = new RowFilter[AbstractTableModel, Integer] {
+    def include(entry: RowFilter.Entry[T, I] forSome { type T <: AbstractTableModel; type I <: Integer }) =
+      true
+  }
 }
 
 object RegExFilter {
-  def apply(text: String, columns: Int*): RowFilter[AbstractTableModel, Integer] = {
-    try {
-      RowFilter.regexFilter(escape(text), columns: _*)
-    } catch {
-      case _ => NoFilter // swallow any illegal regular expressions
+  def apply(text: String, columns: Int*) = {
+    new TableFilter[AbstractTableModel, Integer] {
+      val rowFilter: RowFilter[AbstractTableModel, Integer] = RowFilter.regexFilter(escape(text), columns: _*)
     }
   }
 
