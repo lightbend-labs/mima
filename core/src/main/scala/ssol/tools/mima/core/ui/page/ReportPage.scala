@@ -67,7 +67,7 @@ class ReportPage extends GridBagPanel with WithConstraints {
 
   private val ins = new Insets(0, 0, 10, 0)
 
-  val filter = new FilterTextField
+  private val filter = new FilterTextField
 
   withConstraints(insets = ins, gridx = 0, gridy = 0, weightx = .4, fill = Fill.Both)(add(filter, _))
 
@@ -75,13 +75,17 @@ class ReportPage extends GridBagPanel with WithConstraints {
 
   reactions += {
     case ValueChanged(`filter`) =>
-      val rf = {
-        if (!filter.isDefaultFilterText)
-          RegExFilter(filter.text, (0 until table.getModel.getColumnCount): _*)
-        else
-          NoFilter
+      try {
+        val rf = {
+          if (!filter.isDefaultFilterText)
+            RegExFilter(filter.text, (0 until table.getModel.getColumnCount): _*)
+          else
+            NoFilter
+        }
+        sorter.setRowFilter(rf.rowFilter)
+      } catch {
+        case e: Exception => () // swallow
       }
-      sorter.setRowFilter(rf.rowFilter)
   }
   
   private val errorLabel = new Label { foreground = java.awt.Color.RED }
@@ -159,3 +163,5 @@ object RegExFilter {
     }
   }
 }
+
+class IgnoreDialog(owner: Window) extends Dialog(owner)

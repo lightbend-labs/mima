@@ -17,10 +17,10 @@ abstract class MimaFrame extends MainFrame with Centered {
   object TypesafeLogo extends widget.ImagePanel(images.Icons.typesafe)
 
   title = "Scala Migration Manager"
-  preferredSize = (800, 600)
+  preferredSize = (1024, 768)
   minimumSize = preferredSize
   centerFrame
-  resizable = true
+  resizable = false
 
 
   protected val mainContainer = new BorderPanel {
