@@ -6,7 +6,7 @@ import scala.swing.event.ButtonClicked
 abstract class ListItemsPanel extends BoxPanel(Orientation.Vertical) {
 
   type Item <: Component
-  
+
   private class Row(val elem: Item) extends FlowPanel(FlowPanel.Alignment.Left)() {
     vGap = 0
     private val add = new Button {
@@ -25,8 +25,10 @@ abstract class ListItemsPanel extends BoxPanel(Orientation.Vertical) {
         removeConstraint(this)
     }
 
-    contents ++= Seq(elem, add)
-    if (view.contents.size > 0)
+    contents += elem
+    if (view.contents.isEmpty)
+      contents += add
+    else
       contents += remove
   }
 

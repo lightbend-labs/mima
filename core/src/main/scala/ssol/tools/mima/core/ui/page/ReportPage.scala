@@ -108,8 +108,30 @@ class ReportPage extends BorderPanel {
     t
   }
   
+  
+
+  /** A message telling how many unfixable problems have been found */
+  private val unfixablesMsg = new Label { foreground = java.awt.Color.RED }
+
+  //add(unfixablesMsg, BorderPanel.Position.South)
+  
   /** table's filter panel*/
-  private val tableFilterPanel = new TableFiltersPanel(table)
+  private val tableFilterPanel = new BorderPanel{
+	  private val title = new Label("Filters:")
+	  private val filters = new TableFiltersPanel(table)
+	  
+	  add(new BorderPanel {
+	    border = EmptyBorder(3,3,0,0)
+	    add(title, BorderPanel.Position.North)
+	  }, BorderPanel.Position.West)
+	  
+	  add(filters, BorderPanel.Position.Center)
+	  
+	  add(new BorderPanel {
+	    border = EmptyBorder(6,3,0,0)
+	    add(unfixablesMsg, BorderPanel.Position.North)
+	  }, BorderPanel.Position.East)
+  }
 
   /** filter panel is located on the top */
   add(tableFilterPanel, BorderPanel.Position.North)
@@ -142,14 +164,9 @@ class ReportPage extends BorderPanel {
 
   add(splitPanel, BorderPanel.Position.Center)
 
-  /** A message telling how many unfixable problems have been found */
-  private val unfixablesCount = new Label { foreground = java.awt.Color.RED }
-
-  add(unfixablesCount, BorderPanel.Position.South)
-
   def setTableModel(_model: ReportTableModel) = {
-    unfixablesCount.visible = _model.hasUnfixableProblems
-    unfixablesCount.text = "There are " + _model.countUnfixableProblems + " unfixable incompatibilities"
+    unfixablesMsg.visible = _model.hasUnfixableProblems
+    unfixablesMsg.text = "There are " + _model.countUnfixableProblems + " unfixable incompatibilities"
 
     table.setModel(_model)
     table.doLayout
@@ -211,7 +228,7 @@ protected[page] class ColumnFilterDef(_columns: List[String]) extends FlowPanel(
 
   private val columns = new ComboBox(_columns)
   private val combinators = new ComboBox(textCombinators)
-  private val value = new TextField(40)
+  private val value = new TextField(20)
 
   private def filterText = value.text.trim
 
