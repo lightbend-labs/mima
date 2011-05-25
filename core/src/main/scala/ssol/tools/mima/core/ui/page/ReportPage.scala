@@ -23,11 +23,11 @@ import javax.swing.{ JCheckBox, UIManager }
 import java.awt.event.{ MouseListener, ItemListener }
 
 /** Mima problem report page. */
-class ReportPage extends BorderPanel /*GridBagPanel with WithConstraints*/ {
+class ReportPage extends BorderPanel {
   import javax.swing.event.{ ListSelectionListener, ListSelectionEvent }
 
   /** When the user selects a row show a description panel for the problem. */
-  private[ReportPage] class RowSelection(table: ReportTable) extends ListSelectionListener {
+  private class RowSelection(table: ReportTable) extends ListSelectionListener {
     private val LowPanelSplitterHeight = 150
 
     override def valueChanged(e: ListSelectionEvent) {
@@ -65,109 +65,91 @@ class ReportPage extends BorderPanel /*GridBagPanel with WithConstraints*/ {
     }
   }
 
-  private[ReportPage] class FilterConstraint extends FlowPanel(FlowPanel.Alignment.Left)() {
-    vGap = 0
-    abstract class Comparer {
-      def comparer: String => Boolean
-    }
-    object Is extends Comparer {
-      def comparer = _ == value.text
-      override def toString = "is"
-    }
-    object Contains extends Comparer {
-      def comparer = _ contains value.text
-      override def toString = "contains"
-    }
-    object StartsWith extends Comparer {
-      def comparer = _ startsWith value.text
-      override def toString = "startsWith"
-    }
-    object EndsWith extends Comparer {
-      def comparer = _ endsWith value.text
-      override def toString = "endsWith"
-    }
-    
-    object Not{
-      def apply(c: Comparer) = new Not(c)
-    }
-    
-    class Not(c: Comparer) extends Comparer {
-      override def comparer = value => !c.comparer(value) 
-      
-      override def toString = c.toString + " not"
-    }
+  /** Top panel used to define table's filters. When a filter is modified the 
+   * table's view is immediately updated.
+   * */
+  private class TableFiltersPanel(table: ReportTable) extends ListItemsPanel {
+    type Item = ColumnFilterDef
 
-    private val verbs = List(Contains, StartsWith, EndsWith, Is, 
-        							Not(Contains), Not(StartsWith), Not(EndsWith), Not(Is))
-
-    private val listNames = new ComboBox(table.getModel.getColumnNames)
-    private val listVerbs = new ComboBox(verbs)
-    val value = new TextField(40)
-
-    def createColumnTextFilter: RowFilter[AbstractTableModel, Integer] =
-      if(value.text.trim.isEmpty)
-        NoFilter
-      else
-      	new ColumnTextFilter(listNames.selection.index, listVerbs.selection.item.comparer)
-
-    contents ++= Seq(listNames, listVerbs, value)
-  }
-
-  class FilterConstraintsPanel extends ListItemsPanel {
-    type Item = FilterConstraint
-    private val constraints = new collection.mutable.ArrayBuffer[FilterConstraint]()
+    private val constraints = new collection.mutable.ArrayBuffer[Item]()
 
     addConstraint()
 
     override protected def create() = {
-      val fc = new FilterConstraint
+      val fc = new Item(table.getModel.getColumnNames)
       constraints += fc
-      listenTo(fc.value)
+      listenTo(fc)
 
       fc
     }
 
     reactions += {
-      case ValueChanged(_) =>
-        computeFilter()
+      case ColumnFilterDef.ColumnFilterDefChanged => refreshTableFilter()
     }
 
-    override protected def remove(c: FilterConstraint) {
+    override protected def remove(c: Item) {
       constraints -= c
       deafTo(c)
-      computeFilter()
+      refreshTableFilter()
     }
 
-    private def computeFilter() {
-      val filter = constraints.foldRight[RowFilter[AbstractTableModel, Integer]](NoFilter)((a, b) => RowFilter.andFilter(java.util.Arrays.asList(a.createColumnTextFilter, b)))
+    private def refreshTableFilter() {
+      assert(sorter != null, "table's sorter hasn't been initialized")
+      val filter = constraints.foldRight[RowFilter[AbstractTableModel, Integer]](NoFilter)((a, b) => RowFilter.andFilter(java.util.Arrays.asList(a.columnFilter, b)))
       sorter.setRowFilter(filter)
     }
   }
 
-  private val constraintsPanel = new FilterConstraintsPanel()
-  add(constraintsPanel, BorderPanel.Position.North)
-
-  private val errorLabel = new Label { foreground = java.awt.Color.RED }
-
-  add(errorLabel, BorderPanel.Position.South)
-
-  // the problem table
-  private lazy val table = {
+  /** table reporting compatibilities problem*/
+  private val table = {
     val t = new ReportTable
     val selectionListener = new RowSelection(t)
     t.getSelectionModel.addListSelectionListener(selectionListener)
     t
   }
+  
+  /** table's filter panel*/
+  private val tableFilterPanel = new TableFiltersPanel(table)
 
+  /** filter panel is located on the top */
+  add(tableFilterPanel, BorderPanel.Position.North)
+
+  /** Make the table scrollable */
   val tableContainer = new ScrollPane(new Component {
     override lazy val peer = table
   })
+  
+  /** a panel that provides a full description for a given selected problem.
+   * class `RowSelectionRowSelection` is responsible of updating the view
+   * accordingly to the selected row.
+   * */
+  private val problemInfo = new ProblemInfoView()
 
+  /** remove row's selection when the problem's description panel is forced to close */
+  listenTo(problemInfo)
+  reactions += {
+    case ProblemInfoView.Close(`problemInfo`) => table.clearSelection()
+  }
+
+  /** table sorter. Each time the table's model is updated via `setTableModel` a 
+   *  new sorter instance is created and affected. 
+   */
   private var sorter: TableRowSorter[AbstractTableModel] = _
 
+  /** Split panel that contains both the table and the problem's description panel. The divider 
+   * location is updated by the `RowSelection` class. */
+  val splitPanel = new SplitPane(Orientation.Horizontal, tableContainer, problemInfo)
+
+  add(splitPanel, BorderPanel.Position.Center)
+
+  /** A message telling how many unfixable problems have been found */
+  private val unfixablesCount = new Label { foreground = java.awt.Color.RED }
+
+  add(unfixablesCount, BorderPanel.Position.South)
+
   def setTableModel(_model: ReportTableModel) = {
-    errorLabel.visible = _model.hasUnfixableProblems
-    errorLabel.text = "There are " + _model.countUnfixableProblems + " unfixable incompatibilities"
+    unfixablesCount.visible = _model.hasUnfixableProblems
+    unfixablesCount.text = "There are " + _model.countUnfixableProblems + " unfixable incompatibilities"
 
     table.setModel(_model)
     table.doLayout
@@ -175,27 +157,86 @@ class ReportPage extends BorderPanel /*GridBagPanel with WithConstraints*/ {
     sorter = new TableRowSorter(_model)
     table.setRowSorter(sorter)
   }
+}
 
-  private val problemInfo = new ProblemInfoView()
 
-  listenTo(problemInfo)
+protected[page] object ColumnFilterDef {
+  object ColumnFilterDefChanged extends scala.swing.event.Event
+}
+
+protected[page] class ColumnFilterDef(_columns: List[String]) extends FlowPanel(FlowPanel.Alignment.Left)() {
+  import ColumnFilterDef.ColumnFilterDefChanged
+  
+  private abstract class TextCombinator {
+    def predicate: String => Boolean
+  }
+  private object Is extends TextCombinator {
+    def predicate = _ == filterText
+    override def toString = "is"
+  }
+  private object Contains extends TextCombinator {
+    def predicate = _ contains filterText
+    override def toString = "contain"
+  }
+  private object StartsWith extends TextCombinator {
+    def predicate = _ startsWith filterText
+    override def toString = "startWith"
+  }
+  private object EndsWith extends TextCombinator {
+    def predicate = _ endsWith filterText
+    override def toString = "endWith"
+  }
+
+  private object Not {
+    def apply(c: TextCombinator) = new Not(c)
+  }
+
+  private class Not(c: TextCombinator) extends TextCombinator {
+    override def predicate = value => !c.predicate(value)
+
+    override def toString = c match {
+      case Is => c.toString + " not"
+      case _ => "does not " + c.toString
+    }
+  }
+
+  private class ColumnTextFilter(colIndex: Int, textPredicate: String => Boolean) extends RowFilter[AbstractTableModel, Integer] {
+    def include(entry: RowFilter.Entry[T, I] forSome { type T <: AbstractTableModel; type I <: Integer }) = {
+      textPredicate(entry.getStringValue(colIndex))
+    }
+  }
+
+  private val textCombinators = List(Contains, StartsWith, EndsWith, Is,
+    Not(Contains), Not(StartsWith), Not(EndsWith), Not(Is))
+
+  private val columns = new ComboBox(_columns)
+  private val combinators = new ComboBox(textCombinators)
+  private val value = new TextField(40)
+
+  private def filterText = value.text.trim
+
+  listenTo(columns.selection, combinators.selection, value)
 
   reactions += {
-    case ProblemInfoView.Close(`problemInfo`) => table.clearSelection()
+    case scala.swing.event.SelectionChanged(_) =>
+      publish(ColumnFilterDefChanged)
+    case scala.swing.event.ValueChanged(`value`) =>
+      publish(ColumnFilterDefChanged)
   }
 
-  val splitPanel = new SplitPane(Orientation.Horizontal, tableContainer, problemInfo)
+  vGap = 0
 
-  add(splitPanel, BorderPanel.Position.Center)
+  contents ++= Seq(columns, combinators, value)
+
+  def columnFilter: RowFilter[AbstractTableModel, Integer] =
+    if (filterText.isEmpty)
+      NoFilter
+    else
+      new ColumnTextFilter(columns.selection.index, combinators.selection.item.predicate)
+
 }
 
-object NoFilter extends RowFilter[AbstractTableModel, Integer] {
+protected[page] object NoFilter extends RowFilter[AbstractTableModel, Integer] {
   def include(entry: RowFilter.Entry[T, I] forSome { type T <: AbstractTableModel; type I <: Integer }) =
     true
-}
-
-class ColumnTextFilter(colIndex: Int, pred: String => Boolean) extends RowFilter[AbstractTableModel, Integer] {
-  def include(entry: RowFilter.Entry[T, I] forSome { type T <: AbstractTableModel; type I <: Integer }) = {
-    pred(entry.getStringValue(colIndex))
-  }
 }
