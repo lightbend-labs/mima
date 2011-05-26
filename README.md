@@ -52,7 +52,7 @@ Note: The `problems.txt` is the test oracle. Expected errors are declared using 
 FAQ
 -------
 
-Exception - java.lang.OutOfMemoryError: Java heap space: If you are experiencing out of memory exception you should increase the VM arguments for the initial heap size and the maximum heap size. The default values are the `-Xms64m` for for the initial heap size and `-Xmx256m` for the maximum heap size.
+Exception - java.lang.OutOfMemoryError: Java heap space: If you are experiencing out of memory exception you may need to increase the VM arguments for the initial heap size and the maximum heap size. The default values are `-Xms64m` for for the initial heap size and `-Xmx256m` for the maximum heap size.
 
 Bugs and Feature requests
 -------
