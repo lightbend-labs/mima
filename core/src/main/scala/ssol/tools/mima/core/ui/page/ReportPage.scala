@@ -198,11 +198,11 @@ protected[page] class ColumnFilterDef(_columns: List[String]) extends FlowPanel(
   }
   private object StartsWith extends TextCombinator {
     def predicate = _ startsWith filterText
-    override def toString = "startWith"
+    override def toString = "start with"
   }
   private object EndsWith extends TextCombinator {
     def predicate = _ endsWith filterText
-    override def toString = "endWith"
+    override def toString = "end with"
   }
 
   private object Not {

@@ -16,7 +16,7 @@ class CollectProblemsTest {
     val cpString = ClassPath.join(cp: _*)
     Config.baseClassPath = new JavaClassPath(ClassPath.DefaultJavaContext.classesInPath(cpString), ClassPath.DefaultJavaContext)
 
-    val mima = new MiMaLib
+    val mima = new MiMaLib(Config.baseClassPath)
 
     // SUT
     val problems = mima.collectProblems(oldJarPath, newJarPath).map(_.description)

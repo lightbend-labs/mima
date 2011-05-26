@@ -27,8 +27,8 @@ object LibWizard {
 
     import Keys._
 
-    def classpath_=(classpath: ClassPath[_]) = data += Classpath -> classpath
-    def classpath = data.get(Classpath).get.asInstanceOf[ClassPath[_]]
+    def classpath_=(classpath: JavaClassPath) = data += Classpath -> classpath
+    def classpath = data.get(Classpath).get.asInstanceOf[JavaClassPath]
 
     def tableModel_=(tableModel: ReportTableModel) = data += TableModel -> tableModel
     def tableModel = data.get(TableModel).get.asInstanceOf[ReportTableModel]
@@ -101,7 +101,7 @@ class LibWizard extends Wizard {
 
     override def onLoad() {
       if (!model.hasTableModel) {
-        val mima = new MiMaLib(ssol.tools.mima.core.util.log.UiLogger)
+        val mima = new MiMaLib(model.classpath, ssol.tools.mima.core.util.log.UiLogger)
         val problems = mima.collectProblems(LibWizard.oldLib.get.getAbsolutePath, LibWizard.newLib.get.getAbsolutePath)
         model.tableModel = ReportTableModel(problems)
       }

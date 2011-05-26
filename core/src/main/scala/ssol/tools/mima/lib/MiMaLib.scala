@@ -6,13 +6,13 @@ import ssol.tools.mima._
 import analyze.Analyzer
 import core.util.IndentedOutput._
 import scala.tools.nsc.io.{ File, AbstractFile }
-import scala.tools.nsc.util.{ DirectoryClassPath, JavaClassPath }
+import scala.tools.nsc.util.{ DirectoryClassPath, JavaClassPath}
 import collection.mutable.ListBuffer
 
 
 import ssol.tools.mima.core.util.log.{Logging, ConsoleLogging}
 
-class MiMaLib(val log: Logging = ConsoleLogging) {
+class MiMaLib(classpath: JavaClassPath, val log: Logging = ConsoleLogging) {
   /*
   options: 
   -classpath foo
@@ -30,7 +30,7 @@ class MiMaLib(val log: Logging = ConsoleLogging) {
   }
 
   private def root(name: String): Definitions = classPath(name) match {
-    case cp @ Some(_) => new Definitions(cp, Config.baseClassPath)
+    case cp @ Some(_) => new Definitions(cp, classpath)
     case None         => fatal("not a directory or jar file: " + name)
   }
 
