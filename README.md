@@ -21,6 +21,7 @@ Launch MiMa
 
 	$ xsbt run
 
+
 Functional Tests
 -------
 
@@ -47,6 +48,11 @@ After doing that, `reload` if you are in a `xsbt` console session (if that makes
 Tests within the `functional-tests` folder should always pass. If you spot a bug (or missing feature), please create a test that exercise the problem and put it in the `functional-tests-exposing-bugs` directory, located in the project root. Once the test succeed, then you should move it into the `functional-tests` directory.
 
 Note: The `problems.txt` is the test oracle. Expected errors are declared using the Mima's reporting output (i.e., the output of the tool and the expected errors should match perfectly). Admittedly, this coupling is an issue since the testing framework is highly coupled with the tool output used to report errors to the user. We should improve this and make the two independent. Until then, mind that by changing the output of the tool you will likely have to update some of the test oracles (i.e., problems.txt file).
+
+FAQ
+-------
+
+Exception - java.lang.OutOfMemoryError: Java heap space: If you are experiencing out of memory exception you should increase the VM arguments for the initial heap size and the maximum heap size. The default values are the `-Xms64m` for for the initial heap size and `-Xmx256m` for the maximum heap size.
 
 Bugs and Feature requests
 -------

@@ -60,7 +60,7 @@ class MiMaLib(val log: Logging = ConsoleLogging) {
   }
 
   private def traversePackages(oldpkg: PackageInfo, newpkg: PackageInfo) {
-    log.info("Traversing package " + oldpkg.fullName)
+    log.info("Traversing package " + oldpkg.fullName)	
     comparePackages(oldpkg, newpkg)
     indented {
       for (p <- oldpkg.packages.valuesIterator) {
