@@ -21,3 +21,14 @@ class ImagePanel(img: javax.swing.Icon) extends Panel {
     img.paintIcon(peer, g, 0, 0)
   }
 }
+
+class LinkImagePanel(val uri: String, img: javax.swing.Icon) extends ImagePanel(img){
+  require(uri != null)
+  
+  cursor = new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR)
+    listenTo(mouse.clicks)
+    reactions += {
+      case e: scala.swing.event.MouseClicked =>
+        java.awt.Desktop.getDesktop().browse(new java.net.URI(uri))
+    }
+}

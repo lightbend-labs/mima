@@ -10,7 +10,7 @@ class JavaEnvironmentPage extends GridBagPanel with WithConstraints {
 
 
   protected val cpEditor = new ClassPathEditor {
-    classpathLabel.text = "Make sure that the correct Java environment is selected"
+    classpathLabel.text = "Make sure the correct Java environment is selected"
   }
   
   import GridBagPanel._

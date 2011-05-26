@@ -11,6 +11,7 @@ import scala.tools.nsc.util.{ClassPath, JavaClassPath, DirectoryClassPath}
  *  to resolve type names during classfile parsing.
  */
 class Definitions(val lib: Option[DirectoryClassPath], val classPath: JavaClassPath) {
+  import ssol.tools.mima.core.util.log.ConsoleLogging._
   
   lazy val root = 
     new ConcretePackageInfo(null, 
@@ -27,7 +28,7 @@ class Definitions(val lib: Option[DirectoryClassPath], val classPath: JavaClassP
     }
     pkg.packages ++=  lib.get.packages map (cp => cp.name -> new ConcretePackageInfo(pkg, cp, this))
     
-    Config.info("added packages to <root>: %s".format(pkg.packages.keys.mkString(", ")))
+    debugLog("added packages to <root>: %s".format(pkg.packages.keys.mkString(", ")))
     pkg
   }
   

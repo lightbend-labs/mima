@@ -26,6 +26,7 @@ object Fix {
 }
 
 abstract class Fix(val clazz: ClassInfo) {
+  import ssol.tools.mima.core.util.log.ConsoleLogging._
   
   private final val Icat = 0
   private final val Lcat = 1

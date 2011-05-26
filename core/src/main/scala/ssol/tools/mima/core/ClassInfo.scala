@@ -12,11 +12,12 @@ object ClassInfo {
   lazy val ObjectClass = Config.baseDefinitions.fromName("java.lang.Object")
 }
 
+import ssol.tools.mima.core.util.log.{ConsoleLogging, Logging}
+
 /** A placeholder class info for a class that is not found on the classpath or in a given
  *  package.
  */
 class SyntheticClassInfo(owner: PackageInfo, val name: String) extends ClassInfo(owner) {
-  Config.info("<synthetic> " + toString)
   loaded = true
   def file: AbstractFile = throw new UnsupportedOperationException
   override lazy val superClasses = Nil
@@ -64,10 +65,12 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
   def classString = (accessModifier + " " + declarationPrefix + " " + formattedFullName).trim
 
   protected var loaded = false
+  
+  import ssol.tools.mima.core.util.log.ConsoleLogging._
   override protected def ensureLoaded() =
     if (!loaded)
       try {
-        Config.info("parsing " + file)
+        info("parsing " + file)
         owner.definitions.ClassfileParser.parse(this)
       } finally {
         loaded = true

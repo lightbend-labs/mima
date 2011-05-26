@@ -20,6 +20,8 @@ import scala.collection.mutable
  */
 class ClassfileTransformer(out: DataOutputStream, definitions: Definitions) extends ClassfileParser(definitions) {
 
+  import ssol.tools.mima.core.util.log.ConsoleLogging._
+  
   def readFields = (clazz: ClassInfo) => false
   def readMethods = (clazz: ClassInfo) => true
   def readCode = (meth: MemberInfo) => false
@@ -51,7 +53,7 @@ class ClassfileTransformer(out: DataOutputStream, definitions: Definitions) exte
     }
 
     def writeNew() = index.keys foreach { entry =>
-      Config.debugLog("CP"+index(entry)+": "+entry)
+      debugLog("CP"+index(entry)+": "+entry)
       entry.write()
     }
 

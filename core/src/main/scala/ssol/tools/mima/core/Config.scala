@@ -9,13 +9,12 @@ object Config {
 
   private var settings: Settings = _
   private var _classpath: JavaClassPath = _
-  
-  def info(str: String) = if (verbose) println(str)
-  def debugLog(str: String) = if (debug) println(str)
 
   def inPlace = settings.mimaOutDir.isDefault
+  
   def verbose = settings.verbose.value
   def debug = settings.debug.value
+  
   def fixall = settings.fixall.value
   
   def error(msg: String) = System.err.println(msg)

@@ -22,6 +22,7 @@ object MiMaClient {
 }
 
 class MiMaClient {
+  import ssol.tools.mima.core.util.log.ConsoleLogging._
   import PackageInfo._
 
   private var ignore = Set("java", "javax", "sun")
@@ -37,15 +38,15 @@ class MiMaClient {
           printLine("      "+m)
     }
     if (clazz.unimplementedMethods.nonEmpty || clazz.unimplementedSetters.nonEmpty) {
-      Config.info(clazz+" at "+clazz.file+" needs to be fixed")
+      info(clazz+" at "+clazz.file+" needs to be fixed")
       if (clazz.unimplementedMethods.nonEmpty)
-        Config.info("  has unimplemented methods: \n    "+clazz.unimplementedMethods.map(_.description).mkString("\n    "))
+        info("  has unimplemented methods: \n    "+clazz.unimplementedMethods.map(_.description).mkString("\n    "))
       if (clazz.unimplementedSetters.nonEmpty)
-        Config.info("  has unimplemented fields with setters:\n   "+clazz.unimplementedSetters.map(_.description).mkString("\n    "))
-      Config.info(clazz.superClass.description)
-      Config.info(clazz.directTraits map (_.description) toString)
-      Config.info(clazz.superClass.allTraits map (_.description) toString)
-      Config.info(clazz.superClass.allTraits map (_.interfaces) toString)
+        info("  has unimplemented fields with setters:\n   "+clazz.unimplementedSetters.map(_.description).mkString("\n    "))
+      info(clazz.superClass.description)
+      info(clazz.directTraits map (_.description) toString)
+      info(clazz.superClass.allTraits map (_.description) toString)
+      info(clazz.superClass.allTraits map (_.interfaces) toString)
       fixes += new ClientFix(clazz).fix()
     }
   }
@@ -63,7 +64,7 @@ class MiMaClient {
 
   private def traversePackage(pkg: PackageInfo): Unit =
     if (!(ignore contains pkg.fullName)) {
-      Config.info("* " + pkg.fullName + ": ")
+      info("* " + pkg.fullName + ": ")
       processPackage(pkg)
       indented {
         pkg.packages.valuesIterator foreach traversePackage

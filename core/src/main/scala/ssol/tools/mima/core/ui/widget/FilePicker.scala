@@ -29,7 +29,6 @@ class FilePicker(_label: String, owner: Component, private var _selectedFile: Op
   private val fileNameLabel = new Label("Please select a file")
 
   if (selectedFile.isDefined) {
-    Config.debugLog("starting with initial file: " + selectedFile.get.getAbsolutePath)
     FilePicker.lastSelectedFile = _selectedFile
     fileNameLabel.text = strippedFileName(selectedFile.get)
   }

@@ -13,8 +13,12 @@ import util._
 import ClassPath._
 
 abstract class MimaFrame extends MainFrame with Centered {
+
+  val ScalaWebsite = "http://www.scala-lang.org/"
+  object ScalaLogo extends widget.LinkImagePanel(ScalaWebsite, images.Icons.scalaLogo)
   
-  object TypesafeLogo extends widget.ImagePanel(images.Icons.typesafe)
+  val TypesafeWebsite = "http://typesafe.com/"
+  object TypesafeLogo extends widget.LinkImagePanel(TypesafeWebsite, images.Icons.typesafe)
 
   title = "Scala Migration Manager"
   preferredSize = (1024, 768)
@@ -22,15 +26,19 @@ abstract class MimaFrame extends MainFrame with Centered {
   centerFrame
   resizable = false
 
-
   protected val mainContainer = new BorderPanel {
     border = EmptyBorder(10)
-    
-    private val leftPanel = new BorderPanel {
+
+    private val topPanel = new BorderPanel {
+      add(ScalaLogo, BorderPanel.Position.West)
+      /*add(new Label(title) {
+        font = new Font("Serif", java.awt.Font.ITALIC, 18);
+      }, BorderPanel.Position.Center)*/
       add(TypesafeLogo, BorderPanel.Position.East)
+      //add(new Separator, BorderPanel.Position.South)
     }
-    add(leftPanel, BorderPanel.Position.North)
-    
+    add(topPanel, BorderPanel.Position.North)
+
     def setContent(c: Component): Unit = {
       c.border = EmptyBorder(10, 0, 0, 0)
       add(c, BorderPanel.Position.Center)
@@ -38,9 +46,9 @@ abstract class MimaFrame extends MainFrame with Centered {
       repaint()
     }
   }
-  
+
   contents = mainContainer
-  
+
   reactions += {
     case Exit =>
       Dialog.showConfirmation(parent = null,

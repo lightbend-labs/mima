@@ -8,8 +8,9 @@ import ssol.tools.mima.core._
 
 
 class Writer(fixes: Seq[Fix], config: WriterConfig) {
-
-  /** All class files that belongs in a zip for which a `Fix` exists */
+	import ssol.tools.mima.core.util.log.ConsoleLogging._
+  
+	/** All class files that belongs in a zip for which a `Fix` exists */
   private def zippedClassFiles: Seq[AbstractFile] = fixes.map(_.clazz.file).filter(_.isInstanceOf[ZipArchive#FileEntry])
 
   /** get the zip container of the provided `entry` file */
@@ -26,9 +27,9 @@ class Writer(fixes: Seq[Fix], config: WriterConfig) {
     op(out)
     
     if (out.renameTo(file)) {
-      Config.info(file+" was correctly patched")
+      info(file+" was correctly patched")
     } else {
-      Config.info("*** cannot rename " + out + " to " + file + ";\n" +
+      info("*** cannot rename " + out + " to " + file + ";\n" +
         "leaving patched file in " + out)
     }
   }
@@ -39,7 +40,7 @@ class Writer(fixes: Seq[Fix], config: WriterConfig) {
       return
     }
     
-    Config.info("[jars to fix: " + jarfiles.mkString(", ") + "]")
+    info("[jars to fix: " + jarfiles.mkString(", ") + "]")
       
     val jarPatches: Map[ZipArchive, JarCopy.Patches] = (jarfiles map (_ -> new JarCopy.Patches)).toMap
     for (fix <- fixes) {
@@ -69,7 +70,7 @@ class Writer(fixes: Seq[Fix], config: WriterConfig) {
       }
     }
     for (fix <- fixes) {
-      Config.info("[" + "Fixed up " + fix.clazz + " in " + fix.outputFileName + "]")
+      info("[" + "Fixed up " + fix.clazz + " in " + fix.outputFileName + "]")
     }
     
     val fixesStr = fixes.length match {
@@ -77,6 +78,6 @@ class Writer(fixes: Seq[Fix], config: WriterConfig) {
       case 1 => "one class fixed"
       case n => n + " classes fixed"
     }
-    Config.info("[" + ClassfileParser.parsed + " classes parsed, " + fixesStr + "]")
+    info("[" + ClassfileParser.parsed + " classes parsed, " + fixesStr + "]")
   }
 }

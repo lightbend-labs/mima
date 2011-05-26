@@ -66,8 +66,7 @@ class ReportPage extends BorderPanel {
   }
 
   /** Top panel used to define table's filters. When a filter is modified the 
-   * table's view is immediately updated.
-   * */
+   * table's view is immediately updated. */
   private class TableFiltersPanel(table: ReportTable) extends ListItemsPanel {
     type Item = ColumnFilterDef
 
@@ -108,29 +107,17 @@ class ReportPage extends BorderPanel {
     t
   }
   
-  
-
-  /** A message telling how many unfixable problems have been found */
-  private val unfixablesMsg = new Label { foreground = java.awt.Color.RED }
-
-  //add(unfixablesMsg, BorderPanel.Position.South)
-  
   /** table's filter panel*/
   private val tableFilterPanel = new BorderPanel{
 	  private val title = new Label("Filters:")
 	  private val filters = new TableFiltersPanel(table)
 	  
 	  add(new BorderPanel {
-	    border = EmptyBorder(3,3,0,0)
+	    border = EmptyBorder(5,3,0,0)
 	    add(title, BorderPanel.Position.North)
 	  }, BorderPanel.Position.West)
 	  
 	  add(filters, BorderPanel.Position.Center)
-	  
-	  add(new BorderPanel {
-	    border = EmptyBorder(6,3,0,0)
-	    add(unfixablesMsg, BorderPanel.Position.North)
-	  }, BorderPanel.Position.East)
   }
 
   /** filter panel is located on the top */
@@ -164,9 +151,20 @@ class ReportPage extends BorderPanel {
 
   add(splitPanel, BorderPanel.Position.Center)
 
+  /** A message telling how many unfixable problems have been found */
+  private val reportMsg = new Label {
+    font = new java.awt.Font("Serif", java.awt.Font.ITALIC, 14)
+  }
+  
+	add(new BorderPanel {
+	    border = EmptyBorder(3,0,0,3)
+	    add(reportMsg, BorderPanel.Position.East)
+	  }, BorderPanel.Position.South)
+
+  
   def setTableModel(_model: ReportTableModel) = {
-    unfixablesMsg.visible = _model.hasUnfixableProblems
-    unfixablesMsg.text = "There are " + _model.countUnfixableProblems + " unfixable incompatibilities"
+    reportMsg.visible = _model.getRowCount > 0
+    reportMsg.text = "Found " + _model.getRowCount + " incompatibilities (" + _model.countUnfixableProblems + " unfixable / " + _model.countUpgradableProblems +" upgradable)"
 
     table.setModel(_model)
     table.doLayout

@@ -43,7 +43,7 @@ class Wizard extends BorderPanel {
   }
   
   private object LoadingPanel extends FlowPanel {
-    contents += new Label("Loading...")
+    contents += ssol.tools.mima.core.util.log.UiLogger
   }
 
   import BorderPanel._

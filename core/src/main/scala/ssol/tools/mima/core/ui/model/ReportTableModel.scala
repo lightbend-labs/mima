@@ -21,6 +21,8 @@ class ReportTableModel(problems: Array[Array[AnyRef]]) extends AbstractTableMode
 
   def countUnfixableProblems = problems.count(_(0) == Problem.Status.Unfixable)
   
+  def countUpgradableProblems = problems.count(_(0) == Problem.Status.Upgradable)
+  
   override def getColumnName(n: Int) = columns(n)
   def getColumnNames = columns.toList
   def getColumnIndex(name: String) = (0 until columns.size).find(getColumnName(_).toLowerCase == name) 

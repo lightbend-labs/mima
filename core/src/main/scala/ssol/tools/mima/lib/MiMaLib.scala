@@ -9,8 +9,10 @@ import scala.tools.nsc.io.{ File, AbstractFile }
 import scala.tools.nsc.util.{ DirectoryClassPath, JavaClassPath }
 import collection.mutable.ListBuffer
 
-class MiMaLib {
 
+import ssol.tools.mima.core.util.log.{Logging, ConsoleLogging}
+
+class MiMaLib(val log: Logging = ConsoleLogging) {
   /*
   options: 
   -classpath foo
@@ -36,13 +38,14 @@ class MiMaLib {
 
   private def raise(problem: Problem) = {
     problems += problem
-    info("Problem: " + problem.description + (if (problem.status != Problem.Status.Unfixable) " (" + problem.status + ")" else ""))
+    log.debugLog("Problem: " + problem.description + (if (problem.status != Problem.Status.Unfixable) " (" + problem.status + ")" else ""))
   }
 
 
   private def comparePackages(oldpkg: PackageInfo, newpkg: PackageInfo) {
     val traits = newpkg.traits // determine traits of new package first
     for (oldclazz <- oldpkg.accessibleClasses) {
+      log.info("Analyzing class "+oldclazz.name)
       newpkg.classes get oldclazz.name match {
         case None if oldclazz.isImplClass =>
           // if it is missing a trait implementation class, then no error should be reported 
@@ -57,7 +60,7 @@ class MiMaLib {
   }
 
   private def traversePackages(oldpkg: PackageInfo, newpkg: PackageInfo) {
-    info("* " + oldpkg.fullName + ": ")
+    log.info("Traversing package " + oldpkg.fullName)
     comparePackages(oldpkg, newpkg)
     indented {
       for (p <- oldpkg.packages.valuesIterator) {
@@ -75,9 +78,9 @@ class MiMaLib {
   def collectProblems(oldDir: String, newDir: String): List[Problem] = {
     val oldRoot = root(oldDir)
     val newRoot = root(newDir)
-    info("[old version in: " + oldRoot + "]")
-    info("[new version in: " + newRoot + "]")
-    info("classpath: " + Config.baseClassPath.asClasspathString)
+    log.debugLog("[old version in: " + oldRoot + "]")
+    log.debugLog("[new version in: " + newRoot + "]")
+    log.debugLog("classpath: " + Config.baseClassPath.asClasspathString)
     traversePackages(oldRoot.targetPackage, newRoot.targetPackage)
     problems.toList
   }

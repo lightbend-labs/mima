@@ -101,7 +101,7 @@ class LibWizard extends Wizard {
 
     override def onLoad() {
       if (!model.hasTableModel) {
-        val mima = new MiMaLib
+        val mima = new MiMaLib(ssol.tools.mima.core.util.log.UiLogger)
         val problems = mima.collectProblems(LibWizard.oldLib.get.getAbsolutePath, LibWizard.newLib.get.getAbsolutePath)
         model.tableModel = ReportTableModel(problems)
       }
