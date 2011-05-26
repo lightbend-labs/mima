@@ -68,6 +68,7 @@ class ReportPage extends BorderPanel {
   /** Top panel used to define table's filters. When a filter is modified the 
    * table's view is immediately updated. */
   private class TableFiltersPanel(table: ReportTable) extends ListItemsPanel {
+    
     type Item = ColumnFilterDef
 
     private val constraints = new collection.mutable.ArrayBuffer[Item]()
@@ -92,7 +93,7 @@ class ReportPage extends BorderPanel {
       refreshTableFilter()
     }
 
-    private def refreshTableFilter() {
+    def refreshTableFilter() {
       assert(sorter != null, "table's sorter hasn't been initialized")
       val filter = constraints.foldRight[RowFilter[AbstractTableModel, Integer]](NoFilter)((a, b) => RowFilter.andFilter(java.util.Arrays.asList(a.columnFilter, b)))
       sorter.setRowFilter(filter)
@@ -110,7 +111,7 @@ class ReportPage extends BorderPanel {
   /** table's filter panel*/
   private val tableFilterPanel = new BorderPanel{
 	  private val title = new Label("Filters:")
-	  private val filters = new TableFiltersPanel(table)
+	  val filters = new TableFiltersPanel(table)
 	  
 	  add(new BorderPanel {
 	    border = EmptyBorder(5,3,0,0)
@@ -157,7 +158,7 @@ class ReportPage extends BorderPanel {
   }
   
 	add(new BorderPanel {
-	    border = EmptyBorder(3,0,0,3)
+	    border = EmptyBorder(4,0,0,3)
 	    add(reportMsg, BorderPanel.Position.East)
 	  }, BorderPanel.Position.South)
 
@@ -171,6 +172,8 @@ class ReportPage extends BorderPanel {
 
     sorter = new TableRowSorter(_model)
     table.setRowSorter(sorter)
+    
+    tableFilterPanel.filters.refreshTableFilter()
   }
 }
 

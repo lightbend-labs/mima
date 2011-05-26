@@ -7,31 +7,37 @@ abstract class ListItemsPanel extends BoxPanel(Orientation.Vertical) {
 
   type Item <: Component
 
-  private class Row(val elem: Item) extends FlowPanel(FlowPanel.Alignment.Left)() {
+  private abstract class Row(val elem: Item) extends FlowPanel(FlowPanel.Alignment.Left)() {
     vGap = 0
+    contents += elem
+  }
+  
+  private class TopRow(elem: Item) extends Row(elem) {
     private val add = new Button {
       icon = images.Icons.add
     }
-    private val remove = new Button {
-      icon = images.Icons.remove
-    }
-    listenTo(add, remove)
-
+    listenTo(add)
     reactions += {
       case ButtonClicked(`add`) =>
         addConstraint()
-
+    }
+    
+    contents += add
+  }
+  
+  private class AnyRow(elem: Item) extends Row(elem) {
+    private val remove = new Button {
+      icon = images.Icons.remove
+    }
+    listenTo(remove)
+    reactions += {
       case ButtonClicked(`remove`) =>
         removeConstraint(this)
     }
-
-    contents += elem
-    if (view.contents.isEmpty)
-      contents += add
-    else
-      contents += remove
+    
+    contents += remove
   }
-
+  
   private val view = new BoxPanel(Orientation.Vertical) {
     def +=(r: Row) {
       contents += r
@@ -47,7 +53,7 @@ abstract class ListItemsPanel extends BoxPanel(Orientation.Vertical) {
   contents += view
 
   final protected def addConstraint() {
-    view += new Row(create())
+    view += (if (view.contents.isEmpty) new TopRow(create()) else new AnyRow(create()))
   }
 
   private def removeConstraint(r: Row) {
