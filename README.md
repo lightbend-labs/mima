@@ -1,37 +1,65 @@
 Migration Manager for Scala
 ==============
 
-A tool for diagnosing and fixing migration problems for Scala libraries.
+The Migration Manager for Scala (MiMa in short) is a tool for diagnosing and fixing binary incompatibilities for Scala libraries.
+
+MiMa's Modules
+-------
+
+MiMa is splitter into three modules: 
+
+- Core: Classes that are used by both the Reporter and Migrator modules.
+- Reporter:  Used to diagnose binary incompatibilities between two different versions of a same library. (This was formerly named MiMa Lib)
+- Migrator: Used to fix binary incompatibilities of a client jar. (This was formerly named MiMa Client)
+
+Eclipse
+-------
+
+Folders `core`, `reporter` and `migrator` contain all metadata files used by Eclipse. To set up the three modules in Eclipse just click on `File > Import > General > Exisiting Projects Into Workspace`, and select the MiMa project's root folder, the three modules should be correctly loaded.
+
+In the `reporter` and `migrator` folders you can also find a `*.launch` file configuration, which can be imported in Eclipse and can be used to start the programs.
+
 
 Build
 -------
 
 Using [the xsbt tool][xsbt]. 
 
-      $ xsbt update compile
+      $ xsbt clean update compile
 
 
 Make sure to build the sources of branch 0.9, installation notes can be found [here][xsbt].
 
 [xsbt]: https://github.com/harrah/xsbt/tree/0.9
 
+This will recompile all MiMa's modules.
 
-Launch MiMa
+
+Launch MiMa Reporter
+-------
+Type the following command to run the MiMa Reporter
+
+	$ xsbt // will start xsbt console
+	$ project reporter // will switch to the reporter project
+	$ run // will launch the MiMa Reporter UI
+
+Launch MiMa Migrator
+-------
+Type the following command to run the MiMa Reporter
+
+	$ xsbt // will start xsbt console
+	$ project migrator // will switch to the migrator project
+	$ run // will launch the MiMa Migrator UI
+
+
+MiMa Reporter: Functional Tests
 -------
 
-	$ xsbt run
-
-
-Functional Tests
--------
-
-The 'functional-tests' folder contains a number of functional tests that exercise the Mima's error reporting functionality. All tests are executed by running the following command:
+The directory containing the MiMa Reporter module ('reporter') there is a 'functional-tests' folder that contains several functional tests exercising the system. All tests are executed as part of the build, therefore when running
 
 	$ xsbt package
 
-If you prefer to run a single test, use the following command
-
-	$ xsbt <test-folder-name>/fun-tests
+if one (or more) test fails the build is stop and no jar will not be produced.
 
 To add a new functional test to the suite, create a new folder within 'functional-tests' directory with the following structure:
 
