@@ -6,7 +6,7 @@ The Migration Manager for Scala (MiMa in short) is a tool for diagnosing and fix
 MiMa's Modules
 -------
 
-MiMa is splitter into three modules: 
+MiMa is split into three modules: 
 
 - Core: Classes that are used by both the Reporter and Migrator modules.
 - Reporter:  Used to diagnose binary incompatibilities between two different versions of a same library. (This was formerly named MiMa Lib)
@@ -28,7 +28,7 @@ Using [the xsbt tool][xsbt].
       $ xsbt clean update compile
 
 
-Make sure to build the sources of branch 0.9, installation notes can be found [here][xsbt].
+Make sure to use tag 0.9.8, installation notes can be found [here][xsbt].
 
 [xsbt]: https://github.com/harrah/xsbt/tree/0.9
 
