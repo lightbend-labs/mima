@@ -3,9 +3,6 @@ target/
 *.scala_dependencies
 project/boot
 bin/
-.classpath
-.project
 .DS_Store
 **/.DS_Store
-.settings
 .history

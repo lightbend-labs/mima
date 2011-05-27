@@ -4,7 +4,7 @@ import ssol.tools.mima.core._
 import ssol.tools.mima._
 import ssol.tools.mima.lib.analyze.Rule
 
-private[template] object TemplateRules {
+/*private[template]*/ object TemplateRules {
   trait TemplateRule extends Rule[ClassInfo, ClassInfo]
 
   object EntityDecl extends TemplateRule {
@@ -74,11 +74,13 @@ private[template] object TemplateRules {
   }
   
   object CyclicTypeReference extends TemplateRule {
-    def apply(oldclz: ClassInfo, newclz: ClassInfo) = {
-      if(newclz.superClasses.contains(newclz)) 
-        Some(CyclicTypeReferenceProblem(newclz))
+    def apply(clz: ClassInfo) = {
+      if(clz.superClasses.contains(clz)) 
+        Some(CyclicTypeReferenceProblem(clz))
       else 
         None
     }
+    
+    def apply(oldclz: ClassInfo, newclz: ClassInfo) = this(newclz)
   }
 }

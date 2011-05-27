@@ -1,4 +1,3 @@
-libraryDependencies ++= Seq("org.scala-lang" % "scala-swing" % "2.9.0" % "compile", 
-                            "org.clapper" %% "grizzled-slf4j" % "0.5" % "compile")
+name := "mima-core"
 
-scalaVersion := "2.9.0"
+libraryDependencies ++= Seq("org.scala-lang" % "scala-swing" % "2.9.0" % "compile")

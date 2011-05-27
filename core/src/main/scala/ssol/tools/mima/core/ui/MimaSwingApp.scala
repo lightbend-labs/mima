@@ -3,7 +3,6 @@ package ssol.tools.mima.core.ui
 import javax.swing.UIManager
 import java.io.File
 
-import scala.tools.nsc.util.JavaClassPath
 import scala.swing._
 import Swing._
 import ssol.tools.mima.core.Config
