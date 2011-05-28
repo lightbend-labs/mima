@@ -11,6 +11,8 @@ import util._
 import ClassPath._
 import ssol.tools.mima.core.ui.page._
 
+import widget.LicenseAgreementView
+
 object LibWizard {
   import java.io.File
 
@@ -28,7 +30,10 @@ object LibWizard {
     import Keys._
 
     def classpath_=(classpath: JavaClassPath) = data += Classpath -> classpath
-    def classpath = data.get(Classpath).get.asInstanceOf[JavaClassPath]
+    def classpath: JavaClassPath = data.get(Classpath) match {
+      case Some(cp) => cp.asInstanceOf[JavaClassPath]
+      case None => Config.baseClassPath
+    }
 
     def tableModel_=(tableModel: ReportTableModel) = data += TableModel -> tableModel
     def tableModel = data.get(TableModel).get.asInstanceOf[ReportTableModel]
@@ -60,6 +65,18 @@ class LibWizard extends Wizard {
     import LibWizard.PageModel
     override val model = new PageModel
   }
+  
+  this += new LicenseAgreementView with Page {
+    private var _licenseAccepted = false
+    override def canNavigateForward = _licenseAccepted 
+    
+    listenTo(this)
+    reactions += {
+      case LicenseAgreementView.LicenseAccepted(status) =>
+        _licenseAccepted = status
+        publish(WizardPage.CanGoNext(status))
+    }
+  }
 
   // step 1 - select java environment
   this += new JavaEnvironmentPage with Page {
@@ -67,8 +84,6 @@ class LibWizard extends Wizard {
     import util._
     import ClassPath._
     
-    model.classpath = Config.baseClassPath
-
     override def onReveal() {
       cpEditor.classpath = split(model.classpath.asClasspathString)
     }
