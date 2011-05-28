@@ -66,6 +66,7 @@ class LibWizard extends Wizard {
     override val model = new PageModel
   }
   
+  // step 1 - license agreement
   this += new LicenseAgreementView with Page {
     private var _licenseAccepted = false
     override def canNavigateForward = _licenseAccepted 
@@ -77,29 +78,17 @@ class LibWizard extends Wizard {
         publish(WizardPage.CanGoNext(status))
     }
   }
-
-  // step 1 - select java environment
-  this += new JavaEnvironmentPage with Page {
-    import scala.tools.nsc.{ util, io }
-    import util._
-    import ClassPath._
-    
-    override def onReveal() {
-      cpEditor.classpath = split(model.classpath.asClasspathString)
-    }
-
-    override def onNext() {
-      model.classpath = new JavaClassPath(DefaultJavaContext.classesInPath(cpEditor.classPathString), DefaultJavaContext)
-    }
-  }
-
+  
   // step 2 - select library
   this += new ConfigurationPanel(LibWizard.oldLib, LibWizard.newLib) with Page {
     override def canNavigateForward = areFilesSelected
 
+     override def onReveal() {
+      cpEditor.classpath = split(model.classpath.asClasspathString)
+    }
+    
     override def onNext(): Unit = {
-      val cp = model.classpath
-      model.classpath = new JavaClassPath(DefaultJavaContext.classesInPath(cpEditor.classPathString + io.File.pathSeparator + cp.asClasspathString), DefaultJavaContext)
+      model.classpath = new JavaClassPath(DefaultJavaContext.classesInPath(cpEditor.classPathString), DefaultJavaContext)
     }
 
     reactions += {
