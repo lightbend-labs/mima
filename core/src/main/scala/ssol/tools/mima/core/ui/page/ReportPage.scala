@@ -29,7 +29,7 @@ class ReportPage extends BorderPanel {
   /** When the user selects a row show a description panel for the problem. */
   private class RowSelection(table: ReportTable) extends ListSelectionListener {
     private val LowPanelSplitterHeight = 150
-
+    
     override def valueChanged(e: ListSelectionEvent) {
       if (e.getValueIsAdjusting) return // skip
 
@@ -40,13 +40,16 @@ class ReportPage extends BorderPanel {
 
       if (!problemInfo.visible) {
         splitPanel.dividerLocation = splitPanel.size.height
+        splitPanel.dividerSize = 0
         return
       }
 
       updateProblemInfo(index)
 
-      if (!wasVisible) // adjust the split location only if the panel was not visible	  
+      if (!wasVisible) { // adjust the split location only if the panel was not visible
+        splitPanel.dividerSize = splitPanel.defaultDividerSize
         splitPanel.dividerLocation = splitPanel.size.height - LowPanelSplitterHeight
+      }
 
       scrollToTop()
     }
@@ -148,7 +151,10 @@ class ReportPage extends BorderPanel {
 
   /** Split panel that contains both the table and the problem's description panel. The divider 
    * location is updated by the `RowSelection` class. */
-  val splitPanel = new SplitPane(Orientation.Horizontal, tableContainer, problemInfo)
+  val splitPanel = new SplitPane(Orientation.Horizontal, tableContainer, problemInfo) {
+    val defaultDividerSize = peer.getDividerSize
+    dividerSize = 0
+  }
 
   add(splitPanel, BorderPanel.Position.Center)
 
