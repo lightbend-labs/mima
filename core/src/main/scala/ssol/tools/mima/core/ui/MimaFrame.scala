@@ -20,7 +20,8 @@ abstract class MimaFrame extends MainFrame with Centered {
   val TypesafeWebsite = "http://typesafe.com/"
   object TypesafeLogo extends widget.LinkImagePanel(TypesafeWebsite, images.Icons.typesafe)
 
-  title = "Scala Migration Manager"
+  // FIXME: How can I inject the version number?
+  title = "Migration Manager - 0.0.1-beta" 
   preferredSize = (1024, 768)
   minimumSize = preferredSize
   centerFrame
@@ -52,7 +53,8 @@ abstract class MimaFrame extends MainFrame with Centered {
   reactions += {
     case Exit =>
       Dialog.showConfirmation(parent = null,
-        title = "Exit",
+        icon = images.Icons.exit,
+        title = "Exit MiMa",
         message = "Are you sure you want to quit?") match {
           case Dialog.Result.Ok => exit(0)
           case _                => ()

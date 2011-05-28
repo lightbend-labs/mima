@@ -12,6 +12,12 @@ private[ui] class ReportTable extends JTable(ReportTableModel(Nil)) with TableMo
   // allow only single selection
   setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
   
+  // apply the render to all cells! 
+  setDefaultRenderer(classOf[Any], new AlternatedColoredRowRenderer)
+  
+  // remove any space between columns and rows 
+  setIntercellSpacing(new java.awt.Dimension(0,0))
+  
   override def prepareRenderer(renderer: TableCellRenderer, row: Int, column: Int): java.awt.Component = {
     val component = super.prepareRenderer(renderer, row, column)
 
@@ -38,5 +44,32 @@ private[ui] class ReportTable extends JTable(ReportTableModel(Nil)) with TableMo
   override def setModel(model: javax.swing.table.TableModel) = {
     assert(model.isInstanceOf[ReportTableModel])
     super.setModel(model)
+  }
+}
+
+import javax.swing.table.DefaultTableCellRenderer
+import java.awt.Color
+
+private object AlternatedColoredRowRenderer {
+  val WhiteSmoke = new java.awt.Color(245,245,245)
+}
+
+class AlternatedColoredRowRenderer(oddRowsColor: Color = Color.white, evenRowsColor: Color = AlternatedColoredRowRenderer.WhiteSmoke) extends DefaultTableCellRenderer {
+  
+  override def getTableCellRendererComponent(table: JTable, value: Any, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int): java.awt.Component = {
+    // ignoring focus so that the cell is drawn with no border.
+    val ignoreFocus = false
+    val component = super.getTableCellRendererComponent(table, value, isSelected, ignoreFocus, row, column)
+    
+    if(isSelected) return component
+    
+    if(row % 2 == 0) {
+      component.setBackground(evenRowsColor)
+    }
+    else {
+    	component.setBackground(oddRowsColor)
+    }
+    
+    component
   }
 }

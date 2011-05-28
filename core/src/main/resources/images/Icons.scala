@@ -22,6 +22,9 @@ object Icons {
   
   lazy val typesafe = getIcon("typesafe.png")
   lazy val scalaLogo = getIcon("scala_logo.png")
+  
+  lazy val exit = getIcon("exit.png")
+  
   lazy val migration = getIcon("migration.jpg")
   lazy val check = getIcon("check.jpg")
   
