@@ -52,9 +52,11 @@ import java.awt.Color
 
 private object AlternatedColoredRowRenderer {
   val WhiteSmoke = new java.awt.Color(245,245,245)
+  val Azure = new java.awt.Color(240,240,255)
 }
 
-class AlternatedColoredRowRenderer(oddRowsColor: Color = Color.white, evenRowsColor: Color = AlternatedColoredRowRenderer.WhiteSmoke) extends DefaultTableCellRenderer {
+class AlternatedColoredRowRenderer(oddRowsColor: Color = AlternatedColoredRowRenderer.Azure, evenRowsColor: Color = Color.white) 
+	extends DefaultTableCellRenderer {
   
   override def getTableCellRendererComponent(table: JTable, value: Any, isSelected: Boolean, hasFocus: Boolean, row: Int, column: Int): java.awt.Component = {
     // ignoring focus so that the cell is drawn with no border.
