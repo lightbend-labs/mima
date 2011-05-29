@@ -1,10 +1,9 @@
 package ssol.tools.mima.core.ui.widget
 
-import scala.swing.{ Component, GridBagPanel, Label, TextArea, Insets, ScrollPane }
+import scala.swing._
+import scala.swing.Swing.{ EmptyBorder, LineBorder }
 import scala.swing.GridBagPanel.Anchor
 import scala.swing.GridBagPanel.Fill
-import scala.swing.Swing.{ EmptyBorder, LineBorder }
-import scala.swing.Swing
 import scala.swing.event.ButtonClicked
 import ssol.tools.mima.core.ui.WithConstraints
 import java.awt.Color
@@ -12,44 +11,29 @@ import java.awt.Color
 import ssol.tools.mima.core.Problem
 
 object ProblemInfoView {
-	case class Close(source: Component) extends scala.swing.event.Event
+  case class Close(source: Component) extends scala.swing.event.Event
 }
-
 
 class ProblemInfoView extends Component {
 
   private[ProblemInfoView] class Panel extends GridBagPanel with WithConstraints {
-    private var lightYellow = new Color(247, 255, 199)
-    private val backgroundColor = lightYellow
-    background = backgroundColor
-    border = EmptyBorder(3)
+    opaque = false
+    val statusLabel = new Label("Status:") { xAlignment = Alignment.Left }
+    val status = new Label { xAlignment = Alignment.Left }
 
-    val closeButton = new CloseButton
-    
-    listenTo(closeButton)
-    reactions += {
-      case ButtonClicked(`closeButton`) =>
-        ProblemInfoView.this.publish(new ProblemInfoView.Close(ProblemInfoView.this))
-    }
+    val fileLabel = new Label("File:") { xAlignment = Alignment.Left }
+    val file = new Label { xAlignment = Alignment.Left }
 
-    val statusLabel = new Label("Status:")
-    val status = new Label
+    val memberLabel = new Label("Member:") { xAlignment = Alignment.Left }
+    val member = new Label { xAlignment = Alignment.Left }
 
-    val fileLabel = new Label("File:")
-    val file = new Label
-
-    val memberLabel = new Label("Member:")
-    val member = new Label
-
-    val descriptionLabel = new Label("Description:")
-    var description = new TextArea {
+    val descriptionLabel = new Label("Description:") { xAlignment = Alignment.Left }
+    var description = new EditorPane() {
+      opaque = false
       editable = false
-      background = backgroundColor
-      lineWrap = true
-      charWrap = true
     }
 
-    val leftIns = new Insets(0, 9, 10, 5)
+    val leftIns = new Insets(0, 9, 10, 10)
     val rightIns = new Insets(0, 0, 10, 9)
 
     withConstraints(gridwidth = 2, anchor = Anchor.FirstLineEnd, insets = new Insets(0, 0, 0, 12)) {
@@ -88,16 +72,38 @@ class ProblemInfoView extends Component {
       add(description, _)
     }
 
-    withConstraints(gridx = 0, gridy = 4, gridwidth = 2, weightx = 1, weighty = 1, fill = Fill.Both) {
+    withConstraints(gridx = 0, gridy = 4, weighty = 1, fill = Fill.Both) {
       add(Swing.VGlue, _)
     }
+
+  }
+
+  private lazy val closeButton = new CloseButton
+
+  listenTo(closeButton)
+  reactions += {
+    case ButtonClicked(`closeButton`) =>
+      ProblemInfoView.this.publish(new ProblemInfoView.Close(ProblemInfoView.this))
+  }
+
+  private lazy val container = new BorderPanel {
+    private val LightYellow = new Color(247, 255, 199)
+
+    background = LightYellow
+    border = EmptyBorder(3)
+    val infoPanel = new Panel()
+    add(infoPanel, BorderPanel.Position.Center)
+    add(new BorderPanel {
+      opaque = false
+      border = EmptyBorder(0,0,0,12)
+      add(closeButton, BorderPanel.Position.North)
+    }, BorderPanel.Position.East)
   }
 
   private lazy val pane = new ScrollPane {
-    private val panel = new Panel()
-    
+
     private val view = new Component {
-      override lazy val peer = panel.peer
+      override lazy val peer = container.peer
     }
 
     contents = view
@@ -109,10 +115,10 @@ class ProblemInfoView extends Component {
     border = LineBorder(Color.lightGray, 1)
 
     def updateWith(problem: Problem) = {
-      panel.status.text = problem.status.toString
-      panel.file.text = problem.fileName
-      panel.member.text = problem.referredMember
-      panel.description.text = problem.description
+      container.infoPanel.status.text = problem.status.toString
+      container.infoPanel.file.text = problem.fileName
+      container.infoPanel.member.text = problem.referredMember
+      container.infoPanel.description.text = problem.description
     }
   }
 

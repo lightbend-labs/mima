@@ -29,7 +29,7 @@ class ReportPage extends BorderPanel {
   /** When the user selects a row show a description panel for the problem. */
   private class RowSelection(table: ReportTable) extends ListSelectionListener {
     private val LowPanelSplitterHeight = 150
-    
+
     override def valueChanged(e: ListSelectionEvent) {
       if (e.getValueIsAdjusting) return // skip
 
@@ -68,7 +68,6 @@ class ReportPage extends BorderPanel {
     }
   }
 
-  
   private class CloseProblemInfoPanelOnEscapeKeyHit extends java.awt.event.KeyAdapter {
     import java.awt.event.KeyEvent
     override def keyReleased(e: KeyEvent) {
@@ -76,11 +75,13 @@ class ReportPage extends BorderPanel {
         closeProblemInfoView()
     }
   }
-  
-  /** Top panel used to define table's filters. When a filter is modified the 
-   * table's view is immediately updated. */
+
+  /**
+   * Top panel used to define table's filters. When a filter is modified the
+   * table's view is immediately updated.
+   */
   private class TableFiltersPanel(table: ReportTable) extends ListItemsPanel {
-    
+
     type Item = ColumnFilterDef
 
     private val constraints = new collection.mutable.ArrayBuffer[Item]()
@@ -120,18 +121,18 @@ class ReportPage extends BorderPanel {
     t.addKeyListener(new CloseProblemInfoPanelOnEscapeKeyHit())
     t
   }
-  
+
   /** table's filter panel*/
-  private val tableFilterPanel = new BorderPanel{
-	  private val title = new Label("Filters:")
-	  val filters = new TableFiltersPanel(table)
-	  
-	  add(new BorderPanel {
-	    border = EmptyBorder(5,3,0,0)
-	    add(title, BorderPanel.Position.North)
-	  }, BorderPanel.Position.West)
-	  
-	  add(filters, BorderPanel.Position.Center)
+  private val tableFilterPanel = new BorderPanel {
+    private val title = new Label("Filters:")
+    val filters = new TableFiltersPanel(table)
+
+    add(new BorderPanel {
+      border = EmptyBorder(5, 3, 0, 0)
+      add(title, BorderPanel.Position.North)
+    }, BorderPanel.Position.West)
+
+    add(filters, BorderPanel.Position.Center)
   }
 
   /** filter panel is located on the top */
@@ -141,11 +142,12 @@ class ReportPage extends BorderPanel {
   val tableContainer = new ScrollPane(new Component {
     override lazy val peer = table
   })
-  
-  /** a panel that provides a full description for a given selected problem.
+
+  /**
+   * a panel that provides a full description for a given selected problem.
    * class `RowSelectionRowSelection` is responsible of updating the view
    * accordingly to the selected row.
-   * */
+   */
   private val problemInfo: ProblemInfoView = new ProblemInfoView()
 
   /** remove row's selection when the problem's description panel is forced to close */
@@ -153,16 +155,19 @@ class ReportPage extends BorderPanel {
   reactions += {
     case ProblemInfoView.Close(`problemInfo`) => closeProblemInfoView()
   }
-  
-  private def closeProblemInfoView() { table.clearSelection() } 
 
-  /** table sorter. Each time the table's model is updated via `setTableModel` a 
-   *  new sorter instance is created and affected. 
+  private def closeProblemInfoView() { table.clearSelection() }
+
+  /**
+   * table sorter. Each time the table's model is updated via `setTableModel` a
+   *  new sorter instance is created and affected.
    */
   private var sorter: TableRowSorter[AbstractTableModel] = _
 
-  /** Split panel that contains both the table and the problem's description panel. The divider 
-   * location is updated by the `RowSelection` class. */
+  /**
+   * Split panel that contains both the table and the problem's description panel. The divider
+   * location is updated by the `RowSelection` class.
+   */
   val splitPanel = new SplitPane(Orientation.Horizontal, tableContainer, problemInfo) {
     val defaultDividerSize = peer.getDividerSize
     dividerSize = 0
@@ -174,27 +179,25 @@ class ReportPage extends BorderPanel {
   private val reportMsg = new Label {
     font = new java.awt.Font("Serif", java.awt.Font.ITALIC, 14)
   }
-  
-	add(new BorderPanel {
-	    border = EmptyBorder(4,0,0,3)
-	    add(reportMsg, BorderPanel.Position.East)
-	  }, BorderPanel.Position.South)
 
-  
+  add(new BorderPanel {
+    border = EmptyBorder(4, 0, 0, 3)
+    add(reportMsg, BorderPanel.Position.East)
+  }, BorderPanel.Position.South)
+
   def setTableModel(_model: ReportTableModel) = {
     reportMsg.visible = _model.getRowCount > 0
-    reportMsg.text = "Found " + _model.getRowCount + " incompatibilities (" + _model.countUnfixableProblems + " unfixable / " + _model.countUpgradableProblems +" upgradable)"
+    reportMsg.text = "Found " + _model.getRowCount + " incompatibilities (" + _model.countUnfixableProblems + " unfixable / " + _model.countUpgradableProblems + " upgradable)"
 
     table.setModel(_model)
     table.doLayout
 
     sorter = new TableRowSorter(_model)
     table.setRowSorter(sorter)
-    
+
     tableFilterPanel.filters.refreshTableFilter()
   }
 }
-
 
 protected[page] object ColumnFilterDef {
   object ColumnFilterDefChanged extends scala.swing.event.Event
@@ -202,7 +205,7 @@ protected[page] object ColumnFilterDef {
 
 protected[page] class ColumnFilterDef(_columns: List[String]) extends FlowPanel(FlowPanel.Alignment.Left)() {
   import ColumnFilterDef.ColumnFilterDefChanged
-  
+
   private abstract class TextCombinator {
     def predicate: String => Boolean
   }
@@ -254,11 +257,11 @@ protected[page] class ColumnFilterDef(_columns: List[String]) extends FlowPanel(
   listenTo(columns.selection, combinators.selection, value)
 
   reactions += {
-    case scala.swing.event.SelectionChanged(_) =>
-      publish(ColumnFilterDefChanged)
-    case scala.swing.event.ValueChanged(`value`) =>
-      publish(ColumnFilterDefChanged)
+    case scala.swing.event.SelectionChanged(_) => notifyFilterChanged()
+    case scala.swing.event.ValueChanged(`value`) => notifyFilterChanged()
   }
+
+  private def notifyFilterChanged() { publish(ColumnFilterDefChanged) }
 
   vGap = 0
 
