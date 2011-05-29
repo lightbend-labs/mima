@@ -32,9 +32,10 @@ class LicenseAgreementView extends Component {
   private lazy val licenseText = license.License.license
   private lazy val licenseEditor = new Component {
 	border = EmptyBorder(5)
-    override lazy val peer = new EditorPane("text/plain", licenseText) {
+	private lazy val pane = new EditorPane("text/plain", licenseText) {
       editable = false
-    }.peer
+    }
+    override lazy val peer = pane.peer
   }
 
   private lazy val acceptLicense = new CheckBox("Accept the End User License Agreement")

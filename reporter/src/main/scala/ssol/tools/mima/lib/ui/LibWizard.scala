@@ -10,6 +10,7 @@ import scala.tools.nsc.{ util, io }
 import util._
 import ClassPath._
 import ssol.tools.mima.core.ui.page._
+import ssol.tools.mima.lib.ui.page.WelcomePage
 
 import widget.LicenseAgreementView
 
@@ -65,6 +66,9 @@ class LibWizard extends Wizard {
     import LibWizard.PageModel
     override val model = new PageModel
   }
+  
+  // step 0 - welcome screen
+  this += new WelcomePage with Page 
   
   // step 1 - license agreement
   this += new LicenseAgreementView with Page {
