@@ -68,6 +68,15 @@ class ReportPage extends BorderPanel {
     }
   }
 
+  
+  private class CloseProblemInfoPanelOnEscapeKeyPressed extends java.awt.event.KeyAdapter {
+    import java.awt.event.KeyEvent
+    override def keyReleased(e: KeyEvent) {
+      if (e.getKeyCode == KeyEvent.VK_ESCAPE && problemInfo.visible)
+        closeProblemInfoView()
+    }
+  }
+  
   /** Top panel used to define table's filters. When a filter is modified the 
    * table's view is immediately updated. */
   private class TableFiltersPanel(table: ReportTable) extends ListItemsPanel {
@@ -108,6 +117,7 @@ class ReportPage extends BorderPanel {
     val t = new ReportTable
     val selectionListener = new RowSelection(t)
     t.getSelectionModel.addListSelectionListener(selectionListener)
+    t.addKeyListener(new CloseProblemInfoPanelOnEscapeKeyPressed())
     t
   }
   
@@ -136,13 +146,15 @@ class ReportPage extends BorderPanel {
    * class `RowSelectionRowSelection` is responsible of updating the view
    * accordingly to the selected row.
    * */
-  private val problemInfo = new ProblemInfoView()
+  private val problemInfo: ProblemInfoView = new ProblemInfoView()
 
   /** remove row's selection when the problem's description panel is forced to close */
   listenTo(problemInfo)
   reactions += {
-    case ProblemInfoView.Close(`problemInfo`) => table.clearSelection()
+    case ProblemInfoView.Close(`problemInfo`) => closeProblemInfoView()
   }
+  
+  private def closeProblemInfoView() { table.clearSelection() } 
 
   /** table sorter. Each time the table's model is updated via `setTableModel` a 
    *  new sorter instance is created and affected. 
