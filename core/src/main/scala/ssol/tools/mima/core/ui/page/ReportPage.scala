@@ -69,7 +69,7 @@ class ReportPage extends BorderPanel {
   }
 
   
-  private class CloseProblemInfoPanelOnEscapeKeyPressed extends java.awt.event.KeyAdapter {
+  private class CloseProblemInfoPanelOnEscapeKeyHit extends java.awt.event.KeyAdapter {
     import java.awt.event.KeyEvent
     override def keyReleased(e: KeyEvent) {
       if (e.getKeyCode == KeyEvent.VK_ESCAPE && problemInfo.visible)
@@ -117,7 +117,7 @@ class ReportPage extends BorderPanel {
     val t = new ReportTable
     val selectionListener = new RowSelection(t)
     t.getSelectionModel.addListSelectionListener(selectionListener)
-    t.addKeyListener(new CloseProblemInfoPanelOnEscapeKeyPressed())
+    t.addKeyListener(new CloseProblemInfoPanelOnEscapeKeyHit())
     t
   }
   
