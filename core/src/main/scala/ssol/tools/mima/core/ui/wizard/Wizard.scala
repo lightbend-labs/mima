@@ -43,10 +43,12 @@ class Wizard extends BorderPanel {
   }
   
   private class LoadingPanel extends BorderPanel {
-    val loading = new ssol.tools.mima.core.ui.widget.LoadingPanel("")
-    add(ssol.tools.mima.core.util.log.UiLogger, BorderPanel.Position.North)
-    add(new Component { override lazy val peer = loading }, BorderPanel.Position.Center)
-    loading.start()
+    private val loading = new ssol.tools.mima.core.ui.widget.LoadingPanel("")
+    private val wrapper = Component.wrap(loading)
+    add(wrapper, BorderPanel.Position.Center)
+    add(ssol.tools.mima.core.util.log.UiLogger, BorderPanel.Position.South)
+    
+    def start() = loading.start()
   }
 
   import BorderPanel._
@@ -145,7 +147,13 @@ class Wizard extends BorderPanel {
 
     private def showLoadingPanel() {
       buttonsPanel.visible = false
-      setContent(new LoadingPanel())
+      val loading = new LoadingPanel()
+      setContent(loading)
+      // delaying start so that `setContent` will trigger 
+      // component's `repaint` which will update the loading 
+      // panel's size. The size is needed to correctly center 
+      // the loading animation.
+      Swing onEDT { loading.start() }
     }
 
     private def hideLoadingPanel() {
