@@ -32,11 +32,7 @@ abstract class MimaFrame extends MainFrame with Centered {
 
     private val topPanel = new BorderPanel {
       add(ScalaLogo, BorderPanel.Position.West)
-      /*add(new Label(title) {
-        font = new Font("Serif", java.awt.Font.ITALIC, 18);
-      }, BorderPanel.Position.Center)*/
       add(TypesafeLogo, BorderPanel.Position.East)
-      //add(new Separator, BorderPanel.Position.South)
     }
     add(topPanel, BorderPanel.Position.North)
 
