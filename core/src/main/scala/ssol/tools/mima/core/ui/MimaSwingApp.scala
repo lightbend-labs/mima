@@ -15,7 +15,6 @@ trait MimaSwingApp extends SimpleSwingApplication with WithEventQueueProxy {
   override def startup(args: Array[String]) {
     resargs = Config.setup("scala " + launcherClassName +" <old-dir> <new-dir>", args, "-fixall")
     super.startup(args)
-  
   }
 
   protected def launcherClassName: String

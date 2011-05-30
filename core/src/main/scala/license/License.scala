@@ -2,7 +2,7 @@ package license
 
 object License {
   val license: String = {
-    val url = getClass.getResource("LICENSE")
-    io.Source.fromFile(url.toURI).mkString
+    val url = getClass.getResourceAsStream("LICENSE")
+    io.Source.fromInputStream(url).mkString
   }
 }

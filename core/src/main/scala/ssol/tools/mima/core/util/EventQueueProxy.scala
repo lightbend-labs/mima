@@ -17,10 +17,6 @@ class EventQueueProxy extends EventQueue {
       super.dispatchEvent(newEvent)
     } catch {
       case t: Throwable => 
-        val source = newEvent.getSource match {
-          case c: java.awt.Component =>
-          val frame = javax.swing.SwingUtilities.getRoot(c);
-        }
         new UnexpectedErrorDialog(t)()
     }
   }
