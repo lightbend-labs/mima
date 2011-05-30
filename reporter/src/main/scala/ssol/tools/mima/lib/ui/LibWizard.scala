@@ -10,7 +10,6 @@ import scala.tools.nsc.{ util, io }
 import util._
 import ClassPath._
 import ssol.tools.mima.core.ui.page._
-import ssol.tools.mima.lib.ui.page.WelcomePage
 
 import widget.LicenseAgreementView
 
