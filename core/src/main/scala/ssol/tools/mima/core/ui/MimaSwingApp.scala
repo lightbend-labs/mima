@@ -6,8 +6,9 @@ import java.io.File
 import scala.swing._
 import Swing._
 import ssol.tools.mima.core.Config
+import ssol.tools.mima.core.util.WithEventQueueProxy
 
-trait MimaSwingApp extends SimpleSwingApplication {
+trait MimaSwingApp extends SimpleSwingApplication with WithEventQueueProxy {
 
   var resargs: List[String] = Nil 
   

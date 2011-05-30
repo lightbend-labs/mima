@@ -16,7 +16,7 @@ object MimaLibApp extends MimaSwingApp {
     title = "Typesafe - End User License Agreement"
     preferredSize = (640, 480)
     minimumSize = preferredSize
-    centerFrame
+    location = center
     resizable = false
     
     private val license = new LicenseAgreementView

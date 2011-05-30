@@ -9,10 +9,7 @@ import ssol.tools.mima.core.ui.event.Exit
 import ssol.tools.mima.core.util.Browse
 
 object MimaMenuBar extends MenuBar {
-  
-  private val howTo = "http://typesafe.com/technology/migration-manager"
-  private val bugs = "https://www.assembla.com/spaces/mima/tickets"
-  
+  import ssol.tools.mima.core.util.Urls._
   // File menu
 	val file = new Menu("File") {
 		mnemonic = Key.F
@@ -36,14 +33,14 @@ object MimaMenuBar extends MenuBar {
 	
 	contents += help
 	
-	val guide = new MenuItem(new Action("How to") {
-	  def apply() =  Browse to howTo
+	val guide = new MenuItem(new Action("Online resources") {
+	  def apply() =  Browse to OnlineResource
 	}) {
 	  mnemonic = Key.T
 	}
 	
 	val bug = new MenuItem(new Action("Report a bug...") {
-	  def apply() = Browse to bugs
+	  def apply() = Browse to BugReporting
 	}) {
 	  mnemonic = Key.R
 	}

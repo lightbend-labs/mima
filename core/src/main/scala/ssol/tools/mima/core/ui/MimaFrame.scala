@@ -7,23 +7,22 @@ import ssol.tools.mima.core.ui.wizard._
 import ssol.tools.mima.core.Config
 import ssol.tools.mima.core.ui.page._
 import ssol.tools.mima.core.ui.event.Exit
+import ssol.tools.mima.core.util.Version
 
 import scala.tools.nsc.{ util, io }
 import util._
 import ClassPath._
 
 abstract class MimaFrame extends MainFrame with Centered {  
-  val ScalaWebsite = "http://www.scala-lang.org/"
+  import ssol.tools.mima.core.util.Urls._
   object ScalaLogo extends widget.LinkImagePanel(ScalaWebsite, images.Icons.scalaLogo)
   
-  val TypesafeWebsite = "http://typesafe.com/"
   object TypesafeLogo extends widget.LinkImagePanel(TypesafeWebsite, images.Icons.typesafe)
 
-  // FIXME: How can I inject the version number?
-  title = "Migration Manager - 0.1-beta1" 
+  title = "Migration Manager - " + Version.version
   preferredSize = (1024, 768)
   minimumSize = preferredSize
-  centerFrame
+  location = center
   resizable = false
 
   
