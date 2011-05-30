@@ -75,7 +75,7 @@ class Wizard extends BorderPanel {
   private def updateNavigationButtons() {
     navigation.next.enabled = pages(_currentPage).get.canNavigateForward
     navigation.next.visible = currentIsNotLastPage
-    navigation.back.visible = currentIsNotFirstPage
+    navigation.back.visible = currentIsNotFirstPage && pages(_currentPage).get.canNavigateBack
   }
 
   private def currentIsNotLastPage: Boolean =

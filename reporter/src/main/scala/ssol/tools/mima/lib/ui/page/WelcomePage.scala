@@ -7,6 +7,7 @@ import javax.swing._
 
 import javax.swing.text.html.HTMLEditorKit
 import javax.swing.text.html.HTMLDocument
+import javax.swing.border.TitledBorder
 
 import ssol.tools.mima.core.ui.WithConstraints
 
@@ -18,7 +19,7 @@ class WelcomePage extends GridBagPanel with WithConstraints {
      */
     val defaultLabelFont = UIManager.getFont("Label.font");
     val bodyRule = "body { font-family: " + defaultLabelFont.getFamily() + "; " +
-      "font-size: " + defaultLabelFont.getSize() + "pt; }";
+      "font-size: " + textFont.getSize() + "pt; }";
     (getDocument().asInstanceOf[HTMLDocument]).getStyleSheet().addRule(bodyRule);
 
     setOpaque(false)
@@ -33,59 +34,104 @@ class WelcomePage extends GridBagPanel with WithConstraints {
       }
     })
   }
+  
+
+  private val mimaIntroUrl = "http://typesafe.com/technology/migration-manager"
+  private val mimaStepByStepGuideUrl = "http://typesafe.com/technology/migration-manager"
+  private val assemblaBugReportUrl = "https://www.assembla.com/spaces/mima/tickets"
+  
+  private val defaultLabelFont = javax.swing.UIManager.getFont("Label.font")
+  private val textFont = new java.awt.Font(defaultLabelFont.getName, defaultLabelFont.getStyle, 15)
 
   private def createTitledComponent(title: String, component: javax.swing.JComponent) = new Component {
-    border = TitledBorder(LineBorder(java.awt.Color.lightGray, 1), title)
+    private val darkRed =  new java.awt.Color(130,0,0)
+    border = BorderFactory.createTitledBorder(LineBorder(java.awt.Color.lightGray, 1), title, TitledBorder.LEADING, TitledBorder.TOP, textFont, darkRed)
     override lazy val peer = component
   }
 
-  private val mimaStepByStepIntroUrl = "http://typesafe.com/technology/migration-manager"
-  private val assemblaBugReportUrl = "https://www.assembla.com/spaces/mima/tickets"
-
-  private val defaultLabelFont = javax.swing.UIManager.getFont("Label.font")
 
   private val columns = 2
 
   
-  withConstraints(gridx = 0, gridy = 0, weightx = 1, gridwidth = columns, anchor = GridBagPanel.Anchor.Center) {
+  private var row = 0 
+
+  withConstraints(gridx = 0, gridy = row, weightx = 1, gridwidth = columns, fill = GridBagPanel.Fill.Horizontal) {
+    add(VStrut(30), _)
+  }
+  
+  row += 1
+  
+  withConstraints(gridx = 0, gridy = row, weightx = 1, gridwidth = columns, anchor = GridBagPanel.Anchor.Center) {
     add(new FlowPanel(FlowPanel.Alignment.Center)(new Label("Welcome to the Scala Migration Manager") {
-      font = new java.awt.Font(defaultLabelFont.getName, defaultLabelFont.getStyle, 20)
+      font = new java.awt.Font(defaultLabelFont.getFamily, defaultLabelFont.getStyle, 30)
     }), _)
   }
+  
+  row += 1
 
-  withConstraints(gridx = 0, gridy = 1, weightx = 1, gridwidth = columns, fill = GridBagPanel.Fill.Horizontal) {
-    add(VStrut(50), _)
+  withConstraints(gridx = 0, gridy = row, weightx = 1, gridwidth = columns, fill = GridBagPanel.Fill.Horizontal) {
+    add(VStrut(20), _)
   }
-
-  private val intro = new Editor {
-    val text = """The Migration Manager (MiMa in short) can help you diagnose binary 
-    		 |incompatiblities between two subsequent versions of a same library.<br>
-    		 |If this is the first time you use MiMa, we suggest 
-             |you read the <a href="%s">step-by-step introduction</a>.""".format(mimaStepByStepIntroUrl).stripMargin
-
-    setText(text)
+  
+  row += 1
+  
+  withConstraints(gridx = 0, gridy = row, weightx = 1, gridwidth = columns, fill = GridBagPanel.Fill.Horizontal) {
+    add(new Label("Click `Next` if you want to start now") {font = textFont}, _) 
   }
-
-  withConstraints(gridx = 0, gridy = 2, weightx = 1, fill = GridBagPanel.Fill.Horizontal) {
-    add(createTitledComponent("Introduction", intro), _)
-  }
-
-  withConstraints(gridx = 0, gridy = 3, weightx = 1, gridwidth = columns, fill = GridBagPanel.Fill.Horizontal) {
+  
+  row += 1
+  
+  withConstraints(gridx = 0, gridy = row, weightx = 1, gridwidth = columns, fill = GridBagPanel.Fill.Horizontal) {
     add(VStrut(50), _)
   }
   
-  private val bugs = new Editor {
-    val text = """Please report issues by filing a new ticket <a href="%s">here</a>. 
-    		 |You may use the same service to request feature enhancement.""".format(assemblaBugReportUrl).stripMargin
+  row += 1
+
+  private val intro = new Editor {
+    val text = """The Migration Manager (MiMa in short) can help you diagnose binary incompatibilities 
+                 |between two versions of a same library. This can greatly help you, the library producer, 
+    			       |to take the right steps when evolving the API. This enables library's users to confidently 
+    					   |upgrade to newer versions without having to recompile, hence taking advantage of all the new 
+    					   |features of the latest version with no overhead. <br><br>
+    						 |In fact, upgrading a mission critical applications to use a new version of a library can sometimes be 
+    					   |a difficult and frustrating task that can put your business at risk. Until now, you were forced 
+    						 |to upgrade your own codebase and then consider how to make it binary-compatible with third-party 
+    						 |libraries other subsystems on which you rely. Now, if the library's version you want to move to 
+    					   |is binary compatible with the one currently in use (and you can check that with MiMa), then 
+    						 |upgrading becomes an effortless task that only requires you to replace the old library with 
+    						 |the new one. It really can't be easier. <a href="%s">Read more...</a> <br><br>
+    		         |If this is the first time you are using MiMa, we suggest you read the <a href="%s">step-by-step guide</a> 
+    						 |to get quickly up to speed."""
+                 .format(mimaIntroUrl,mimaStepByStepGuideUrl).stripMargin
 
     setText(text)
   }
 
-  withConstraints(gridx = 0, gridy = 4, weightx = 1, fill = GridBagPanel.Fill.Horizontal) {
-    add(createTitledComponent("Report Issues", bugs), _)
+  withConstraints(gridx = 0, gridy = row, weightx = 1, fill = GridBagPanel.Fill.Horizontal) {
+    add(createTitledComponent("Introduction", intro), _)
   }
 
-  withConstraints(gridx = 0, gridy = 5, weighty = 1, gridwidth = columns, fill = GridBagPanel.Fill.Both) {
+  row += 1
+  
+  withConstraints(gridx = 0, gridy = row, weightx = 1, gridwidth = columns, fill = GridBagPanel.Fill.Horizontal) {
+    add(VStrut(50), _)
+  }
+  
+  row += 1
+  
+  private val bugs = new Editor {
+    val text = """A <a href="%s">ticketing system</a> exists to report issues or request new features.""".format(assemblaBugReportUrl).stripMargin
+
+    setText(text)
+  }
+
+  withConstraints(gridx = 0, gridy = row, weightx = 1, fill = GridBagPanel.Fill.Horizontal) {
+    add(createTitledComponent("Tickets", bugs), _)
+  }
+  
+  row += 1
+
+  withConstraints(gridx = 0, gridy = row, weighty = 1, gridwidth = columns, fill = GridBagPanel.Fill.Both) {
     add(Swing.VGlue, _)
   }
 }

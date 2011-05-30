@@ -68,12 +68,14 @@ class LibWizard extends Wizard {
   }
   
   // step 0 - welcome screen
-  this += new WelcomePage with Page 
+  this += new WelcomePage with Page
   
   // step 1 - license agreement
   this += new LicenseAgreementView with Page {
     private var _licenseAccepted = false
     override def canNavigateForward = _licenseAccepted 
+    
+    override def canNavigateBack = false
     
     listenTo(this)
     reactions += {
@@ -85,6 +87,7 @@ class LibWizard extends Wizard {
   
   // step 2 - select library
   this += new ConfigurationPanel(LibWizard.oldLib, LibWizard.newLib) with Page {
+    override def canNavigateBack = false
     override def canNavigateForward = areFilesSelected
 
      override def onReveal() {

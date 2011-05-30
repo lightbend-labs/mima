@@ -25,6 +25,9 @@ trait WizardPage extends Component {
 
   /** is forward navigation enabled. */
   def canNavigateForward = true
+  
+  /** is Back navigation enabled. */
+  def canNavigateBack = true
 
   /** is called before the page is displayed. Long-running task should be
    *  executed here (a loading panel is automatically displayed).
