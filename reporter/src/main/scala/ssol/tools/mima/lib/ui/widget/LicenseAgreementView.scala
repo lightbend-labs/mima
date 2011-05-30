@@ -34,6 +34,7 @@ class LicenseAgreementView extends Component {
 	border = EmptyBorder(5)
 	private lazy val pane = new EditorPane("text/plain", licenseText) {
       editable = false
+      focusable = false
     }
     override lazy val peer = pane.peer
   }
