@@ -67,25 +67,7 @@ class LibWizard extends Wizard {
     override val model = new PageModel
   }
   
-  // step 0 - welcome screen
-  this += new WelcomePage with Page
-  
-  // step 1 - license agreement
-  this += new LicenseAgreementView with Page {
-    private var _licenseAccepted = false
-    override def canNavigateForward = _licenseAccepted 
-    
-    override def canNavigateBack = false
-    
-    listenTo(this)
-    reactions += {
-      case LicenseAgreementView.LicenseAccepted(status) =>
-        _licenseAccepted = status
-        publish(WizardPage.CanGoNext(status))
-    }
-  }
-  
-  // step 2 - select library
+  // step 1 - select library
   this += new ConfigurationPanel(LibWizard.oldLib, LibWizard.newLib) with Page {
     override def canNavigateBack = false
     override def canNavigateForward = areFilesSelected
@@ -107,7 +89,7 @@ class LibWizard extends Wizard {
     }
   }
 
-  // step 3 - report issues
+  // step 2 - report issues
   this += new ReportPage with Page {
 
     override def onLoad() {

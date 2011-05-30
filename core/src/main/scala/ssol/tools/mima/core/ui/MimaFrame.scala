@@ -6,14 +6,13 @@ import ssol.tools.mima.core.ui._
 import ssol.tools.mima.core.ui.wizard._
 import ssol.tools.mima.core.Config
 import ssol.tools.mima.core.ui.page._
-import event.Event
+import ssol.tools.mima.core.ui.event.Exit
 
 import scala.tools.nsc.{ util, io }
 import util._
 import ClassPath._
 
-abstract class MimaFrame extends MainFrame with Centered {
-
+abstract class MimaFrame extends MainFrame with Centered {  
   val ScalaWebsite = "http://www.scala-lang.org/"
   object ScalaLogo extends widget.LinkImagePanel(ScalaWebsite, images.Icons.scalaLogo)
   
@@ -21,12 +20,13 @@ abstract class MimaFrame extends MainFrame with Centered {
   object TypesafeLogo extends widget.LinkImagePanel(TypesafeWebsite, images.Icons.typesafe)
 
   // FIXME: How can I inject the version number?
-  title = "Migration Manager - 0.0.1-beta" 
+  title = "Migration Manager - 0.1-beta1" 
   preferredSize = (1024, 768)
   minimumSize = preferredSize
   centerFrame
   resizable = false
 
+  
   protected val mainContainer = new BorderPanel {
     border = EmptyBorder(10)
 
@@ -44,8 +44,13 @@ abstract class MimaFrame extends MainFrame with Centered {
     }
   }
 
+  
+  menuBar = MimaMenuBar
+  
   contents = mainContainer
-
+  
+  listenTo(menuBar)
+  
   reactions += {
     case Exit =>
       Dialog.showConfirmation(parent = null,

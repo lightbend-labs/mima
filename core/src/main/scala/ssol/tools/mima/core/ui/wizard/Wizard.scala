@@ -8,6 +8,7 @@ import scala.swing._
 import scala.swing.event._
 import Swing._
 
+import ssol.tools.mima.core.ui.event.Exit
 import ssol.tools.mima.core.ui.widget.NavigationPanel
 
 /** A simple wizard interface. It consist of a center panel that displays
@@ -201,6 +202,3 @@ class Wizard extends BorderPanel {
     case WizardPage.CanGoNext(allowed) => navigation.next.enabled = allowed
   }
 }
-
-
-case object Exit extends Event

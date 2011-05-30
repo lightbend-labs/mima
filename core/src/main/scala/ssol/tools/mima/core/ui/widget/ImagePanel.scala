@@ -8,6 +8,8 @@ import java.io.File
 import scala.swing._  
 import Swing._
 
+import ssol.tools.mima.core.util.Browse
+
 class ImagePanel(img: javax.swing.Icon) extends Panel {
   
   preferredSize = (img.getIconWidth, img.getIconHeight)
@@ -28,7 +30,6 @@ class LinkImagePanel(val uri: String, img: javax.swing.Icon) extends ImagePanel(
   cursor = new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR)
     listenTo(mouse.clicks)
     reactions += {
-      case e: scala.swing.event.MouseClicked =>
-        java.awt.Desktop.getDesktop().browse(new java.net.URI(uri))
+      case e: scala.swing.event.MouseClicked => Browse to uri
     }
 }

@@ -5,7 +5,7 @@ import scala.swing.event.ButtonClicked
 
 abstract class ListItemsPanel extends BoxPanel(Orientation.Vertical) {
   
-  private val MaxNumberOfItems = 4
+  private val MaxNumberOfItems = 10
 
   type Item <: Component
 
