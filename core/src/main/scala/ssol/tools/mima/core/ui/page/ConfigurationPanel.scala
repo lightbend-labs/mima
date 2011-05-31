@@ -17,7 +17,7 @@ import ssol.tools.mima.core.ui.WithConstraints
  */
 class ConfigurationPanel(f1: Option[File] = None, f2: Option[File] = None) extends GridBagPanel with WithConstraints {
   
-  private val oldFilePicker = new FilePicker("Old: ", this, f1)
+  private val oldFilePicker = new FilePicker("Old:", this, f1)
   private val newFilePicker = new FilePicker("New:", this, f2)
   
   def oldFile = oldFilePicker.selectedFile.get

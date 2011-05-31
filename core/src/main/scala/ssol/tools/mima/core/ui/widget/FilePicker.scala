@@ -37,7 +37,7 @@ class FilePicker(_label: String, owner: Component, private var _selectedFile: Op
     if (file.getName.length > 40) "..." + file.getName.takeRight(35) else file.getName
   }
 
-  private val label = new Label(_label)
+  private val label = new Label(_label) { preferredSize = (40, preferredSize.height) } 
 
   contents += (label, Swing.HStrut(10))
   contents += Button("Choose") {

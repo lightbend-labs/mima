@@ -7,12 +7,11 @@ object Icons {
 
   private lazy val sep = java.io.File.separator
   
-  private def getIcon = buildIcon(sep + "images" + sep) _ 
+  private def getIcon = buildIcon  _ 
   
   /** Load the icon from the given path, or EmptyIcon if not found. */
-  private def buildIcon(basePath: String)(filename: String) : javax.swing.Icon = {
-    val path = basePath + filename
-    getClass.getResource(path) match {
+  private def buildIcon(filename: String) : javax.swing.Icon = {
+    getClass.getResource(filename) match {
       case null => EmptyIcon 
       case value => 
         val resource = Swing.Icon(value)

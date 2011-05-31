@@ -8,9 +8,13 @@ import javax.swing.ListSelectionModel
 import ssol.tools.mima.core.ui.model.ReportTableModel
 
 private[ui] class ReportTable extends JTable(ReportTableModel(Nil)) with TableModelListener {
-
+  
   // allow only single selection
   setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
+
+  
+  // turn off grid as we use the `AlternatedColoredRowRenderer`
+  setShowGrid(false)
 
   // apply the render to all cells! 
   setDefaultRenderer(classOf[Any], new AlternatedColoredRowRenderer)
