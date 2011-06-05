@@ -1,0 +1,2 @@
+method bar_=(Int)Unit in trait A does not have a correspondent in old version
+method bar()Int in trait A does not have a correspondent in old version

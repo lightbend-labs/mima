@@ -1,0 +1,1 @@
+method foo()Int in class A is declared final in new version

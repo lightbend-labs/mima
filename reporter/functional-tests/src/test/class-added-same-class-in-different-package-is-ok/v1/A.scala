@@ -1,0 +1,3 @@
+package me {
+  class A
+}

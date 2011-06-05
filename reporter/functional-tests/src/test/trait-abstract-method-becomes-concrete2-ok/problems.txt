@@ -1,0 +1,1 @@
+method foo()Int in trait A1 does not have a correspondent in old version

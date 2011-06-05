@@ -1,0 +1,1 @@
+Removing a class type from the inheritance relationship of a trait surprisingly does not break binary compatibility. This because the produced classes for the trait do not contain an explicit reference to the class it inherit from.

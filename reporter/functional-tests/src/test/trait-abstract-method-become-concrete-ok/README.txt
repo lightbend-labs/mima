@@ -1,0 +1,1 @@
+This is not really an issue as the bytecode an overridden method is the same as for a standard method implementation.

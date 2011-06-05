@@ -1,0 +1,8 @@
+target/
+**/target
+*.scala_dependencies
+project/boot
+bin/
+.DS_Store
+**/.DS_Store
+.history

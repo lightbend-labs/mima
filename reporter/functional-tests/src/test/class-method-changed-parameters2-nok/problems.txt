@@ -1,0 +1,1 @@
+method foo(java.lang.Object,Int)Int in class A's type has changed; was (java.lang.Object,Int)Int, is now: (Int,java.lang.Object)Int

@@ -1,0 +1,3 @@
+package you {
+  class B
+}
