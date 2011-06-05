@@ -10,13 +10,15 @@ import Path._
 object MimaBuild extends Build {
 
   // here we list all projects that are defined.
-  lazy val projects = Seq(root, core, reporter, migrator, reporterFunctionalTests) ++ tests
+  override lazy val projects = Seq(root) ++ modules
+  
+  lazy val modules = Seq(core, reporter, migrator, reporterFunctionalTests) ++ tests
 
-  lazy val root = Project("root", file("."), aggregate = (Seq(core, reporter, migrator, reporterFunctionalTests) ++ tests).map(Reference.projectToRef(_)))
+  lazy val root: Project = Project("root", file("."), aggregate = modules.map(Reference.projectToRef(_)))
 
-  lazy val core: Project = Project("core", file("core"), delegates = root :: Nil)
+  lazy val core: Project = Project("core", file("core"), delegates = Seq(root))
 
-  lazy val reporter: Project = Project("reporter", file("reporter"), delegates = root :: Nil)
+  lazy val reporter: Project = Project("reporter", file("reporter"), delegates = List(root))
 	.dependsOn(core)
 	.settings(
 	  // add task functional-tests that depends on all functional tests
@@ -25,9 +27,13 @@ object MimaBuild extends Build {
           packageBin in Compile <<= packageBin in Compile dependsOn  functionalTests 
 	)	
 
-  lazy val reporterFunctionalTests: Project = Project("reporter-functional-tests", file("reporter") / "functional-tests" , delegates = core :: Nil) dependsOn(core, reporter)
+  lazy val reporterFunctionalTests: Project = Project("reporter-functional-tests", 
+  													file("reporter") / "functional-tests" , 
+  													delegates = Seq(core))
+  													.dependsOn(core, reporter)
 
-  lazy val migrator: Project = Project("migrator", file("migrator"), delegates = root :: Nil) dependsOn(core, reporter)
+  lazy val migrator: Project = Project("migrator", file("migrator"), delegates = Seq(root))
+  							  .dependsOn(core, reporter)
 
   // select all testN directories.
   val bases = (file("reporter") / "functional-tests" / "src" / "test") * (DirectoryFilter)
@@ -38,7 +44,7 @@ object MimaBuild extends Build {
   // defines a Project for the given base directory (for example, functional-tests/test1)
   //  Its name is the directory name (test1) and it has compile+package tasks for sources in v1/ and v2/
   def testProject(base: File) =
-    Project(base.name, base, settings = testProjectSettings).configs(v1Config, v2Config).dependsOn(reporterFunctionalTests)
+    Project(base.name, base, settings = testProjectSettings).configs(v1Config, v2Config) dependsOn (reporterFunctionalTests)
 
   lazy val testProjectSettings =
     (Defaults.defaultSettings :+ (scalaVersion := "2.9.0"))++ // normal project defaults; can be trimmed later- test and run aren't needed, for example.
