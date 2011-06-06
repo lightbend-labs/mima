@@ -43,18 +43,13 @@ Launch MiMa Reporter
 -------
 Type the following command to run the MiMa Reporter
 
-	$ xsbt // will start xsbt console
-	$ project reporter // will switch to the reporter project
-	$ run // will launch the MiMa Reporter UI
+	$ xsbt reporter/run
 
 Launch MiMa Migrator
 -------
 Type the following command to run the MiMa Reporter
 
-	$ xsbt // will start xsbt console
-	$ project migrator // will switch to the migrator project
-	$ run // will launch the MiMa Migrator UI
-
+	$ xsbt migrator/run
 
 MiMa Reporter: Functional Tests
 -------
