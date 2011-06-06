@@ -6,7 +6,7 @@ import ssol.tools.mima.core.ui._
 import ssol.tools.mima.core.ui.wizard._
 import ssol.tools.mima.core.Config
 import ssol.tools.mima.core.ui.page._
-import ssol.tools.mima.core.ui.event.Exit
+import ssol.tools.mima.core.ui.event.ExitMiMa
 import ssol.tools.mima.core.util.Version
 
 import scala.tools.nsc.{ util, io }
@@ -51,7 +51,7 @@ abstract class MimaFrame extends MainFrame with Centered {
   listenTo(menuBar)
   
   reactions += {
-    case Exit =>
+    case ExitMiMa =>
       Dialog.showConfirmation(parent = null,
         icon = images.Icons.exit,
         title = "Exit MiMa",

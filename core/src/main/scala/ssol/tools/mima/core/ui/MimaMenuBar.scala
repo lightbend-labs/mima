@@ -5,7 +5,7 @@ import scala.swing.event._
 
 import java.net.URI
 
-import ssol.tools.mima.core.ui.event.Exit
+import ssol.tools.mima.core.ui.event.ExitMiMa
 import ssol.tools.mima.core.util.Browse
 
 object MimaMenuBar extends MenuBar {
@@ -18,7 +18,7 @@ object MimaMenuBar extends MenuBar {
 	contents += file
 	
 	val exit = new MenuItem(new Action("Exit") {
-	  def apply() = publish(Exit)
+	  def apply() = publish(ExitMiMa)
 	}) {
 	  mnemonic = Key.E
 	}

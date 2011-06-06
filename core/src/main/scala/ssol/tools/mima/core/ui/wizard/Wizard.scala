@@ -8,7 +8,7 @@ import scala.swing._
 import scala.swing.event._
 import Swing._
 
-import ssol.tools.mima.core.ui.event.Exit
+import ssol.tools.mima.core.ui.event.ExitMiMa
 import ssol.tools.mima.core.ui.widget.NavigationPanel
 
 /** A simple wizard interface. It consist of a center panel that displays
@@ -192,7 +192,7 @@ class Wizard extends BorderPanel {
 
   navigation.back.action = Action("Back") { back() }
 
-  navigation.exit.action = Action("Quit") { publish(Exit) }
+  navigation.exit.action = Action("Quit") { publish(ExitMiMa) }
 
   private def notifyReveal(page: WizardPage) = {
     listenTo(page)
