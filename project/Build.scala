@@ -9,6 +9,18 @@ import Path._
 
 object MimaBuild extends Build {
 
+  // dependencies
+  val compiler = "org.scala-lang" % "scala-compiler" % "2.9.0" % "compile"
+  val swing = "org.scala-lang" % "scala-swing" % "2.9.0" % "compile"
+
+
+  // Settings
+  val commonSettings = Seq(
+      organization := "com.typesafe.mima",
+      scalaVersion := "2.9.0",
+      version := "0.1.1",
+      libraryDependencies ++= Seq(swing))
+
   // here we list all projects that are defined.
   override lazy val projects = Seq(root) ++ modules
   
@@ -16,9 +28,10 @@ object MimaBuild extends Build {
 
   lazy val root: Project = Project("root", file("."), aggregate = modules.map(Reference.projectToRef(_)))
 
-  lazy val core: Project = Project("core", file("core"), delegates = Seq(root))
+  lazy val core: Project = Project("core", file("core"), settings = Defaults.defaultSettings ++ commonSettings  ++ Seq(
+          libraryDependencies ++= Seq(compiler)) :+ (name := "mima-core"))
 
-  lazy val reporter: Project = Project("reporter", file("reporter"), delegates = List(root))
+  lazy val reporter: Project = Project("reporter", file("reporter"), settings = Defaults.defaultSettings ++ commonSettings :+ (name := "mima-reporter"))
 	.dependsOn(core)
 	.settings(
 	  // add task functional-tests that depends on all functional tests
@@ -29,10 +42,10 @@ object MimaBuild extends Build {
 
   lazy val reporterFunctionalTests: Project = Project("reporter-functional-tests", 
   													file("reporter") / "functional-tests" , 
-  													delegates = Seq(core))
+  													settings = Defaults.defaultSettings ++ commonSettings)
   													.dependsOn(core, reporter)
 
-  lazy val migrator: Project = Project("migrator", file("migrator"), delegates = Seq(root))
+  lazy val migrator: Project = Project("migrator", file("migrator"), settings = Defaults.defaultSettings ++ commonSettings :+ (name := "mima-migrator"))
   							  .dependsOn(core, reporter)
 
   // select all testN directories.
@@ -47,7 +60,7 @@ object MimaBuild extends Build {
     Project(base.name, base, settings = testProjectSettings).configs(v1Config, v2Config) dependsOn (reporterFunctionalTests)
 
   lazy val testProjectSettings =
-    (Defaults.defaultSettings :+ (scalaVersion := "2.9.0"))++ // normal project defaults; can be trimmed later- test and run aren't needed, for example.
+    Defaults.defaultSettings ++ commonSettings ++ // normal project defaults; can be trimmed later- test and run aren't needed, for example.
       inConfig(v1Config)(perConfig) ++ // add compile/package for the v1 sources
       inConfig(v2Config)(perConfig) :+  // add compile/package for the v2 sources
       (functionalTests <<= runTest) // add the functional-tests task.

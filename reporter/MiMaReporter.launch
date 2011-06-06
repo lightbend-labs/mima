@@ -7,6 +7,6 @@
 <listEntry value="1"/>
 </listAttribute>
 <stringAttribute key="org.eclipse.jdt.launching.MAIN_TYPE" value="ssol.tools.mima.lib.ui.MimaLibApp"/>
-<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="mima-lib"/>
+<stringAttribute key="org.eclipse.jdt.launching.PROJECT_ATTR" value="mima-reporter"/>
 <stringAttribute key="org.eclipse.jdt.launching.VM_ARGUMENTS" value="-Xmx256m"/>
 </launchConfiguration>

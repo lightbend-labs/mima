@@ -6,3 +6,5 @@ bin/
 .DS_Store
 **/.DS_Store
 .history
+.classpath
+.project
