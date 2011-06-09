@@ -26,8 +26,8 @@ class ConfigurationPanel(f1: Option[File] = None, f2: Option[File] = None) exten
 
   private lazy val componee = new GridBagPanel with WithConstraints {
 
-    private val oldFilePickerLabel = new Label("Old:")
-    private val newFilePickerLabel = new Label("New:")
+    private val oldFilePickerLabel = new Label("Old:") { preferredSize = (40, preferredSize.height) }
+    private val newFilePickerLabel = new Label("New:") { preferredSize = (40, preferredSize.height) }
 
     val oldFilePicker = new FilePicker(oldFilePickerLabel, this, f1)
     val newFilePicker = new FilePicker(newFilePickerLabel, this, f2)
@@ -37,7 +37,7 @@ class ConfigurationPanel(f1: Option[File] = None, f2: Option[File] = None) exten
 
     reactions += {
       case FileChanged(_, _) =>
-        if (areFilesSelected) 
+        if (areFilesSelected)
           notifyFilesSelected()
     }
 
@@ -69,12 +69,12 @@ class ConfigurationPanel(f1: Option[File] = None, f2: Option[File] = None) exten
 
   private def oldFile = componee.oldFilePicker.selectedFile
   private def newFile = componee.newFilePicker.selectedFile
-  
+
   private def notifyFilesSelected() {
     publish(ConfigurationPanel.FilesSelected(oldFile.get, newFile.get))
   }
 
   def areFilesSelected: Boolean = oldFile.isDefined && newFile.isDefined
-  
+
   def cpEditor = componee.cpEditor
 }
