@@ -1,4 +1,4 @@
-package ssol.tools.mima.core.ui.widget
+package ssol.tools.mima.lib.ui.widget
 
 import scala.swing._
 import scala.swing.Swing.{ EmptyBorder, LineBorder }
@@ -6,6 +6,7 @@ import scala.swing.GridBagPanel.Anchor
 import scala.swing.GridBagPanel.Fill
 import scala.swing.event.ButtonClicked
 import ssol.tools.mima.core.ui.WithConstraints
+import ssol.tools.mima.core.ui.widget.CloseButton
 import java.awt.Color
 
 import ssol.tools.mima.core.Problem

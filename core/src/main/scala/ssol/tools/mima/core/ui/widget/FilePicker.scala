@@ -11,48 +11,68 @@ import FileChooser.Result._
 import javax.swing.filechooser.FileNameExtensionFilter
 
 object FilePicker {
+  /**
+   * Keeps a reference to the last selected file.
+   * XXX: This works as a cache. We may want to move this into `Prefs`
+   */
   private var lastSelectedFile: Option[File] = None
 
+  /** Event triggered upon selection of a file*/
+  case class FileChanged(source: FilePicker, file: File) extends event.Event
 }
 
-/** UI for choosing a File. It displays the name of the current file
- *  and a button for showing the FileChooser dialog.
+/**
+ * Jar File Picker. It displays the name of the current file
+ *  and a button for selecting a different jar file.
+ *
+ *  @event: A `FileChanged` event is published every time the selected file is changed.
  */
-class FilePicker(_label: String, owner: Component, private var _selectedFile: Option[File]) extends FlowPanel(FlowPanel.Alignment.Left)() {
+class FilePicker(private val label: Label, owner: Component, private var _selectedFile: Option[File]) extends Component {
 
-  def selectedFile: Option[File] = _selectedFile
-  private def selectedFile_=(file: File) = {
-    _selectedFile = Some(file)
-    FilePicker.lastSelectedFile = _selectedFile
-  }
+  import FilePicker._
 
-  private val fileNameLabel = new Label("Please select a file")
+  override lazy val peer = componee.peer
 
-  if (selectedFile.isDefined) {
-    FilePicker.lastSelectedFile = _selectedFile
-    fileNameLabel.text = strippedFileName(selectedFile.get)
-  }
+  private lazy val componee = new FlowPanel(FlowPanel.Alignment.Left)() {
 
-  private def strippedFileName(file: File): String = {
-    if (file.getName.length > 40) "..." + file.getName.takeRight(35) else file.getName
-  }
+    private def selectedFile_=(file: File) = {
+      /** Shorten file name at the somewhat arbitrary size of 40 chars*/
+      def shortName(file: File): String = {
+        val MaxFileNameLength = 40
+        if (file.getName.length > MaxFileNameLength)
+          "..." + file.getName.takeRight(35)
+        else file.getName
+      }
 
-  private val label = new Label(_label) { preferredSize = (40, preferredSize.height) } 
-
-  contents += (label, Swing.HStrut(10))
-  contents += Button("Choose") {
-    val d = new JarFileChooser(FilePicker.lastSelectedFile.map(_.getParentFile).getOrElse(null))
-    d.showOpenDialog(owner) match {
-      case Approve =>
-        val fileName = d.selectedFile.getName
-        fileNameLabel.text = strippedFileName(d.selectedFile)
-        selectedFile = d.selectedFile
-        publish(FileSelected(this, d.selectedFile))
-      case _ =>
+      _selectedFile = Some(file)
+      lastSelectedFile = _selectedFile
+      fileName.text = shortName(file)
+      notifiyFileSelectedChanged()
     }
+
+    private val fileName = new Label("Please select a file")
+
+    if (_selectedFile.isDefined)
+      selectedFile_=(_selectedFile.get)
+
+    // position UI elements
+    contents += (label, Swing.HStrut(10))
+
+    contents += Button("Choose") {
+      val d = new JarFileChooser(lastSelectedFile.map(_.getParentFile).getOrElse(null))
+      d.showOpenDialog(owner) match {
+        case Approve =>
+          selectedFile_=(d.selectedFile)
+        case _ =>
+      }
+    }
+
+    contents += (fileName, Swing.HGlue)
   }
 
-  contents += (fileNameLabel, Swing.HGlue)
+  private def notifiyFileSelectedChanged() {
+    publish(FileChanged(FilePicker.this, selectedFile.get))
+  }
+  
+  def selectedFile: Option[File] = _selectedFile
 }
-
-case class FileSelected(source: FilePicker, file: File) extends event.Event

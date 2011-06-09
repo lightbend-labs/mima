@@ -5,7 +5,6 @@ import Swing._
 import ssol.tools.mima.core.ui._
 import ssol.tools.mima.core.ui.wizard._
 import ssol.tools.mima.core.Config
-import ssol.tools.mima.core.ui.page._
 import ssol.tools.mima.core.ui.event.ExitMiMa
 import ssol.tools.mima.core.util.Version
 

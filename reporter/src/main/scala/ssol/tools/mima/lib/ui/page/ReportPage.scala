@@ -1,11 +1,12 @@
-package ssol.tools.mima.core.ui.page
+package ssol.tools.mima.lib.ui.page
 
 import scala.swing._
 import Swing._
 import GridBagPanel._
 
-import ssol.tools.mima.core.ui.model.ReportTableModel
+import ssol.tools.mima.lib.ui.model.ReportTableModel
 import ssol.tools.mima.core.ui.widget._
+import ssol.tools.mima.lib.ui.widget._
 
 import ssol.tools.mima.core.ui.WithConstraints
 import ssol.tools.mima._

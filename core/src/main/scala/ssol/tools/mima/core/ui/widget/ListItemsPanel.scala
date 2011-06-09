@@ -3,7 +3,7 @@ package ssol.tools.mima.core.ui.widget
 import scala.swing._
 import scala.swing.event.ButtonClicked
 
-abstract class ListItemsPanel extends BoxPanel(Orientation.Vertical) {
+abstract class ListItemsPanel extends Component {
   
   private val MaxNumberOfItems = 10
 
@@ -35,7 +35,7 @@ abstract class ListItemsPanel extends BoxPanel(Orientation.Vertical) {
     contents += (add, remove)
   }
 
-  private val view = new BoxPanel(Orientation.Vertical) {
+  private lazy val view = new BoxPanel(Orientation.Vertical) {
     def +=(r: Row) {
       contents += r
       updateView()
@@ -47,7 +47,7 @@ abstract class ListItemsPanel extends BoxPanel(Orientation.Vertical) {
     }
   }
 
-  contents += view
+  override lazy val peer: javax.swing.JComponent = view.peer
 
   final protected def addConstraint() {
     val newRow = new Row(create()) { 

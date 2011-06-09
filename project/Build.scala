@@ -10,14 +10,14 @@ import Path._
 object MimaBuild extends Build {
 
   // dependencies
-  val compiler = "org.scala-lang" % "scala-compiler" % "2.9.0" % "compile"
-  val swing = "org.scala-lang" % "scala-swing" % "2.9.0" % "compile"
+  val compiler = "org.scala-lang" % "scala-compiler" % "2.9.0-1" % "compile"
+  val swing = "org.scala-lang" % "scala-swing" % "2.9.0-1" % "compile"
 
 
   // Settings
   val commonSettings = Seq(
-      organization := "com.typesafe.mima",
-      scalaVersion := "2.9.0",
+      organization := "com.typesafe",
+      scalaVersion := "2.9.0-1",
       version := "0.1.1",
       libraryDependencies ++= Seq(swing))
 

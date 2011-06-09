@@ -3,19 +3,19 @@ package ssol.tools.mima.core.util
 import scala.swing._
 import scala.swing.Swing._
 import scala.swing.event.ButtonClicked
-import ssol.tools.mima.core.ui.widget.HtmlEditorPane
+import ssol.tools.mima.core.ui.widget.HtmlViewPane
 import ssol.tools.mima.core.ui.Centered
 
 import javax.swing.BorderFactory
 import javax.swing.border.TitledBorder
 
-class UnexpectedErrorDialog(error: Throwable)(owner: Window = null) extends Dialog(owner) with Centered {
+class BugDialog(error: Throwable)(owner: Window = null) extends Dialog(owner) with Centered {
   assert(error != null)
 
   title = "Unexpected Error"
 
-  private val explanation = new HtmlEditorPane {
-    setText("An unexpected error occurred. Please create a " +
+  private val explanation = new HtmlViewPane {
+    setHtml("An unexpected error occurred. Please create a " +
       "<a href=" + Urls.BugReporting + ">new ticket</a> describing " +
       "the issue.")
   }
@@ -31,6 +31,7 @@ class UnexpectedErrorDialog(error: Throwable)(owner: Window = null) extends Dial
       text = error.getStackTrace.mkString("\n")
       wordWrap = true
       lineWrap = true
+      rows = 10
     }
     override lazy val peer = stackTraceContent.peer
   })
@@ -41,7 +42,7 @@ class UnexpectedErrorDialog(error: Throwable)(owner: Window = null) extends Dial
     border = EmptyBorder(10)
 
     contents += VStrut(10)
-    contents += Component.wrap(explanation)
+    contents += explanation
     contents += VStrut(10)
     contents += new FlowPanel(FlowPanel.Alignment.Left)(stackTraceLabel) {vGap = 0; hGap = 0}
     contents += VStrut(10)

@@ -4,14 +4,14 @@ import scala.swing.Component
 
 object WizardPage {
   import scala.swing.event.Event
-  /** used to inform `Wizard` whether forward navigation is allowed. */
+  /** used to inform `Wizard` whether forward navigation is `allowed`. */
   case class CanGoNext(allowed: Boolean) extends Event
   
   trait Model {
     /** model is backed by a mutable map. */
     protected val data = collection.mutable.Map.empty[String, Any]
 
-    /** copies `that` model into `this`. */
+    /** copies `that` into `this`. */
     def ++=(that: Model): Unit = data ++= that.data
     def clear(): Unit = data.clear()
   }

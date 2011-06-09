@@ -1,4 +1,4 @@
-package ssol.tools.mima.core.ui.model
+package ssol.tools.mima.lib.ui.model
 
 import ssol.tools.mima.core.Problem
 import javax.swing.table.AbstractTableModel

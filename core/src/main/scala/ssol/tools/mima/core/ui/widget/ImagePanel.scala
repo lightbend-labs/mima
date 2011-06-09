@@ -24,12 +24,14 @@ class ImagePanel(img: javax.swing.Icon) extends Panel {
   }
 }
 
+import scala.swing.event.MouseClicked
+
 class LinkImagePanel(val uri: String, img: javax.swing.Icon) extends ImagePanel(img){
   require(uri != null)
   
   cursor = new java.awt.Cursor(java.awt.Cursor.HAND_CURSOR)
     listenTo(mouse.clicks)
     reactions += {
-      case e: scala.swing.event.MouseClicked => Browse to uri
+      case e: MouseClicked => Browse to uri
     }
 }

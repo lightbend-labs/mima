@@ -17,7 +17,7 @@ class EventQueueProxy extends EventQueue {
       super.dispatchEvent(newEvent)
     } catch {
       case t: Throwable => 
-        new UnexpectedErrorDialog(t)()
+        new BugDialog(t)()
     }
   }
 }

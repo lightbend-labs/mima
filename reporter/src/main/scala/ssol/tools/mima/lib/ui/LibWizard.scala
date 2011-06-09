@@ -5,11 +5,11 @@ import scala.swing._
 import ssol.tools.mima.core.Config
 import ssol.tools.mima.lib.MiMaLib
 import ssol.tools.mima.core.ui.wizard._
-import ssol.tools.mima.core.ui.model.ReportTableModel
+import ssol.tools.mima.lib.ui.model.ReportTableModel
 import scala.tools.nsc.{ util, io }
 import util._
 import ClassPath._
-import ssol.tools.mima.core.ui.page._
+import ssol.tools.mima.lib.ui.page._
 
 import widget.LicenseAgreementView
 
@@ -68,20 +68,20 @@ class LibWizard extends Wizard {
   
   // step 1 - select library
   this += new ConfigurationPanel(LibWizard.oldLib, LibWizard.newLib) with Page {
-    override def canNavigateBack = false
     override def canNavigateForward = areFilesSelected
 
-     override def onReveal() {
+    override def onReveal() {
       cpEditor.classpath = split(model.classpath.asClasspathString)
     }
     
     override def onNext(): Unit = {
+      val cp = model.classpath
       model.classpath = new JavaClassPath(DefaultJavaContext.classesInPath(cpEditor.classPathString), DefaultJavaContext)
     }
 
     reactions += {
       // forward navigation allowed only if files have been selected
-      case FilesSelected(oldLib, newLib) =>
+      case ConfigurationPanel.FilesSelected(oldLib, newLib) =>
         LibWizard.oldLib = Some(oldLib)
         LibWizard.newLib = Some(newLib)
         publish(WizardPage.CanGoNext(true))

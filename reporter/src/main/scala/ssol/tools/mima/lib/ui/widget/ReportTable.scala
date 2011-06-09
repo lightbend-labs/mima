@@ -1,11 +1,11 @@
-package ssol.tools.mima.core.ui.widget
+package ssol.tools.mima.lib.ui.widget
 
 import javax.swing.JTable
 import javax.swing.table.TableCellRenderer
 import javax.swing.event.TableModelListener
 import javax.swing.ListSelectionModel
 
-import ssol.tools.mima.core.ui.model.ReportTableModel
+import ssol.tools.mima.lib.ui.model.ReportTableModel
 
 private[ui] class ReportTable extends JTable(ReportTableModel(Nil)) with TableModelListener {
   
