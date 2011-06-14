@@ -8,6 +8,8 @@ import scala.swing._
 import event._
 import Swing._
 import BorderPanel._
+
+import ssol.tools.mima.core.ui.images
 import ssol.tools.mima.core.ui.WithConstraints
 
 /** A simple interface for interacting with the classpath. Allows

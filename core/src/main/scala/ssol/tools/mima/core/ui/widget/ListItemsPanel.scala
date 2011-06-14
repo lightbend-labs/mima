@@ -3,6 +3,8 @@ package ssol.tools.mima.core.ui.widget
 import scala.swing._
 import scala.swing.event.ButtonClicked
 
+import ssol.tools.mima.core.ui.images
+
 abstract class ListItemsPanel extends Component {
   
   private val MaxNumberOfItems = 10

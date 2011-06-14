@@ -8,6 +8,7 @@ import ssol.tools.mima.core.ui.{Centered, MimaSwingApp}
 import ssol.tools.mima.core.util.Prefs
 import ssol.tools.mima.lib.ui.widget.LicenseAgreementView
 
+import ssol.tools.mima.lib.license.License
 
 object MimaLibApp extends MimaSwingApp {
   override protected def launcherClassName = "ssol.tools.mima.lib.ui.MimaLibApp"
@@ -19,7 +20,7 @@ object MimaLibApp extends MimaSwingApp {
     location = center
     resizable = false
     
-    private val license = new LicenseAgreementView
+    private val license = new LicenseAgreementView(License.license)
     private val continue = new Button("Continue") {
       enabled = false
     }

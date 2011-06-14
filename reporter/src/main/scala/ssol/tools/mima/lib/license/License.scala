@@ -1,4 +1,6 @@
-package license
+package ssol.tools.mima.lib.license
+
+import java.io.FileInputStream
 
 object License {
   val license: String = {

@@ -4,7 +4,8 @@ import java.net.{ URL, URI, URISyntaxException }
 import java.io.IOException
 
 import scala.swing.Dialog
-import images.Icons
+
+import ssol.tools.mima.core.ui.images
 
 object Browse {
 
@@ -51,6 +52,6 @@ object Browse {
 
   private def cannotOpenBrowser(msg: String, e: Exception) {
     //FIXME: Should log exception!
-    Dialog.showMessage(message = msg, title = "Cannot open link", icon = Icons.broken)
+    Dialog.showMessage(message = msg, title = "Cannot open link", icon = images.Icons.broken)
   }
 }

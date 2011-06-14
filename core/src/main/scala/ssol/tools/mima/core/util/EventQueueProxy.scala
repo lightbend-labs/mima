@@ -3,7 +3,6 @@ package ssol.tools.mima.core.util
 import java.awt.{ EventQueue, AWTEvent }
 
 import scala.swing.Dialog
-import images.Icons
 
 trait WithEventQueueProxy {
   import java.awt.Toolkit

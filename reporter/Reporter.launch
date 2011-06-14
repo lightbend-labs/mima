@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8" standalone="no"?>
 <launchConfiguration type="scala.application">
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_PATHS">
-<listEntry value="/mima-lib/src/main/scala/ssol/tools/mima/lib/ui/MimaLibApp.scala"/>
+<listEntry value="/mima-reporter/src/main/scala/ssol/tools/mima/lib/ui/MimaLibApp.scala"/>
 </listAttribute>
 <listAttribute key="org.eclipse.debug.core.MAPPED_RESOURCE_TYPES">
 <listEntry value="1"/>

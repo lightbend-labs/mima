@@ -7,9 +7,9 @@ import scala.swing.event.{ ButtonClicked, Event }
 object LicenseAgreementView {
   case class LicenseAccepted(status: Boolean) extends Event
 }
-class LicenseAgreementView extends Component {
-  //XXX: without the access modifier scalac can't compile the file... 
-  private[LicenseAgreementView] lazy val container = new BorderPanel {
+
+class LicenseAgreementView(licenseText: String) extends Component {
+  private lazy val container = new BorderPanel {
     add(new FlowPanel(FlowPanel.Alignment.Left)(explanation) {hGap = 0; vGap = 3}, BorderPanel.Position.North)
     add(new ScrollPane {
       contents = licenseEditor
@@ -25,11 +25,10 @@ class LicenseAgreementView extends Component {
     add(new FlowPanel(FlowPanel.Alignment.Right)(acceptLicense) {hGap = 0; vGap = 0}, BorderPanel.Position.South)
   }
 
-  override lazy val peer = container.peer
+  override lazy val peer: javax.swing.JComponent = container.peer
 
   private lazy val explanation = new Label("Please read the following End User License Agreement.")
 
-  private lazy val licenseText = license.License.license
   private lazy val licenseEditor = new Component {
 	border = EmptyBorder(5)
 	private lazy val pane = new EditorPane("text/plain", licenseText) {

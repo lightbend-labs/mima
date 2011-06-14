@@ -7,46 +7,63 @@ import Configurations.config
 import Build.data
 import Path._
 
+object BuildSettings {
+  
+  val buildName = "mima"
+  val buildOrganization = "com.typesafe"
+  val buildScalaVer = "2.9.0-1"
+  val buildVersion = "0.1.1"
+  
+  val commonSettings = Defaults.defaultSettings ++ Seq (
+      organization := buildOrganization,
+      scalaVersion := buildScalaVer,
+      version      := buildVersion
+  )
+}
+
+object Dependencies {
+  import BuildSettings._
+  
+  val compiler = "org.scala-lang" % "scala-compiler" % buildScalaVer
+  val swing = "org.scala-lang" % "scala-swing" % buildScalaVer
+}
+
 object MimaBuild extends Build {
-
-  // dependencies
-  val compiler = "org.scala-lang" % "scala-compiler" % "2.9.0-1" % "compile"
-  val swing = "org.scala-lang" % "scala-swing" % "2.9.0-1" % "compile"
-
-
-  // Settings
-  val commonSettings = Seq(
-      organization := "com.typesafe",
-      scalaVersion := "2.9.0-1",
-      version := "0.1.1",
-      libraryDependencies ++= Seq(swing))
+  import BuildSettings._
+  import Dependencies._
 
   // here we list all projects that are defined.
   override lazy val projects = Seq(root) ++ modules
   
   lazy val modules = Seq(core, reporter, migrator, reporterFunctionalTests) ++ tests
 
-  lazy val root: Project = Project("root", file("."), aggregate = modules.map(Reference.projectToRef(_)))
+  lazy val root = Project("root", file("."), aggregate = modules.map(Reference.projectToRef(_)))
 
-  lazy val core: Project = Project("core", file("core"), settings = Defaults.defaultSettings ++ commonSettings  ++ Seq(
-          libraryDependencies ++= Seq(compiler)) :+ (name := "mima-core"))
+  lazy val core = Project("core", file("core"), settings = commonSettings  ++ 
+  								Seq(libraryDependencies ++= Seq(swing, compiler)) :+ 
+  								(name := buildName + "-core"))
 
-  lazy val reporter: Project = Project("reporter", file("reporter"), settings = Defaults.defaultSettings ++ commonSettings :+ (name := "mima-reporter"))
+  lazy val reporter = Project("reporter", file("reporter"), 
+  	 settings = commonSettings ++ Seq(libraryDependencies ++= Seq(swing)) :+ 
+  	 				(name := buildName + "-reporter") :+ (javaOptions += "-Xmx512m"))
 	.dependsOn(core)
 	.settings(
 	  // add task functional-tests that depends on all functional tests
 	  functionalTests <<= runAllTests,
-          // make the main 'package' task depend on all functional tests passing
-          packageBin in Compile <<= packageBin in Compile dependsOn  functionalTests 
+      // make the main 'package' task depend on all functional tests passing
+      packageBin in Compile <<= packageBin in Compile dependsOn  functionalTests
 	)	
 
-  lazy val reporterFunctionalTests: Project = Project("reporter-functional-tests", 
-  													file("reporter") / "functional-tests" , 
-  													settings = Defaults.defaultSettings ++ commonSettings)
-  													.dependsOn(core, reporter)
+  lazy val reporterFunctionalTests = Project("reporter-functional-tests", 
+  										file("reporter") / "functional-tests" , 
+  										settings = commonSettings)
+  										.dependsOn(core, reporter)
 
-  lazy val migrator: Project = Project("migrator", file("migrator"), settings = Defaults.defaultSettings ++ commonSettings :+ (name := "mima-migrator"))
-  							  .dependsOn(core, reporter)
+  lazy val migrator = Project("migrator", file("migrator"), 
+  						settings = commonSettings ++ 
+  								   Seq(libraryDependencies ++= Seq(swing, compiler)) :+ 
+  							       (name := buildName + "-migrator") :+ (javaOptions += "-Xmx512m"))
+  						.dependsOn(core, reporter)
 
   // select all testN directories.
   val bases = (file("reporter") / "functional-tests" / "src" / "test") * (DirectoryFilter)
@@ -55,12 +72,12 @@ object MimaBuild extends Build {
   lazy val tests = bases.getFiles map testProject
 
   // defines a Project for the given base directory (for example, functional-tests/test1)
-  //  Its name is the directory name (test1) and it has compile+package tasks for sources in v1/ and v2/
-  def testProject(base: File) =
-    Project(base.name, base, settings = testProjectSettings).configs(v1Config, v2Config) dependsOn (reporterFunctionalTests)
+  // Its name is the directory name (test1) and it has compile+package tasks for sources in v1/ and v2/
+  def testProject(base: File) = Project(base.name, base, settings = testProjectSettings)
+  								  .configs(v1Config, v2Config) dependsOn (reporterFunctionalTests)
 
   lazy val testProjectSettings =
-    Defaults.defaultSettings ++ commonSettings ++ // normal project defaults; can be trimmed later- test and run aren't needed, for example.
+    commonSettings ++ // normal project defaults; can be trimmed later- test and run aren't needed, for example.
       inConfig(v1Config)(perConfig) ++ // add compile/package for the v1 sources
       inConfig(v2Config)(perConfig) :+  // add compile/package for the v2 sources
       (functionalTests <<= runTest) // add the functional-tests task.
@@ -97,9 +114,14 @@ object MimaBuild extends Build {
         val loader = new java.net.URLClassLoader(urls, si.loader)
 
         val testClass = loader.loadClass("ssol.tools.mima.lib.CollectProblemsTest")
-        val testRunner = testClass.newInstance().asInstanceOf[{ def runTest(testName: String, oldJarPath: String, newJarPath: String, oraclePath: String): Unit }]
+        val testRunner = testClass.newInstance().asInstanceOf[
+        					{ def runTest(testName: String, oldJarPath: String, newJarPath: String, 
+        							oraclePath: String): Unit 
+        					}]
 
-        val projectPath = proj.build.getPath + "reporter" + "/" + "functional-tests" + "/" + "src" + "/" + "test" + "/" + proj.project
+        val projectPath = proj.build.getPath + "reporter" + "/" + "functional-tests" + "/" + "src" +
+        					"/" + "test" + "/" + proj.project
+        					
         val oraclePath = projectPath + "/problems.txt"
 
         try {

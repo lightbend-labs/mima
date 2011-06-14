@@ -11,8 +11,8 @@ MiMa's Modules
 MiMa is split into three modules: 
 
 - Core: Classes that are used by both the Reporter and Migrator modules.
-- Reporter:  Used to diagnose binary incompatibilities between two different versions of a same library. (formerly MiMa Lib)
-- Migrator: Used to fix binary incompatibilities of a client jar. (formerly MiMa Client)
+- Reporter:  Used to diagnose binary incompatibilities between two different versions of a same library. (Formerly MiMa Lib)
+- Migrator: Used to fix binary incompatibilities of a client jar. (Formerly MiMa Client)
 
 Eclipse
 -------
@@ -79,7 +79,7 @@ Note: The `problems.txt` is the test oracle. Expected errors are declared using 
 FAQ
 -------
 
-`Exception - java.lang.OutOfMemoryError`: Java heap space: If you are experiencing out of memory exception you may need to increase the VM arguments for the initial heap size and the maximum heap size. The default values are `-Xms64m` for for the initial heap size and `-Xmx256m` for the maximum heap size.
+`java.lang.OutOfMemoryError - Java heap space:` If you are experiencing out of memory exception you may need to increase the VM arguments for the initial heap size and the maximum heap size. The default values are `-Xms64m` for for the initial heap size and `-Xmx256m` for the maximum heap size.
 
 Bugs and Feature requests
 -------
