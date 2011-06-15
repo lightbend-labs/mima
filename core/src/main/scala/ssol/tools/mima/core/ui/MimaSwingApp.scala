@@ -6,9 +6,9 @@ import java.io.File
 import scala.swing._
 import Swing._
 import ssol.tools.mima.core.Config
-import ssol.tools.mima.core.util.WithEventQueueProxy
+import ssol.tools.mima.core.util.WithUncaughtExceptionHandlerDialog
 
-trait MimaSwingApp extends SimpleSwingApplication with WithEventQueueProxy {
+trait MimaSwingApp extends SimpleSwingApplication with WithUncaughtExceptionHandlerDialog {
 
   var resargs: List[String] = Nil 
   
