@@ -18,7 +18,7 @@ import javax.swing.JComponent;
 
 /**
  * Copy/pasted from `http://www.jroller.com/gfx/date/20050215`.
- * This has to clean and we should use actors instead of threads.
+ * FIXME: This has to be cleaned.
  */
 class LoadingPanel extends JComponent with MouseListener {
   private var ticker: Array[Area] = null
