@@ -22,7 +22,7 @@ class BugReportDialog(error: Throwable, owner: Window = null) extends Dialog(own
 
   private val explanation = new HtmlViewPane {
     setHtml("An unexpected error occurred. Please create a " +
-      "<a href=" + Urls.BugReporting + ">new ticket</a> describing " +
+      "<a href=" + Urls.BugReportingSite + ">new ticket</a> describing " +
       "the issue.")
   }
 

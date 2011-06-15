@@ -6,6 +6,9 @@ import java.net.URL
 import scala.swing._
 import Swing._
 
+/** Icons should be added in the `resources` folder. It assumes that icons can be found in
+ *  the same package location of this class.
+ */
 object Icons {
 
   private lazy val sep = File.separator

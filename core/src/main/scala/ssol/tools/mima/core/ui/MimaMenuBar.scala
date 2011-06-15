@@ -34,13 +34,13 @@ object MimaMenuBar extends MenuBar {
 	contents += help
 	
 	val guide = new MenuItem(new Action("Online resources") {
-	  def apply() =  Browse to OnlineResource
+	  def apply() =  Browse to OnlineResourceSite
 	}) {
 	  mnemonic = Key.T
 	}
 	
 	val bug = new MenuItem(new Action("Report a bug...") {
-	  def apply() = Browse to BugReporting
+	  def apply() = Browse to BugReportingSite
 	}) {
 	  mnemonic = Key.R
 	}

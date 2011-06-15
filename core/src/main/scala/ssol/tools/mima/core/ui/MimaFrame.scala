@@ -14,9 +14,9 @@ import ClassPath._
 
 abstract class MimaFrame extends MainFrame with Centered {  
   import ssol.tools.mima.core.util.Urls._
-  object ScalaLogo extends widget.LinkImagePanel(ScalaWebsite, images.Icons.scalaLogo)
+  object ScalaLogo extends widget.LinkImagePanel(ScalaSite, images.Icons.scalaLogo)
   
-  object TypesafeLogo extends widget.LinkImagePanel(TypesafeWebsite, images.Icons.typesafe)
+  object TypesafeLogo extends widget.LinkImagePanel(TypesafeSite, images.Icons.typesafe)
 
   title = "Migration Manager - " + Version.version
   preferredSize = (1024, 768)

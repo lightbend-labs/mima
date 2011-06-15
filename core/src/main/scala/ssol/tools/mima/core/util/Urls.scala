@@ -1,9 +1,9 @@
 package ssol.tools.mima.core.util
 
 object Urls {
-  val ScalaWebsite = "http://www.scala-lang.org/"
-  val TypesafeWebsite = "http://typesafe.com/"
+  val ScalaSite = "http://www.scala-lang.org/"
+  val TypesafeSite = "http://typesafe.com/"
     
-  val OnlineResource = "http://typesafe.com/technology/migration-manager"
-  val BugReporting = "http://www.assembla.com/spaces/mima/support/tickets"
+  val OnlineResourceSite = "http://typesafe.com/technology/migration-manager"
+  val BugReportingSite = "http://www.assembla.com/spaces/mima/support/tickets"
 }
