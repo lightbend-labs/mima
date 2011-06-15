@@ -10,10 +10,14 @@ import ssol.tools.mima.core.util.Urls
 import javax.swing.BorderFactory
 import javax.swing.border.TitledBorder
 
-/** Simple dialog containing
- *    (1) hyperlink to the bug reporting website
+/** 
+ * Simple dialog for reporting unexpected failures.
+ * The dialog contains
+ *    (1) An hyperlink to the bug reporting site
  *    (2) A textarea containing the exception's stack trace
  *    (3) A `continue` button to close the dialog
+ *    
+ * @precondition: the `error` must not be null
  */
 class BugReportDialog(error: Throwable, owner: Window = null) extends Dialog(owner) with Centered {
   assert(error != null)
