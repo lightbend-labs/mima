@@ -26,6 +26,8 @@ object Dependencies {
   
   val compiler = "org.scala-lang" % "scala-compiler" % buildScalaVer
   val swing = "org.scala-lang" % "scala-swing" % buildScalaVer
+  
+  val specs2 = "org.specs2" %% "specs2" % "1.4" % "test"
 }
 
 object MimaBuild extends Build {
@@ -40,7 +42,7 @@ object MimaBuild extends Build {
   lazy val root = Project("root", file("."), aggregate = modules.map(Reference.projectToRef(_)))
 
   lazy val core = Project("core", file("core"), settings = commonSettings  ++ 
-  								Seq(libraryDependencies ++= Seq(swing, compiler)) :+ 
+  								Seq(libraryDependencies ++= Seq(swing, compiler, specs2)) :+ 
   								(name := buildName + "-core"))
 
   lazy val reporter = Project("reporter", file("reporter"), 

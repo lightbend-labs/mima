@@ -1,13 +1,43 @@
 package ssol.tools.mima.core.util
 
-import java.net.{ URL, URI, URISyntaxException }
-import java.io.IOException
+import java.net.{ URL, URI }
 
-import scala.swing.Dialog
-
-import ssol.tools.mima.core.ui.images
+trait BrowserProxy {
+  def open(webpage: URI)
+  def cannotOpen(webpage: URI, e: Exception)
+  def cannotOpen(msg: String, e: Exception)
+}
 
 object Browse {
+  class BrowserProxyImpl extends BrowserProxy {
+    import scala.swing.Dialog
+    import ssol.tools.mima.core.ui.images
+
+    override def open(webpage: URI) {
+      java.awt.Desktop.getDesktop().browse(webpage)
+    }
+
+    override def cannotOpen(webpage: URI, e: Exception) {
+      cannotOpen("I can't open the page.\nPlease paste " + webpage.toString + " in your browser", e)
+    }
+
+    override def cannotOpen(msg: String, e: Exception) {
+      //FIXME: Should log exception!
+      Dialog.showMessage(message = msg, title = "Cannot open link", icon = images.Icons.broken)
+    }
+  }
+
+  private val browser = new Browse(new BrowserProxyImpl)
+  
+  def to(webpage: String) { browser to webpage }
+  def to(webpage: URL) { browser to webpage }
+  def to(webpage: URI) { browser to webpage }
+}
+
+private[util] class Browse(private val browserProxy: BrowserProxy) {
+  import java.io.IOException
+  import java.net.URISyntaxException
+  import browserProxy._
 
   def to(webpage: String) { this(webpage) }
   def to(webpage: URL) { this(webpage) }
@@ -18,7 +48,7 @@ object Browse {
       this(new URI(webpage))
     } catch {
       case e: URISyntaxException =>
-        cannotOpenBrowser("`" + webpage + "` is invalid", e)
+        cannotOpen("`" + webpage + "` is invalid", e)
     }
   }
 
@@ -27,7 +57,7 @@ object Browse {
       this(webpage.toURI)
     } catch {
       case e: URISyntaxException =>
-        cannotOpenBrowser("`" + webpage + "` is invalid", e)
+        cannotOpen("`" + webpage + "` is invalid", e)
     }
   }
 
@@ -35,23 +65,10 @@ object Browse {
     try {
       open(webpage)
     } catch {
-      case e: UnsupportedOperationException => cannotOpenBrowser(webpage, e)
-      case e: IOException => cannotOpenBrowser(webpage, e)
-      case e: SecurityException => cannotOpenBrowser(webpage, e)
-      case e: IllegalArgumentException => cannotOpenBrowser(webpage, e)
+      case e: UnsupportedOperationException => cannotOpen(webpage, e)
+      case e: IOException                   => cannotOpen(webpage, e)
+      case e: SecurityException             => cannotOpen(webpage, e)
+      case e: IllegalArgumentException      => cannotOpen(webpage, e)
     }
-  }
-
-  private def open(webpage: URI) {
-    java.awt.Desktop.getDesktop().browse(webpage)
-  }
-
-  private def cannotOpenBrowser(webpage: URI, e: Exception) {
-    cannotOpenBrowser("I can't open the page.\nPlease paste " + webpage.toString + " in your browser", e)
-  }
-
-  private def cannotOpenBrowser(msg: String, e: Exception) {
-    //FIXME: Should log exception!
-    Dialog.showMessage(message = msg, title = "Cannot open link", icon = images.Icons.broken)
   }
 }
