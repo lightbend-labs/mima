@@ -10,7 +10,12 @@ import ssol.tools.mima.core.util.Urls
 import javax.swing.BorderFactory
 import javax.swing.border.TitledBorder
 
-class BugReportDialog(error: Throwable)(owner: Window = null) extends Dialog(owner) with Centered {
+/** Simple dialog containing
+ *    (1) hyperlink to the bug reporting website
+ *    (2) A textarea containing the exception's stack trace
+ *    (3) A `continue` button to close the dialog
+ */
+class BugReportDialog(error: Throwable, owner: Window = null) extends Dialog(owner) with Centered {
   assert(error != null)
 
   title = "Unexpected Error"
@@ -45,11 +50,11 @@ class BugReportDialog(error: Throwable)(owner: Window = null) extends Dialog(own
     contents += VStrut(10)
     contents += explanation
     contents += VStrut(10)
-    contents += new FlowPanel(FlowPanel.Alignment.Left)(stackTraceLabel) {vGap = 0; hGap = 0}
+    contents += new FlowPanel(FlowPanel.Alignment.Left)(stackTraceLabel) { vGap = 0; hGap = 0 }
     contents += VStrut(10)
     contents += stackTrace
     contents += VStrut(10)
-    contents += new FlowPanel(FlowPanel.Alignment.Center)(continue) {vGap = 0; hGap = 0}
+    contents += new FlowPanel(FlowPanel.Alignment.Center)(continue) { vGap = 0; hGap = 0 }
   }
 
   listenTo(continue)
@@ -65,3 +70,4 @@ class BugReportDialog(error: Throwable)(owner: Window = null) extends Dialog(own
 
   visible = true
 }
+  
