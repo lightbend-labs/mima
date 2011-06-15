@@ -138,14 +138,14 @@ class Wizard extends BorderPanel {
     }
 
     private def worker(task: => Unit)(onEDT: => Unit): Actor = {
-      import ssol.tools.mima.core.util.BugDialog
+      import ssol.tools.mima.core.ui.widget.BugReportDialog
       new Actor {
         def act() = {
           try {
         	  task
           } catch {
             case t: Throwable =>
-              new BugDialog(t)()
+              new BugReportDialog(t)()
           }
           Swing onEDT { onEDT }
         }

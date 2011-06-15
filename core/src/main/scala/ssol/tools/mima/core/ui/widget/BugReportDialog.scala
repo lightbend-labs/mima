@@ -1,15 +1,16 @@
-package ssol.tools.mima.core.util
+package ssol.tools.mima.core.ui.widget
 
 import scala.swing._
 import scala.swing.Swing._
 import scala.swing.event.ButtonClicked
-import ssol.tools.mima.core.ui.widget.HtmlViewPane
 import ssol.tools.mima.core.ui.Centered
+
+import ssol.tools.mima.core.util.Urls
 
 import javax.swing.BorderFactory
 import javax.swing.border.TitledBorder
 
-class BugDialog(error: Throwable)(owner: Window = null) extends Dialog(owner) with Centered {
+class BugReportDialog(error: Throwable)(owner: Window = null) extends Dialog(owner) with Centered {
   assert(error != null)
 
   title = "Unexpected Error"

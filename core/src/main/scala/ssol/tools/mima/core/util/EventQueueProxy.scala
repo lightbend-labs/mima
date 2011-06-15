@@ -3,6 +3,7 @@ package ssol.tools.mima.core.util
 import java.awt.{ EventQueue, AWTEvent }
 
 import scala.swing.Dialog
+import ssol.tools.mima.core.ui.widget.BugReportDialog
 
 trait WithEventQueueProxy {
   import java.awt.Toolkit
@@ -16,7 +17,7 @@ class EventQueueProxy extends EventQueue {
       super.dispatchEvent(newEvent)
     } catch {
       case t: Throwable => 
-        new BugDialog(t)()
+        new BugReportDialog(t)()
     }
   }
 }
