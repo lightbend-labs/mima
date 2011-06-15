@@ -48,7 +48,7 @@ class BrowseSpec extends SpecificationWithJUnit with Mockito {
       there was one(proxy).cannotOpen(anyURI, any)
     }
 
-    "fail gracefully if user has not enough privileges to launch the browser" in new SetUp {
+    "fail gracefully if the user has not enough privileges to use the browser" in new SetUp {
       proxy.open(any) throws new java.lang.SecurityException()
 
       browse to anyOkUrl
@@ -56,8 +56,16 @@ class BrowseSpec extends SpecificationWithJUnit with Mockito {
       there was one(proxy).cannotOpen(anyURI, any)
     }
 
-    "fail gracefully if the OS does not support Desktop.Action.OPEN" in new SetUp {
+    "fail gracefully if the OS does not support Desktop.Action.BROWSE" in new SetUp {
       proxy.open(any) throws new java.lang.UnsupportedOperationException()
+
+      browse to anyOkUrl
+
+      there was one(proxy).cannotOpen(anyURI, any)
+    }
+    
+    "fail gracefully if the URI cannot be converted into an URL" in new SetUp {
+      proxy.open(any) throws new java.lang.IllegalArgumentException()
 
       browse to anyOkUrl
 
