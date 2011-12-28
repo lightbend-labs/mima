@@ -8,3 +8,4 @@ bin/
 .history
 .classpath
 .project
+reporter/project/**
