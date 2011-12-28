@@ -1,0 +1,2 @@
+the type hierarchy of interface B has changed in new version. Missing types {scala.ScalaObject}
+method foo()Int in trait B does not have a correspondent in new version
