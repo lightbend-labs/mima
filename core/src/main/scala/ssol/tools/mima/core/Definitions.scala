@@ -16,8 +16,8 @@ class Definitions(val lib: Option[DirectoryClassPath], val classPath: JavaClassP
   lazy val root = 
     new ConcretePackageInfo(null, 
         new JavaClassPath(
-            if (lib.isDefined) List(lib.get, classPath) 
-            else List(classPath), DefaultJavaContext), this)
+            if (lib.isDefined) Vector(lib.get, classPath) 
+            else Vector(classPath), DefaultJavaContext), this)
   
   /** Return all packages in the target library. */
   lazy val targetPackage: PackageInfo = {

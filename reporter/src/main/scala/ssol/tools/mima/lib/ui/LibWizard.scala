@@ -76,7 +76,7 @@ class LibWizard extends Wizard {
     
     override def onNext(): Unit = {
       val cp = model.classpath
-      model.classpath = new JavaClassPath(DefaultJavaContext.classesInPath(cpEditor.classPathString), DefaultJavaContext)
+      model.classpath = new JavaClassPath(DefaultJavaContext.classesInPath(cpEditor.classPathString).toIndexedSeq, DefaultJavaContext)
     }
 
     reactions += {

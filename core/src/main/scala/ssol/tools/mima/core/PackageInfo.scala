@@ -34,7 +34,7 @@ object NoPackageInfo extends SyntheticPackageInfo(null, "<no package>")
 class ConcretePackageInfo(owner: PackageInfo, cp: ClassPath[AbstractFile], val defs: Definitions) extends PackageInfo(owner) {
   def definitions = defs
   def name = cp.name
-  private def classFiles: List[AbstractFile] = cp.classes flatMap (_.binary)
+  private def classFiles: IndexedSeq[AbstractFile] = cp.classes flatMap (_.binary)
 
   lazy val packages: mutable.Map[String, PackageInfo] = 
     mutable.Map() ++= (cp.packages map (cp => cp.name -> new ConcretePackageInfo(this, cp, defs)))

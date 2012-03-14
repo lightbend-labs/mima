@@ -14,7 +14,7 @@ class CollectProblemsTest {
     var scalaLib = "regressions-tests/scala-library/scala-library-2.9.0.jar"
     val cp = scalaLib :: ClassPath.split(Config.baseClassPath.asClasspathString)
     val cpString = ClassPath.join(cp: _*)
-    Config.baseClassPath = new JavaClassPath(ClassPath.DefaultJavaContext.classesInPath(cpString), ClassPath.DefaultJavaContext)
+    Config.baseClassPath = new JavaClassPath(ClassPath.DefaultJavaContext.classesInPath(cpString).toIndexedSeq, ClassPath.DefaultJavaContext)
 
     val mima = new MiMaLib(Config.baseClassPath)
 
