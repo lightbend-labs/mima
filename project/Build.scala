@@ -37,7 +37,7 @@ object MimaBuild extends Build {
   // here we list all projects that are defined.
   override lazy val projects = Seq(root) ++ modules
   
-  lazy val modules = Seq(core, reporter, migrator, reporterFunctionalTests) ++ tests
+  lazy val modules = Seq(core, reporter, reporterFunctionalTests) ++ tests
 
   lazy val root = Project("root", file("."), aggregate = modules.map(Reference.projectToRef(_)))
 
@@ -60,12 +60,6 @@ object MimaBuild extends Build {
   										file("reporter") / "functional-tests" , 
   										settings = commonSettings)
   										.dependsOn(core, reporter)
-
-  lazy val migrator = Project("migrator", file("migrator"), 
-  						settings = commonSettings ++ 
-  								   Seq(libraryDependencies ++= Seq(swing, compiler)) :+ 
-  							       (name := buildName + "-migrator") :+ (javaOptions += "-Xmx512m"))
-  						.dependsOn(core, reporter)
 
   // select all testN directories.
   val bases = (file("reporter") / "functional-tests" / "src" / "test") * (DirectoryFilter)
