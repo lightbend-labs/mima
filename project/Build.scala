@@ -37,18 +37,28 @@ object MimaBuild extends Build {
   // here we list all projects that are defined.
   override lazy val projects = Seq(root) ++ modules
   
-  lazy val modules = Seq(core, reporter, reporterFunctionalTests) ++ tests
+  lazy val modules = Seq(core, coreui, reporter, reporterFunctionalTests) ++ tests
 
   lazy val root = Project("root", file("."), aggregate = modules.map(Reference.projectToRef(_)))
 
-  lazy val core = Project("core", file("core"), settings = commonSettings  ++ 
-  								Seq(libraryDependencies ++= Seq(swing, compiler, specs2)) :+ 
-  								(name := buildName + "-core"))
+  lazy val core = (
+    Project("core", file("core"), 
+            settings = commonSettings)
+    settings(libraryDependencies ++= Seq(compiler, specs2),
+             name := buildName + "-core")
+  )
+
+  lazy val coreui = (
+    Project("core-ui", file("core-ui"), settings = commonSettings)
+    settings(libraryDependencies ++= Seq(swing, compiler, specs2), 
+             name := buildName + "-core-ui")
+    dependsOn(core)
+  )
 
   lazy val reporter = Project("reporter", file("reporter"), 
   	 settings = commonSettings ++ Seq(libraryDependencies ++= Seq(swing)) :+ 
   	 				(name := buildName + "-reporter") :+ (javaOptions += "-Xmx512m"))
-	.dependsOn(core)
+	.dependsOn(coreui)
 	.settings(
 	  // add task functional-tests that depends on all functional tests
 	  functionalTests <<= runAllTests,
@@ -59,7 +69,7 @@ object MimaBuild extends Build {
   lazy val reporterFunctionalTests = Project("reporter-functional-tests", 
   										file("reporter") / "functional-tests" , 
   										settings = commonSettings)
-  										.dependsOn(core, reporter)
+  										.dependsOn(core, coreui, reporter)
 
   // select all testN directories.
   val bases = (file("reporter") / "functional-tests" / "src" / "test") * (DirectoryFilter)
