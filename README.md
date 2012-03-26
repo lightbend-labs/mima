@@ -15,6 +15,34 @@ MiMa is split into Several modules:
 - Core-UI: UI Classes that can be re-used between the migrator and the reporter.
 - Reporter:  Raw reporting classes and the command line interface.
 - Reporter-UI: Swing interface to the reporter.
+- SBT Plugin:  The SBT plugin for usage inside SBT builds.
+
+
+SBT Plugin
+----------
+
+Although not released, you can still try it out.  To do so:
+
+1. Add the following to your `project/project/build.scala` file:
+
+    import sbt._
+    object PluginDef extends Build {
+      override def projects = Seq(root)
+      lazy val root = Project("plugins", file(".")) dependsOn(mima)
+    
+      lazy val mima = ProjectRef(file("/path/to/checkedout/mima"), "sbtplugin")
+    }
+
+2. Add the following to your `build.sbt` file:
+
+    import ssol.tools.mima.plugin.MimaPlugin.{mimaDefaultSettings, previousArtifact}
+    
+    seq(mimaDefaultSettings:_*)) 
+    
+    previousArtifact := Some("com.jsuereth" % "scala-arm_2.9.1" % "1.2")
+
+But replacing the scala-arm example with your own artifact.
+
 
 Eclipse
 -------
