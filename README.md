@@ -3,23 +3,25 @@ Migration Manager for Scala
 
 A tool for diagnosing and fixing migration problems for Scala libraries.
 =======
-The Migration Manager for Scala (MiMa in short) is a tool for diagnosing and fixing binary incompatibilities for Scala libraries.
+The Migration Manager for Scala (MiMa in short) is a tool for diagnosing and fixing binary incompatibilities for Scala libraries.  The OSS version includes only
+features which allow inspecting binary compatibility.
 
 MiMa's Modules
 -------
 
-MiMa is split into three modules: 
+MiMa is split into Several modules: 
 
-- Core: Classes that are used by both the Reporter and Migrator modules.
-- Reporter:  Used to diagnose binary incompatibilities between two different versions of a same library. (Formerly MiMa Lib)
-- Migrator: Used to fix binary incompatibilities of a client jar. (Formerly MiMa Client)
+- Core: Classes that are used for both migrations and reporting.
+- Core-UI: UI Classes that can be re-used between the migrator and the reporter.
+- Reporter:  Raw reporting classes and the command line interface.
+- Reporter-UI: Swing interface to the reporter.
 
 Eclipse
 -------
 
 In order to create Eclipse metadata files (i.e., .classpath and .project) we recomend to use [sbteclipse][sbteclipse]. Once done, to set up the three modules in Eclipse just click on `File > Import > General > Exisiting Projects Into Workspace`, and select the MiMa project's root folder, the three modules should be correctly loaded.
 
-In the `reporter` and `migrator` folders you can also find a `*.launch` file configuration, which can be imported in Eclipse and can be used to start the programs.
+In the `reporter-ui` folders you can also find a `*.launch` file configuration, which can be imported in Eclipse and can be used to start the programs.
 
 
 [sbteclipse]: https://github.com/typesafehub/sbteclipse/
@@ -32,31 +34,31 @@ Using [the xsbt tool][xsbt].
       $ xsbt clean update compile
 
 
-Make sure to use tag 0.10.0, installation notes can be found [here][xsbt].
+Make sure to use tag 0.11.2, installation notes can be found [here][xsbt].
 
-[xsbt]: https://github.com/harrah/xsbt/tree/v0.10.0
+[xsbt]: https://github.com/harrah/xsbt/tree/v0.11.2
 
 This will recompile all MiMa's modules.
 
 
-Launch MiMa Reporter
+Launch MiMa Reporter UI
 -------
 Type the following command to run the MiMa Reporter
+
+	$ xsbt reporter-ui/run
+
+Launch MiMa Reporter CLI
+-------
+Type the following command to run the MiMa Reporter command-line
 
 	$ xsbt reporter/run
-
-Launch MiMa Migrator
--------
-Type the following command to run the MiMa Reporter
-
-	$ xsbt migrator/run
 
 MiMa Reporter: Functional Tests
 -------
 
 The directory containing the MiMa Reporter module ('reporter') there is a 'functional-tests' folder that contains several functional tests exercising the system. All tests are executed as part of the build, therefore when running
 
-	$ xsbt package
+	$ xsbt test-functional
 
 if one (or more) test fails the build is stop and no jar will not be produced.
 
