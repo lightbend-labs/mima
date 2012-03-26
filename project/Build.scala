@@ -37,7 +37,7 @@ object MimaBuild extends Build {
   // here we list all projects that are defined.
   override lazy val projects = Seq(root) ++ modules ++ tests :+ reporterFunctionalTests
   
-  lazy val modules = Seq(core, coreui, reporter, reporterui)
+  lazy val modules = Seq(core, coreui, reporter, reporterui, sbtplugin)
 
   lazy val root = (
     Project("root", file("."), aggregate = modules.map(Reference.projectToRef(_)))
@@ -78,6 +78,13 @@ object MimaBuild extends Build {
              name := buildName + "-reporter-ui",
              javaOptions += "-Xmx512m")
     dependsOn(coreui, reporter)
+  )
+
+  lazy val sbtplugin = (
+     Project("sbtplugin", file("sbtplugin"), settings = commonSettings)
+     settings(name := "sbt-mima-plugin",
+              sbtPlugin := true)
+     dependsOn(reporter)
   )
 
   lazy val reporterFunctionalTests = Project("reporter-functional-tests", 

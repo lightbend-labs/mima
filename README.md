@@ -89,3 +89,8 @@ Bugs and Feature requests
 Use the [Assembla project page][mima-assembla] for filing new tickets.
 
 [mima-assembla]: https://www.assembla.com/spaces/mima/tickets
+
+License
+-------
+
+OSS Mima is released under the 
