@@ -59,10 +59,28 @@ class Main(args: List[String]) extends {
     new MiMaLib(makeClasspath)
   }
   
+  /** Converts a problem to a human-readable mapped string. */
+  private def printProblem(p: core.Problem): String = {
+    def wrap(words: Seq[String]): Seq[Seq[String]] = 
+      if(words.isEmpty) Seq.empty
+      else {
+        // This is so painfully slow, it hurts.
+        val output = (words.inits dropWhile { x => x.map(_.length).sum + x.length > 77 }).next
+        output +: wrap(words.drop(output.length))
+      }
+    def wrapString(s: String) =
+      wrap(s split "\\s") map (_ mkString " ")
+    wrapString(" * " + p.description) mkString "\n   "
+  }
+  
   def run(): Unit = {
     val mima = makeMima
     val problems = mima.collectProblems(prevfile, currentfile)
-    problems foreach println
+    val header = "Found " + problems.size + " binary incompatibiities" 
+    println(header)
+    println(Seq.fill(header.length)("=") mkString "")
+    problems map printProblem foreach println
+    // TODO - System.exit(problems.size)
   }
 }
 
