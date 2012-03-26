@@ -35,11 +35,14 @@ object MimaBuild extends Build {
   import Dependencies._
 
   // here we list all projects that are defined.
-  override lazy val projects = Seq(root) ++ modules
+  override lazy val projects = Seq(root) ++ modules ++ tests :+ reporterFunctionalTests
   
-  lazy val modules = Seq(core, coreui, reporter, reporterFunctionalTests) ++ tests
+  lazy val modules = Seq(core, coreui, reporter, reporterui)
 
-  lazy val root = Project("root", file("."), aggregate = modules.map(Reference.projectToRef(_)))
+  lazy val root = (
+    Project("root", file("."), aggregate = modules.map(Reference.projectToRef(_)))
+    //settings(functionalTests <<= functionalTests in reporter)
+  )
 
   lazy val core = (
     Project("core", file("core"), 
@@ -55,21 +58,32 @@ object MimaBuild extends Build {
     dependsOn(core)
   )
 
-  lazy val reporter = Project("reporter", file("reporter"), 
-  	 settings = commonSettings ++ Seq(libraryDependencies ++= Seq(swing)) :+ 
-  	 				(name := buildName + "-reporter") :+ (javaOptions += "-Xmx512m"))
-	.dependsOn(coreui)
-	.settings(
-	  // add task functional-tests that depends on all functional tests
-	  functionalTests <<= runAllTests,
-      // make the main 'package' task depend on all functional tests passing
+  lazy val reporter = (
+    Project("reporter", file("reporter"), settings = commonSettings)
+    settings(libraryDependencies ++= Seq(swing),
+             name := buildName + "-reporter",
+             javaOptions += "-Xmx512m")
+    dependsOn(core)
+    settings(
+      // add task functional-tests that depends on all functional tests
+      functionalTests <<= runAllTests,
+      // make the main 'package' task depend on all functional tests passing  (TODO - Control this in root project...)
       packageBin in Compile <<= packageBin in Compile dependsOn  functionalTests
-	)	
+    )
+  )
+
+  lazy val reporterui = (
+    Project("reporter-ui", file("reporter-ui"), settings = commonSettings)
+    settings(libraryDependencies ++= Seq(swing),
+             name := buildName + "-reporter-ui",
+             javaOptions += "-Xmx512m")
+    dependsOn(coreui, reporter)
+  )
 
   lazy val reporterFunctionalTests = Project("reporter-functional-tests", 
   										file("reporter") / "functional-tests" , 
   										settings = commonSettings)
-  										.dependsOn(core, coreui, reporter)
+  										.dependsOn(core, reporter)
 
   // select all testN directories.
   val bases = (file("reporter") / "functional-tests" / "src" / "test") * (DirectoryFilter)
