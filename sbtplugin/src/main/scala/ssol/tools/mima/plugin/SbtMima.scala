@@ -35,18 +35,8 @@ object SbtMima {
    * @param failOnProblem if true, fails the build on binary compatibility errors.
    */
   def reportErrors(errors: List[core.Problem], failOnProblem: Boolean, s: TaskStreams): Unit = {
-    def prettyPrint(p: core.Problem): String = {
-      def wrap(words: Seq[String]): Seq[Seq[String]] = 
-        if(words.isEmpty) Seq.empty
-        else {
-          // This is so painfully slow, it hurts.
-          val output = (words.inits dropWhile { x => x.map(_.length).sum + x.length > 77 }).next
-          output +: wrap(words.drop(output.length))
-        }
-      def wrapString(s: String) =
-        wrap(s split "\\s") map (_ mkString " ")
-      wrapString(" * " + p.description) mkString "\n   "
-    }
+    // TODO - Line wrapping an other magikz 
+    def prettyPrint(p: core.Problem): String = " * " + p.description
     s.log.info("Found " + errors.size + " potential binary incompatibilities")
     errors map prettyPrint foreach { p =>
       if(failOnProblem) s.log.error(p)
