@@ -37,7 +37,7 @@ Although not released, you can still try it out.  To do so:
 
     import ssol.tools.mima.plugin.MimaPlugin.{mimaDefaultSettings, previousArtifact}
     
-    seq(mimaDefaultSettings:_*)) 
+    mimaDefaultSettings
     
     previousArtifact := Some("com.jsuereth" % "scala-arm_2.9.1" % "1.2")
 
