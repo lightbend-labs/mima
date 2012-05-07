@@ -25,21 +25,25 @@ Although not released, you can still try it out.  To do so:
 
 1. Add the following to your `project/project/build.scala` file:
 
-      import sbt._
-      object PluginDef extends Build {
-        override def projects = Seq(root)
-        lazy val root = Project("plugins", file(".")) dependsOn(mima)
-        
-        lazy val mima = ProjectRef(file("/path/to/checkedout/mima"), "sbtplugin")
-      }
+```
+import sbt._
+object PluginDef extends Build {
+  override def projects = Seq(root)
+  lazy val root = Project("plugins", file(".")) dependsOn(mima)        
+  lazy val mima = ProjectRef(file("/path/to/checkedout/mima"), "sbtplugin")
+}
+```
 
 2. Add the following to your `build.sbt` file:
 
-      import ssol.tools.mima.plugin.MimaPlugin.{mimaDefaultSettings, previousArtifact}
+```
+import ssol.tools.mima.plugin.MimaPlugin.{mimaDefaultSettings, previousArtifact}
       
-      mimaDefaultSettings
+mimaDefaultSettings
       
-      previousArtifact := Some("com.jsuereth" % "scala-arm_2.9.1" % "1.2")
+previousArtifact := Some("com.jsuereth" % "scala-arm_2.9.1" % "1.2")
+```
+
 
 But replacing the scala-arm example with your own artifact.
 
