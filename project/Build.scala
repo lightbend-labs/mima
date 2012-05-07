@@ -14,7 +14,7 @@ object BuildSettings {
   val buildName = "mima"
   val buildOrganization = "com.typesafe"
   val buildScalaVer = "2.9.1"
-  val buildVersion = "0.1.2-SNAPSHOT"
+  val buildVersion = "0.1.2"
   
   val commonSettings = Defaults.defaultSettings ++ Seq (
       organization := buildOrganization,
@@ -88,7 +88,8 @@ object MimaBuild extends Build {
 
   lazy val root = (
     Project("root", file("."), aggregate = modules.map(Reference.projectToRef(_)))
-    //settings(functionalTests <<= functionalTests in reporter)
+    settings(publish := (),
+             publishLocal := ())
   )
 
   lazy val core = (
