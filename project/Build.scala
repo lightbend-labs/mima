@@ -6,6 +6,8 @@ import Project.inConfig
 import Configurations.config
 import Build.data
 import Path._
+import sbtassembly.Plugin.AssemblyKeys._
+import sbtassembly.Plugin.assemblySettings
 
 object BuildSettings {
   
@@ -17,7 +19,52 @@ object BuildSettings {
   val commonSettings = Defaults.defaultSettings ++ Seq (
       organization := buildOrganization,
       scalaVersion := buildScalaVer,
-      version      := buildVersion
+      version      := buildVersion,
+      licenses := Seq("Apache License v2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+      homepage := Some(url("http://github.com/typesafehub/mima-free"))
+  )
+
+
+  def sbtPublishSettings: Seq[Setting[_]] = Seq(
+    publishMavenStyle := false,
+    publishTo <<= (version) { version: String =>
+       val scalasbt = "http://scalasbt.artifactoryonline.com/scalasbt/"
+       val (name, u) = if (version.contains("-SNAPSHOT")) ("sbt-plugin-snapshots", scalasbt+"sbt-plugin-snapshots")
+                       else ("sbt-plugin-releases", scalasbt+"sbt-plugin-releases")
+       Some(Resolver.url(name, url(u))(Resolver.ivyStylePatterns))
+    }
+  )
+
+  def sonatypePublishSettings: Seq[Setting[_]] = Seq(
+    // If we want on maven central, we need to be in maven style.
+    publishMavenStyle := true,
+    publishArtifact in Test := false,
+    // The Nexus repo we're publishing to.
+    publishTo <<= version { (v: String) =>
+      val nexus = "https://oss.sonatype.org/"
+      if (v.trim.endsWith("SNAPSHOT")) Some("snapshots" at nexus + "content/repositories/snapshots") 
+      else                             Some("releases"  at nexus + "service/local/staging/deploy/maven2")
+    },
+    // Maven central cannot allow other repos.  We're ok here because the artifacts we
+    // we use externally are *optional* dependencies.
+    pomIncludeRepository := { x => false },
+    // Maven central wants some extra metadata to keep things 'clean'.
+    pomExtra := (
+      <scm>
+        <url>git@github.com:typesafehub/mima-free.git</url>
+        <connection>scm:git:git@github.com:typesafehub/mima-free.git</connection>
+      </scm>
+      <developers>
+        <developer>
+          <id>mirco</id>
+          <name>Mirco Dotta</name>
+        </developer>
+        <developer>
+          <id>jsuereth</id>
+          <name>Josh Suereth</name>
+          <url>http://jsuereth.com</url>
+        </developer>
+      </developers>)
   )
 }
 
@@ -49,6 +96,7 @@ object MimaBuild extends Build {
             settings = commonSettings)
     settings(libraryDependencies ++= Seq(compiler, specs2),
              name := buildName + "-core")
+    settings(sonatypePublishSettings:_*)
   )
 
   lazy val coreui = (
@@ -56,6 +104,7 @@ object MimaBuild extends Build {
     settings(libraryDependencies ++= Seq(swing, compiler, specs2), 
              name := buildName + "-core-ui")
     dependsOn(core)
+    settings(sonatypePublishSettings:_*)
   )
 
   lazy val reporter = (
@@ -64,19 +113,25 @@ object MimaBuild extends Build {
              name := buildName + "-reporter",
              javaOptions += "-Xmx512m")
     dependsOn(core)
+    settings(sonatypePublishSettings:_*)
+    settings(assemblySettings:_*)
     settings(
       // add task functional-tests that depends on all functional tests
       functionalTests <<= runAllTests,
       // make the main 'package' task depend on all functional tests passing  (TODO - Control this in root project...)
-      packageBin in Compile <<= packageBin in Compile dependsOn  functionalTests
+      packageBin in Compile <<= packageBin in Compile dependsOn  functionalTests,
+      mainClass in assembly := Some("ssol.tools.mima.cli.Main")
     )
   )
 
   lazy val reporterui = (
     Project("reporter-ui", file("reporter-ui"), settings = commonSettings)
+    settings(assemblySettings:_*)
+    settings(sonatypePublishSettings:_*)
     settings(libraryDependencies ++= Seq(swing),
              name := buildName + "-reporter-ui",
-             javaOptions += "-Xmx512m")
+             javaOptions += "-Xmx512m",
+             mainClass in assembly := Some("ssol.tools.mima.lib.ui.MimaLibApp"))
     dependsOn(coreui, reporter)
   )
 
@@ -85,6 +140,7 @@ object MimaBuild extends Build {
      settings(name := "sbt-mima-plugin",
               sbtPlugin := true)
      dependsOn(reporter)
+    settings(sbtPublishSettings:_*)
   )
 
   lazy val reporterFunctionalTests = Project("reporter-functional-tests", 

@@ -68,6 +68,12 @@ Make sure to use tag 0.11.2, installation notes can be found [here][xsbt].
 
 This will recompile all MiMa's modules.
 
+If you'd like to create distributable jar files run:
+
+      $ xsbt assembly
+
+This will create `reporter/target/mima-reporter-assembly-....jar` and `reporter-ui/target/mima-reporter-ui-assembly-....jar` jar files that can be used to launch the command line and ui version of MiMa.
+
 
 Launch MiMa Reporter UI
 -------
