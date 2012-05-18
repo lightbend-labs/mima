@@ -21,23 +21,21 @@ MiMa is split into Several modules:
 SBT Plugin
 ----------
 
-Although not released, you can still try it out.  To do so:
+The SBT Plugin is released for SBT version 0.11.3.  To try it, do the following:
 
 1. Add the following to your `project/project/build.scala` file:
 
 ```
-import sbt._
-object PluginDef extends Build {
-  override def projects = Seq(root)
-  lazy val root = Project("plugins", file(".")) dependsOn(mima)        
-  lazy val mima = ProjectRef(file("/path/to/checkedout/mima"), "sbtplugin")
-}
+resolvers += Resolver.url("sbt-plugin-releases", new URL("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases/"))(Resolver.ivyStylePatterns)
+
+addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.1.2")
 ```
 
 2. Add the following to your `build.sbt` file:
 
 ```
-import ssol.tools.mima.plugin.MimaPlugin.{mimaDefaultSettings, previousArtifact}
+import ssol.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
+import ssol.tools.mima.plugin.MimaKeys.previousArtifact
       
 mimaDefaultSettings
       
@@ -46,6 +44,18 @@ previousArtifact := Some("com.jsuereth" % "scala-arm_2.9.1" % "1.2")
 
 
 But replacing the scala-arm example with your own artifact.
+
+3. Run `mima-report-binary-issues`.  You should see something like the following:
+
+```
+[info] Found 4 potential binary incompatibilities
+[error]  * method rollbackTransactionResource()resource.Resource in object resource.Resource does not have a correspondent in new version
+[error]  * method now()scala.util.continuations.ControlContext in trait resource.ManagedResourceOperations does not have a correspondent in old version
+[error]  * abstract method now()scala.util.continuations.ControlContext in interface resource.ManagedResource does not have a correspondent in old version
+[error]  * method rollbackTransactionResource()resource.Resource in trait resource.MediumPriorityResourceImplicits does not have a correspondent in new version
+[error] {file:/home/jsuereth/project/personal/scala-arm/}scala-arm/*:mima-report-binary-issues: Binary compatibility check failed!
+[error] Total time: 15 s, completed May 18, 2012 11:32:29 AM
+```
 
 
 Eclipse
