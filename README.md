@@ -66,9 +66,9 @@ Using [the xsbt tool][xsbt].
       $ xsbt clean update compile
 
 
-Make sure to use tag 0.11.2, installation notes can be found [here][xsbt].
+Make sure to use tag 0.11.3, installation notes can be found [here][xsbt].
 
-[xsbt]: https://github.com/harrah/xsbt/tree/v0.11.2
+[xsbt]: https://github.com/harrah/xsbt/tree/v0.11.3
 
 This will recompile all MiMa's modules.
 
