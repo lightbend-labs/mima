@@ -188,7 +188,7 @@ class ReportPage extends BorderPanel {
 
   def setTableModel(_model: ReportTableModel) = {
     reportMsg.visible = _model.getRowCount > 0
-    reportMsg.text = "Found " + _model.getRowCount + " incompatibilities (" + _model.countUnfixableProblems + " unfixable / " + _model.countUpgradableProblems + " upgradable)"
+    reportMsg.text = "Found " + _model.getRowCount + " incompatibilities"
 
     table.setModel(_model)
     table.doLayout
