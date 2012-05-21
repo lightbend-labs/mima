@@ -81,13 +81,11 @@ private[analyze] class ClassAnalyzer extends Analyzer {
         case None =>
           val p = MissingMethodProblem(newAbstrMeth)
           p.affectedVersion = Problem.ClassVersion.Old
-          p.status = Problem.Status.Upgradable
           Some(p)
         case Some(found) =>
           if(found.isConcrete) {
         	val p = AbstractMethodProblem(newAbstrMeth)
         	p.affectedVersion = Problem.ClassVersion.Old
-        	p.status = Problem.Status.Unfixable
         	Some(p)
           }
           else
@@ -113,7 +111,6 @@ private[analyze] class TraitAnalyzer extends Analyzer {
         // has to be injected 
         val problem = MissingMethodProblem(newmeth)
         problem.affectedVersion = Problem.ClassVersion.Old
-        problem.status = Problem.Status.Upgradable
         res += problem
       }
       // else a static implementation for the same method existed already, therefore 
@@ -128,7 +125,6 @@ private[analyze] class TraitAnalyzer extends Analyzer {
         case Some(oldmeth) => ()
         case _ =>
           val problem = MissingMethodProblem(newmeth)
-          problem.status = Problem.Status.Upgradable
           problem.affectedVersion = Problem.ClassVersion.Old
           res += problem
       }

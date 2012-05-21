@@ -38,7 +38,7 @@ class MiMaLib(classpath: JavaClassPath, val log: Logging = ConsoleLogging) {
 
   private def raise(problem: Problem) = {
     problems += problem
-    log.debugLog("Problem: " + problem.description + (if (problem.status != Problem.Status.Unfixable) " (" + problem.status + ")" else ""))
+    log.debugLog("Problem: " + problem.description)
   }
 
 

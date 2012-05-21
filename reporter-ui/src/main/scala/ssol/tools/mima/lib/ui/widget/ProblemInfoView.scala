@@ -19,8 +19,6 @@ class ProblemInfoView extends Component {
 
   private[ProblemInfoView] class Panel extends GridBagPanel with WithConstraints {
     opaque = false
-    val statusLabel = new Label("Status:") { xAlignment = Alignment.Left }
-    val status = new Label { xAlignment = Alignment.Left }
 
     val fileLabel = new Label("File:") { xAlignment = Alignment.Left }
     val file = new Label { xAlignment = Alignment.Left }
@@ -42,38 +40,30 @@ class ProblemInfoView extends Component {
     }
 
     withConstraints(gridx = 0, gridy = 0, insets = leftIns) {
-      add(statusLabel, _)
-    }
-
-    withConstraints(gridx = 1, gridy = 0, weightx = 1, insets = rightIns) {
-      add(status, _)
-    }
-
-    withConstraints(gridx = 0, gridy = 1, insets = leftIns) {
       add(fileLabel, _)
     }
 
-    withConstraints(gridx = 1, gridy = 1, weightx = 1, insets = rightIns) {
+    withConstraints(gridx = 1, gridy = 0, weightx = 1, insets = rightIns) {
       add(file, _)
     }
 
-    withConstraints(gridx = 0, gridy = 2, insets = leftIns) {
+    withConstraints(gridx = 0, gridy = 1, insets = leftIns) {
       add(memberLabel, _)
     }
 
-    withConstraints(gridx = 1, gridy = 2, weightx = 1, insets = rightIns) {
+    withConstraints(gridx = 1, gridy = 1, weightx = 1, insets = rightIns) {
       add(member, _)
     }
 
-    withConstraints(gridx = 0, gridy = 3, insets = leftIns) {
+    withConstraints(gridx = 0, gridy = 2, insets = leftIns) {
       add(descriptionLabel, _)
     }
 
-    withConstraints(gridx = 1, gridy = 3, fill = Fill.Horizontal, insets = rightIns) {
+    withConstraints(gridx = 1, gridy = 2, fill = Fill.Horizontal, insets = rightIns) {
       add(description, _)
     }
 
-    withConstraints(gridx = 0, gridy = 4, weighty = 1, fill = Fill.Both) {
+    withConstraints(gridx = 0, gridy = 3, weighty = 1, fill = Fill.Both) {
       add(Swing.VGlue, _)
     }
 
@@ -121,7 +111,6 @@ class ProblemInfoView extends Component {
     border = LineBorder(Color.lightGray, 1)
 
     def updateWith(problem: Problem) = {
-      container.infoPanel.status.text = problem.status.toString
       container.infoPanel.file.text = problem.fileName
       container.infoPanel.member.text = problem.referredMember
       container.infoPanel.description.text = problem.description

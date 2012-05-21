@@ -1,12 +1,6 @@
 package ssol.tools.mima.core
 
 object Problem {
-  object Status extends Enumeration {
-    val Unfixable = Value("unfixable")
-    val Upgradable = Value("upgradable") // means MiMa Client can fix the bytecode
-    val Ignored = Value("ignored")
-  }
-
   object ClassVersion extends Enumeration {
     val New = Value("new")
     val Old = Value("old")
@@ -33,7 +27,6 @@ trait MemberRef extends ProblemRef {
 }
 
 sealed abstract class Problem extends ProblemRef {
-  var status = Problem.Status.Unfixable
   var affectedVersion = Problem.ClassVersion.New
   def description: String
 }
@@ -54,8 +47,6 @@ case class UpdateForwarderBodyProblem(meth: MemberInfo) extends MemberProblem(me
   assert(meth.owner.isTrait)
   assert(meth.owner.hasStaticImpl(meth))
 
-  status = Problem.Status.Upgradable
-  
   def description = "classes mixing " + meth.owner.fullName + " needs to update body of " + meth.shortMethodString
 }
 
@@ -97,7 +88,6 @@ case class IncompatibleResultTypeProblem(oldmeth: MemberInfo, newmeth: MemberInf
 }
 
 case class AbstractMethodProblem(newmeth: MemberInfo) extends MemberProblem(newmeth) {
-  status = Problem.Status.Upgradable
   def description = "abstract " + newmeth.methodString + " does not have a correspondent in " + affectedVersion + " version"
 }
 
