@@ -5,5 +5,5 @@ object Urls {
   val TypesafeSite = "http://typesafe.com/"
     
   val OnlineResourceSite = "http://typesafe.com/technology/migration-manager"
-  val BugReportingSite = "http://www.assembla.com/spaces/mima/support/tickets"
+  val BugReportingSite = "http://github.com/typesafehub/migration-manager/issues"
 }
