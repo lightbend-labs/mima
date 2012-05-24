@@ -61,15 +61,20 @@ class Main(args: List[String]) extends {
   
   /** Converts a problem to a human-readable mapped string. */
   private def printProblem(p: core.Problem): String = {
-    def wrap(words: Seq[String]): Seq[Seq[String]] = 
-      if(words.isEmpty) Seq.empty
+    def wrap(words: Seq[String], result: List[String] = Nil): Seq[String] = 
+      if(words.isEmpty) result.reverse
       else {
         // This is so painfully slow, it hurts.
-        val output = (words.inits dropWhile { x => x.map(_.length).sum + x.length > 77 }).next
-        output +: wrap(words.drop(output.length))
+        val output = {
+          val tmp = (words.inits dropWhile { x => x.map(_.length).sum + x.length > 77 }).next
+          if(tmp.isEmpty) Seq(words.head)
+          else tmp
+        }
+        val line = output mkString " "
+        val rest = words drop output.length
+        wrap(rest, line :: result)
       }
-    def wrapString(s: String) =
-      wrap(s split "\\s") map (_ mkString " ")
+    def wrapString(s: String) = wrap(s split "\\s")
     wrapString(" * " + p.description) mkString "\n   "
   }
   
