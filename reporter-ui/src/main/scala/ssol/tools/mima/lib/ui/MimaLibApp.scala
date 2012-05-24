@@ -9,7 +9,7 @@ import ssol.tools.mima.lib.ui.widget.LicenseAgreementView
 import ssol.tools.mima.lib.license.License
 
 object MimaLibApp extends MimaSwingApp {
-  override protected def launcherClassName = "ssol.tools.mima.lib.ui.MimaLibApp"
+  override protected def launcherClassName = classOf[MimaLibApp].getName
 
   private class LicenseFrame extends Frame with Centered {
     title = "End User License Agreement"
@@ -48,3 +48,5 @@ object MimaLibApp extends MimaSwingApp {
   
   override def top: Frame = if(License.isAccepted) libFrame else licenseFrame 
 }
+
+class MimaLibApp
