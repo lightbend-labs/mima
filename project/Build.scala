@@ -139,7 +139,7 @@ object MimaBuild extends Build {
       functionalTests <<= runAllTests,
       // make the main 'package' task depend on all functional tests passing  (TODO - Control this in root project...)
       packageBin in Compile <<= packageBin in Compile dependsOn  functionalTests,
-      mainClass in assembly := Some("ssol.tools.mima.cli.Main")
+      mainClass in assembly := Some("com.typesafe.tools.mima.cli.Main")
     )
   )
 
@@ -150,7 +150,7 @@ object MimaBuild extends Build {
     settings(libraryDependencies ++= Seq(swing),
              name := buildName + "-reporter-ui",
              javaOptions += "-Xmx512m",
-             mainClass in assembly := Some("ssol.tools.mima.lib.ui.MimaLibApp"))
+             mainClass in assembly := Some("com.typesafe.tools.mima.lib.ui.MimaLibApp"))
     dependsOn(coreui, reporter)
   )
 
@@ -215,7 +215,7 @@ object MimaBuild extends Build {
         val urls = data(cp).map(_.toURI.toURL).toArray
         val loader = new java.net.URLClassLoader(urls, si.loader)
 
-        val testClass = loader.loadClass("ssol.tools.mima.lib.CollectProblemsTest")
+        val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest")
         val testRunner = testClass.newInstance().asInstanceOf[
         					{ def runTest(testName: String, oldJarPath: String, newJarPath: String, 
         							oraclePath: String): Unit 
