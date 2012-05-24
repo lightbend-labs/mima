@@ -34,8 +34,8 @@ addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.1.2")
 2. Add the following to your `build.sbt` file:
 
 ```
-import ssol.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
-import ssol.tools.mima.plugin.MimaKeys.previousArtifact
+import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
+import com.typesafe.tools.mima.plugin.MimaKeys.previousArtifact
       
 mimaDefaultSettings
       
