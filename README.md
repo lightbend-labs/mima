@@ -28,7 +28,7 @@ The SBT Plugin is released for SBT version 0.11.3.  To try it, do the following:
 ```
 resolvers += Resolver.url("sbt-plugin-releases", new URL("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases/"))(Resolver.ivyStylePatterns)
 
-addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.1.2")
+addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.1.3")
 ```
 
 2. Add the following to your `build.sbt` file:
