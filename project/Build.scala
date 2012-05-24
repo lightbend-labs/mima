@@ -6,8 +6,10 @@ import Project.inConfig
 import Configurations.config
 import Build.data
 import Path._
+import sbtassembly.Plugin.AssemblyKeys
 import sbtassembly.Plugin.AssemblyKeys._
 import sbtassembly.Plugin.assemblySettings
+import sbtassembly.Plugin.MergeStrategy
 
 object BuildSettings {
   
@@ -108,6 +110,22 @@ object MimaBuild extends Build {
     settings(sonatypePublishSettings:_*)
   )
 
+  val myAssemblySettings: Seq[Setting[_]] = assemblySettings ++ Seq(
+     mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
+        {
+          case "LICENSE" => MergeStrategy.first
+          case x => old(x)
+        }
+     },
+     AssemblyKeys.excludedFiles in assembly <<= (AssemblyKeys.excludedFiles in assembly) { (old) =>
+       val tmp: Seq[File] => Seq[File] = { files: Seq[File] =>
+         // Hack to keep LICENSE files.
+         old(files) filterNot (_.getName contains "LICENSE") 
+       }
+       tmp
+     }
+  )
+
   lazy val reporter = (
     Project("reporter", file("reporter"), settings = commonSettings)
     settings(libraryDependencies ++= Seq(swing),
@@ -115,7 +133,7 @@ object MimaBuild extends Build {
              javaOptions += "-Xmx512m")
     dependsOn(core)
     settings(sonatypePublishSettings:_*)
-    settings(assemblySettings:_*)
+    settings(myAssemblySettings:_*)
     settings(
       // add task functional-tests that depends on all functional tests
       functionalTests <<= runAllTests,
@@ -127,7 +145,7 @@ object MimaBuild extends Build {
 
   lazy val reporterui = (
     Project("reporter-ui", file("reporter-ui"), settings = commonSettings)
-    settings(assemblySettings:_*)
+    settings(myAssemblySettings:_*)
     settings(sonatypePublishSettings:_*)
     settings(libraryDependencies ++= Seq(swing),
              name := buildName + "-reporter-ui",
