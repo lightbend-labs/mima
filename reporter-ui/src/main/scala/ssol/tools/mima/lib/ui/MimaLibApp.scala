@@ -3,18 +3,16 @@ package ssol.tools.mima.lib.ui
 import scala.swing._
 import scala.swing.Swing._
 import scala.swing.event.ButtonClicked
-
 import ssol.tools.mima.core.ui.{Centered, MimaSwingApp}
 import ssol.tools.mima.core.util.Prefs
 import ssol.tools.mima.lib.ui.widget.LicenseAgreementView
-
 import ssol.tools.mima.lib.license.License
 
 object MimaLibApp extends MimaSwingApp {
   override protected def launcherClassName = "ssol.tools.mima.lib.ui.MimaLibApp"
 
   private class LicenseFrame extends Frame with Centered {
-    title = "Typesafe - End User License Agreement"
+    title = "End User License Agreement"
     preferredSize = (640, 480)
     minimumSize = preferredSize
     location = center
@@ -36,8 +34,8 @@ object MimaLibApp extends MimaSwingApp {
     reactions += {
       case LicenseAgreementView.LicenseAccepted(value) => continue.enabled = value
       case ButtonClicked(`continue`) => {
-        Prefs.beLicenseAccepted()
-        licenseFrame.dispose
+        License.accepted()
+        licenseFrame.dispose()
         libFrame.visible = true
       }
     }
@@ -48,5 +46,5 @@ object MimaLibApp extends MimaSwingApp {
   private lazy val licenseFrame = new LicenseFrame
   private lazy val libFrame = new LibFrame
   
-  override def top: Frame = if(Prefs.isLicenseAccepted) libFrame else licenseFrame 
+  override def top: Frame = if(License.isAccepted) libFrame else licenseFrame 
 }
