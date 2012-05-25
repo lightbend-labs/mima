@@ -76,7 +76,7 @@ object Dependencies {
   val compiler = "org.scala-lang" % "scala-compiler" % buildScalaVer
   val swing = "org.scala-lang" % "scala-swing" % buildScalaVer
   
-  val specs2 = "org.specs2" % "specs2_2.9.1" % "1.5" % "test"
+  val specs2 = "org.specs2" %% "specs2" % "1.5" % "test"
 }
 
 object MimaBuild extends Build {
