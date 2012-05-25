@@ -8,11 +8,10 @@ case class TestFailed(msg: String) extends Exception(msg)
 
 class CollectProblemsTest {
 
-  def runTest(testName: String, oldJarPath: String, newJarPath: String, oraclePath: String) {
+  def runTest(testClasspath: List[String])(testName: String, oldJarPath: String, newJarPath: String, oraclePath: String) {
     // load test setup
     Config.setup("scala com.typesafe.tools.mima.MiMaLibUI <old-dir> <new-dir>", Array(oldJarPath, newJarPath))
-    var scalaLib = "regressions-tests/scala-library/scala-library-2.9.0.jar"
-    val cp = scalaLib :: ClassPath.split(Config.baseClassPath.asClasspathString)
+    val cp = testClasspath ::: ClassPath.split(Config.baseClassPath.asClasspathString)
     val cpString = ClassPath.join(cp: _*)
     Config.baseClassPath = new JavaClassPath(ClassPath.DefaultJavaContext.classesInPath(cpString).toIndexedSeq, ClassPath.DefaultJavaContext)
 

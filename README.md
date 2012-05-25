@@ -1,10 +1,13 @@
 Migration Manager for Scala
 ==============
 
-A tool for diagnosing and fixing migration problems for Scala libraries.
-=======
+A tool for diagnosing and fixing migration problems for Scala libraries
+=======================================================================
+
 The Migration Manager for Scala (MiMa in short) is a tool for diagnosing and fixing binary incompatibilities for Scala libraries.  The OSS version includes only
 features which allow inspecting binary compatibility.
+
+The mailing list is at https://groups.google.com/group/migration-manager-user/topics. Please use it for questions and comments!
 
 MiMa's Modules
 -------
@@ -62,8 +65,6 @@ Eclipse
 -------
 
 In order to create Eclipse metadata files (i.e., .classpath and .project) we recomend to use [sbteclipse][sbteclipse]. Once done, to set up the three modules in Eclipse just click on `File > Import > General > Exisiting Projects Into Workspace`, and select the MiMa project's root folder, the three modules should be correctly loaded.
-
-In the `reporter-ui` folders you can also find a `*.launch` file configuration, which can be imported in Eclipse and can be used to start the programs.
 
 
 [sbteclipse]: https://github.com/typesafehub/sbteclipse/
