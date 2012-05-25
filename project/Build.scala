@@ -58,7 +58,7 @@ object BuildSettings {
       </scm>
       <developers>
         <developer>
-          <id>mirco</id>
+          <id>mdotta</id>
           <name>Mirco Dotta</name>
         </developer>
         <developer>
