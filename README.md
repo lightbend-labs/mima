@@ -6,7 +6,7 @@ A tool for diagnosing and fixing migration problems for Scala libraries
 
 The Migration Manager for Scala (MiMa in short) is a tool for diagnosing binary incompatibilities for Scala libraries.
 
-The mailing list is at https://groups.google.com/group/migration-manager-user/topics. Please use it for questions and comments!
+Please, use the [mima-user Mailing List][mima-user-ml] for questions and comments.
 
 MiMa's Modules
 -------
@@ -134,9 +134,9 @@ FAQ
 Bugs and Feature requests
 -------
 
-Use the [Assembla project page][mima-assembla] for filing new tickets.
+Use the [GitHub project page][mima-github] for filing new tickets. For questions and comments, please use the [mima-user Mailing List][mima-user-ml].
 
-[mima-assembla]: https://www.assembla.com/spaces/mima/tickets
+[mima-github]: https://github.com/typesafehub/migration-manager/issues
 
 
 Contributing
@@ -158,3 +158,5 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
+
+[mima-user-ml]: https://groups.google.com/group/migration-manager-user/topics
