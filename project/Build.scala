@@ -217,9 +217,12 @@ object MimaBuild extends Build {
 
         val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest")
         val testRunner = testClass.newInstance().asInstanceOf[
-        					{ def runTest(testName: String, oldJarPath: String, newJarPath: String, 
+        					{ def runTest(testClasspath: List[String], testName: String, oldJarPath: String, newJarPath: String, 
         							oraclePath: String): Unit 
         					}]
+
+        // Add the scala-library to the MiMa classpath used to run this test
+        val testClasspath = data(cp).filter(_.getName endsWith "scala-library.jar").map(_.getAbsolutePath).toList
 
         val projectPath = proj.build.getPath + "reporter" + "/" + "functional-tests" + "/" + "src" +
         					"/" + "test" + "/" + proj.project
@@ -227,7 +230,7 @@ object MimaBuild extends Build {
         val oraclePath = projectPath + "/problems.txt"
 
         try {
-          testRunner.runTest(proj.project, v1.getAbsolutePath, v2.getAbsolutePath, oraclePath)
+          testRunner.runTest(testClasspath, proj.project, v1.getAbsolutePath, v2.getAbsolutePath, oraclePath)
           streams.log.info("Test '" + proj.project + "' succeeded.")
         } catch {
           case e: Exception =>  streams.log.error(e.toString)
