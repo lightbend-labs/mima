@@ -13,8 +13,8 @@ MiMa's Modules
 
 MiMa is split into Several modules: 
 
-- Core: Classes that are used for both migrations and reporting.
-- Core-UI: UI Classes that can be re-used between the migrator and the reporter.
+- Core: Classes that are used for detection.
+- Core-UI: UI Classes that can be re-used between different detectors.
 - Reporter:  Raw reporting classes and the command line interface.
 - Reporter-UI: Swing interface to the reporter.
 - SBT Plugin:  The SBT plugin for usage inside SBT builds.
