@@ -34,15 +34,15 @@ object SbtMima {
   /** Reports binary compatibility errors.
    * @param failOnProblem if true, fails the build on binary compatibility errors.
    */
-  def reportErrors(errors: List[core.Problem], failOnProblem: Boolean, s: TaskStreams): Unit = {
+  def reportErrors(errors: List[core.Problem], failOnProblem: Boolean, s: TaskStreams, projectName: String): Unit = {
     // TODO - Line wrapping an other magikz
     def prettyPrint(p: core.Problem): String = " * " + p.description
-    s.log.info("Found " + errors.size + " potential binary incompatibilities")
+    s.log.info(projectName + ": found " + errors.size + " potential binary incompatibilities")
     errors map prettyPrint foreach { p =>
       if(failOnProblem) s.log.error(p)
       else              s.log.warn(p)
     }
-    if(failOnProblem && !errors.isEmpty) sys.error("Binary compatibility check failed!")
+    if(failOnProblem && !errors.isEmpty) sys.error(projectName + ": Binary compatibility check failed!")
   }
   /** Resolves an artifact representing the previous abstract binary interface
    * for testing.

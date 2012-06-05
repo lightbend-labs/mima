@@ -20,7 +20,7 @@ object MimaPlugin extends Plugin {
            Nil
        }
     },
-    reportBinaryIssues <<= (findBinaryIssues, failOnProblem, streams) map SbtMima.reportErrors
+    reportBinaryIssues <<= (findBinaryIssues, failOnProblem, streams, name) map SbtMima.reportErrors
   )
   /** Setup mima with default settings, applicable for most projects. */
   def mimaDefaultSettings: Seq[Setting[_]] = Seq(
