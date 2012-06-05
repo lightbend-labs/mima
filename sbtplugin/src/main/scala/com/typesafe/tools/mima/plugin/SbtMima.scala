@@ -47,7 +47,7 @@ object SbtMima {
   /** Resolves an artifact representing the previous abstract binary interface
    * for testing.
    */
-  def getPreviousArttifact(m: ModuleID, ivy: IvySbt, s: TaskStreams): File = {
+  def getPreviousArtifact(m: ModuleID, ivy: IvySbt, s: TaskStreams): File = {
     val moduleSettings = InlineConfiguration(
       "dummy" % "test" % "version",
       ModuleInfo("dummy-test-project-for-resolving"),

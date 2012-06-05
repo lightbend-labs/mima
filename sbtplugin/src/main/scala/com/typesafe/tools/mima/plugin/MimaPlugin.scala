@@ -21,7 +21,7 @@ object MimaPlugin extends Plugin {
     currentClassfiles <<= classDirectory in Compile map identity,
     previousClassfiles <<= (ivySbt, previousArtifact, streams) map { (i, optArt, s) =>
       val art = optArt getOrElse sys.error("No previous-artifact defined.  Cannot check binary compatibility.")
-      SbtMima.getPreviousArttifact(art, i, s)
+      SbtMima.getPreviousArtifact(art, i, s)
     },
     fullClasspath in findBinaryIssues <<= fullClasspath in Compile
   ) ++ mimaReportSettings
