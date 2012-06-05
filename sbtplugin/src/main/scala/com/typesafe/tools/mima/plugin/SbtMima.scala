@@ -17,7 +17,7 @@ class SbtLogger(s: TaskStreams) extends Logging {
 
 object SbtMima {
   val x = sbt.Keys.fullClasspath
-  
+
   /** Creates a new MiMaLib object to run analysis. */
   private def makeMima(cp: sbt.Keys.Classpath, s: TaskStreams): lib.MiMaLib = {
     // TODO: Fix MiMa so we don't have to hack this bit in.
@@ -26,28 +26,28 @@ object SbtMima {
     val classpath = new JavaClassPath(DefaultJavaContext.classesInPath(cpstring).toIndexedSeq, DefaultJavaContext)
     new lib.MiMaLib(classpath, new SbtLogger(s))
   }
-  
+
   /** Runs MiMa and returns a list of potential binary incompatibilities. */
-  def runMima(prev: File, curr: File, cp: sbt.Keys.Classpath, s: TaskStreams): List[core.Problem] = 
+  def runMima(prev: File, curr: File, cp: sbt.Keys.Classpath, s: TaskStreams): List[core.Problem] =
     makeMima(cp, s).collectProblems(prev.getAbsolutePath, curr.getAbsolutePath)
 
   /** Reports binary compatibility errors.
    * @param failOnProblem if true, fails the build on binary compatibility errors.
    */
-  def reportErrors(errors: List[core.Problem], failOnProblem: Boolean, s: TaskStreams): Unit = {
-    // TODO - Line wrapping an other magikz 
+  def reportErrors(errors: List[core.Problem], failOnProblem: Boolean, s: TaskStreams, projectName: String): Unit = {
+    // TODO - Line wrapping an other magikz
     def prettyPrint(p: core.Problem): String = " * " + p.description
-    s.log.info("Found " + errors.size + " potential binary incompatibilities")
+    s.log.info(projectName + ": found " + errors.size + " potential binary incompatibilities")
     errors map prettyPrint foreach { p =>
       if(failOnProblem) s.log.error(p)
       else              s.log.warn(p)
     }
-    if(failOnProblem && !errors.isEmpty) sys.error("Binary compatibility check failed!")
+    if(failOnProblem && !errors.isEmpty) sys.error(projectName + ": Binary compatibility check failed!")
   }
   /** Resolves an artifact representing the previous abstract binary interface
    * for testing.
    */
-  def getPreviousArttifact(m: ModuleID, ivy: IvySbt, s: TaskStreams): File = {
+  def getPreviousArtifact(m: ModuleID, ivy: IvySbt, s: TaskStreams): File = {
     val moduleSettings = InlineConfiguration(
       "dummy" % "test" % "version",
       ModuleInfo("dummy-test-project-for-resolving"),
@@ -57,10 +57,10 @@ object SbtMima {
     val report = IvyActions.update(
       module,
       new UpdateConfiguration(
-          retrieve = None, 
+          retrieve = None,
           missingOk = false,
           logging = UpdateLogging.DownloadOnly),
-      s.log    
+      s.log
     )
     val optFile = (for {
       config <- report.configurations
