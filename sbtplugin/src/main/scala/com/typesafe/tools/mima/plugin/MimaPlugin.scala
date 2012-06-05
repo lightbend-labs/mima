@@ -9,6 +9,7 @@ object MimaPlugin extends Plugin {
   import MimaKeys._
   /** Just configures MiMa to compare previous/current classfiles.*/
   def mimaReportSettings: Seq[Setting[_]] = Seq(
+    binaryIssueFilters := Nil,
     findBinaryIssues <<= (previousClassfiles, currentClassfiles,
       fullClasspath in findBinaryIssues, streams, name) map { (prevOption, curr, cp, s, name) =>
         prevOption match {
@@ -19,7 +20,7 @@ object MimaPlugin extends Plugin {
             Nil
         }
       },
-    reportBinaryIssues <<= (findBinaryIssues, failOnProblem, streams, name) map SbtMima.reportErrors)
+    reportBinaryIssues <<= (findBinaryIssues, failOnProblem, binaryIssueFilters, streams, name) map SbtMima.reportErrors)
   /** Setup mima with default settings, applicable for most projects. */
   def mimaDefaultSettings: Seq[Setting[_]] = Seq(
     failOnProblem := true,

@@ -34,10 +34,29 @@ object SbtMima {
   /** Reports binary compatibility errors.
    *  @param failOnProblem if true, fails the build on binary compatibility errors.
    */
-  def reportErrors(errors: List[core.Problem], failOnProblem: Boolean, s: TaskStreams, projectName: String): Unit = {
+  def reportErrors(found: List[core.Problem], failOnProblem: Boolean, filters: Seq[core.ProblemFilter], s: TaskStreams, projectName: String): Unit = {
+    // filters * found is n-squared, it's fixable in principle by special-casing known
+    // filter types or something, not worth it most likely...
+
+    def isReported(problem: core.Problem) = filters forall { f =>
+      if (f(problem)) {
+        true
+      } else {
+        s.log.debug(projectName + ": filtered out: " + problem.description + "\n  filtered by: " + f)
+        false
+      }
+    }
+
+    val errors = found filter isReported
+
+    val filteredCount = found.size - errors.size
+    val filteredNote = if (filteredCount > 0) " (filtered " + filteredCount + ")" else ""
+
     // TODO - Line wrapping an other magikz
-    def prettyPrint(p: core.Problem): String = " * " + p.description
-    s.log.info(projectName + ": found " + errors.size + " potential binary incompatibilities")
+    def prettyPrint(p: core.Problem): String = {
+      " * " + p.description + p.howToFilter.map("\n   filter with: " + _).getOrElse("")
+    }
+    s.log.info(projectName + ": found " + errors.size + " potential binary incompatibilities" + filteredNote)
     errors map prettyPrint foreach { p =>
       if (failOnProblem) s.log.error(p)
       else s.log.warn(p)
