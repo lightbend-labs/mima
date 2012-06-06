@@ -10,6 +10,7 @@ import sbtassembly.Plugin.AssemblyKeys
 import sbtassembly.Plugin.AssemblyKeys._
 import sbtassembly.Plugin.assemblySettings
 import sbtassembly.Plugin.MergeStrategy
+import sbtbuildinfo.Plugin._
 
 object BuildSettings {
   
@@ -96,7 +97,13 @@ object MimaBuild extends Build {
 
   lazy val core = (
     Project("core", file("core"), 
-            settings = commonSettings)
+            settings = commonSettings ++: buildInfoSettings ++: Seq(
+                sourceGenerators in Compile <+= buildInfo,
+                buildInfoKeys := Seq[Scoped](version),
+                buildInfoPackage := "com.typesafe.tools.mima.core.buildinfo",
+                buildInfoObject  := "BuildInfo"
+                )
+           )
     settings(libraryDependencies ++= Seq(compiler, specs2),
              name := buildName + "-core")
     settings(sonatypePublishSettings:_*)

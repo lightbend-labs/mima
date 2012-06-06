@@ -6,7 +6,7 @@ import com.typesafe.tools.mima.core.ui._
 import com.typesafe.tools.mima.core.ui.wizard._
 import com.typesafe.tools.mima.core.Config
 import com.typesafe.tools.mima.core.ui.event.ExitMiMa
-import com.typesafe.tools.mima.core.util.Version
+import com.typesafe.tools.mima.core.buildinfo.BuildInfo
 
 import scala.tools.nsc.{ util, io }
 import util._
@@ -19,7 +19,7 @@ abstract class MimaFrame extends MainFrame with Centered {
 
   object TypesafeLogo extends widget.LinkImagePanel(TypesafeSite, images.Icons.typesafe)
 
-  title = "Migration Manager - " + Version.version
+  title = "Migration Manager - " + BuildInfo.version
   preferredSize = (1024, 768)
   minimumSize = preferredSize
   location = center
