@@ -12,6 +12,14 @@ trait ProblemRef {
   def ref: Ref
   def fileName: String
   def referredMember: String
+
+  // name that can be used to write a matching filter
+  def matchName: Option[String] = None
+
+  // description of how to make a filter rule
+  def howToFilter: Option[String] = matchName map { name =>
+    """ProblemFilters.exclude[%s]("%s")""".format(this.getClass.getSimpleName, name)
+  }
 }
 
 trait TemplateRef extends ProblemRef {
@@ -31,9 +39,13 @@ sealed abstract class Problem extends ProblemRef {
   def description: String
 }
 
-abstract class TemplateProblem(override val ref: ClassInfo) extends Problem with TemplateRef
+abstract class TemplateProblem(override val ref: ClassInfo) extends Problem with TemplateRef {
+  override def matchName = Some(ref.fullName)
+}
 
-abstract class MemberProblem(override val ref: MemberInfo) extends Problem with MemberRef
+abstract class MemberProblem(override val ref: MemberInfo) extends Problem with MemberRef {
+  override def matchName = Some(referredMember)
+}
 
 case class MissingFieldProblem(oldfld: MemberInfo) extends MemberProblem(oldfld) {
   def description = oldfld.fieldString + " does not have a correspondent in " + affectedVersion + " version"

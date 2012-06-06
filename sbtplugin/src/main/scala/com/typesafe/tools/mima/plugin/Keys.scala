@@ -12,5 +12,5 @@ object MimaKeys {
   // TODO - Create a task to make a MiMaLib, is that a good idea?
   val findBinaryIssues = TaskKey[List[core.Problem]]("mima-find-binary-issues", "A list of all binary incompatibilities between two files.")
   val reportBinaryIssues = TaskKey[Unit]("mima-report-binary-issues", "Logs all binary incompatibilities to the sbt console/logs.")
-
+  val binaryIssueFilters = SettingKey[Seq[core.ProblemFilter]]("mima-binary-issue-filters", "A list of filters to apply to binary issues found.")
 }
