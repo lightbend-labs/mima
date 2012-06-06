@@ -9,3 +9,5 @@ bin/
 .classpath
 .project
 reporter/project/**
+**/eclipse.sbt
+**/.cache

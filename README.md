@@ -63,7 +63,23 @@ But replacing the scala-arm example with your own artifact.
 Eclipse
 -------
 
-In order to create Eclipse metadata files (i.e., .classpath and .project) we recomend to use [sbteclipse][sbteclipse]. Once done, to set up the three modules in Eclipse just click on `File > Import > General > Exisiting Projects Into Workspace`, and select the MiMa project's root folder, the three modules should be correctly loaded.
+In order to create Eclipse metadata files (i.e., .classpath and .project) we recomend to use [sbteclipse][sbteclipse]. 
+
+Setting up [sbteclipse][sbteclipse] is a simple three-steps process:
+
+* Create a ``eclipse.sbt`` file under the ``project`` folder and add the [sbteclipse][sbteclipse] plugin. 
+At the time of this writing, my ``project/eclipse.sbt`` contains the following:
+
+	``addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "2.1.0-RC1")``
+
+* Create a ``eclipse.sbt`` file under the ``core`` folder and add:
+
+	``EclipseKeys.createSrc := EclipseCreateSrc.Default + EclipseCreateSrc.Managed``
+
+This will make sure to add ``src_managed`` to the project's build-path in Eclipse 
+(the ``src_managed`` folder is created by Sbt during the ``source-generators`` phase).
+
+* Once done, to set up the three modules in Eclipse just click on `File > Import > General > Exisiting Projects Into Workspace`, and select the MiMa project's root folder, the three modules should be correctly loaded.
 
 
 [sbteclipse]: https://github.com/typesafehub/sbteclipse/
