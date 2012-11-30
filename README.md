@@ -23,14 +23,14 @@ MiMa is split into Several modules:
 SBT Plugin
 ----------
 
-The SBT Plugin is released for SBT version 0.11.3.  To try it, do the following:
+The SBT Plugin is released for SBT version 0.12.  To try it, do the following:
 
 1. Add the following to your `project/project/build.scala` file:
 
 ```
 resolvers += Resolver.url("sbt-plugin-releases", new URL("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases/"))(Resolver.ivyStylePatterns)
 
-addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.1.3")
+addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.1.4")
 ```
 
 2. Add the following to your `build.sbt` file:
@@ -70,7 +70,7 @@ Setting up [sbteclipse][sbteclipse] is a simple three-steps process:
 * Create a ``eclipse.sbt`` file under the ``project`` folder and add the [sbteclipse][sbteclipse] plugin. 
 At the time of this writing, my ``project/eclipse.sbt`` contains the following:
 
-	``addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "2.1.0-RC1")``
+	``addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "2.1.0")``
 
 * Create a ``eclipse.sbt`` file under the ``core`` folder and add:
 
