@@ -18,7 +18,7 @@ object BuildSettings {
   val buildOrganization = "com.typesafe"
 
   val buildScalaVer = "2.9.2"
-  val buildVersion = "0.1.4"
+  val buildVersion = "0.1.5-SNAPSHOT"
 
   val commonSettings = Defaults.defaultSettings ++ Seq (
       organization := buildOrganization,
@@ -32,7 +32,7 @@ object BuildSettings {
   def sbtPublishSettings: Seq[Setting[_]] = Seq(
     publishMavenStyle := false,
     publishTo <<= (version) { version: String =>
-       val scalasbt = "http://scalasbt.artifactoryonline.com/scalasbt/"
+       val scalasbt = " "
        val (name, u) = if (version.contains("-SNAPSHOT")) ("sbt-plugin-snapshots", scalasbt+"sbt-plugin-snapshots")
                        else ("sbt-plugin-releases", scalasbt+"sbt-plugin-releases")
        Some(Resolver.url(name, url(u))(Resolver.ivyStylePatterns))
