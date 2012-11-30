@@ -78,14 +78,14 @@ class Main(args: List[String]) extends {
     wrapString(" * " + p.description) mkString "\n   "
   }
   
-  def run(): Unit = {
+  def run(): Int = {
     val mima = makeMima
     val problems = mima.collectProblems(prevfile, currentfile)
     val header = "Found " + problems.size + " binary incompatibiities" 
     println(header)
     println(Seq.fill(header.length)("=") mkString "")
     problems map printProblem foreach println
-    // TODO - System.exit(problems.size)
+    problems.size
   }
 }
 
@@ -94,6 +94,6 @@ object Main {
     val runner = new Main(args.toList)
     
     if (args.isEmpty || !runner.isDefined) println(runner.helpMsg)
-    else                                  runner.run()
+    else                                   System.exit(runner.run())
   }
 }
