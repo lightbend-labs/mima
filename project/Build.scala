@@ -16,9 +16,10 @@ object BuildSettings {
   
   val buildName = "mima"
   val buildOrganization = "com.typesafe"
-  val buildScalaVer = "2.9.1"
-  val buildVersion = "0.1.4-SNAPSHOT"
-  
+
+  val buildScalaVer = "2.9.2"
+  val buildVersion = "0.1.4"
+
   val commonSettings = Defaults.defaultSettings ++ Seq (
       organization := buildOrganization,
       scalaVersion := buildScalaVer,
@@ -77,7 +78,7 @@ object Dependencies {
   val compiler = "org.scala-lang" % "scala-compiler" % buildScalaVer
   val swing = "org.scala-lang" % "scala-swing" % buildScalaVer
   
-  val specs2 = "org.specs2" %% "specs2" % "1.5" % "test"
+  val specs2 = "org.specs2" % "specs2_2.9.1" % "1.5" % "test"
 }
 
 object MimaBuild extends Build {
@@ -195,8 +196,8 @@ object MimaBuild extends Build {
   lazy val functionalTests = TaskKey[Unit]("test-functional")
 
   // define configurations for the v1 and v2 sources
-  lazy val v1Config = config("v1")
-  lazy val v2Config = config("v2")
+  lazy val v1Config = config("v1") extend Compile
+  lazy val v2Config = config("v2") extend Compile
 
   // these are settings defined for each configuration (v1 and v2).
   // We use the normal per-configuration settings, but modify the source directory to be just v1/ instead of src/v1/scala/
@@ -223,17 +224,15 @@ object MimaBuild extends Build {
         val loader = new java.net.URLClassLoader(urls, si.loader)
 
         val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest")
-        val testRunner = testClass.newInstance().asInstanceOf[
-        					{ def runTest(testClasspath: List[String], testName: String, oldJarPath: String, newJarPath: String, 
-        							oraclePath: String): Unit 
-        					}]
+        val testRunner = testClass.newInstance().asInstanceOf[{ 
+          def runTest(testClasspath: Array[String], testName: String, oldJarPath: String, newJarPath: String, oraclePath: String): Unit 
+        }]
 
         // Add the scala-library to the MiMa classpath used to run this test
-        val testClasspath = data(cp).filter(_.getName endsWith "scala-library.jar").map(_.getAbsolutePath).toList
+        val testClasspath = data(cp).filter(_.getName endsWith "scala-library.jar").map(_.getAbsolutePath).toArray
 
-        val projectPath = proj.build.getPath + "reporter" + "/" + "functional-tests" + "/" + "src" +
-        					"/" + "test" + "/" + proj.project
-        					
+        val projectPath = proj.build.getPath + "reporter" + "/" + "functional-tests" + "/" + "src" + "/" + "test" + "/" + proj.project
+
         val oraclePath = projectPath + "/problems.txt"
 
         try {
