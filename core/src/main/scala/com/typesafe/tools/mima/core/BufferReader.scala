@@ -9,7 +9,7 @@ package com.typesafe.tools.mima.core
 import java.lang.Float.intBitsToFloat
 import java.lang.Double.longBitsToDouble
 
-/** 
+/**
  * This class reads files byte per byte. Only used by ClassFileParser
  *
  * @author Philippe Altherr

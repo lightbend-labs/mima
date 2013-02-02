@@ -22,7 +22,7 @@ class SyntheticClassInfo(owner: PackageInfo, val name: String) extends ClassInfo
   def file: AbstractFile = throw new UnsupportedOperationException
   override lazy val superClasses = Nil
   override lazy val allTraits = Set.empty[ClassInfo]
-  override lazy val allInterfaces: Set[ClassInfo] = Set.empty[ClassInfo] 
+  override lazy val allInterfaces: Set[ClassInfo] = Set.empty[ClassInfo]
 }
 
 /** As the name implies. */
@@ -35,7 +35,7 @@ class ConcreteClassInfo(owner: PackageInfo, val file: AbstractFile) extends Clas
 
 abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
   import ClassInfo._
-  
+
   def file: AbstractFile
 
   private var _sourceFileName = ""
@@ -65,7 +65,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
   def classString = (accessModifier + " " + declarationPrefix + " " + formattedFullName).trim
 
   protected var loaded = false
-  
+
   import com.typesafe.tools.mima.core.util.log.ConsoleLogging._
   override protected def ensureLoaded() =
     if (!loaded)
@@ -107,7 +107,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
 
   def lookupClassMethods(name: String): Iterator[MemberInfo] =
     (Iterator.single(this) ++ superClasses.iterator) flatMap (_.methods.get(name))
-    
+
   private def lookupInterfaceMethods(name: String): Iterator[MemberInfo] =
     allInterfaces.iterator flatMap (_.methods.get(name))
 
@@ -145,9 +145,9 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
     else if(isClass) methods.iterator filter (!_.isDeferred) toList
     else Nil
   }
-  
+
   /** The deferred methods of this trait */
-  lazy val deferredMethods: List[MemberInfo] = 
+  lazy val deferredMethods: List[MemberInfo] =
     methods.iterator.toList -- concreteMethods
 
   /** The inherited traits in the linearization of this class or trait,
@@ -208,10 +208,10 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
         case impl: ConcreteClassInfo =>
           assert(impl.isImplClass, impl)
           impl.methods.get(m.name) find (im => hasImplSig(im.sig, m.sig))
-  
+
         case _ => None
       }
-    } 
+    }
     else None
   }
 
@@ -278,6 +278,6 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
     val index = descr.lastIndexOf(descr)
     if (index < 0) descr else descr.substring(index)
   }
-  
+
   def description: String = declarationPrefix + " " + formattedFullName
 }

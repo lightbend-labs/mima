@@ -6,7 +6,7 @@ object WizardPage {
   import scala.swing.event.Event
   /** used to inform `Wizard` whether forward navigation is `allowed`. */
   case class CanGoNext(allowed: Boolean) extends Event
-  
+
   trait Model {
     /** model is backed by a mutable map. */
     protected val data = collection.mutable.Map.empty[String, Any]
@@ -25,7 +25,7 @@ trait WizardPage extends Component {
 
   /** is forward navigation enabled. */
   def canNavigateForward = true
-  
+
   /** is Back navigation enabled. */
   def canNavigateBack = true
 

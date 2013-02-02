@@ -13,7 +13,7 @@ import sbtassembly.Plugin.MergeStrategy
 import sbtbuildinfo.Plugin._
 
 object BuildSettings {
-  
+
   val buildName = "mima"
   val buildOrganization = "com.typesafe"
 
@@ -46,7 +46,7 @@ object BuildSettings {
     // The Nexus repo we're publishing to.
     publishTo <<= version { (v: String) =>
       val nexus = "https://oss.sonatype.org/"
-      if (v.trim.endsWith("SNAPSHOT")) Some("snapshots" at nexus + "content/repositories/snapshots") 
+      if (v.trim.endsWith("SNAPSHOT")) Some("snapshots" at nexus + "content/repositories/snapshots")
       else                             Some("releases"  at nexus + "service/local/staging/deploy/maven2")
     },
     // Maven central cannot allow other repos.  We're ok here because the artifacts we
@@ -74,10 +74,10 @@ object BuildSettings {
 
 object Dependencies {
   import BuildSettings._
-  
+
   val compiler = "org.scala-lang" % "scala-compiler" % buildScalaVer
   val swing = "org.scala-lang" % "scala-swing" % buildScalaVer
-  
+
   val specs2 = "org.specs2" % "specs2_2.9.1" % "1.5" % "test"
 }
 
@@ -87,7 +87,7 @@ object MimaBuild extends Build {
 
   // here we list all projects that are defined.
   override lazy val projects = Seq(root) ++ modules ++ tests :+ reporterFunctionalTests
-  
+
   lazy val modules = Seq(core, coreui, reporter, reporterui, sbtplugin)
 
   lazy val root = (
@@ -97,7 +97,7 @@ object MimaBuild extends Build {
   )
 
   lazy val core = (
-    Project("core", file("core"), 
+    Project("core", file("core"),
             settings = commonSettings ++: buildInfoSettings ++: Seq(
                 sourceGenerators in Compile <+= buildInfo,
                 buildInfoKeys := Seq[Scoped](version),
@@ -112,7 +112,7 @@ object MimaBuild extends Build {
 
   lazy val coreui = (
     Project("core-ui", file("core-ui"), settings = commonSettings)
-    settings(libraryDependencies ++= Seq(swing, compiler, specs2), 
+    settings(libraryDependencies ++= Seq(swing, compiler, specs2),
              name := buildName + "-core-ui")
     dependsOn(core)
     settings(sonatypePublishSettings:_*)
@@ -128,7 +128,7 @@ object MimaBuild extends Build {
      AssemblyKeys.excludedFiles in assembly <<= (AssemblyKeys.excludedFiles in assembly) { (old) =>
        val tmp: Seq[File] => Seq[File] = { files: Seq[File] =>
          // Hack to keep LICENSE files.
-         old(files) filterNot (_.getName contains "LICENSE") 
+         old(files) filterNot (_.getName contains "LICENSE")
        }
        tmp
      }
@@ -170,8 +170,8 @@ object MimaBuild extends Build {
     settings(sbtPublishSettings:_*)
   )
 
-  lazy val reporterFunctionalTests = Project("reporter-functional-tests", 
-  										file("reporter") / "functional-tests" , 
+  lazy val reporterFunctionalTests = Project("reporter-functional-tests",
+  										file("reporter") / "functional-tests" ,
   										settings = commonSettings)
   										.dependsOn(core, reporter)
 
@@ -201,7 +201,7 @@ object MimaBuild extends Build {
 
   // these are settings defined for each configuration (v1 and v2).
   // We use the normal per-configuration settings, but modify the source directory to be just v1/ instead of src/v1/scala/
-  lazy val perConfig = Defaults.configSettings :+ shortSourceDir 
+  lazy val perConfig = Defaults.configSettings :+ shortSourceDir
 
   // sets the source directory in this configuration to be: testN / vN
   // scalaSource is the setting key that defines the directory for Scala sources
@@ -224,8 +224,8 @@ object MimaBuild extends Build {
         val loader = new java.net.URLClassLoader(urls, si.loader)
 
         val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest")
-        val testRunner = testClass.newInstance().asInstanceOf[{ 
-          def runTest(testClasspath: Array[String], testName: String, oldJarPath: String, newJarPath: String, oraclePath: String): Unit 
+        val testRunner = testClass.newInstance().asInstanceOf[{
+          def runTest(testClasspath: Array[String], testName: String, oldJarPath: String, newJarPath: String, oraclePath: String): Unit
         }]
 
         // Add the scala-library to the MiMa classpath used to run this test

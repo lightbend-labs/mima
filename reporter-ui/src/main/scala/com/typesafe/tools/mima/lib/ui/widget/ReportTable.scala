@@ -8,18 +8,18 @@ import javax.swing.ListSelectionModel
 import com.typesafe.tools.mima.lib.ui.model.ReportTableModel
 
 private[ui] class ReportTable extends JTable(ReportTableModel(Nil)) with TableModelListener {
-  
+
   // allow only single selection
   setSelectionMode(ListSelectionModel.SINGLE_SELECTION)
 
-  
+
   // turn off grid as we use the `AlternatedColoredRowRenderer`
   setShowGrid(false)
 
-  // apply the render to all cells! 
+  // apply the render to all cells!
   setDefaultRenderer(classOf[Any], new AlternatedColoredRowRenderer)
 
-  // remove any space between columns and rows 
+  // remove any space between columns and rows
   setIntercellSpacing(new java.awt.Dimension(0, 0))
 
   override def prepareRenderer(renderer: TableCellRenderer, row: Int, column: Int): java.awt.Component = {

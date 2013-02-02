@@ -11,12 +11,12 @@ object Config {
   private var _classpath: JavaClassPath = _
 
   def inPlace = settings.mimaOutDir.isDefault
-  
+
   def verbose = settings.verbose.value
   def debug = settings.debug.value
-  
+
   def fixall = settings.fixall.value
-  
+
   def error(msg: String) = System.err.println(msg)
 
   def baseClassPath: JavaClassPath = _classpath

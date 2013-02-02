@@ -46,41 +46,41 @@ import com.typesafe.tools.mima.lib.analyze.Rule
     def diff(thisTypes: Iterable[ClassInfo], thatTypes: Iterable[ClassInfo]) = {
       val thisSuperclasses = thisTypes.map(_.fullName).toSet
       val thatSuperclasses = thisTypes.map(_.fullName).toSet
-      
+
       thisTypes.filter(sc => !thatTypes.exists(_.fullName == sc.fullName))
     }
   }
-  
+
   object Superclasses extends TemplateRule with ClassTypesHelper {
     def apply(thisClass: ClassInfo, thatClass: ClassInfo) = {
       val missing = diff(thisClass.superClasses, thatClass.superClasses)
-      
-      if(missing.isEmpty) 
+
+      if(missing.isEmpty)
         None
       else
         Some(MissingTypesProblem(thatClass, missing))
     }
   }
-  
+
   object Superinterfaces extends TemplateRule with ClassTypesHelper {
     def apply(thisClass: ClassInfo, thatClass: ClassInfo) = {
       val missing = diff(thisClass.allInterfaces, thatClass.allInterfaces)
-      
-      if(missing.isEmpty) 
+
+      if(missing.isEmpty)
         None
       else
         Some(MissingTypesProblem(thatClass, missing))
     }
   }
-  
+
   object CyclicTypeReference extends TemplateRule {
     def apply(clz: ClassInfo) = {
-      if(clz.superClasses.contains(clz)) 
+      if(clz.superClasses.contains(clz))
         Some(CyclicTypeReferenceProblem(clz))
-      else 
+      else
         None
     }
-    
+
     def apply(oldclz: ClassInfo, newclz: ClassInfo) = this(newclz)
   }
 }

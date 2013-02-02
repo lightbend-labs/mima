@@ -63,7 +63,7 @@ class BrowseSpec extends SpecificationWithJUnit with Mockito {
 
       there was one(proxy).cannotOpen(anyURI, any)
     }
-    
+
     "fail gracefully if the URI cannot be converted into an URL" in new BrowseMock {
       proxy.open(any) throws new java.lang.IllegalArgumentException()
 

@@ -65,7 +65,7 @@ class LibWizard extends Wizard {
     import LibWizard.PageModel
     override val model = new PageModel
   }
-  
+
   // step 1 - select library
   this += new ConfigurationPanel(LibWizard.oldLib, LibWizard.newLib) with Page {
     override def canNavigateForward = areFilesSelected
@@ -73,7 +73,7 @@ class LibWizard extends Wizard {
     override def onReveal() {
       cpEditor.classpath = split(model.classpath.asClasspathString)
     }
-    
+
     override def onNext(): Unit = {
       val cp = model.classpath
       model.classpath = new JavaClassPath(DefaultJavaContext.classesInPath(cpEditor.classPathString).toIndexedSeq, DefaultJavaContext)

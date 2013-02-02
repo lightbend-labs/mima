@@ -14,14 +14,14 @@ import com.typesafe.tools.mima.core.util.log.{Logging, ConsoleLogging}
 
 class MiMaLib(classpath: JavaClassPath, val log: Logging = ConsoleLogging) {
   /*
-  options: 
+  options:
   -classpath foo
   -ignore bar
   -d outputdir
   -i, -iinteractive
   -f, -fix
   */
-  
+
   private def classPath(name: String) = {
     val f = new File(new java.io.File(name))
     val dir = AbstractFile.getDirectory(f)
@@ -48,19 +48,19 @@ class MiMaLib(classpath: JavaClassPath, val log: Logging = ConsoleLogging) {
       log.info("Analyzing class "+oldclazz.name)
       newpkg.classes get oldclazz.name match {
         case None if oldclazz.isImplClass =>
-          // if it is missing a trait implementation class, then no error should be reported 
+          // if it is missing a trait implementation class, then no error should be reported
           // since there should be already errors, i.e., missing methods...
           ()
-        
+
         case None => raise(MissingClassProblem(oldclazz))
-        
+
         case Some(newclazz) =>  Analyzer(oldclazz, newclazz).foreach(raise)
       }
     }
   }
 
   private def traversePackages(oldpkg: PackageInfo, newpkg: PackageInfo) {
-    log.info("Traversing package " + oldpkg.fullName)	
+    log.info("Traversing package " + oldpkg.fullName)
     comparePackages(oldpkg, newpkg)
     indented {
       for (p <- oldpkg.packages.valuesIterator) {
