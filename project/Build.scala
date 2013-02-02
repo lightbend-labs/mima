@@ -17,7 +17,7 @@ object BuildSettings {
   val buildName = "mima"
   val buildOrganization = "com.typesafe"
 
-  val buildScalaVer = "2.9.2"
+  val buildScalaVer = "2.10.0"
   val buildVersion = "0.1.5-SNAPSHOT"
 
   val commonSettings = Defaults.defaultSettings ++ Seq (
@@ -78,7 +78,7 @@ object Dependencies {
   val compiler = "org.scala-lang" % "scala-compiler" % buildScalaVer
   val swing = "org.scala-lang" % "scala-swing" % buildScalaVer
 
-  val specs2 = "org.specs2" % "specs2_2.9.1" % "1.5" % "test"
+  val specs2 = "org.specs2" %% "specs2" % "1.13" % "test"
 }
 
 object MimaBuild extends Build {

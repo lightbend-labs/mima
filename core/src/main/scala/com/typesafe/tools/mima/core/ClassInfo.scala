@@ -148,7 +148,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
 
   /** The deferred methods of this trait */
   lazy val deferredMethods: List[MemberInfo] =
-    methods.iterator.toList -- concreteMethods
+    methods.iterator.toList filterNot concreteMethods.toSet
 
   /** The inherited traits in the linearization of this class or trait,
    *  except any traits inherited by its superclass.

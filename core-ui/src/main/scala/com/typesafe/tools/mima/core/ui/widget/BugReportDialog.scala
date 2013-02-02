@@ -75,3 +75,4 @@ class BugReportDialog(error: Throwable, owner: Window = null) extends Dialog(own
   pack()
   visible = true
 }
+  
