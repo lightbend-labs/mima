@@ -63,7 +63,7 @@ private[analyze] trait Analyzer extends Function2[ClassInfo, ClassInfo, List[Pro
 private[analyze] class ClassAnalyzer extends Analyzer {
   import com.typesafe.tools.mima.lib.analyze.field.ClassFieldChecker
   import com.typesafe.tools.mima.lib.analyze.method.ClassMethodChecker
-  
+
   protected val fieldChecker = new ClassFieldChecker
   protected val methodChecker = new ClassMethodChecker
 
@@ -73,7 +73,7 @@ private[analyze] class ClassAnalyzer extends Analyzer {
     else
       super.analyze(oldclazz, newclazz)
   }
-  
+
   /** Analyze incompatibilities that may derive from methods in the `newclazz` */
   override def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
     for (newAbstrMeth <- newclazz.deferredMethods) yield {
@@ -98,7 +98,7 @@ private[analyze] class ClassAnalyzer extends Analyzer {
 private[analyze] class TraitAnalyzer extends Analyzer {
   import com.typesafe.tools.mima.lib.analyze.field.ClassFieldChecker
   import com.typesafe.tools.mima.lib.analyze.method.TraitMethodChecker
-  
+
   protected val fieldChecker = new ClassFieldChecker
   protected val methodChecker = new TraitMethodChecker
 
@@ -107,15 +107,15 @@ private[analyze] class TraitAnalyzer extends Analyzer {
 
     for (newmeth <- newclazz.concreteMethods if !oldclazz.hasStaticImpl(newmeth)) {
       if (!oldclazz.lookupMethods(newmeth.name).exists(_.sig == newmeth.sig)) {
-        // this means that the method is brand new and therefore the implementation 
-        // has to be injected 
+        // this means that the method is brand new and therefore the implementation
+        // has to be injected
         val problem = MissingMethodProblem(newmeth)
         problem.affectedVersion = Problem.ClassVersion.Old
         res += problem
       }
-      // else a static implementation for the same method existed already, therefore 
-      // class that mixed-in the trait already have a forwarder to the implementation 
-      // class. Mind that, despite no binary incompatibility arises, program's 
+      // else a static implementation for the same method existed already, therefore
+      // class that mixed-in the trait already have a forwarder to the implementation
+      // class. Mind that, despite no binary incompatibility arises, program's
       // semantic may be severely affected.
     }
 

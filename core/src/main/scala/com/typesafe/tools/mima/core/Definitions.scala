@@ -3,22 +3,22 @@ package com.typesafe.tools.mima.core
 import scala.tools.nsc.util.{ClassPath, JavaClassPath, DirectoryClassPath}
 
 
-/** This class holds together a root package and a classpath. It 
- *  also offers definitions of commonly used classes, including 
+/** This class holds together a root package and a classpath. It
+ *  also offers definitions of commonly used classes, including
  *  java.lang.Object
- *  
+ *
  *  Each version of the input jar file has an instance of Definitions, used
  *  to resolve type names during classfile parsing.
  */
 class Definitions(val lib: Option[DirectoryClassPath], val classPath: JavaClassPath) {
   import com.typesafe.tools.mima.core.util.log.ConsoleLogging._
-  
-  lazy val root = 
-    new ConcretePackageInfo(null, 
+
+  lazy val root =
+    new ConcretePackageInfo(null,
         new JavaClassPath(
-            if (lib.isDefined) Vector(lib.get, classPath) 
+            if (lib.isDefined) Vector(lib.get, classPath)
             else Vector(classPath), DefaultJavaContext), this)
-  
+
   /** Return all packages in the target library. */
   lazy val targetPackage: PackageInfo = {
     val pkg = new SyntheticPackageInfo(root, "<root>") {
@@ -27,16 +27,16 @@ class Definitions(val lib: Option[DirectoryClassPath], val classPath: JavaClassP
       override lazy val classes = Definitions.this.root.classes
     }
     pkg.packages ++=  lib.get.packages map (cp => cp.name -> new ConcretePackageInfo(pkg, cp, this))
-    
+
     debugLog("added packages to <root>: %s".format(pkg.packages.keys.mkString(", ")))
     pkg
   }
-  
+
   lazy val ObjectClass = fromName("java.lang.Object")
   lazy val AnnotationClass = fromName("java.lang.annotation.Annotation")
 
   lazy val ClassfileParser = new LibClassfileParser(this)
-  
+
   /** Return the class corresponding to the fully qualified name.
    *  If there is no such class in the current classpath, a SyntheticClassInfo
    *  and all necessary SyntheticPackageInfo are created along the way.
@@ -49,7 +49,7 @@ class Definitions(val lib: Option[DirectoryClassPath], val classPath: JavaClassP
     while (i < parts.length - 1) {
       pkg.packages get part match {
         case Some(p) => pkg = p
-        case None => 
+        case None =>
           val newpkg = new SyntheticPackageInfo(pkg, part)
           pkg.packages += (part -> newpkg)
           pkg = newpkg
@@ -59,7 +59,7 @@ class Definitions(val lib: Option[DirectoryClassPath], val classPath: JavaClassP
     }
     pkg.classes getOrElse (part, new SyntheticClassInfo(pkg, part))
   }
- 
+
   import Type._
 
   /** Return the type corresponding to 'sig'. Class names are resolved
@@ -67,12 +67,12 @@ class Definitions(val lib: Option[DirectoryClassPath], val classPath: JavaClassP
    */
   def fromSig(sig: String): Type = {
     var in = 0
-    
+
     def getType(): Type = {
       val ch = sig(in)
       in += 1
       abbrevToValueType get ch match {
-        case Some(tp) => 
+        case Some(tp) =>
           tp
         case None =>
           if (ch == '[') {
@@ -98,7 +98,7 @@ class Definitions(val lib: Option[DirectoryClassPath], val classPath: JavaClassP
 
     getType()
   }
-  
+
   override def toString = {
     "definitions:\n\tlib: %s\n%s".format(lib, classPath.asClasspathString)
   }

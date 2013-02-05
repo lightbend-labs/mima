@@ -17,20 +17,20 @@ object MimaLibApp extends MimaSwingApp {
     minimumSize = preferredSize
     location = center
     resizable = false
-    
+
     private val license = new LicenseAgreementView(License.license)
     private val continue = new Button("Continue") {
       enabled = false
     }
-    
+
     contents = new BorderPanel {
       border = EmptyBorder(3)
     	add(license, BorderPanel.Position.Center)
       add(new FlowPanel(FlowPanel.Alignment.Right)(continue), BorderPanel.Position.South)
     }
-    
+
     listenTo(license, continue)
-    
+
     reactions += {
       case LicenseAgreementView.LicenseAccepted(value) => continue.enabled = value
       case ButtonClicked(`continue`) => {
@@ -42,11 +42,11 @@ object MimaLibApp extends MimaSwingApp {
   }
 
   private val licenseAccepted = false
-  
+
   private lazy val licenseFrame = new LicenseFrame
   private lazy val libFrame = new LibFrame
-  
-  override def top: Frame = if(License.isAccepted) libFrame else licenseFrame 
+
+  override def top: Frame = if(License.isAccepted) libFrame else licenseFrame
 }
 
 class MimaLibApp

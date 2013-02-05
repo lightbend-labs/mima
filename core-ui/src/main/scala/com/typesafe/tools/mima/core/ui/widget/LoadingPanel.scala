@@ -31,8 +31,8 @@ class LoadingPanel extends JComponent with MouseListener {
   private var barsCount = 14
   private var fps = 15.0f
 
-  private var hints: RenderingHints = null 
-  
+  private var hints: RenderingHints = null
+
   def this(text: String = "", barsCount: Int = 14, shield: Float = 0.0f, fps: Float = 15.0f, rampDelay: Int = 300) =
     {
       this()
@@ -119,12 +119,12 @@ class LoadingPanel extends JComponent with MouseListener {
     {
       val width = getWidth()
       val height = getHeight()
-    
+
       val ticker = Array.ofDim[Area](barsCount)
       val hwidth = width.asInstanceOf[Double] / 2
       val hheight = height.asInstanceOf[Double] / 2
       val center = new Point2D.Double(hwidth, hheight)
-      val fixedAngle = 2.0 * Math.Pi / (barsCount.asInstanceOf[Double])
+      val fixedAngle = 2.0 * math.Pi / (barsCount.asInstanceOf[Double])
 
       for (j <- 0 until barsCount) {
         val i = j.asInstanceOf[Double]
@@ -166,7 +166,7 @@ class LoadingPanel extends JComponent with MouseListener {
       val width = getWidth()
       val height = getHeight()
       val center = new Point2D.Double(width.asInstanceOf[Double] / 2, height.asInstanceOf[Double] / 2);
-      val fixedIncrement = 2.0 * Math.Pi / (barsCount.asInstanceOf[Double])
+      val fixedIncrement = 2.0 * math.Pi / (barsCount.asInstanceOf[Double])
       val toCircle = AffineTransform.getRotateInstance(fixedIncrement, center.getX(), center.getY());
 
       val start = System.currentTimeMillis();

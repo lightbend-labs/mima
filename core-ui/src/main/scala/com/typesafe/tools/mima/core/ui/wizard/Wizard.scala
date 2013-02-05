@@ -32,7 +32,7 @@ class Wizard extends BorderPanel {
     def apply(_page: => WizardPage) = new WizardPageProxy { override def page = _page }
   }
   private[Wizard] abstract class WizardPageProxy {
-    private var cached: Option[WizardPage] = None 
+    private var cached: Option[WizardPage] = None
     def clear() = cached = None
     protected def page: WizardPage
     def get = cached match {
@@ -42,13 +42,13 @@ class Wizard extends BorderPanel {
       case Some(page) => page
     }
   }
-  
+
   private class LoadingPanel extends BorderPanel {
     private val loading = new com.typesafe.tools.mima.core.ui.widget.LoadingPanel("")
     private val wrapper = Component.wrap(loading)
     add(wrapper, BorderPanel.Position.Center)
     add(com.typesafe.tools.mima.core.util.log.UiLogger, BorderPanel.Position.South)
-    
+
     def start() = loading.start()
   }
 
@@ -155,9 +155,9 @@ class Wizard extends BorderPanel {
       buttonsPanel.visible = false
       val loading = new LoadingPanel()
       setContent(loading)
-      // delaying start so that `setContent` will trigger 
-      // component's `repaint` which will update the loading 
-      // panel's size. The size is needed to correctly center 
+      // delaying start so that `setContent` will trigger
+      // component's `repaint` which will update the loading
+      // panel's size. The size is needed to correctly center
       // the loading animation.
       Swing onEDT { loading.start() }
     }
@@ -175,7 +175,7 @@ class Wizard extends BorderPanel {
 
   private def currentPage = _currentPage
   private var _currentPage = 0
-  
+
   // the bottom section where the navigation buttons are
   private val navigation = new NavigationPanel
 

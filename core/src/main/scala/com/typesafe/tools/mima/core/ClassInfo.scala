@@ -22,7 +22,7 @@ class SyntheticClassInfo(owner: PackageInfo, val name: String) extends ClassInfo
   def file: AbstractFile = throw new UnsupportedOperationException
   override lazy val superClasses = Nil
   override lazy val allTraits = Set.empty[ClassInfo]
-  override lazy val allInterfaces: Set[ClassInfo] = Set.empty[ClassInfo] 
+  override lazy val allInterfaces: Set[ClassInfo] = Set.empty[ClassInfo]
 }
 
 /** As the name implies. */
@@ -35,7 +35,7 @@ class ConcreteClassInfo(owner: PackageInfo, val file: AbstractFile) extends Clas
 
 abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
   import ClassInfo._
-  
+
   def file: AbstractFile
 
   private var _sourceFileName = ""
@@ -65,7 +65,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
   def classString = (accessModifier + " " + declarationPrefix + " " + formattedFullName).trim
 
   protected var loaded = false
-  
+
   import com.typesafe.tools.mima.core.util.log.ConsoleLogging._
   override protected def ensureLoaded() =
     if (!loaded)
@@ -84,7 +84,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
   private var _isScala: Boolean = false
 
   def superClass: ClassInfo = { ensureLoaded(); _superClass }
-  def interfaces: List[ClassInfo] = { ensureLoaded(); _interfaces }
+  def interfaces: List[ClassInfo] = ({ ensureLoaded(); _interfaces }) filterNot isScalaObject
   def fields: Members = { ensureLoaded(); _fields }
   def methods: Members = { ensureLoaded(); _methods }
   override def flags: Int = _flags
@@ -92,22 +92,26 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
   /** currently not set! */
   def isScala: Boolean = { ensureLoaded(); _isScala }
 
-  def superClass_=(x: ClassInfo) = _superClass = x
+  /** Drop ScalaObject for 2.9/2.10 consistency. */
+  def superClass_=(x: ClassInfo) = _superClass = if (isScalaObject(x)) ClassInfo.ObjectClass else x
   def interfaces_=(x: List[ClassInfo]) = _interfaces = x
   def fields_=(x: Members) = _fields = x
   def methods_=(x: Members) = _methods = x
   def flags_=(x: Int) = _flags = x
   def isScala_=(x: Boolean) = _isScala = x
 
-  lazy val superClasses: List[ClassInfo] =
-    (if (this == ClassInfo.ObjectClass) Nil else superClass :: superClass.superClasses)
+  private def isScalaObject(info: ClassInfo) = info.fullName == "scala.ScalaObject"
+  /** Filter out ScalaObject for 2.9/2.10 consistency */
+  lazy val superClasses: List[ClassInfo] = (
+    (if (this == ClassInfo.ObjectClass) Nil else superClass :: superClass.superClasses) filterNot isScalaObject
+  )
 
   def lookupClassFields(name: String): Iterator[MemberInfo] =
     (Iterator.single(this) ++ superClasses.iterator) flatMap (_.fields.get(name))
 
   def lookupClassMethods(name: String): Iterator[MemberInfo] =
     (Iterator.single(this) ++ superClasses.iterator) flatMap (_.methods.get(name))
-    
+
   private def lookupInterfaceMethods(name: String): Iterator[MemberInfo] =
     allInterfaces.iterator flatMap (_.methods.get(name))
 
@@ -145,10 +149,10 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
     else if(isClass) methods.iterator filter (!_.isDeferred) toList
     else Nil
   }
-  
+
   /** The deferred methods of this trait */
-  lazy val deferredMethods: List[MemberInfo] = 
-    methods.iterator.toList -- concreteMethods
+  lazy val deferredMethods: List[MemberInfo] =
+    methods.iterator.toList filterNot concreteMethods.toSet
 
   /** The inherited traits in the linearization of this class or trait,
    *  except any traits inherited by its superclass.
@@ -208,10 +212,10 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
         case impl: ConcreteClassInfo =>
           assert(impl.isImplClass, impl)
           impl.methods.get(m.name) find (im => hasImplSig(im.sig, m.sig))
-  
+
         case _ => None
       }
-    } 
+    }
     else None
   }
 
@@ -278,6 +282,6 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
     val index = descr.lastIndexOf(descr)
     if (index < 0) descr else descr.substring(index)
   }
-  
+
   def description: String = declarationPrefix + " " + formattedFullName
 }

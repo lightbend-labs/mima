@@ -6,7 +6,7 @@ object MemberInfo {
 
  /** The index of the string $_setter_$ in this string */
   private def setterIdx(name: String) = name.indexOf(setterTag)
-  
+
   private val setterTag = "$_setter_$"
   private val setterSuffix = "_$eq"
 
@@ -21,14 +21,14 @@ class MemberInfo(val owner: ClassInfo, val name: String, override val flags: Int
   def fieldString = "field "+decodedName+" in "+owner.classString
   def shortMethodString = (if(hasSyntheticName) "synthetic " else "") + (if(isDeprecated) "deprecated " else "") + "method "+decodedName + tpe
   def methodString = shortMethodString + " in " + owner.classString
-  def defString = (if(isDeprecated) "@deprecated " else "") + "def " + decodedName + params.mkString("(", ",", ")") + ": " + tpe.resultType + " = " 
+  def defString = (if(isDeprecated) "@deprecated " else "") + "def " + decodedName + params.mkString("(", ",", ")") + ": " + tpe.resultType + " = "
   def applyString = decodedName + params.mkString("(", ",", ")")
-  
+
   lazy val params: List[String] = tpe match {
     case MethodType(paramTypes, resultType) =>
       for ((ptype, index) <- paramTypes.zipWithIndex) yield "par" + index + ": " + ptype
   }
-  
+
   def fullName = owner.formattedFullName + "." + decodedName
 
   def tpe: Type = owner.owner.definitions.fromSig(sig)
@@ -42,7 +42,7 @@ class MemberInfo(val owner: ClassInfo, val name: String, override val flags: Int
     sig substring (1, sig indexOf ")")
   }
 
-  def matchesType(other: MemberInfo): Boolean = 
+  def matchesType(other: MemberInfo): Boolean =
     if (isMethod) other.isMethod && parametersSig == other.parametersSig
     else !other.isMethod && sig == other.sig
 
@@ -50,8 +50,8 @@ class MemberInfo(val owner: ClassInfo, val name: String, override val flags: Int
     assert(sig(0) == '(')
     sig substring ((sig indexOf ")") + 1)
   }
-  
-  
+
+
   var codeOpt: Option[(Int, Int)] = None
 
   def isClassConstructor = name == "<init>"
@@ -62,10 +62,10 @@ class MemberInfo(val owner: ClassInfo, val name: String, override val flags: Int
 
   var isTraitSetter = maybeSetter(name) && setterIdx(name) >= 0
 
-  var isDeprecated = false	
+  var isDeprecated = false
 
   def hasSyntheticName: Boolean = decodedName contains '$'
-  
+
   def isAccessible: Boolean = isPublic && !hasSyntheticName
 
   /** The name of the getter corresponding to this setter */

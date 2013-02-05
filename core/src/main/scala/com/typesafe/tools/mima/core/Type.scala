@@ -36,9 +36,9 @@ case class ValueType(name: String) extends Type {
 }
 case class ClassType(private val clazz: ClassInfo) extends Type {
   override def toString = ClassInfo.formatClassName(clazz.fullName)
-  
+
   override def isSubtypeOf(that: Type) = that match {
-    case ClassType(thatClazz) => 
+    case ClassType(thatClazz) =>
       if(thatClazz.isTrait) clazz.allTraits.exists(_.fullName == thatClazz.fullName)
       else clazz.superClasses.exists(_.fullName == thatClazz.fullName)
     case _ => false

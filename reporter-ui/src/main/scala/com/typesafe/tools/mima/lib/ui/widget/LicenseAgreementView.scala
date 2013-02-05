@@ -17,7 +17,7 @@ class LicenseAgreementView(licenseText: String) extends Component {
 
       peer.addComponentListener(new java.awt.event.ComponentAdapter {
         override def componentResized(e: java.awt.event.ComponentEvent) {
-          licenseEditor.size = new Dimension(size.width - 20, size.height)
+          licenseEditor.peer setSize new Dimension(size.width - 20, size.height)
         }
       });
 
