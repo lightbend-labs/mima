@@ -23,6 +23,7 @@ object BuildSettings {
   val commonSettings = Defaults.defaultSettings ++ Seq (
       organization := buildOrganization,
       scalaVersion := buildScalaVer,
+      crossScalaVersions := "2.9.2" :: buildScalaVer :: Nil,
       version      := buildVersion,
       licenses := Seq("Apache License v2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
       homepage := Some(url("http://github.com/typesafehub/migration-manager"))
@@ -78,7 +79,10 @@ object Dependencies {
   val compiler = "org.scala-lang" % "scala-compiler" % buildScalaVer
   val swing = "org.scala-lang" % "scala-swing" % buildScalaVer
 
-  val specs2 = "org.specs2" %% "specs2" % "1.13" % "test"
+  def specs2(sv: String) = (
+    if (sv startsWith "2.9.") "org.specs2"  % "specs2_2.9.1" % "1.5"  % "test"
+    else "org.specs2" %% "specs2"       % "1.13" % "test"
+  )
 }
 
 object MimaBuild extends Build {
@@ -96,6 +100,12 @@ object MimaBuild extends Build {
              publishLocal := ())
   )
 
+  private def libDeps(suffix: String): List[Setting[_]] = List(
+    libraryDependencies += compiler,
+    libraryDependencies <+= (scalaVersion)(specs2),
+    name := buildName + "-" + suffix
+  )
+
   lazy val core = (
     Project("core", file("core"),
             settings = commonSettings ++: buildInfoSettings ++: Seq(
@@ -105,15 +115,14 @@ object MimaBuild extends Build {
                 buildInfoObject  := "BuildInfo"
                 )
            )
-    settings(libraryDependencies ++= Seq(compiler, specs2),
-             name := buildName + "-core")
+
+    settings(libDeps("core"): _*)
     settings(sonatypePublishSettings:_*)
   )
 
   lazy val coreui = (
     Project("core-ui", file("core-ui"), settings = commonSettings)
-    settings(libraryDependencies ++= Seq(swing, compiler, specs2),
-             name := buildName + "-core-ui")
+    settings((libraryDependencies += swing) :: libDeps("core-ui"): _*)
     dependsOn(core)
     settings(sonatypePublishSettings:_*)
   )

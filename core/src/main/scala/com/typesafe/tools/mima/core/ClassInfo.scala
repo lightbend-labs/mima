@@ -84,7 +84,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
   private var _isScala: Boolean = false
 
   def superClass: ClassInfo = { ensureLoaded(); _superClass }
-  def interfaces: List[ClassInfo] = { ensureLoaded(); _interfaces }
+  def interfaces: List[ClassInfo] = ({ ensureLoaded(); _interfaces }) filterNot isScalaObject
   def fields: Members = { ensureLoaded(); _fields }
   def methods: Members = { ensureLoaded(); _methods }
   override def flags: Int = _flags
@@ -92,15 +92,19 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
   /** currently not set! */
   def isScala: Boolean = { ensureLoaded(); _isScala }
 
-  def superClass_=(x: ClassInfo) = _superClass = x
+  /** Drop ScalaObject for 2.9/2.10 consistency. */
+  def superClass_=(x: ClassInfo) = _superClass = if (isScalaObject(x)) ClassInfo.ObjectClass else x
   def interfaces_=(x: List[ClassInfo]) = _interfaces = x
   def fields_=(x: Members) = _fields = x
   def methods_=(x: Members) = _methods = x
   def flags_=(x: Int) = _flags = x
   def isScala_=(x: Boolean) = _isScala = x
 
-  lazy val superClasses: List[ClassInfo] =
-    (if (this == ClassInfo.ObjectClass) Nil else superClass :: superClass.superClasses)
+  private def isScalaObject(info: ClassInfo) = info.fullName == "scala.ScalaObject"
+  /** Filter out ScalaObject for 2.9/2.10 consistency */
+  lazy val superClasses: List[ClassInfo] = (
+    (if (this == ClassInfo.ObjectClass) Nil else superClass :: superClass.superClasses) filterNot isScalaObject
+  )
 
   def lookupClassFields(name: String): Iterator[MemberInfo] =
     (Iterator.single(this) ++ superClasses.iterator) flatMap (_.fields.get(name))
