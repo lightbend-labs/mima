@@ -11,6 +11,8 @@ import sbtassembly.Plugin.AssemblyKeys._
 import sbtassembly.Plugin.assemblySettings
 import sbtassembly.Plugin.MergeStrategy
 import sbtbuildinfo.Plugin._
+import com.typesafe.sbt.S3Plugin._
+import S3._
 
 object BuildSettings {
   
@@ -27,7 +29,6 @@ object BuildSettings {
       licenses := Seq("Apache License v2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
       homepage := Some(url("http://github.com/typesafehub/migration-manager"))
   )
-
 
   def sbtPublishSettings: Seq[Setting[_]] = Seq(
     publishMavenStyle := false,
@@ -92,8 +93,18 @@ object MimaBuild extends Build {
 
   lazy val root = (
     Project("root", file("."), aggregate = modules.map(Reference.projectToRef(_)))
+    settings(s3Settings:_*)
     settings(publish := (),
-             publishLocal := ())
+             publishLocal := (),
+             mappings in upload <<= (assembly in reporter, assembly in reporterui) map { (cli, ui) =>
+               def loc(name: String) = "migration-manager/%s/%s-%s.jar" format (buildVersion, name, buildVersion)
+               Seq(
+                 cli -> loc("migration-manager-cli"),
+                 ui  -> loc("migration-manager-ui")
+               )
+             },
+             host in upload := "downloads.typesafe.com.s3.amazonaws.com"
+    )
   )
 
   lazy val core = (
