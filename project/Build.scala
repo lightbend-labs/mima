@@ -77,6 +77,7 @@ object Dependencies {
 
   val compiler = "org.scala-lang" % "scala-compiler" % buildScalaVer
   val swing = "org.scala-lang" % "scala-swing" % buildScalaVer
+  val typesafeConfig = "com.typesafe" % "config" % "1.0.0"
 
   val specs2 = "org.specs2" % "specs2_2.9.1" % "1.5" % "test"
 }
@@ -136,7 +137,7 @@ object MimaBuild extends Build {
 
   lazy val reporter = (
     Project("reporter", file("reporter"), settings = commonSettings)
-    settings(libraryDependencies ++= Seq(swing),
+    settings(libraryDependencies ++= Seq(swing, typesafeConfig),
              name := buildName + "-reporter",
              javaOptions += "-Xmx512m")
     dependsOn(core)

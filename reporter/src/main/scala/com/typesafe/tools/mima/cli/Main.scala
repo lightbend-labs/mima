@@ -5,7 +5,8 @@ import lib.MiMaLib
 import scala.tools.cmd._
 import scala.tools.nsc.util.{JavaClassPath,ClassPath}
 import ClassPath.DefaultJavaContext
-import core.Config
+import core.{Config, ProblemFilter}
+import java.io.File
 
 /** A program to run the MIMA tools from the command line.
  */
@@ -19,6 +20,8 @@ trait MimaSpec extends Spec with Meta.StdOpts with Interpolation {
   val currentfile = "curr" / "Current classpath/jar for binary compatibility testing." defaultTo ""
   heading("optional settings:")
   val classpath    = "classpath"    / "an optional classpath setting"        defaultTo System.getProperty("java.class.path")
+  val problemFilters = "filters" / "an optional problem filters configuration file" --|
+  val generateFilters = "generate-filters" / "generate filters definition for displayed problems" --?
 }
 
 object MimaSpec extends MimaSpec with Property {
@@ -78,14 +81,47 @@ class Main(args: List[String]) extends {
     wrapString(" * " + p.description) mkString "\n   "
   }
 
-  def run(): Int = {
-    val mima = makeMima
-    val problems = mima.collectProblems(prevfile, currentfile)
-    val header = "Found " + problems.size + " binary incompatibiities"
+  private def loadFilters(configFile: File): Seq[ProblemFilter] = {
+    import com.typesafe.config._
+    try {
+      val config: Config = ConfigFactory.parseFile(configFile)
+      ProblemFiltersConfig.parseProblemFilters(config)
+    } catch {
+      case e: Exception =>
+        Console.err.println("Problem with loading filter configuration:")
+        e.printStackTrace(Console.err)
+        System.exit(1)
+        // we rethrow to satisfy types, System.exit should do the job
+        throw e
+    }
+  }
+
+  private def printGeneratedFilters(errors: Seq[core.Problem]): Unit = {
+    val errorsFilterConfig = ProblemFiltersConfig.problemsToProblemFilterConfig(errors)
+    val header = "Generated filter config definition"
     println(header)
     println(Seq.fill(header.length)("=") mkString "")
-    problems map printProblem foreach println
-    problems.size
+    import com.typesafe.config._
+    val renderOptions = ConfigRenderOptions.defaults().setOriginComments(false).setJson(false)
+    println(errorsFilterConfig.root.render(renderOptions))
+  }
+
+  def run(): Int = {
+    val mima = makeMima
+    val foundProblems = mima.collectProblems(prevfile, currentfile)
+    val filters = problemFilters.map(filePath => loadFilters(new File(filePath))).flatten
+    def isReported(problem: core.Problem) = filters.forall(filter => filter(problem))
+    val errors = foundProblems.filter(isReported)
+    val header = "Found " + errors.size + " binary incompatibiities" + {
+      val filteredOutSize = foundProblems.size - errors.size
+      if (filteredOutSize > 0) " (" + filteredOutSize + " were filtered out)" else ""
+    }
+    println(header)
+    println(Seq.fill(header.length)("=") mkString "")
+    errors map printProblem foreach println
+    if (generateFilters)
+      printGeneratedFilters(errors)
+    errors.size
   }
 }
 
