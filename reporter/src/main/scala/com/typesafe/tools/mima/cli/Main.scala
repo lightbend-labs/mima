@@ -84,7 +84,7 @@ class Main(args: List[String]) extends {
   private def loadFilters(configFile: File): Seq[ProblemFilter] = {
     import com.typesafe.config._
     try {
-      val config: Config = ConfigFactory.parseFile(configFile)
+      val config: Config = ConfigFactory.parseFile(configFile).resolve
       ProblemFiltersConfig.parseProblemFilters(config)
     } catch {
       case e: Exception =>
