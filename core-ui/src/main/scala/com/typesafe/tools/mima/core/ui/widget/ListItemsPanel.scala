@@ -6,7 +6,7 @@ import scala.swing.event.ButtonClicked
 import com.typesafe.tools.mima.core.ui.images
 
 abstract class ListItemsPanel extends Component {
-  
+
   private val MaxNumberOfItems = 10
 
   type Item <: Component
@@ -52,7 +52,7 @@ abstract class ListItemsPanel extends Component {
   override lazy val peer: javax.swing.JComponent = view.peer
 
   final protected def addConstraint() {
-    val newRow = new Row(create()) { 
+    val newRow = new Row(create()) {
       remove.visible = false
     }
     if(view.contents.nonEmpty) {
@@ -66,12 +66,12 @@ abstract class ListItemsPanel extends Component {
     view -= r
     view.contents.last.asInstanceOf[Row].remove.visible = false
   }
-  
-  
+
+
 
   private def updateView() {
-    add.enabled = (view.contents.size < MaxNumberOfItems) 
-    
+    add.enabled = (view.contents.size < MaxNumberOfItems)
+
     repaint()
     revalidate()
   }

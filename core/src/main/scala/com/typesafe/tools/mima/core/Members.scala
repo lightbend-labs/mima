@@ -10,7 +10,7 @@ class Members(val members: TraversableOnce[MemberInfo]) {
   }
   for (m <- members) bindings += m.name -> (m :: bindings(m.name))
 
-  def iterator: Iterator[MemberInfo] = 
+  def iterator: Iterator[MemberInfo] =
     for (ms <- bindings.valuesIterator; m <- ms.iterator) yield m
   def get(name: String): Iterator[MemberInfo] = bindings(name).iterator
 }

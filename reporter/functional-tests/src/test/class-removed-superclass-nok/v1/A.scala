@@ -1,2 +1,2 @@
-class A 
+class A
 class B extends A

@@ -13,7 +13,7 @@ import com.typesafe.tools.mima.core.util.Browse
 class HtmlViewPane extends Component {
 
   override lazy val peer = componee
-  
+
   private lazy val componee = new JEditorPane(new HTMLEditorKit().getContentType(), "") {
     private val defaultLabelFont = UIManager.getFont("Label.font")
     /**
@@ -36,6 +36,6 @@ class HtmlViewPane extends Component {
       }
     })
   }
-  
+
   def setHtml(html: String) = componee.setText(html)
 }

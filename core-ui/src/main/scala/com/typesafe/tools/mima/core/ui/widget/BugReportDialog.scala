@@ -71,8 +71,7 @@ class BugReportDialog(error: Throwable, owner: Window = null) extends Dialog(own
 
   location = center
   modal = true
-  resizable = false 
+  resizable = false
   pack()
   visible = true
 }
-  

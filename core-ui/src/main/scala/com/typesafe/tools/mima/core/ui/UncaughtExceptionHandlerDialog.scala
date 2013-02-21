@@ -20,7 +20,7 @@ trait WithUncaughtExceptionHandlerDialog {
 
   /** Default exception handler */
   protected val handler: Thread.UncaughtExceptionHandler = new UncaughtExceptionHandlerDialog()
-  
-  // setting the handler (assumes it is set only once, here - no way to enforce this though)  
+
+  // setting the handler (assumes it is set only once, here - no way to enforce this though)
   Thread.setDefaultUncaughtExceptionHandler(handler)
 }

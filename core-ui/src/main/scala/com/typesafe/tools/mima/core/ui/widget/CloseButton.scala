@@ -5,7 +5,7 @@ import scala.swing.Swing.EmptyBorder
 
 import com.typesafe.tools.mima.core.ui.images
 
-/** A close button displayed as an icon. When the mouse is over 
+/** A close button displayed as an icon. When the mouse is over
  * the image a hand cursor is shown.*/
 class CloseButton extends Button {
   icon = images.Icons.close

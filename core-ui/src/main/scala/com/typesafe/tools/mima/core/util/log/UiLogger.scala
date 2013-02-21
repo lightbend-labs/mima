@@ -6,11 +6,11 @@ import scala.swing.Swing
 import com.typesafe.tools.mima.core.Config
 
 object UiLogger extends Component with Logging {
-  
+
   private lazy val label = new Label
-  
+
   override lazy val peer = label.peer
-  
-	def info(str: String): Unit = Swing.onEDT { label.text = str } 
-  def debugLog(str: String): Unit = if(Config.debug) Swing.onEDT { label.text = str } 
+
+	def info(str: String): Unit = Swing.onEDT { label.text = str }
+  def debugLog(str: String): Unit = if(Config.debug) Swing.onEDT { label.text = str }
 }

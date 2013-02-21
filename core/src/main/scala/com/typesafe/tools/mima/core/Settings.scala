@@ -16,22 +16,22 @@ class Settings(specificOptions: String*) extends nsc.Settings(Console.println) {
 
   allSettings += (interactive, mimaOutDir)
 
-  def visibleNames = 
+  def visibleNames =
     List(
-      "-bootclasspath", 
-      "-classpath", 
-      "-extdirs", 
-      "-javaextdirs", 
-      "-usejavacp", 
-      "-version", 
-      "-help", 
+      "-bootclasspath",
+      "-classpath",
+      "-extdirs",
+      "-javaextdirs",
+      "-usejavacp",
+      "-version",
+      "-help",
       "-Ydebug",
-      "-verbose", 
-      "-d", 
+      "-verbose",
+      "-d",
       "-i") ++ specificOptions
 
   override def visibleSettings = super.visibleSettings.filter (visibleNames contains _.name)
 }
 
-    
-  
+
+
