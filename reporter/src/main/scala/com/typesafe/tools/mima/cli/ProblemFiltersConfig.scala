@@ -13,8 +13,8 @@ object ProblemFiltersConfig {
   /**
    * Parses Config definition into sequence of problem filters.
    *
-   * @exception ConfigException
-   * @exception ClassNotFoundException if filter rule uses `problemName` that does not
+   * @throws ConfigException
+   * @throws ClassNotFoundException if filter rule uses `problemName` that does not
    *                                   correspond to existing Problem class.
    */
   def parseProblemFilters(config: Config): Seq[ProblemFilter] = {

@@ -20,7 +20,7 @@ object ProblemFilters {
    *
    *  The problemName is name of a class corresponding to a problem like `AbstractMethodProblem`.
    *
-   *  @exception ClassNotFoundException if the class corresponding to the problem cannot be located
+   *  @throws ClassNotFoundException if the class corresponding to the problem cannot be located
    */
   def exclude(problemName: String, name: String): ProblemFilter = {
     val problemClass: Class[_ <: ProblemRef] = Class.forName("com.typesafe.tools.mima.core." + problemName).asInstanceOf[Class[_ <: ProblemRef]]
