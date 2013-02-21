@@ -15,9 +15,9 @@ private[analyze] abstract class BaseFieldChecker extends Checker[MemberInfo, Cla
           Some(InaccessibleFieldProblem(newfld))
         else if(field.sig != newfld.sig)
           Some(IncompatibleFieldTypeProblem(field, newfld))
-        else 
+        else
           None
-      } 
+      }
       else Some(MissingFieldProblem(field))
     }
     else None

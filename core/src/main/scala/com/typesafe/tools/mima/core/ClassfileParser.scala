@@ -60,7 +60,7 @@ abstract class ClassfileParser(definitions: Definitions) {
     } catch {
       case e: RuntimeException => handleError(e)
     }
-  } 
+  }
 
   protected def parseAll(clazz: ClassInfo) {
     parseHeader()
@@ -83,7 +83,7 @@ abstract class ClassfileParser(definitions: Definitions) {
     private val starts = new Array[Int](length)
     private val values = new Array[AnyRef](length)
     private val internalized = new Array[String](length)
-    
+
     { var i = 1
       while (i < length) {
         starts(i) = in.bp
@@ -140,7 +140,7 @@ abstract class ClassfileParser(definitions: Definitions) {
       }
       c
     }
-    
+
     /** Return the external name of the class info structure found at 'index'.
      *  Use 'getClassSymbol' if the class is sure to be a top-level class.
      */
@@ -149,7 +149,7 @@ abstract class ClassfileParser(definitions: Definitions) {
       if (in.buf(start).toInt != CONSTANT_CLASS) errorBadTag(start)
       getExternalName(in.getChar(start + 1))
     }
-    
+
     def getSuperClass(index: Int): ClassInfo =
       if (index == 0) ClassInfo.ObjectClass else getClassInfo(index)
 
@@ -157,7 +157,7 @@ abstract class ClassfileParser(definitions: Definitions) {
      *  type, a dummy symbol is created in 'ownerTpe', which is used as the
      *  owner of its value parameters. This might lead to inconsistencies,
      *  if a symbol of the given name already exists, and has a different
-     *  type. 
+     *  type.
      */
     def getNameAndType(index: Int): (String, String) = {
       if (index <= 0 || length <= index) errorBadIndex(index)
@@ -201,13 +201,13 @@ abstract class ClassfileParser(definitions: Definitions) {
       throw new RuntimeException("bad constant pool tag " + in.buf(start) + " at byte " + start)
   }
 
-  def parseFields(clazz: ClassInfo): Unit = 
+  def parseFields(clazz: ClassInfo): Unit =
     if (readFields(clazz)) clazz.fields = parseMembers(clazz)
     else if (readMethods(clazz)) skipMembers()
 
-  def parseMethods(clazz: ClassInfo) = 
+  def parseMethods(clazz: ClassInfo) =
     if (readMethods(clazz)) clazz.methods = parseMembers(clazz)
-            
+
   def parseMembers(clazz: ClassInfo): Members = {
     val takeStatics = clazz.isImplClass
     val memberCount = in.nextChar
@@ -229,7 +229,7 @@ abstract class ClassfileParser(definitions: Definitions) {
       in.skip(6); skipAttributes()
     }
   }
-  
+
   def parseMember(clazz: ClassInfo, jflags: Int): MemberInfo = {
     val name = pool.getName(in.nextChar)
     val sig = pool.getExternalName(in.nextChar)
@@ -243,12 +243,12 @@ abstract class ClassfileParser(definitions: Definitions) {
     val nameIdx = in.nextChar
     val externalName = pool.getClassName(nameIdx)
 
-    def parseSuperClass(): ClassInfo = 
+    def parseSuperClass(): ClassInfo =
       if (hasAnnotation(clazz.flags)) { in.nextChar; definitions.AnnotationClass }
       else pool.getSuperClass(in.nextChar)
 
     def parseInterfaces(): List[ClassInfo] = {
-      val rawInterfaces = 
+      val rawInterfaces =
         for (i <- List.range(0, in.nextChar)) yield pool.getSuperClass(in.nextChar)
       rawInterfaces filter (_ != NoClass)
     }
@@ -266,7 +266,7 @@ abstract class ClassfileParser(definitions: Definitions) {
       in.skip(2); in.skip(in.nextInt)
     }
   }
-  
+
   def parseAttributes(c: ClassInfo) {
     val attrCount = in.nextChar
      for (i <- 0 until attrCount) {
@@ -280,11 +280,11 @@ abstract class ClassfileParser(definitions: Definitions) {
           c.sourceFileName = pool.getName(attrNameIndex)
         }
       }
-      
+
       in.bp = attrEnd
      }
   }
-  
+
   /** Return true iff TraitSetter annotation found among attributes */
   def parseAttributes(m: MemberInfo) {
     val maybeTraitSetter = MemberInfo.maybeSetter(m.name)
@@ -300,9 +300,9 @@ abstract class ClassfileParser(definitions: Definitions) {
         while (j < annotCount && !m.isTraitSetter) {
           if (in.bp + 2 <= attrEnd) {
             val annotIndex = in.nextChar
-            if (pool.getName(annotIndex) == "Lscala/runtime/TraitSetter;") 
+            if (pool.getName(annotIndex) == "Lscala/runtime/TraitSetter;")
               m.isTraitSetter = true
-            else 
+            else
               skipAnnotation(annotIndex, attrEnd)
           }
           j += 1
@@ -332,7 +332,7 @@ abstract class ClassfileParser(definitions: Definitions) {
           }
       }
     } catch {
-      case ex: Exception => 
+      case ex: Exception =>
     }
   }
 

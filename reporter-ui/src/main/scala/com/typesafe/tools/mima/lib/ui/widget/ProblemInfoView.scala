@@ -68,7 +68,7 @@ class ProblemInfoView extends Component {
     }
 
   }
-  
+
   private lazy val LightYellow = new Color(247, 255, 199)
 
   private lazy val closeButton = new CloseButton {
@@ -83,7 +83,7 @@ class ProblemInfoView extends Component {
   }
 
   private lazy val container = new BorderPanel {
-    
+
 
     background = LightYellow
     border = EmptyBorder(3)

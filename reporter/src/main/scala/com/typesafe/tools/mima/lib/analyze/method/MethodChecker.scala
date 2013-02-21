@@ -59,14 +59,14 @@ private[analyze] class TraitMethodChecker extends BaseMethodChecker {
       // then it's ok, the method it is still there
       None
     } else {
-      // if a concrete method exists on some inherited trait, then we 
-      // report the missing method but we can upgrade the bytecode for 
+      // if a concrete method exists on some inherited trait, then we
+      // report the missing method but we can upgrade the bytecode for
       // this specific issue
       if (inclazz.allTraits.exists(_.hasStaticImpl(method))) {
         Some(UpdateForwarderBodyProblem(method))
       } else {
-        // otherwise we check the all concrete trait methods and report 
-        // either that the method is missing or that no method with the 
+        // otherwise we check the all concrete trait methods and report
+        // either that the method is missing or that no method with the
         // same signature exists. Either way, we expect that a problem is reported!
         val prob = super.check(method, inclazz.lookupConcreteTraitMethods(method.name))
         assert(prob.isDefined)

@@ -73,6 +73,6 @@ class FilePicker(private val label: Label, owner: Component, private var _select
   private def notifiyFileSelectedChanged() {
     publish(FileChanged(FilePicker.this, selectedFile.get))
   }
-  
+
   def selectedFile: Option[File] = _selectedFile
 }

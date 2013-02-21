@@ -25,18 +25,18 @@ class ClassPathEditor(init: List[String] = Nil) extends GridBagPanel with WithCo
 
   def classpath_=(_classpath: List[String]) =  listView.listData = _classpath
   def classpath = listView.listData
-  
+
   /** Return the string of current classpath in this editor. */
   def classPathString = {
     ClassPath.join(listView.listData: _*)
   }
-  
+
   private val listView = new ListView(elements.toList) {
     border = LineBorder(Color.gray)
     selection.intervalMode = ListView.IntervalMode.SingleInterval
 
     listenTo(mouse.moves)
-    
+
     reactions += {
       case MouseMoved(_, point, _) =>
         val index = peer.locationToIndex(point)

@@ -16,13 +16,13 @@ trait WithAccessModifier extends HasAccessFlags {
     ensureLoaded()
     ClassfileParser.isPrivate(flags)
   }
-  
+
   def isLessVisibleThan(that: WithAccessModifier) = {
-    (!isPublic && that.isPublic) || (isPrivate && that.isProtected) 
+    (!isPublic && that.isPublic) || (isPrivate && that.isProtected)
   }
-  
+
   protected def ensureLoaded() {}
-  
+
   def accessModifier = {
     if(isProtected) "protected"
     else if(isPrivate) "private"

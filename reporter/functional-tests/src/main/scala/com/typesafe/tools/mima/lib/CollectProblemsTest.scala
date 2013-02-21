@@ -21,7 +21,7 @@ class CollectProblemsTest {
     val problems = mima.collectProblems(oldJarPath, newJarPath).map(_.description)
 
     // load oracle
-    var expectedProblems = Source.fromFile(oraclePath).getLines.toList 
+    var expectedProblems = Source.fromFile(oraclePath).getLines.toList
 
     // diff between the oracle and the collected problems
     val unexpectedProblems = problems -- expectedProblems

@@ -19,12 +19,12 @@ class ReportTableModel(problems: Array[Array[AnyRef]]) extends AbstractTableMode
 
   override def getColumnName(n: Int) = columns(n)
   def getColumnNames = columns.toList
-  def getColumnIndex(name: String) = (0 until columns.size).find(getColumnName(_).toLowerCase == name) 
+  def getColumnIndex(name: String) = (0 until columns.size).find(getColumnName(_).toLowerCase == name)
 
   override def getColumnCount = columns.size
   override def getRowCount = problems.size
   override def getValueAt(x: Int, y: Int): AnyRef = problems(x)(y)
-  
+
   def getProblem(row: Int) = getValueAt(row, ReportTableModel.ProblemDataColumn).asInstanceOf[Problem]
 
   override def isCellEditable(i: Int, j: Int) = false
