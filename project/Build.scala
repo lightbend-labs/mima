@@ -20,7 +20,7 @@ object BuildSettings {
   val buildOrganization = "com.typesafe"
 
   val buildScalaVer = "2.9.2"
-  val buildVersion = "0.1.5"
+  val buildVersion = "0.1.6-SNAPSHOT"
 
   val commonSettings = Defaults.defaultSettings ++ Seq (
       organization := buildOrganization,
