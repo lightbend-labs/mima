@@ -6,6 +6,8 @@ A tool for diagnosing and fixing migration problems for Scala libraries
 
 The Migration Manager for Scala (MiMa in short) is a tool for diagnosing binary incompatibilities for Scala libraries.
 
+If you don't know how to use MiMa, please [read the user documentation](https://github.com/typesafehub/migration-manager/wiki).
+
 Please, use the [mima-user Mailing List][mima-user-ml] for questions and comments.
 
 MiMa's Modules
@@ -18,47 +20,6 @@ MiMa is split into Several modules:
 - Reporter:  Raw reporting classes and the command line interface.
 - Reporter-UI: Swing interface to the reporter.
 - SBT Plugin:  The SBT plugin for usage inside SBT builds.
-
-
-SBT Plugin
-----------
-
-The SBT Plugin is released for SBT version 0.12.  To try it, do the following:
-
-1. Add the following to your `project/project/build.scala` file:
-
-```
-resolvers += Resolver.url("sbt-plugin-releases", new URL("http://scalasbt.artifactoryonline.com/scalasbt/sbt-plugin-releases/"))(Resolver.ivyStylePatterns)
-
-addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.1.4")
-```
-
-2. Add the following to your `build.sbt` file:
-
-```
-import com.typesafe.tools.mima.plugin.MimaPlugin.mimaDefaultSettings
-import com.typesafe.tools.mima.plugin.MimaKeys.previousArtifact
-      
-mimaDefaultSettings
-      
-previousArtifact := Some("com.jsuereth" % "scala-arm_2.9.1" % "1.2")
-```
-
-
-But replacing the scala-arm example with your own artifact.
-
-3. Run `mima-report-binary-issues`.  You should see something like the following:
-
-```
-[info] Found 4 potential binary incompatibilities
-[error]  * method rollbackTransactionResource()resource.Resource in object resource.Resource does not have a correspondent in new version
-[error]  * method now()scala.util.continuations.ControlContext in trait resource.ManagedResourceOperations does not have a correspondent in old version
-[error]  * abstract method now()scala.util.continuations.ControlContext in interface resource.ManagedResource does not have a correspondent in old version
-[error]  * method rollbackTransactionResource()resource.Resource in trait resource.MediumPriorityResourceImplicits does not have a correspondent in new version
-[error] {file:/home/jsuereth/project/personal/scala-arm/}scala-arm/*:mima-report-binary-issues: Binary compatibility check failed!
-[error] Total time: 15 s, completed May 18, 2012 11:32:29 AM
-```
-
 
 Eclipse
 -------
