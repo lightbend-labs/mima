@@ -7,6 +7,7 @@ import scala.collection.JavaConverters._
 
 object ProblemFiltersConfig {
   private val filterProblemsPath = "filter.problems"
+  private val filterPackagesPath = "filter.packages"
   private val problemNameKey = "problemName"
   private val matchNameKey = "matchName"
 
@@ -19,11 +20,16 @@ object ProblemFiltersConfig {
    */
   def parseProblemFilters(config: Config): Seq[ProblemFilter] = {
     val filters = config.getConfigList(filterProblemsPath).asScala.toSeq
-    for (problemConfig <- filters) yield {
+    val individualFilter = for (problemConfig <- filters) yield {
       val problemClassName = problemConfig.getString(problemNameKey)
       val matchName = problemConfig.getString(matchNameKey)
       ProblemFilters.exclude(problemClassName, matchName)
     }
+    val packages = config.getStringList(filterPackagesPath).asScala.toSeq
+    val packageFilter = for (pack <- packages) yield {
+      ProblemFilters.excludePackage(pack)
+    }
+    individualFilter ++ packageFilter
   }
 
   /**
