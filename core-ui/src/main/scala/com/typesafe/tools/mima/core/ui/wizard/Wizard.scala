@@ -22,7 +22,7 @@ import com.typesafe.tools.mima.core.ui.widget.NavigationPanel
  *      pages += new Button("Page 1")
  *      pages += new Label("Page 2")
  *    }
- *  }}
+ *  }}}
  *
  *  This class publishes two events.
  *  @see PageChanged, Cancelled

@@ -5,7 +5,6 @@ import Keys._
 import Project.inConfig
 import Configurations.config
 import Build.data
-import Path._
 import sbtassembly.Plugin.AssemblyKeys
 import sbtassembly.Plugin.AssemblyKeys._
 import sbtassembly.Plugin.assemblySettings
@@ -19,8 +18,9 @@ object BuildSettings {
   val buildName = "mima"
   val buildOrganization = "com.typesafe"
 
-  val buildScalaVer = "2.9.2"
+  val buildScalaVer = "2.10.2"
   val buildVersion = "0.1.6-SNAPSHOT"
+
 
   val commonSettings = Defaults.defaultSettings ++ Seq (
       organization := buildOrganization,
@@ -78,9 +78,13 @@ object Dependencies {
 
   val compiler = "org.scala-lang" % "scala-compiler" % buildScalaVer
   val swing = "org.scala-lang" % "scala-swing" % buildScalaVer
+  val actors = "org.scala-lang" % "scala-actors" % buildScalaVer
   val typesafeConfig = "com.typesafe" % "config" % "1.0.0"
 
-  val specs2 = "org.specs2" % "specs2_2.9.1" % "1.5" % "test"
+  val specs2 = "org.specs2" %% "specs2" % "1.14" % "test"
+  val mockito = "org.mockito" % "mockito-all" % "1.9.0" % "test"
+  val junit = "junit" % "junit" % "4.7"	% "test"
+  def testDeps = List(specs2, mockito, junit)
 }
 
 object MimaBuild extends Build {
@@ -93,7 +97,8 @@ object MimaBuild extends Build {
   lazy val modules = Seq(core, coreui, reporter, reporterui, sbtplugin)
 
   lazy val root = (
-    Project("root", file("."), aggregate = modules.map(Reference.projectToRef(_)))
+    Project("root", file("."))
+    aggregate(core, coreui, reporter, reporterui, sbtplugin)
     settings(s3Settings:_*)
     settings(publish := (),
              publishLocal := (),
@@ -112,19 +117,19 @@ object MimaBuild extends Build {
     Project("core", file("core"),
             settings = commonSettings ++: buildInfoSettings ++: Seq(
                 sourceGenerators in Compile <+= buildInfo,
-                buildInfoKeys := Seq[Scoped](version),
+                buildInfoKeys := Seq(version),
                 buildInfoPackage := "com.typesafe.tools.mima.core.buildinfo",
                 buildInfoObject  := "BuildInfo"
                 )
            )
-    settings(libraryDependencies ++= Seq(compiler, specs2),
+    settings(libraryDependencies ++= Seq(compiler) ++ testDeps,
              name := buildName + "-core")
     settings(sonatypePublishSettings:_*)
   )
 
   lazy val coreui = (
     Project("core-ui", file("core-ui"), settings = commonSettings)
-    settings(libraryDependencies ++= Seq(swing, compiler, specs2),
+    settings(libraryDependencies ++= Seq(actors, swing, compiler) ++ testDeps,
              name := buildName + "-core-ui")
     dependsOn(core)
     settings(sonatypePublishSettings:_*)
@@ -148,7 +153,7 @@ object MimaBuild extends Build {
 
   lazy val reporter = (
     Project("reporter", file("reporter"), settings = commonSettings)
-    settings(libraryDependencies ++= Seq(swing, typesafeConfig),
+    settings(libraryDependencies ++= Seq(actors, swing, typesafeConfig),
              name := buildName + "-reporter",
              javaOptions += "-Xmx512m")
     dependsOn(core)
@@ -180,6 +185,7 @@ object MimaBuild extends Build {
               sbtPlugin := true)
      dependsOn(reporter)
     settings(sbtPublishSettings:_*)
+    settings(sbtVersion in Global := "0.13.0")
   )
 
   lazy val reporterFunctionalTests = Project("reporter-functional-tests",
@@ -191,7 +197,7 @@ object MimaBuild extends Build {
   val bases = (file("reporter") / "functional-tests" / "src" / "test") * (DirectoryFilter)
 
   // make the Project for each discovered directory
-  lazy val tests = bases.getFiles map testProject
+  lazy val tests = bases.get map testProject
 
   // defines a Project for the given base directory (for example, functional-tests/test1)
   // Its name is the directory name (test1) and it has compile+package tasks for sources in v1/ and v2/

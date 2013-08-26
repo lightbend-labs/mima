@@ -1,1 +1,3 @@
-case class A
+case class A {
+  def copy = ()
+}
