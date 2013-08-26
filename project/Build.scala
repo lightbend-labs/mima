@@ -27,10 +27,11 @@ object BuildSettings {
       scalaVersion := buildScalaVer,
       version      := buildVersion,
       licenses := Seq("Apache License v2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
-      homepage := Some(url("http://github.com/typesafehub/migration-manager"))
+      homepage := Some(url("http://github.com/typesafehub/migration-manager")),
+      scalacOptions := Seq("-deprecation", "-language:_", "-Xlint")
   )
 
-  def sbtPublishSettings: Seq[Setting[_]] = Seq(
+  def sbtPublishSettings: Seq[Def.Setting[_]] = Seq(
     publishMavenStyle := false,
     publishTo <<= (version) { version: String =>
        val scalasbt = "http://scalasbt.artifactoryonline.com/scalasbt/"
@@ -40,7 +41,7 @@ object BuildSettings {
     }
   )
 
-  def sonatypePublishSettings: Seq[Setting[_]] = Seq(
+  def sonatypePublishSettings: Seq[Def.Setting[_]] = Seq(
     // If we want on maven central, we need to be in maven style.
     publishMavenStyle := true,
     publishArtifact in Test := false,
@@ -115,7 +116,7 @@ object MimaBuild extends Build {
 
   lazy val core = (
     Project("core", file("core"),
-            settings = commonSettings ++: buildInfoSettings ++: Seq(
+            settings = ((commonSettings ++ buildInfoSettings): Seq[Setting[_]]) ++: Seq(
                 sourceGenerators in Compile <+= buildInfo,
                 buildInfoKeys := Seq(version),
                 buildInfoPackage := "com.typesafe.tools.mima.core.buildinfo",
@@ -135,7 +136,7 @@ object MimaBuild extends Build {
     settings(sonatypePublishSettings:_*)
   )
 
-  val myAssemblySettings: Seq[Setting[_]] = assemblySettings ++ Seq(
+  val myAssemblySettings: Seq[Setting[_]] = (assemblySettings: Seq[Setting[_]]) ++ Seq(
      mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
         {
           case "LICENSE" => MergeStrategy.first
@@ -238,7 +239,7 @@ object MimaBuild extends Build {
       packageBin in v1Config, // package the v1 sources and get the configuration used
       packageBin in v2Config, // same for v2
       streams) map { (cp, proj, si, v1, v2, streams) =>
-        val urls = data(cp).map(_.toURI.toURL).toArray
+        val urls = Attributed.data(cp).map(_.toURI.toURL).toArray
         val loader = new java.net.URLClassLoader(urls, si.loader)
 
         val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest")
@@ -247,7 +248,7 @@ object MimaBuild extends Build {
         }]
 
         // Add the scala-library to the MiMa classpath used to run this test
-        val testClasspath = data(cp).filter(_.getName endsWith "scala-library.jar").map(_.getAbsolutePath).toArray
+        val testClasspath = Attributed.data(cp).filter(_.getName endsWith "scala-library.jar").map(_.getAbsolutePath).toArray
 
         val projectPath = proj.build.getPath + "reporter" + "/" + "functional-tests" + "/" + "src" + "/" + "test" + "/" + proj.project
 

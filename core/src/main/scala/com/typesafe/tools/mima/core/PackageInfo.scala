@@ -22,7 +22,7 @@ object PackageInfo {
 import PackageInfo._
 
 class SyntheticPackageInfo(owner: PackageInfo, val name: String) extends PackageInfo(owner) {
-  def definitions: Definitions = error("Called definitions on synthetic package")
+  def definitions: Definitions = sys.error("Called definitions on synthetic package")
   lazy val packages = mutable.Map.empty[String, PackageInfo]
   lazy val classes = mutable.Map.empty[String, ClassInfo]
 }
@@ -82,7 +82,7 @@ abstract class PackageInfo(val owner: PackageInfo) {
     accessibleClassesUnder(Set.empty)
   }
 
-  /** All implementation classes of traits (classes that end in '$class'). */
+  /** All implementation classes of traits (classes that end in "$" followed by "class"). */
   lazy val implClasses: mutable.Map[String, ClassInfo] =
     classes filter { case (name, _) => name endsWith implClassSuffix }
 

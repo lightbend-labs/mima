@@ -61,7 +61,7 @@ abstract class MimaFrame extends MainFrame with Centered {
       icon = images.Icons.exit,
       title = "Exit MiMa",
       message = "Are you sure you want to quit?") match {
-        case Dialog.Result.Ok => exit(0)
+        case Dialog.Result.Ok => sys.exit(0)
         case _ => ()
       }
   }
