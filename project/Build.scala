@@ -81,7 +81,7 @@ object Dependencies {
   val actors = "org.scala-lang" % "scala-actors" % buildScalaVer
   val typesafeConfig = "com.typesafe" % "config" % "1.0.0"
 
-  val specs2 = "org.specs2" %% "specs2" % "1.14" % "test"
+  val specs2 = "org.specs2" %% "specs2" % "2.1.1" % "test"
   val mockito = "org.mockito" % "mockito-all" % "1.9.0" % "test"
   val junit = "junit" % "junit" % "4.7"	% "test"
   def testDeps = List(specs2, mockito, junit)
