@@ -26,4 +26,13 @@ object ProblemFilters {
     val problemClass: Class[_ <: ProblemRef] = Class.forName("com.typesafe.tools.mima.core." + problemName).asInstanceOf[Class[_ <: ProblemRef]]
     exclude(name)(ClassManifest.fromClass(problemClass))
   }
+
+  private case class ExcludeByPackage(excludedPackageName: String) extends ProblemFilter {
+    def apply(problem: Problem): Boolean = {
+      // careful to avoid excluding "com.foobar" with an exclusion "com.foo"
+      !problem.matchName.getOrElse("").startsWith(excludedPackageName + ".")
+    }
+  }
+
+  def excludePackage(packageName: String): ProblemFilter = new ExcludeByPackage(packageName)
 }
