@@ -114,7 +114,7 @@ class ClassPathEditor(init: List[String] = Nil) extends GridBagPanel with WithCo
       val sel = listView.selection
       val indices = sel.indices.toList
       val (prefix, suffix) = listView.listData.splitAt(sel.indices.max + 1)
-      listView.listData = prefix.dropRight(sel.indices.size) ++ List(suffix.first) ++ sel.items ++ suffix.drop(1)
+      listView.listData = prefix.dropRight(sel.indices.size) ++ List(suffix.head) ++ sel.items ++ suffix.drop(1)
       listView.selectIndices((indices map (_ + 1)).toSeq: _*)
   }
 

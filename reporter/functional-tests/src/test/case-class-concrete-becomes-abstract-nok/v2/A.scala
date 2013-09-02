@@ -1,1 +1,3 @@
-abstract case class A
+abstract case class A() {
+  def copy() = ()
+}

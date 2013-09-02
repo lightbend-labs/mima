@@ -1,1 +1,1 @@
-case class A
+case class A()

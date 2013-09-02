@@ -25,7 +25,7 @@ object FilePicker {
  * Jar File Picker. It displays the name of the current file
  *  and a button for selecting a different jar file.
  *
- *  @event: A `FileChanged` event is published every time the selected file is changed.
+ *  `@event`: A `FileChanged` event is published every time the selected file is changed.
  */
 class FilePicker(private val label: Label, owner: Component, private var _selectedFile: Option[File]) extends Component {
 

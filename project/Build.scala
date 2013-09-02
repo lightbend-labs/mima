@@ -5,7 +5,6 @@ import Keys._
 import Project.inConfig
 import Configurations.config
 import Build.data
-import Path._
 import sbtassembly.Plugin.AssemblyKeys
 import sbtassembly.Plugin.AssemblyKeys._
 import sbtassembly.Plugin.assemblySettings
@@ -19,18 +18,20 @@ object BuildSettings {
   val buildName = "mima"
   val buildOrganization = "com.typesafe"
 
-  val buildScalaVer = "2.9.2"
+  val buildScalaVer = "2.10.2"
   val buildVersion = "0.1.6-SNAPSHOT"
+
 
   val commonSettings = Defaults.defaultSettings ++ Seq (
       organization := buildOrganization,
       scalaVersion := buildScalaVer,
       version      := buildVersion,
       licenses := Seq("Apache License v2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
-      homepage := Some(url("http://github.com/typesafehub/migration-manager"))
+      homepage := Some(url("http://github.com/typesafehub/migration-manager")),
+      scalacOptions := Seq("-deprecation", "-language:_", "-Xlint")
   )
 
-  def sbtPublishSettings: Seq[Setting[_]] = Seq(
+  def sbtPublishSettings: Seq[Def.Setting[_]] = Seq(
     publishMavenStyle := false,
     publishTo <<= (version) { version: String =>
        val scalasbt = "http://scalasbt.artifactoryonline.com/scalasbt/"
@@ -40,7 +41,7 @@ object BuildSettings {
     }
   )
 
-  def sonatypePublishSettings: Seq[Setting[_]] = Seq(
+  def sonatypePublishSettings: Seq[Def.Setting[_]] = Seq(
     // If we want on maven central, we need to be in maven style.
     publishMavenStyle := true,
     publishArtifact in Test := false,
@@ -78,9 +79,13 @@ object Dependencies {
 
   val compiler = "org.scala-lang" % "scala-compiler" % buildScalaVer
   val swing = "org.scala-lang" % "scala-swing" % buildScalaVer
+  val actors = "org.scala-lang" % "scala-actors" % buildScalaVer
   val typesafeConfig = "com.typesafe" % "config" % "1.0.0"
 
-  val specs2 = "org.specs2" % "specs2_2.9.1" % "1.5" % "test"
+  val specs2 = "org.specs2" %% "specs2" % "2.1.1" % "test"
+  val mockito = "org.mockito" % "mockito-all" % "1.9.0" % "test"
+  val junit = "junit" % "junit" % "4.7"	% "test"
+  def testDeps = List(specs2, mockito, junit)
 }
 
 object MimaBuild extends Build {
@@ -93,7 +98,8 @@ object MimaBuild extends Build {
   lazy val modules = Seq(core, coreui, reporter, reporterui, sbtplugin)
 
   lazy val root = (
-    Project("root", file("."), aggregate = modules.map(Reference.projectToRef(_)))
+    Project("root", file("."))
+    aggregate(core, coreui, reporter, reporterui, sbtplugin)
     settings(s3Settings:_*)
     settings(publish := (),
              publishLocal := (),
@@ -110,27 +116,27 @@ object MimaBuild extends Build {
 
   lazy val core = (
     Project("core", file("core"),
-            settings = commonSettings ++: buildInfoSettings ++: Seq(
+            settings = ((commonSettings ++ buildInfoSettings): Seq[Setting[_]]) ++: Seq(
                 sourceGenerators in Compile <+= buildInfo,
-                buildInfoKeys := Seq[Scoped](version),
+                buildInfoKeys := Seq(version),
                 buildInfoPackage := "com.typesafe.tools.mima.core.buildinfo",
                 buildInfoObject  := "BuildInfo"
                 )
            )
-    settings(libraryDependencies ++= Seq(compiler, specs2),
+    settings(libraryDependencies ++= Seq(compiler) ++ testDeps,
              name := buildName + "-core")
     settings(sonatypePublishSettings:_*)
   )
 
   lazy val coreui = (
     Project("core-ui", file("core-ui"), settings = commonSettings)
-    settings(libraryDependencies ++= Seq(swing, compiler, specs2),
+    settings(libraryDependencies ++= Seq(actors, swing, compiler) ++ testDeps,
              name := buildName + "-core-ui")
     dependsOn(core)
     settings(sonatypePublishSettings:_*)
   )
 
-  val myAssemblySettings: Seq[Setting[_]] = assemblySettings ++ Seq(
+  val myAssemblySettings: Seq[Setting[_]] = (assemblySettings: Seq[Setting[_]]) ++ Seq(
      mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
         {
           case "LICENSE" => MergeStrategy.first
@@ -148,7 +154,7 @@ object MimaBuild extends Build {
 
   lazy val reporter = (
     Project("reporter", file("reporter"), settings = commonSettings)
-    settings(libraryDependencies ++= Seq(swing, typesafeConfig),
+    settings(libraryDependencies ++= Seq(actors, swing, typesafeConfig),
              name := buildName + "-reporter",
              javaOptions += "-Xmx512m")
     dependsOn(core)
@@ -180,6 +186,7 @@ object MimaBuild extends Build {
               sbtPlugin := true)
      dependsOn(reporter)
     settings(sbtPublishSettings:_*)
+    settings(sbtVersion in Global := "0.13.0")
   )
 
   lazy val reporterFunctionalTests = Project("reporter-functional-tests",
@@ -191,7 +198,7 @@ object MimaBuild extends Build {
   val bases = (file("reporter") / "functional-tests" / "src" / "test") * (DirectoryFilter)
 
   // make the Project for each discovered directory
-  lazy val tests = bases.getFiles map testProject
+  lazy val tests = bases.get map testProject
 
   // defines a Project for the given base directory (for example, functional-tests/test1)
   // Its name is the directory name (test1) and it has compile+package tasks for sources in v1/ and v2/
@@ -232,7 +239,7 @@ object MimaBuild extends Build {
       packageBin in v1Config, // package the v1 sources and get the configuration used
       packageBin in v2Config, // same for v2
       streams) map { (cp, proj, si, v1, v2, streams) =>
-        val urls = data(cp).map(_.toURI.toURL).toArray
+        val urls = Attributed.data(cp).map(_.toURI.toURL).toArray
         val loader = new java.net.URLClassLoader(urls, si.loader)
 
         val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest")
@@ -241,7 +248,7 @@ object MimaBuild extends Build {
         }]
 
         // Add the scala-library to the MiMa classpath used to run this test
-        val testClasspath = data(cp).filter(_.getName endsWith "scala-library.jar").map(_.getAbsolutePath).toArray
+        val testClasspath = Attributed.data(cp).filter(_.getName endsWith "scala-library.jar").map(_.getAbsolutePath).toArray
 
         val projectPath = proj.build.getPath + "reporter" + "/" + "functional-tests" + "/" + "src" + "/" + "test" + "/" + proj.project
 

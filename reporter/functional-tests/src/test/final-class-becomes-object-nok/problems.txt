@@ -1,1 +1,0 @@
-the type hierarchy of class A has changed in new version. Missing types {scala.ScalaObject}

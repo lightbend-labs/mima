@@ -22,7 +22,7 @@ import com.typesafe.tools.mima.core.ui.widget.NavigationPanel
  *      pages += new Button("Page 1")
  *      pages += new Label("Page 2")
  *    }
- *  }}
+ *  }}}
  *
  *  This class publishes two events.
  *  @see PageChanged, Cancelled
@@ -96,7 +96,7 @@ class Wizard extends BorderPanel {
   }
 
   private def next() {
-    checkStarted
+    checkStarted()
     assert(currentPage + 1 < pages.length)
 
     val page = pages(currentPage).get
@@ -109,7 +109,7 @@ class Wizard extends BorderPanel {
   }
 
   private def back() {
-    checkStarted
+    checkStarted()
     assert(currentPage - 1 >= 0)
 
     val page = pages(currentPage).get
@@ -121,7 +121,7 @@ class Wizard extends BorderPanel {
     switchTo(currentPage - 1)
   }
 
-  private def checkStarted {
+  private def checkStarted() {
     assert(started, "Wizard was not started.")
   }
 

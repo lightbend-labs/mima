@@ -39,7 +39,7 @@ object ProblemFiltersConfig {
     val configValues = for {
       p <- problems
       matchName <- p.matchName
-      val problemName = p.getClass.getSimpleName
+      problemName = p.getClass.getSimpleName
     } yield Map(problemNameKey -> problemName, matchNameKey -> matchName).asJava
     ConfigValueFactory.fromIterable(configValues.asJava).atPath(filterProblemsPath)
   }
