@@ -24,8 +24,8 @@ class CollectProblemsTest {
     var expectedProblems = Source.fromFile(oraclePath).getLines.toList
 
     // diff between the oracle and the collected problems
-    val unexpectedProblems = problems -- expectedProblems
-    val unreportedProblems = expectedProblems -- problems
+    val unexpectedProblems = problems.filterNot(expectedProblems.contains)
+    val unreportedProblems = expectedProblems.filterNot(problems.contains)
 
     val mess = buildErrorMessage(unexpectedProblems, unreportedProblems)
 

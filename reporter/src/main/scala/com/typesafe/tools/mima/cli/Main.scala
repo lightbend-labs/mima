@@ -111,7 +111,7 @@ class Main(args: List[String]) extends {
   def run(): Int = {
     val mima = makeMima
     val foundProblems = mima.collectProblems(prevfile, currentfile)
-    val filters = problemFilters.map(filePath => loadFilters(new File(filePath))).flatten
+    val filters = problemFilters.toSeq.map(filePath => loadFilters(new File(filePath))).flatten
     def isReported(problem: core.Problem) = filters.forall(filter => filter(problem))
     val errors = foundProblems.filter(isReported)
     val header = "Found " + errors.size + " binary incompatibiities" + {

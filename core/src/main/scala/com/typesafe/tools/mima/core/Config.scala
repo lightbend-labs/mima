@@ -43,7 +43,7 @@ object Config {
   /** Creates a help message for a subset of options based on cond */
   def usageMsg(cmd: String): String =
     settings.visibleSettings.
-      map(s => format(s.helpSyntax).padTo(21, ' ') + " " + s.helpDescription).
+      map(s => s.helpSyntax.format().padTo(21, ' ') + " " + s.helpDescription).
       toList.sorted.mkString("Usage: " + cmd + " <options>\nwhere possible options include:\n  ", "\n  ", "\n")
 
   def setup(s: Settings) {

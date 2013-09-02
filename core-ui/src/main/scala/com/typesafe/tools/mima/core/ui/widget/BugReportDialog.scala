@@ -17,7 +17,7 @@ import javax.swing.border.TitledBorder
  *    (2) A textarea containing the exception's stack trace
  *    (3) A `continue` button to close the dialog
  *
- *  @precondition: the `error` must not be null
+ *  Precondition: the `error` must not be null
  */
 class BugReportDialog(error: Throwable, owner: Window = null) extends Dialog(owner) with Centered {
   assert(error != null)
