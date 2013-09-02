@@ -1,1 +1,1 @@
-final case class A
+final case class A()
