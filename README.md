@@ -13,7 +13,7 @@ Please, use the [mima-user Mailing List][mima-user-ml] for questions and comment
 MiMa's Modules
 -------
 
-MiMa is split into Several modules: 
+MiMa is split into Several modules:
 
 - Core: Classes that are used for detection.
 - Core-UI: UI Classes that can be re-used between different detectors.
@@ -24,23 +24,18 @@ MiMa is split into Several modules:
 Eclipse
 -------
 
-In order to create Eclipse metadata files (i.e., .classpath and .project) we recomend to use [sbteclipse][sbteclipse]. 
+In order to create Eclipse metadata files (i.e., .classpath and .project) we recomend to use [sbteclipse][sbteclipse].
 
 Setting up [sbteclipse][sbteclipse] is a simple three-steps process:
 
-* Create a ``eclipse.sbt`` file under the ``project`` folder and add the [sbteclipse][sbteclipse] plugin. 
+* Create a ``eclipse.sbt`` file under the ``project`` folder and add the [sbteclipse][sbteclipse] plugin.
 At the time of this writing, my ``project/eclipse.sbt`` contains the following:
 
-	``addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "2.1.0")``
+	``addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "2.3.0")``
 
-* Create a ``eclipse.sbt`` file under the ``core`` folder and add:
+* Start ``sbt`` from command line on the project's root, and execute the following command ``eclipse`` (or ``eclipse with-source=true`` if you want source attachments correctly set)
 
-	``EclipseKeys.createSrc := EclipseCreateSrc.Default + EclipseCreateSrc.Managed``
-
-This will make sure to add ``src_managed`` to the project's build-path in Eclipse 
-(the ``src_managed`` folder is created by Sbt during the ``source-generators`` phase).
-
-* Once done, to set up the three modules in Eclipse just click on `File > Import > General > Exisiting Projects Into Workspace`, and select the MiMa project's root folder, the three modules should be correctly loaded.
+* Once done, import all modules in Eclipse, i.e., just click on `File > Import > General > Exisiting Projects Into Workspace`, select the MiMa project's root folder, all modules should be correctly loaded.
 
 
 [sbteclipse]: https://github.com/typesafehub/sbteclipse/
@@ -48,20 +43,17 @@ This will make sure to add ``src_managed`` to the project's build-path in Eclips
 Build
 -------
 
-Using [the xsbt tool][xsbt]. 
+Using [sbt][sbt] 0.13.0 or newer.
 
-      $ xsbt clean update compile
+      $ sbt compile
 
-
-Make sure to use tag 0.11.3, installation notes can be found [here][xsbt].
-
-[xsbt]: https://github.com/harrah/xsbt/tree/v0.11.3
+[sbt]: http://www.scala-sbt.org/
 
 This will recompile all MiMa's modules.
 
 If you'd like to create distributable jar files run:
 
-      $ xsbt assembly
+      $ sbt assembly
 
 This will create `reporter/target/mima-reporter-assembly-....jar` and `reporter-ui/target/mima-reporter-ui-assembly-....jar` jar files that can be used to launch the command line and ui version of MiMa.
 
@@ -70,20 +62,20 @@ Launch MiMa Reporter UI
 -------
 Type the following command to run the MiMa Reporter
 
-	$ xsbt reporter-ui/run
+	$ sbt reporter-ui/run
 
 Launch MiMa Reporter CLI
 -------
 Type the following command to run the MiMa Reporter command-line
 
-	$ xsbt reporter/run
+	$ sbt reporter/run
 
 MiMa Reporter: Functional Tests
 -------
 
 The directory containing the MiMa Reporter module ('reporter') there is a 'functional-tests' folder that contains several functional tests exercising the system. All tests are executed as part of the build, therefore when running
 
-	$ xsbt test-functional
+	$ sbt test-functional
 
 if one (or more) test fails the build is stop and no jar will not be produced.
 
@@ -97,7 +89,7 @@ To add a new functional test to the suite, create a new folder within 'functiona
 			|-----> v1 (folder containing sources @ version 1)
 			|-----> v2 (folder containing sources @ version 2)
 
-After doing that, `reload` if you are in a `xsbt` console session (if that makes nosense to you, it means you are fine and you can run the test as usual).
+After doing that, `reload` if you are in a `sbt` console session (if that makes nosense to you, it means you are fine and you can run the test as usual).
 
 Tests within the `functional-tests` folder should always pass.
 
