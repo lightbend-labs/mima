@@ -29,7 +29,7 @@ private[analyze] trait Analyzer extends Function2[ClassInfo, ClassInfo, List[Pro
     analyze(oldclazz, newclazz)
 
   def analyze(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
-    assert(oldclazz.name == newclazz.name)
+    assert(oldclazz.bytecodeName == newclazz.bytecodeName)
     val templateProblems = analyzeTemplateDecl(oldclazz, newclazz)
 
     if (templateProblems.exists(p => p.isInstanceOf[IncompatibleTemplateDefProblem] ||
@@ -77,7 +77,7 @@ private[analyze] class ClassAnalyzer extends Analyzer {
   /** Analyze incompatibilities that may derive from methods in the `newclazz` */
   override def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
     for (newAbstrMeth <- newclazz.deferredMethods) yield {
-      oldclazz.lookupMethods(newAbstrMeth.name).find(_.sig == newAbstrMeth.sig) match {
+      oldclazz.lookupMethods(newAbstrMeth.bytecodeName).find(_.sig == newAbstrMeth.sig) match {
         case None =>
           val p = MissingMethodProblem(newAbstrMeth)
           p.affectedVersion = Problem.ClassVersion.Old
@@ -106,7 +106,7 @@ private[analyze] class TraitAnalyzer extends Analyzer {
     val res = collection.mutable.ListBuffer.empty[Problem]
 
     for (newmeth <- newclazz.concreteMethods if !oldclazz.hasStaticImpl(newmeth)) {
-      if (!oldclazz.lookupMethods(newmeth.name).exists(_.sig == newmeth.sig)) {
+      if (!oldclazz.lookupMethods(newmeth.bytecodeName).exists(_.sig == newmeth.sig)) {
         // this means that the method is brand new and therefore the implementation
         // has to be injected
         val problem = MissingMethodProblem(newmeth)
@@ -120,7 +120,7 @@ private[analyze] class TraitAnalyzer extends Analyzer {
     }
 
     for (newmeth <- newclazz.deferredMethods) {
-      val oldmeths = oldclazz.lookupMethods(newmeth.name)
+      val oldmeths = oldclazz.lookupMethods(newmeth.bytecodeName)
       oldmeths find (_.sig == newmeth.sig) match {
         case Some(oldmeth) => ()
         case _ =>

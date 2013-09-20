@@ -8,7 +8,7 @@ private[analyze] abstract class BaseFieldChecker extends Checker[MemberInfo, Cla
 
   def check(field: MemberInfo, in: ClassInfo): Option[Problem] = {
     if (field.isAccessible) {
-      val newflds = in.lookupClassFields(field.name)
+      val newflds = in.lookupClassFields(field.bytecodeName)
       if (newflds.hasNext) {
         val newfld = newflds.next
         if (!newfld.isPublic)

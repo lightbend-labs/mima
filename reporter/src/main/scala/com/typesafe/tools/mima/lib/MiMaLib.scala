@@ -45,8 +45,8 @@ class MiMaLib(classpath: JavaClassPath, val log: Logging = ConsoleLogging) {
   private def comparePackages(oldpkg: PackageInfo, newpkg: PackageInfo) {
     val traits = newpkg.traits // determine traits of new package first
     for (oldclazz <- oldpkg.accessibleClasses) {
-      log.info("Analyzing class "+oldclazz.name)
-      newpkg.classes get oldclazz.name match {
+      log.info("Analyzing class "+oldclazz.bytecodeName)
+      newpkg.classes get oldclazz.bytecodeName match {
         case None if oldclazz.isImplClass =>
           // if it is missing a trait implementation class, then no error should be reported
           // since there should be already errors, i.e., missing methods...

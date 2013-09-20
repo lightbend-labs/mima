@@ -1,0 +1,2 @@
+// new version
+class ::

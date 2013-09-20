@@ -1,0 +1,1 @@
+method ++()Int in class SpecialChars does not have a correspondent in new version
