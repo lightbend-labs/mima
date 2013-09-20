@@ -17,7 +17,7 @@ import com.typesafe.tools.mima.core.util.log.{ConsoleLogging, Logging}
 /** A placeholder class info for a class that is not found on the classpath or in a given
  *  package.
  */
-class SyntheticClassInfo(owner: PackageInfo, val name: String) extends ClassInfo(owner) {
+class SyntheticClassInfo(owner: PackageInfo, override val bytecodeName: String) extends ClassInfo(owner) {
   loaded = true
   def file: AbstractFile = throw new UnsupportedOperationException
   override lazy val superClasses = Nil
@@ -30,10 +30,10 @@ object NoClass extends SyntheticClassInfo(null, "<noclass>")
 
 /** A class for which we have the classfile. */
 class ConcreteClassInfo(owner: PackageInfo, val file: AbstractFile) extends ClassInfo(owner) {
-  def name = PackageInfo.className(file.name)
+  override def bytecodeName = PackageInfo.className(file.name)
 }
 
-abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
+abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with WithAccessFlags {
   import ClassInfo._
 
   def file: AbstractFile
@@ -45,12 +45,10 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
     case _                    => "compiler generated"
   }
 
-  def name: String
-
   lazy val fullName: String = {
-    assert(name != null)
-    if (owner.isRoot) name
-    else owner.fullName + "." + name
+    assert(bytecodeName != null)
+    if (owner.isRoot) bytecodeName
+    else owner.fullName + "." + bytecodeName
   }
 
   def formattedFullName = formatClassName(if (isObject) fullName.init else fullName)
@@ -115,7 +113,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
     lookupClassMethods(name) ++ lookupInterfaceMethods(name)
 
   def lookupConcreteTraitMethods(name: String): Iterator[MemberInfo] =
-    allTraits.toList.flatten(_.concreteMethods).filter(_.name == name).toIterator
+    allTraits.toList.flatten(_.concreteMethods).filter(_.bytecodeName == bytecodeName).toIterator
 
   /** Is this class a non-trait that inherits !from a trait */
   lazy val isClassInheritsTrait = !isInterface && _interfaces.exists(_.isTrait)
@@ -174,7 +172,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
     if (this == ClassInfo.ObjectClass) Set.empty
     else superClass.allTraits ++ directTraits
 
-  /** All traits inherited directly or indirectly by this class */
+  /** All interfaces inherited directly or indirectly by this class */
   lazy val allInterfaces: Set[ClassInfo] =
     if (this == ClassInfo.ObjectClass) Set.empty
     else superClass.allInterfaces ++ interfaces ++ (interfaces flatMap (_.allInterfaces))
@@ -198,7 +196,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
 
   /** Does this class have an implementation (forwarder or accessor) of given method `m'? */
   private def hasInstanceImpl(m: MemberInfo) =
-    methods.get(m.name) exists (_.sig == m.sig)
+    methods.get(m.bytecodeName) exists (_.sig == m.sig)
 
   /** Does this implementation class have a static implementation of given method `m'? */
   def hasStaticImpl(m: MemberInfo) = staticImpl(m).isDefined
@@ -209,7 +207,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
       implClass match {
         case impl: ConcreteClassInfo =>
           assert(impl.isImplClass, impl)
-          impl.methods.get(m.name) find (im => hasImplSig(im.sig, m.sig))
+          impl.methods.get(m.bytecodeName) find (im => hasImplSig(im.sig, m.sig))
 
         case _ => None
       }
@@ -236,7 +234,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
   }
 
   /** Is this class an implementation class? */
-  lazy val isImplClass: Boolean = name endsWith PackageInfo.implClassSuffix
+  lazy val isImplClass: Boolean = bytecodeName endsWith PackageInfo.implClassSuffix
 
   /** The implementation class corresponding to this trait */
   private var _implClass: ClassInfo = NoClass
@@ -262,7 +260,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
     ClassfileParser.isInterface(flags)
   }
 
-  def isObject: Boolean = name.endsWith("$")
+  def isObject: Boolean = bytecodeName.endsWith("$")
 
   /** Is this class public? */
   /*
@@ -271,7 +269,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends WithAccessFlags {
     !ClassfileParser.isPrivate(flags)
   }*/
 
-  override def toString = "class " + name
+  override def toString = "class " + bytecodeName
 
   def shortDescription = {
     // using 'description' because elsewhere objects' name are not correctly translated.

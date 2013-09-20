@@ -287,7 +287,7 @@ abstract class ClassfileParser(definitions: Definitions) {
 
   /** Return true iff TraitSetter annotation found among attributes */
   def parseAttributes(m: MemberInfo) {
-    val maybeTraitSetter = MemberInfo.maybeSetter(m.name)
+    val maybeTraitSetter = MemberInfo.maybeSetter(m.bytecodeName)
     val attrCount = in.nextChar
     for (i <- 0 until attrCount) {
       val attrIndex = in.nextChar

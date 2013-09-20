@@ -8,7 +8,7 @@ class Members(val members: TraversableOnce[MemberInfo]) {
   private val bindings = new mutable.HashMap[String, List[MemberInfo]] {
     override def default(key: String) = List()
   }
-  for (m <- members) bindings += m.name -> (m :: bindings(m.name))
+  for (m <- members) bindings += m.bytecodeName -> (m :: bindings(m.bytecodeName))
 
   def iterator: Iterator[MemberInfo] =
     for (ms <- bindings.valuesIterator; m <- ms.iterator) yield m
