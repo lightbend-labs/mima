@@ -117,7 +117,7 @@ case class MissingTypesProblem(newclazz: ClassInfo, missing: Iterable[ClassInfo]
 
 case class CyclicTypeReferenceProblem(clz: ClassInfo) extends TemplateProblem(clz) {
   def description = {
-    "the type hierarchy of " + clz.description + " has changed in new version. Type " + clz.name + " appears to be a subtype of itself"
+    "the type hierarchy of " + clz.description + " has changed in new version. Type " + clz.bytecodeName + " appears to be a subtype of itself"
   }
 }
 

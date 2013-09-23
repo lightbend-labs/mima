@@ -13,10 +13,8 @@ object MemberInfo {
   def maybeSetter(name: String) = name.endsWith(setterSuffix)
 }
 
-class MemberInfo(val owner: ClassInfo, val name: String, override val flags: Int, val sig: String) extends WithAccessFlags {
-  override def toString = "def "+name+": "+ sig
-
-  def decodedName = NameTransformer.decode(name)
+class MemberInfo(val owner: ClassInfo, val bytecodeName: String, override val flags: Int, val sig: String) extends HasDeclarationName with WithAccessFlags {
+  override def toString = "def " + bytecodeName + ": "+ sig
 
   def fieldString = "field "+decodedName+" in "+owner.classString
   def shortMethodString = (if(hasSyntheticName) "synthetic " else "") + (if(isDeprecated) "deprecated " else "") + "method "+decodedName + tpe
@@ -54,13 +52,13 @@ class MemberInfo(val owner: ClassInfo, val name: String, override val flags: Int
 
   var codeOpt: Option[(Int, Int)] = None
 
-  def isClassConstructor = name == "<init>"
+  def isClassConstructor = bytecodeName == "<init>"
 
   def needCode = isClassConstructor
 
   import MemberInfo._
 
-  var isTraitSetter = maybeSetter(name) && setterIdx(name) >= 0
+  var isTraitSetter = maybeSetter(bytecodeName) && setterIdx(bytecodeName) >= 0
 
   var isDeprecated = false
 
@@ -70,9 +68,9 @@ class MemberInfo(val owner: ClassInfo, val name: String, override val flags: Int
 
   /** The name of the getter corresponding to this setter */
   private def getterName: String = {
-    val sidx = setterIdx(name)
+    val sidx = setterIdx(bytecodeName)
     val start = if (sidx >= 0) sidx + setterTag.length else 0
-    name.substring(start, name.length - setterSuffix.length)
+    bytecodeName.substring(start, bytecodeName.length - setterSuffix.length)
   }
 
   /** The getter that corresponds to this setter */
@@ -81,6 +79,6 @@ class MemberInfo(val owner: ClassInfo, val name: String, override val flags: Int
     owner.methods.get(getterName) find (_.sig == argsig) get
   }
 
-  def description: String = name+": "+sig+" from "+owner.description
+  def description: String = bytecodeName + ": " + sig + " from " + owner.description
 }
 

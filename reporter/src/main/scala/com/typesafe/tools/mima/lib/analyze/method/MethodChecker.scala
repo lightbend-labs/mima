@@ -38,9 +38,9 @@ private[analyze] abstract class BaseMethodChecker extends Checker[MemberInfo, Cl
 private[analyze] class ClassMethodChecker extends BaseMethodChecker {
   def check(method: MemberInfo, inclazz: ClassInfo): Option[Problem] = {
     if (method.isDeferred)
-      super.check(method, inclazz.lookupMethods(method.name))
+      super.check(method, inclazz.lookupMethods(method.bytecodeName))
     else
-      super.check(method, inclazz.lookupClassMethods(method.name))
+      super.check(method, inclazz.lookupClassMethods(method.bytecodeName))
   }
 }
 
@@ -49,7 +49,7 @@ private[analyze] class TraitMethodChecker extends BaseMethodChecker {
     if (method.owner.hasStaticImpl(method)) {
       checkStaticImplMethod(method, inclazz)
     } else {
-      super.check(method, inclazz.lookupMethods(method.name))
+      super.check(method, inclazz.lookupMethods(method.bytecodeName))
     }
   }
 
@@ -68,7 +68,7 @@ private[analyze] class TraitMethodChecker extends BaseMethodChecker {
         // otherwise we check the all concrete trait methods and report
         // either that the method is missing or that no method with the
         // same signature exists. Either way, we expect that a problem is reported!
-        val prob = super.check(method, inclazz.lookupConcreteTraitMethods(method.name))
+        val prob = super.check(method, inclazz.lookupConcreteTraitMethods(method.bytecodeName))
         assert(prob.isDefined)
         prob
       }
