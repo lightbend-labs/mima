@@ -114,7 +114,7 @@ class Main(args: List[String]) extends {
     val filters = problemFilters.toSeq.map(filePath => loadFilters(new File(filePath))).flatten
     def isReported(problem: core.Problem) = filters.forall(filter => filter(problem))
     val errors = foundProblems.filter(isReported)
-    val header = "Found " + errors.size + " binary incompatibiities" + {
+    val header = "Found " + errors.size + " binary incompatibilities" + {
       val filteredOutSize = foundProblems.size - errors.size
       if (filteredOutSize > 0) " (" + filteredOutSize + " were filtered out)" else ""
     }
