@@ -100,10 +100,10 @@ Releasing
 MiMa releases to several different locations:
 
 1. Maven central (libraries)
-2. repo.scala-sbt.org  (sbt plugin)
-3. downloads.typesafe.com  (bundled CLI + UI artifacts).
+2. Bintray (sbt plugin)
+3. downloads.typesafe.com (bundled CLI + UI artifacts).
 
-To deploy to locations 1 and 2, simple use the `publish` task, but make sure your credentials for both Sonatype's OSSRH + repo.scala-sbt.org are in order.   After deploying, you need to log in to [OSSRH](http://oss.sonatype.org) and close/release the repository.
+To deploy to locations 1 and 2, use the `publish` task, but make sure your credentials for both Sonatype's OSSRH + Bintray typesafe organization are in order.   After deploying, you need to log in to [OSSRH](http://oss.sonatype.org) and close/release the repository containing library. To release sbt plugin repository use `sbtplugin/bintrayRelease` task.
 
 To deploy to downloads.typesafe.com, you need to run the `s3-upload` task, ensuring the appropriate credentials are in place (See [sbt-s3](https://github.com/sbt/sbt-s3) for more info).
 
