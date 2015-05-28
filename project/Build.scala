@@ -12,33 +12,31 @@ import sbtassembly.Plugin.MergeStrategy
 import sbtbuildinfo.Plugin._
 import com.typesafe.sbt.S3Plugin._
 import S3._
+import bintray.BintrayPlugin
+import bintray.BintrayPlugin.autoImport._
+import com.typesafe.sbt.GitVersioning
+import com.typesafe.sbt.GitPlugin.autoImport._
 
 object BuildSettings {
 
   val buildName = "mima"
   val buildOrganization = "com.typesafe"
 
-  val buildScalaVer = "2.10.2"
-  val buildVersion = "0.1.7-SNAPSHOT"
-
+  val buildScalaVer = "2.10.5"
 
   val commonSettings = Defaults.defaultSettings ++ Seq (
       organization := buildOrganization,
       scalaVersion := buildScalaVer,
-      version      := buildVersion,
+      git.baseVersion := "0.1",
       licenses := Seq("Apache License v2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
       homepage := Some(url("http://github.com/typesafehub/migration-manager")),
       scalacOptions := Seq("-deprecation", "-language:_", "-Xlint")
   )
 
   def sbtPublishSettings: Seq[Def.Setting[_]] = Seq(
-    publishMavenStyle := false,
-    publishTo <<= (version) { version: String =>
-       val scalasbt = "http://scalasbt.artifactoryonline.com/scalasbt/"
-       val (name, u) = if (version.contains("-SNAPSHOT")) ("sbt-plugin-snapshots", scalasbt+"sbt-plugin-snapshots")
-                       else ("sbt-plugin-releases", scalasbt+"sbt-plugin-releases")
-       Some(Resolver.url(name, url(u))(Resolver.ivyStylePatterns))
-    }
+    bintrayOrganization := Some("typesafe"),
+    bintrayRepository := "sbt-plugins",
+    bintrayReleaseOnPublish := false
   )
 
   def sonatypePublishSettings: Seq[Def.Setting[_]] = Seq(
@@ -98,13 +96,13 @@ object MimaBuild extends Build {
   lazy val modules = Seq(core, coreui, reporter, reporterui, sbtplugin)
 
   lazy val root = (
-    Project("root", file("."))
+    project("root", file("."))
     aggregate(core, coreui, reporter, reporterui, sbtplugin)
     settings(s3Settings:_*)
     settings(publish := (),
              publishLocal := (),
-             mappings in upload <<= (assembly in reporter, assembly in reporterui) map { (cli, ui) =>
-               def loc(name: String) = "migration-manager/%s/%s-%s.jar" format (buildVersion, name, buildVersion)
+             mappings in upload <<= (assembly in reporter, assembly in reporterui, version) map { (cli, ui, v) =>
+               def loc(name: String) = "migration-manager/%s/%s-%s.jar" format (v, name, v)
                Seq(
                  cli -> loc("migration-manager-cli"),
                  ui  -> loc("migration-manager-ui")
@@ -112,10 +110,11 @@ object MimaBuild extends Build {
              },
              host in upload := "downloads.typesafe.com.s3.amazonaws.com"
     )
+    enablePlugins(GitVersioning)
   )
 
   lazy val core = (
-    Project("core", file("core"),
+    project("core", file("core"),
             settings = ((commonSettings ++ buildInfoSettings): Seq[Setting[_]]) ++: Seq(
                 sourceGenerators in Compile <+= buildInfo,
                 buildInfoKeys := Seq(version),
@@ -129,7 +128,7 @@ object MimaBuild extends Build {
   )
 
   lazy val coreui = (
-    Project("core-ui", file("core-ui"), settings = commonSettings)
+    project("core-ui", file("core-ui"), settings = commonSettings)
     settings(libraryDependencies ++= Seq(actors, swing, compiler) ++ testDeps,
              name := buildName + "-core-ui")
     dependsOn(core)
@@ -153,7 +152,7 @@ object MimaBuild extends Build {
   )
 
   lazy val reporter = (
-    Project("reporter", file("reporter"), settings = commonSettings)
+    project("reporter", file("reporter"), settings = commonSettings)
     settings(libraryDependencies ++= Seq(actors, swing, typesafeConfig),
              name := buildName + "-reporter",
              javaOptions += "-Xmx512m")
@@ -170,7 +169,7 @@ object MimaBuild extends Build {
   )
 
   lazy val reporterui = (
-    Project("reporter-ui", file("reporter-ui"), settings = commonSettings)
+    project("reporter-ui", file("reporter-ui"), settings = commonSettings)
     settings(myAssemblySettings:_*)
     settings(sonatypePublishSettings:_*)
     settings(libraryDependencies ++= Seq(swing),
@@ -181,15 +180,14 @@ object MimaBuild extends Build {
   )
 
   lazy val sbtplugin = (
-     Project("sbtplugin", file("sbtplugin"), settings = commonSettings)
-     settings(name := "sbt-mima-plugin",
-              sbtPlugin := true)
-     dependsOn(reporter)
+    Project("sbtplugin", file("sbtplugin"), settings = commonSettings)
+    settings(name := "sbt-mima-plugin",
+             sbtPlugin := true)
+    dependsOn(reporter)
     settings(sbtPublishSettings:_*)
-    settings(sbtVersion in Global := "0.13.0")
   )
 
-  lazy val reporterFunctionalTests = Project("reporter-functional-tests",
+  lazy val reporterFunctionalTests = project("reporter-functional-tests",
   										file("reporter") / "functional-tests" ,
   										settings = commonSettings)
   										.dependsOn(core, reporter)
@@ -202,7 +200,7 @@ object MimaBuild extends Build {
 
   // defines a Project for the given base directory (for example, functional-tests/test1)
   // Its name is the directory name (test1) and it has compile+package tasks for sources in v1/ and v2/
-  def testProject(base: File) = Project(base.name, base, settings = testProjectSettings)
+  def testProject(base: File) = project(base.name, base, settings = testProjectSettings)
   								  .configs(v1Config, v2Config) dependsOn (reporterFunctionalTests)
 
   lazy val testProjectSettings =
@@ -277,4 +275,6 @@ object MimaBuild extends Build {
         allTests.join.map(_ => ())
       }
 
+    def project(id: String, base: File, settings: Seq[Def.Setting[_]] = Nil) =
+      Project(id, base, settings = settings) disablePlugins(BintrayPlugin)
 }
