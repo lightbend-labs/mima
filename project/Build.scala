@@ -27,7 +27,12 @@ object BuildSettings {
   val commonSettings = Defaults.defaultSettings ++ Seq (
       organization := buildOrganization,
       scalaVersion := buildScalaVer,
-      git.baseVersion := "0.1.7",
+      git.baseVersion := "0.1",
+      git.gitTagToVersionNumber := { tag: String =>
+        if(tag matches "[0.9]+\\..*") Some(tag)
+        else None
+      },
+      git.useGitDescribe := true,
       licenses := Seq("Apache License v2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
       homepage := Some(url("http://github.com/typesafehub/migration-manager")),
       scalacOptions := Seq("-deprecation", "-language:_", "-Xlint")
