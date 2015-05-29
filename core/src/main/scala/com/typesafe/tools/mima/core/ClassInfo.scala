@@ -110,8 +110,10 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
   def lookupClassFields(name: String): Iterator[MemberInfo] =
     (Iterator.single(this) ++ superClasses.iterator) flatMap (_.fields.get(name))
 
-  def lookupClassMethods(name: String): Iterator[MemberInfo] =
-    (Iterator.single(this) ++ superClasses.iterator) flatMap (_.methods.get(name))
+  def lookupClassMethods(name: String): Iterator[MemberInfo] = {
+    if(name == MemberInfo.ConstructorName) methods.get(name) // constructors are not inherited
+    else (Iterator.single(this) ++ superClasses.iterator) flatMap (_.methods.get(name))
+  }
 
   private def lookupInterfaceMethods(name: String): Iterator[MemberInfo] =
     allInterfaces.iterator flatMap (_.methods.get(name))
