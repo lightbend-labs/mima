@@ -43,12 +43,8 @@ import com.typesafe.tools.mima.lib.analyze.Rule
   }
 
   private[TemplateRules] trait ClassTypesHelper {
-    def diff(thisTypes: Iterable[ClassInfo], thatTypes: Iterable[ClassInfo]) = {
-      val thisSuperclasses = thisTypes.map(_.fullName).toSet
-      val thatSuperclasses = thisTypes.map(_.fullName).toSet
-
-      thisTypes.filter(sc => !thatTypes.exists(_.fullName == sc.fullName))
-    }
+    def diff(thisTypes: Set[ClassInfo], thatTypes: Set[ClassInfo]) =
+      thisTypes.filter(sc => !thatTypes.exists(_ === sc))
   }
 
   object Superclasses extends TemplateRule with ClassTypesHelper {

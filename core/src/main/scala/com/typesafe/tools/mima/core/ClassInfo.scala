@@ -10,6 +10,13 @@ object ClassInfo {
    *  class path.
    */
   lazy val ObjectClass = Config.baseDefinitions.fromName("java.lang.Object")
+
+  implicit class EqualClassInfo(c1: ClassInfo) {
+    def ===(c2: ClassInfo): Boolean = {
+      if(c1 == null & c2 == null) true
+      else c1 != null && c2 != null && c1.fullName == c2.fullName
+    }
+  }
 }
 
 import com.typesafe.tools.mima.core.util.log.{ConsoleLogging, Logging}
@@ -20,9 +27,9 @@ import com.typesafe.tools.mima.core.util.log.{ConsoleLogging, Logging}
 class SyntheticClassInfo(owner: PackageInfo, override val bytecodeName: String) extends ClassInfo(owner) {
   loaded = true
   def file: AbstractFile = throw new UnsupportedOperationException
-  override lazy val superClasses = Nil
-  override lazy val allTraits = Set.empty[ClassInfo]
-  override lazy val allInterfaces: Set[ClassInfo] = Set.empty[ClassInfo]
+  override lazy val superClasses = Set(ClassInfo.ObjectClass)
+  override lazy val allTraits: Set[ClassInfo] = Set.empty
+  override lazy val allInterfaces: Set[ClassInfo] = Set.empty
 }
 
 /** As the name implies. */
@@ -97,14 +104,16 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
   def flags_=(x: Int) = _flags = x
   def isScala_=(x: Boolean) = _isScala = x
 
-  lazy val superClasses: List[ClassInfo] =
-    (if (this == ClassInfo.ObjectClass) Nil else superClass :: superClass.superClasses)
+  lazy val superClasses: Set[ClassInfo] =
+    (if (this === ClassInfo.ObjectClass) Set.empty else (superClass.superClasses + superClass))
 
   def lookupClassFields(name: String): Iterator[MemberInfo] =
     (Iterator.single(this) ++ superClasses.iterator) flatMap (_.fields.get(name))
 
-  def lookupClassMethods(name: String): Iterator[MemberInfo] =
-    (Iterator.single(this) ++ superClasses.iterator) flatMap (_.methods.get(name))
+  def lookupClassMethods(name: String): Iterator[MemberInfo] = {
+    if(name == MemberInfo.ConstructorName) methods.get(name) // constructors are not inherited
+    else (Iterator.single(this) ++ superClasses.iterator) flatMap (_.methods.get(name))
+  }
 
   private def lookupInterfaceMethods(name: String): Iterator[MemberInfo] =
     allInterfaces.iterator flatMap (_.methods.get(name))
@@ -116,10 +125,10 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
     allTraits.toList.flatten(_.concreteMethods).filter(_.bytecodeName == bytecodeName).toIterator
 
   /** Is this class a non-trait that inherits !from a trait */
-  lazy val isClassInheritsTrait = !isInterface && _interfaces.exists(_.isTrait)
+  lazy val isClassInheritsTrait: Boolean = !isInterface && _interfaces.exists(_.isTrait)
 
   /** Should methods be parsed from classfile? */
-  def methodsAreRelevant = isTrait || isImplClass || _interfaces.exists(_.isTrait)
+  def methodsAreRelevant: Boolean = isTrait || isImplClass || _interfaces.exists(_.isTrait)
 
   /** The constructors of this class
    *  pre: methodsAreRelevant
@@ -155,7 +164,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
    *  Traits appear in linearization order of this class or trait.
    */
   lazy val directTraits: List[ClassInfo] = {
-    /** All traits in the transitive, reflexive inheritance closure of given trait `t' */
+    // All traits in the transitive, reflexive inheritance closure of given trait `t'
     def traitClosure(t: ClassInfo): List[ClassInfo] =
       if (superClass.allTraits contains t) Nil
       else if (t.isTrait) parentsClosure(t) :+ t
@@ -169,12 +178,12 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
 
   /** All traits inherited directly or indirectly by this class */
   lazy val allTraits: Set[ClassInfo] =
-    if (this == ClassInfo.ObjectClass) Set.empty
+    if (this === ClassInfo.ObjectClass) Set.empty
     else superClass.allTraits ++ directTraits
 
   /** All interfaces inherited directly or indirectly by this class */
   lazy val allInterfaces: Set[ClassInfo] =
-    if (this == ClassInfo.ObjectClass) Set.empty
+    if (this === ClassInfo.ObjectClass) Set.empty
     else superClass.allInterfaces ++ interfaces ++ (interfaces flatMap (_.allInterfaces))
 
   private def unimplemented(sel: ClassInfo => Traversable[MemberInfo]): List[MemberInfo] = {
