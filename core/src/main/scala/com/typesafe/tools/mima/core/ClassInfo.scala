@@ -27,9 +27,9 @@ import com.typesafe.tools.mima.core.util.log.{ConsoleLogging, Logging}
 class SyntheticClassInfo(owner: PackageInfo, override val bytecodeName: String) extends ClassInfo(owner) {
   loaded = true
   def file: AbstractFile = throw new UnsupportedOperationException
-  override lazy val allTraits = Set.empty[ClassInfo]
-  override lazy val allInterfaces: Set[ClassInfo] = Set.empty[ClassInfo]
   override lazy val superClasses = Set(ClassInfo.ObjectClass)
+  override lazy val allTraits: Set[ClassInfo] = Set.empty
+  override lazy val allInterfaces: Set[ClassInfo] = Set.empty
 }
 
 /** As the name implies. */
@@ -125,10 +125,10 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
     allTraits.toList.flatten(_.concreteMethods).filter(_.bytecodeName == bytecodeName).toIterator
 
   /** Is this class a non-trait that inherits !from a trait */
-  lazy val isClassInheritsTrait = !isInterface && _interfaces.exists(_.isTrait)
+  lazy val isClassInheritsTrait: Boolean = !isInterface && _interfaces.exists(_.isTrait)
 
   /** Should methods be parsed from classfile? */
-  def methodsAreRelevant = isTrait || isImplClass || _interfaces.exists(_.isTrait)
+  def methodsAreRelevant: Boolean = isTrait || isImplClass || _interfaces.exists(_.isTrait)
 
   /** The constructors of this class
    *  pre: methodsAreRelevant
@@ -164,7 +164,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
    *  Traits appear in linearization order of this class or trait.
    */
   lazy val directTraits: List[ClassInfo] = {
-    /** All traits in the transitive, reflexive inheritance closure of given trait `t' */
+    // All traits in the transitive, reflexive inheritance closure of given trait `t'
     def traitClosure(t: ClassInfo): List[ClassInfo] =
       if (superClass.allTraits contains t) Nil
       else if (t.isTrait) parentsClosure(t) :+ t
