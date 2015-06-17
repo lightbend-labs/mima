@@ -34,7 +34,7 @@ object SbtMima {
   /** Reports binary compatibility errors.
    *  @param failOnProblem if true, fails the build on binary compatibility errors.
    */
-  def reportErrors(found: List[core.Problem], failOnProblem: Boolean, filters: Seq[core.ProblemFilter], s: TaskStreams, projectName: String): Unit = {
+  def reportErrors(problemsInFiles: List[(File, List[core.Problem])], failOnProblem: Boolean, filters: Seq[core.ProblemFilter], s: TaskStreams, projectName: String): Unit = {
     // filters * found is n-squared, it's fixable in principle by special-casing known
     // filter types or something, not worth it most likely...
 
@@ -47,21 +47,23 @@ object SbtMima {
       }
     }
 
-    val errors = found filter isReported
+    problemsInFiles foreach { case (file, found) =>
+      val errors = found filter isReported
 
-    val filteredCount = found.size - errors.size
-    val filteredNote = if (filteredCount > 0) " (filtered " + filteredCount + ")" else ""
+      val filteredCount = found.size - errors.size
+      val filteredNote = if (filteredCount > 0) " (filtered " + filteredCount + ")" else ""
 
-    // TODO - Line wrapping an other magikz
-    def prettyPrint(p: core.Problem): String = {
-      " * " + p.description + p.howToFilter.map("\n   filter with: " + _).getOrElse("")
+      // TODO - Line wrapping an other magikz
+      def prettyPrint(p: core.Problem): String = {
+        " * " + p.description + p.howToFilter.map("\n   filter with: " + _).getOrElse("")
+      }
+      s.log.info(s"$projectName: found ${errors.size} potential binary incompatibilities while checking against $file $filteredNote")
+      errors map prettyPrint foreach { p =>
+        if (failOnProblem) s.log.error(p)
+        else s.log.warn(p)
+      }
+      if (failOnProblem && !errors.isEmpty) sys.error(projectName + ": Binary compatibility check failed!")
     }
-    s.log.info(projectName + ": found " + errors.size + " potential binary incompatibilities" + filteredNote)
-    errors map prettyPrint foreach { p =>
-      if (failOnProblem) s.log.error(p)
-      else s.log.warn(p)
-    }
-    if (failOnProblem && !errors.isEmpty) sys.error(projectName + ": Binary compatibility check failed!")
   }
   /** Resolves an artifact representing the previous abstract binary interface
    *  for testing.
