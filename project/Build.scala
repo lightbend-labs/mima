@@ -24,7 +24,7 @@ object BuildSettings {
 
   val buildScalaVer = "2.10.6"
 
-  val commonSettings = Defaults.defaultSettings ++ Seq (
+  val commonSettings = Defaults.coreDefaultSettings ++ Seq (
       organization := buildOrganization,
       scalaVersion := buildScalaVer,
       git.baseVersion := "0.1",
