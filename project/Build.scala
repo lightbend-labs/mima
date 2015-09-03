@@ -27,7 +27,6 @@ object BuildSettings {
   val commonSettings = Defaults.defaultSettings ++ Seq (
       organization := buildOrganization,
       scalaVersion := buildScalaVer,
-      git.baseVersion := "0.1",
       git.gitTagToVersionNumber := { tag: String =>
         if(tag matches "[0.9]+\\..*") Some(tag)
         else None
