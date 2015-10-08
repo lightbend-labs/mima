@@ -134,13 +134,13 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
    */
   lazy val traitSetters: List[MemberInfo] = {
     assert(isTrait)
-    methods.iterator filter (_.isTraitSetter) toList
+    methods.iterator.filter(_.isTraitSetter).toList
   }
 
   /** The concrete methods of this trait */
   lazy val concreteMethods: List[MemberInfo] = {
-    if(isTrait) methods.iterator filter (hasStaticImpl(_)) toList
-    else if(isClass) methods.iterator filter (!_.isDeferred) toList
+    if(isTrait) methods.iterator.filter(hasStaticImpl(_)).toList
+    else if(isClass) methods.iterator.filter(!_.isDeferred).toList
     else Nil
   }
 
