@@ -257,7 +257,8 @@ object MimaBuild extends Build {
 
         val oraclePath = projectPath + "/problems.txt"
 
-        try {
+      try {
+          import scala.language.reflectiveCalls
           testRunner.runTest(testClasspath, proj.project, v1.getAbsolutePath, v2.getAbsolutePath, oraclePath)
           streams.log.info("Test '" + proj.project + "' succeeded.")
         } catch {
