@@ -14,6 +14,8 @@ object Analyzer {
 
 private[analyze] trait Analyzer extends Function2[ClassInfo, ClassInfo, List[Problem]] {
 
+  import scala.language.implicitConversions
+
   implicit def option2list(v: Option[Problem]): List[Problem] = v match {
     case None    => Nil
     case Some(p) => List(p)
