@@ -1,4 +1,11 @@
 sudo: false
+
+cache:
+  directories:
+  - $HOME/.ivy2
+  - $HOME/.sbt/boot
+  - $HOME/.sbt/launchers
+
 language: scala
 scala:
   - 2.10.6
