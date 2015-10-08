@@ -129,7 +129,7 @@ If you'd like to contribute to the MiMa project, please sign the [contributor's 
 
 License
 -------
-Copyright 2012 Typesafe, Inc.
+Copyright 2012-2015 Typesafe, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
