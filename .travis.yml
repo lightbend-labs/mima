@@ -1,8 +1,15 @@
+sudo: false
+
+cache:
+  directories:
+  - $HOME/.ivy2
+  - $HOME/.sbt/boot
+  - $HOME/.sbt/launchers
+
 language: scala
 scala:
-  - 2.10.3
+  - 2.10.6
 jdk:
    - oraclejdk8
-   - oraclejdk7
-   - openjdk7
-script: sbt test
+script:
+   - sbt test testFunctional

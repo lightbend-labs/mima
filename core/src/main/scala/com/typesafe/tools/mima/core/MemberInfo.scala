@@ -76,7 +76,7 @@ class MemberInfo(val owner: ClassInfo, val bytecodeName: String, override val fl
   /** The getter that corresponds to this setter */
   def getter: MemberInfo = {
     val argsig = "()" + parametersSig
-    owner.methods.get(getterName) find (_.sig == argsig) get
+    owner.methods.get(getterName).find(_.sig == argsig).get
   }
 
   def description: String = bytecodeName + ": " + sig + " from " + owner.description

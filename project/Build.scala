@@ -22,9 +22,9 @@ object BuildSettings {
   val buildName = "mima"
   val buildOrganization = "com.typesafe"
 
-  val buildScalaVer = "2.10.5"
+  val buildScalaVer = "2.10.6"
 
-  val commonSettings = Defaults.defaultSettings ++ Seq (
+  val commonSettings = Defaults.coreDefaultSettings ++ Seq (
       organization := buildOrganization,
       scalaVersion := buildScalaVer,
       git.gitTagToVersionNumber := { tag: String =>
@@ -34,7 +34,7 @@ object BuildSettings {
       git.useGitDescribe := true,
       licenses := Seq("Apache License v2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
       homepage := Some(url("http://github.com/typesafehub/migration-manager")),
-      scalacOptions := Seq("-deprecation", "-language:_", "-Xlint")
+      scalacOptions := Seq("-feature", "-deprecation", "-Xlint")
   )
 
   def sbtPublishSettings: Seq[Def.Setting[_]] = Seq(
@@ -84,10 +84,12 @@ object Dependencies {
   val actors = "org.scala-lang" % "scala-actors" % buildScalaVer
   val typesafeConfig = "com.typesafe" % "config" % "1.0.0"
 
-  val specs2 = "org.specs2" %% "specs2" % "2.1.1" % "test"
-  val mockito = "org.mockito" % "mockito-all" % "1.9.0" % "test"
-  val junit = "junit" % "junit" % "4.7"	% "test"
-  def testDeps = List(specs2, mockito, junit)
+  val testDeps = Seq(
+    "org.specs2" %% "specs2-core"    % "2.3.9" % "test",
+    "org.specs2" %% "specs2-mock"    % "2.3.9" % "test",
+    "org.specs2" %% "specs2-junit"   % "2.3.9" % "test"
+  )
+
 }
 
 object MimaBuild extends Build {
@@ -256,7 +258,8 @@ object MimaBuild extends Build {
 
         val oraclePath = projectPath + "/problems.txt"
 
-        try {
+      try {
+          import scala.language.reflectiveCalls
           testRunner.runTest(testClasspath, proj.project, v1.getAbsolutePath, v2.getAbsolutePath, oraclePath)
           streams.log.info("Test '" + proj.project + "' succeeded.")
         } catch {
