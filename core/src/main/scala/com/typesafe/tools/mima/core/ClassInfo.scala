@@ -9,7 +9,7 @@ object ClassInfo {
   /** We assume there can be only one java.lang.Object class, and that comes from the configuration
    *  class path.
    */
-  lazy val ObjectClass = Config.baseDefinitions.fromName("java.lang.Object")
+  lazy val ObjectClass = Config.baseDefinitions.ObjectClass
 }
 
 import com.typesafe.tools.mima.core.util.log.{ConsoleLogging, Logging}
