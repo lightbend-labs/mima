@@ -97,7 +97,7 @@ object MimaBuild extends Build {
   import Dependencies._
 
   // here we list all projects that are defined.
-  override lazy val projects = Seq(root) ++ modules ++ tests :+ reporterFunctionalTests
+  override lazy val projects = Seq(root) ++ modules :+ reporterFunctionalTests
 
   lazy val modules = Seq(core, coreui, reporter, reporterui, sbtplugin)
 
@@ -114,7 +114,8 @@ object MimaBuild extends Build {
                  ui  -> loc("migration-manager-ui")
                )
              },
-             host in upload := "downloads.typesafe.com.s3.amazonaws.com"
+             host in upload := "downloads.typesafe.com.s3.amazonaws.com",
+             commands ++= Seq(testFunctionalCommand)
     )
     enablePlugins(GitVersioning)
   )
@@ -166,10 +167,6 @@ object MimaBuild extends Build {
     settings(sonatypePublishSettings:_*)
     settings(myAssemblySettings:_*)
     settings(
-      // add task functional-tests that depends on all functional tests
-      functionalTests <<= runAllTests,
-      // make the main 'package' task depend on all functional tests passing  (TODO - Control this in root project...)
-      packageBin in Compile <<= packageBin in Compile dependsOn  functionalTests,
       mainClass in assembly := Some("com.typesafe.tools.mima.cli.Main")
     )
   )
@@ -194,26 +191,13 @@ object MimaBuild extends Build {
   )
 
   lazy val reporterFunctionalTests = project("reporter-functional-tests",
-  										file("reporter") / "functional-tests" ,
-  										settings = commonSettings)
-  										.dependsOn(core, reporter)
-
-  // select all testN directories.
-  val bases = (file("reporter") / "functional-tests" / "src" / "test") * (DirectoryFilter)
-
-  // make the Project for each discovered directory
-  lazy val tests = bases.get map testProject
-
-  // defines a Project for the given base directory (for example, functional-tests/test1)
-  // Its name is the directory name (test1) and it has compile+package tasks for sources in v1/ and v2/
-  def testProject(base: File) = project(base.name, base, settings = testProjectSettings)
-  								  .configs(v1Config, v2Config) dependsOn (reporterFunctionalTests)
-
-  lazy val testProjectSettings =
-    commonSettings ++ // normal project defaults; can be trimmed later- test and run aren't needed, for example.
+    file("reporter") / "functional-tests",
+    settings = commonSettings ++
       inConfig(v1Config)(perConfig) ++ // add compile/package for the v1 sources
-      inConfig(v2Config)(perConfig) :+  // add compile/package for the v2 sources
-      (functionalTests <<= runTest) // add the functional-tests task.
+      inConfig(v2Config)(perConfig) :+ // add compile/package for the v2 sources
+      (functionalTests <<= runTest)) // add the functional-tests task.
+    .configs(v1Config, v2Config)
+    .dependsOn(core, reporter)
 
   // this is the key for the task that runs the reporter's functional tests
   lazy val functionalTests = TaskKey[Unit]("test-functional")
@@ -223,26 +207,26 @@ object MimaBuild extends Build {
   lazy val v2Config = config("v2") extend Compile
 
   // these are settings defined for each configuration (v1 and v2).
-  // We use the normal per-configuration settings, but modify the source directory to be just v1/ instead of src/v1/scala/
-  lazy val perConfig = Defaults.configSettings :+ shortSourceDir
+  lazy val perConfig = Defaults.configSettings
 
   // sets the source directory in this configuration to be: testN / vN
   // scalaSource is the setting key that defines the directory for Scala sources
   // configuration gets the current configuration
   // expanded version: ss <<= (bd, conf) apply { (b,c) => b / c.name }
-  lazy val shortSourceDir = scalaSource <<= (baseDirectory, configuration) { _ / _.name }
+  def shortSourceDir(testCase: String) = scalaSource <<= (baseDirectory, configuration) { _ / "src" / "test" / testCase / _.name }
 
   // this is the custom test task of the form (ta, tb, tc) map { (a,b,c) => ... }
   // tx are the tasks we need to do our job.
   // Once the task engine runs these tasks, it evaluates the function supplied to map with the task results bound to
   // a,b,c
   lazy val runTest =
-    (fullClasspath in (reporterFunctionalTests, Compile), // the test classpath from the functionalTest project for the test
+    (fullClasspath in Compile, // the test classpath from the functionalTest project for the test
       thisProjectRef, // gives us the ProjectRef this task is defined in
       scalaInstance, // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
       packageBin in v1Config, // package the v1 sources and get the configuration used
       packageBin in v2Config, // same for v2
-      streams) map { (cp, proj, si, v1, v2, streams) =>
+      scalaSource in v1Config, // used for finding oracle file
+      streams) map { (cp, proj, si, v1, v2, ss, streams) =>
         val urls = Attributed.data(cp).map(_.toURI.toURL).toArray
         val loader = new java.net.URLClassLoader(urls, si.loader)
 
@@ -253,35 +237,48 @@ object MimaBuild extends Build {
 
         // Add the scala-library to the MiMa classpath used to run this test
         val testClasspath = Attributed.data(cp).filter(_.getName endsWith "scala-library.jar").map(_.getAbsolutePath).toArray
+        val testCasePath = ss / ".."
 
-        val projectPath = proj.build.getPath + "reporter" + "/" + "functional-tests" + "/" + "src" + "/" + "test" + "/" + proj.project
+        val oraclePath = testCasePath / "problems.txt"
 
-        val oraclePath = projectPath + "/problems.txt"
-
-      try {
+        try {
           import scala.language.reflectiveCalls
-          testRunner.runTest(testClasspath, proj.project, v1.getAbsolutePath, v2.getAbsolutePath, oraclePath)
-          streams.log.info("Test '" + proj.project + "' succeeded.")
+          val testName = testCasePath.getCanonicalFile.getName
+          testRunner.runTest(testClasspath, testName, v1.getAbsolutePath, v2.getAbsolutePath, oraclePath.getPath)
+          streams.log.info(s"Test '$testName' succeeded.")
         } catch {
-          case e: Exception =>  streams.log.error(e.toString)
+          case e: Exception =>  sys.error(e.toString)
         }
         ()
       }
 
-  lazy val runAllTests =
-    (state, // this is how we access all defined projects from a task
-      thisProjectRef, // gives us the ProjectRef this task is defined in
-      test in Test // requires unit tests to run first
-      ) flatMap { (s, proj, _) =>
-        // gets all defined projects, dropping this project (core) so the task doesn't depend on itself
-        val structure = Project.structure(s)
-        val allProjects = structure.units(proj.build).defined.values filter (_.id != proj.project)
-        // get the fun-tests task in each project
-        val allTests = allProjects.toSeq flatMap { p => functionalTests in ProjectRef(proj.build, p.id) get structure.data }
-        // depend on all fun-tests
-        allTests.join.map(_ => ())
-      }
+  def testFunctionalCommand = Command.args("testFunctional", "<test-case>") { (state, args) =>
+    val extracted: Extracted = Project.extract(state)
 
-    def project(id: String, base: File, settings: Seq[Def.Setting[_]] = Nil) =
-      Project(id, base, settings = settings) disablePlugins(BintrayPlugin)
+    val bases = ((file("reporter") / "functional-tests" / "src" / "test") * (DirectoryFilter && GlobFilter(args.headOption.getOrElse("*")))).get.map(_.getName).toList
+
+    @annotation.tailrec def runFunTest(tests: Seq[String]): State = tests match {
+      case Nil => state
+      case testCase :: remaining =>
+        val sourceDirSettings = Seq(v1Config, v2Config).flatMap(c => inScope(ThisScope.in(reporterFunctionalTests, c))(shortSourceDir(testCase)))
+
+        // set source directory to a particular test-case
+        val newState = extracted.append(sourceDirSettings, state)
+
+        // clean up functional test project, otherwise incremental compilation kicks in
+        val Some((cleanState, _)) = Project.runTask(clean in reporterFunctionalTests, newState)
+
+        // run functional tests
+        val Some((_, result)) = Project.runTask(functionalTests in reporterFunctionalTests, cleanState)
+        result.toEither match {
+          case Right(_) => runFunTest(remaining)
+          case Left(_) => state.fail
+        }
+    }
+
+    runFunTest(bases)
+  }
+
+  def project(id: String, base: File, settings: Seq[Def.Setting[_]] = Nil) =
+    Project(id, base, settings = settings) disablePlugins(BintrayPlugin)
 }
