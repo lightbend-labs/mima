@@ -42,18 +42,9 @@ import com.typesafe.tools.mima.lib.analyze.Rule
     }
   }
 
-  private[TemplateRules] trait ClassTypesHelper {
-    def diff(thisTypes: Iterable[ClassInfo], thatTypes: Iterable[ClassInfo]) = {
-      val thisSuperclasses = thisTypes.map(_.fullName).toSet
-      val thatSuperclasses = thisTypes.map(_.fullName).toSet
-
-      thisTypes.filter(sc => !thatTypes.exists(_.fullName == sc.fullName))
-    }
-  }
-
-  object Superclasses extends TemplateRule with ClassTypesHelper {
+  object Superclasses extends TemplateRule {
     def apply(thisClass: ClassInfo, thatClass: ClassInfo) = {
-      val missing = diff(thisClass.superClasses, thatClass.superClasses)
+      val missing = thisClass.superClasses.diff(thatClass.superClasses)
 
       if(missing.isEmpty)
         None
@@ -62,9 +53,9 @@ import com.typesafe.tools.mima.lib.analyze.Rule
     }
   }
 
-  object Superinterfaces extends TemplateRule with ClassTypesHelper {
+  object Superinterfaces extends TemplateRule {
     def apply(thisClass: ClassInfo, thatClass: ClassInfo) = {
-      val missing = diff(thisClass.allInterfaces, thatClass.allInterfaces)
+      val missing = thisClass.allInterfaces.diff(thatClass.allInterfaces)
 
       if(missing.isEmpty)
         None

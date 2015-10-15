@@ -9,7 +9,7 @@ object ClassInfo {
   /** We assume there can be only one java.lang.Object class, and that comes from the configuration
    *  class path.
    */
-  lazy val ObjectClass = Config.baseDefinitions.fromName("java.lang.Object")
+  lazy val ObjectClass = Config.baseDefinitions.ObjectClass
 }
 
 import com.typesafe.tools.mima.core.util.log.{ConsoleLogging, Logging}
@@ -20,20 +20,25 @@ import com.typesafe.tools.mima.core.util.log.{ConsoleLogging, Logging}
 class SyntheticClassInfo(owner: PackageInfo, override val bytecodeName: String) extends ClassInfo(owner) {
   loaded = true
   def file: AbstractFile = throw new UnsupportedOperationException
-  override lazy val superClasses = Nil
+  override lazy val superClasses = Set(ClassInfo.ObjectClass)
   override lazy val allTraits = Set.empty[ClassInfo]
   override lazy val allInterfaces: Set[ClassInfo] = Set.empty[ClassInfo]
+  override def canEqual(other: Any) = other.isInstanceOf[SyntheticClassInfo]
 }
 
 /** As the name implies. */
-object NoClass extends SyntheticClassInfo(null, "<noclass>")
+object NoClass extends SyntheticClassInfo(null, "<noclass>") {
+  override def canEqual(other: Any) = other.isInstanceOf[NoClass.type]
+  override lazy val superClasses = Set.empty[ClassInfo]
+}
 
 /** A class for which we have the classfile. */
 class ConcreteClassInfo(owner: PackageInfo, val file: AbstractFile) extends ClassInfo(owner) {
   override def bytecodeName = PackageInfo.className(file.name)
+  override def canEqual(other: Any) = other.isInstanceOf[ConcreteClassInfo]
 }
 
-abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with WithAccessFlags {
+abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with WithAccessFlags with Equals {
   import ClassInfo._
 
   def file: AbstractFile
@@ -50,6 +55,15 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
     if (owner.isRoot) bytecodeName
     else owner.fullName + "." + bytecodeName
   }
+
+  final override def equals(other: Any): Boolean = other match {
+    case that: ClassInfo => (that canEqual this) && this.fullName == that.fullName
+    case _               => false
+  }
+
+  final override def hashCode = this.fullName.hashCode
+
+  override def canEqual(other: Any) = other.isInstanceOf[ClassInfo]
 
   def formattedFullName = formatClassName(if (isObject) fullName.init else fullName)
 
@@ -97,8 +111,9 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
   def flags_=(x: Int) = _flags = x
   def isScala_=(x: Boolean) = _isScala = x
 
-  lazy val superClasses: List[ClassInfo] =
-    (if (this == ClassInfo.ObjectClass) Nil else superClass :: superClass.superClasses)
+  lazy val superClasses: Set[ClassInfo] =
+    if (this == ClassInfo.ObjectClass) Set.empty
+    else superClass.superClasses + superClass
 
   def lookupClassFields(name: String): Iterator[MemberInfo] =
     (Iterator.single(this) ++ superClasses.iterator) flatMap (_.fields.get(name))
