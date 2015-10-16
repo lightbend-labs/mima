@@ -20,8 +20,11 @@ trait MimaSpec extends Spec with Meta.StdOpts with Interpolation {
   val currentfile = "curr" / "Current classpath/jar for binary compatibility testing." defaultTo ""
   heading("optional settings:")
   val classpath    = "classpath"    / "an optional classpath setting"        defaultTo System.getProperty("java.class.path")
-  val problemFilters = "filters" / "an optional problem filters configuration file" --|
+  val problemFilters = "filters" / "an optional problem filters configuration file, applied to both backward and forward checking" --|
+  val backwardFilters = "backward-filters" / "an optional problem filters configuration file, only applied to backward checking" --|
+  val forwardFilters = "forward-filters" / "an optional problem filters configuration file, only applied to forward checking" --|
   val generateFilters = "generate-filters" / "generate filters definition for displayed problems" --?
+  val direction = "direction" / "check direction, default is \"backward\", but can also be \"forward\" or \"both\"" --|
 }
 
 object MimaSpec extends MimaSpec with Property {
@@ -63,7 +66,7 @@ class Main(args: List[String]) extends {
   }
 
   /** Converts a problem to a human-readable mapped string. */
-  private def printProblem(p: core.Problem): String = {
+  private def printProblem(p: core.Problem, affected: String): String = {
     def wrap(words: Seq[String], result: List[String] = Nil): Seq[String] =
       if(words.isEmpty) result.reverse
       else {
@@ -78,7 +81,7 @@ class Main(args: List[String]) extends {
         wrap(rest, line :: result)
       }
     def wrapString(s: String) = wrap(s split "\\s")
-    wrapString(" * " + p.description) mkString "\n   "
+    wrapString(" * " + p.description(affected)) mkString "\n   "
   }
 
   private def loadFilters(configFile: File): Seq[ProblemFilter] = {
@@ -98,9 +101,9 @@ class Main(args: List[String]) extends {
     }
   }
 
-  private def printGeneratedFilters(errors: Seq[core.Problem]): Unit = {
+  private def printGeneratedFilters(errors: Seq[core.Problem], direction: String): Unit = {
     val errorsFilterConfig = ProblemFiltersConfig.problemsToProblemFilterConfig(errors)
-    val header = "Generated filter config definition"
+    val header = "\nGenerated " + direction + " filter config definition"
     println(header)
     println(Seq.fill(header.length)("=") mkString "")
     import com.typesafe.config._
@@ -108,22 +111,38 @@ class Main(args: List[String]) extends {
     println(errorsFilterConfig.root.render(renderOptions))
   }
 
+  def parseFilters(os:Option[String]) = os.toSeq.map(filePath => loadFilters(new File(filePath))).flatten
+
   def run(): Int = {
     val mima = makeMima
-    val foundProblems = mima.collectProblems(prevfile, currentfile)
-    val filters = problemFilters.toSeq.map(filePath => loadFilters(new File(filePath))).flatten
-    def isReported(problem: core.Problem) = filters.forall(filter => filter(problem))
-    val errors = foundProblems.filter(isReported)
-    val header = "Found " + errors.size + " binary incompatibilities" + {
-      val filteredOutSize = foundProblems.size - errors.size
+    val backwardProblems = (direction getOrElse Nil) match {
+      case "backward" | "backwards" | "both" => mima.collectProblems(prevfile, currentfile)
+      case _ => Nil
+    }
+    val forwardProblems = (direction getOrElse Nil) match {
+      case "forward" | "forwards" | "both" => mima.collectProblems(currentfile, prevfile)
+      case _ => Nil
+    }
+    val bothFilters = parseFilters(problemFilters)
+    val backFilters = bothFilters ++ parseFilters(backwardFilters)
+    val forwFilters = bothFilters ++ parseFilters(forwardFilters)
+    def isReported(problem: core.Problem, filters: Seq[core.Problem => Boolean]) = filters.forall(filter => filter(problem))
+    val backErrors = backwardProblems.filter(isReported(_,backFilters))
+    val forwErrors = forwardProblems.filter(isReported(_,forwFilters))
+    val errorsSize = backErrors.size + forwErrors.size
+    val header = "Found " + errorsSize + " binary incompatibilities" + {
+      val filteredOutSize = backwardProblems.size + forwardProblems.size - errorsSize
       if (filteredOutSize > 0) " (" + filteredOutSize + " were filtered out)" else ""
     }
     println(header)
     println(Seq.fill(header.length)("=") mkString "")
-    errors map printProblem foreach println
-    if (generateFilters)
-      printGeneratedFilters(errors)
-    errors.size
+    backErrors map {p:core.Problem => printProblem(p,"current")} foreach println
+    forwErrors map {p:core.Problem => printProblem(p,"other")} foreach println
+    if (generateFilters) {
+      printGeneratedFilters(backErrors, "backward")
+      printGeneratedFilters(forwErrors, "forward")
+    }
+    errorsSize
   }
 }
 
