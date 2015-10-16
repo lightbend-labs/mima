@@ -1,1 +1,2 @@
 class A is declared final in new version
+method this()Unit in class A does not have a correspondent in new version
