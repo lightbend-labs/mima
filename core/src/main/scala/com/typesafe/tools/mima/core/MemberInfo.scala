@@ -10,6 +10,8 @@ object MemberInfo {
   private val setterTag = "$_setter_$"
   private val setterSuffix = "_$eq"
 
+  val ConstructorName = "<init>"
+
   def maybeSetter(name: String) = name.endsWith(setterSuffix)
 }
 
