@@ -27,18 +27,30 @@ object SbtMima {
     new lib.MiMaLib(classpath, new SbtLogger(s))
   }
 
-  /** Runs MiMa and returns a list of potential binary incompatibilities. */
-  def runMima(prev: File, curr: File, cp: sbt.Keys.Classpath, s: TaskStreams): List[core.Problem] =
-    makeMima(cp, s).collectProblems(prev.getAbsolutePath, curr.getAbsolutePath)
+  /** Runs MiMa and returns a two lists of potential binary incompatibilities,
+      the first for backward compatibility checking, and the second for forward checking. */
+  def runMima(prev: File, curr: File, cp: sbt.Keys.Classpath,
+              dir: String, s: TaskStreams): (List[core.Problem],List[core.Problem]) = {
+    val mimaLib = makeMima(cp, s)
+    (dir match {
+       case "backward" | "backwards" | "both" => mimaLib.collectProblems(prev.getAbsolutePath, curr.getAbsolutePath)
+       case _ => Nil
+     },
+     dir match {
+       case "forward" | "forwards" | "both" => mimaLib.collectProblems(curr.getAbsolutePath, prev.getAbsolutePath)
+       case _ => Nil
+     })
+  }
 
   /** Reports binary compatibility errors.
    *  @param failOnProblem if true, fails the build on binary compatibility errors.
    */
-  def reportErrors(problemsInFiles: List[(File, List[core.Problem])], failOnProblem: Boolean, filters: Seq[core.ProblemFilter], s: TaskStreams, projectName: String): Unit = {
+  def reportErrors(problemsInFiles: List[(File, List[core.Problem], List[core.Problem])], failOnProblem: Boolean,
+        backwardFilters: Seq[core.ProblemFilter], forwardFilters: Seq[core.ProblemFilter], s: TaskStreams, projectName: String): Unit = {
     // filters * found is n-squared, it's fixable in principle by special-casing known
     // filter types or something, not worth it most likely...
 
-    def isReported(problem: core.Problem) = filters forall { f =>
+    def isReported(problem: core.Problem, filters: Seq[core.ProblemFilter]) = filters forall { f =>
       if (f(problem)) {
         true
       } else {
@@ -47,22 +59,24 @@ object SbtMima {
       }
     }
 
-    problemsInFiles foreach { case (file, found) =>
-      val errors = found filter isReported
+    problemsInFiles foreach { case (file, backward, forward) =>
+      val backErrors = backward filter (isReported(_, backwardFilters))
+      val forwErrors = forward filter (isReported(_, forwardFilters))
 
-      val filteredCount = found.size - errors.size
+      val filteredCount = backward.size + forward.size - backErrors.size - forwErrors.size
       val filteredNote = if (filteredCount > 0) " (filtered " + filteredCount + ")" else ""
 
       // TODO - Line wrapping an other magikz
-      def prettyPrint(p: core.Problem): String = {
-        " * " + p.description + p.howToFilter.map("\n   filter with: " + _).getOrElse("")
+      def prettyPrint(p: core.Problem, affected: String): String = {
+        " * " + p.description(affected) + p.howToFilter.map("\n   filter with: " + _).getOrElse("")
       }
-      s.log.info(s"$projectName: found ${errors.size} potential binary incompatibilities while checking against $file $filteredNote")
-      errors map prettyPrint foreach { p =>
-        if (failOnProblem) s.log.error(p)
-        else s.log.warn(p)
+      s.log.info(s"$projectName: found ${backErrors.size+forwErrors.size} potential binary incompatibilities while checking against $file $filteredNote")
+      ((backErrors map {p: core.Problem => prettyPrint(p,"current")}) ++
+       (forwErrors map {p: core.Problem => prettyPrint(p,"other")})) foreach { ps =>
+        if (failOnProblem) s.log.error(ps)
+        else s.log.warn(ps)
       }
-      if (failOnProblem && !errors.isEmpty) sys.error(projectName + ": Binary compatibility check failed!")
+      if (failOnProblem && !backErrors.isEmpty && !forwErrors.isEmpty) sys.error(projectName + ": Binary compatibility check failed!")
     }
   }
   /** Resolves an artifact representing the previous abstract binary interface

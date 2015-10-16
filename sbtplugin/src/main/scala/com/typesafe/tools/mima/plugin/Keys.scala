@@ -14,9 +14,14 @@ class BaseMimaKeys {
   final val mimaPreviousArtifacts  = settingKey[Set[ModuleID]]("Previous released artifacts used to test binary compatibility.")
   final val mimaPreviousClassfiles = taskKey[Set[File]]("Directories or jars containing the previous class files used to test compatibility.")
   final val mimaCurrentClassfiles  = taskKey[File]("Directory or jar containing the current class files used to test compatibility.")
-  final val mimaFindBinaryIssues   = taskKey[List[(File, List[core.Problem])]]("A list of all binary incompatibilities between two files.")
+  final val mimaFindBinaryIssues   = taskKey[List[(File, List[core.Problem], List[core.Problem])]]("A list of all backward and forward binary incompatibilities between two files.")
   final val mimaReportBinaryIssues = taskKey[Unit]("Logs all binary incompatibilities to the sbt console/logs.")
-  final val mimaBinaryIssueFilters = settingKey[Seq[core.ProblemFilter]]("A list of filters to apply to binary issues found.")
+
+  final val mimaBinaryIssueFilters   = settingKey[Seq[core.ProblemFilter]]("A list of filters to apply to binary issues found. Applies both to backward and forward binary compatibility checking.")
+  final val mimaBackwardIssueFilters = settingKey[Seq[core.ProblemFilter]]("A list of filters to apply to binary issues found. These filters only apply to backward compatibility checking.")
+  final val mimaForwardIssueFilters  = settingKey[Seq[core.ProblemFilter]]("A list of filters to apply to binary issues found. These filters only apply to forward compatibility checking.")
+
+  final val mimaCheckDirection = settingKey[String]("Compatibility checking direction; default is \"backward\", but can also be \"forward\" or \"both\".")
 
   @deprecated("Use mimaFailOnProblem",      "0.1.9") final val failOnProblem      = mimaFailOnProblem
   @deprecated("Use mimaPreviousArtifacts",  "0.1.9") final val previousArtifacts  = mimaPreviousArtifacts

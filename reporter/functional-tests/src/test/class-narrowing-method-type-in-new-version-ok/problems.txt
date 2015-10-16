@@ -1,1 +1,1 @@
-method foo()Foo in class A has now a different result type; was: Foo, is now: Bar
+method foo()Foo in class A has a different result type in new version, where it is Bar rather than Foo

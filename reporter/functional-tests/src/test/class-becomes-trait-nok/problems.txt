@@ -1,1 +1,1 @@
-declaration of class A has changed to trait A in new version; changing class to trait breaks client code
+declaration of class A is trait A in new version; changing class to trait breaks client code

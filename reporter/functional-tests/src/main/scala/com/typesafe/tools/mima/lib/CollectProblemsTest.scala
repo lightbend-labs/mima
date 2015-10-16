@@ -18,7 +18,7 @@ class CollectProblemsTest {
     val mima = new MiMaLib(Config.baseClassPath)
 
     // SUT
-    val problems = mima.collectProblems(oldJarPath, newJarPath).map(_.description)
+    val problems = mima.collectProblems(oldJarPath, newJarPath).map(_.description("new"))
 
     // load oracle
     var expectedProblems = Source.fromFile(oraclePath).getLines.toList

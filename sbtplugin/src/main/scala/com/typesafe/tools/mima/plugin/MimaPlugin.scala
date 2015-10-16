@@ -17,22 +17,30 @@ object MimaPlugin extends AutoPlugin {
   /** Just configures MiMa to compare previous/current classfiles.*/
   def mimaReportSettings: Seq[Setting[_]] = Seq(
     binaryIssueFilters := Nil,
+    mimaBackwardIssueFilters := Nil,
+    mimaForwardIssueFilters := Nil,
     findBinaryIssues := {
       if (previousClassfiles.value.isEmpty) {
         streams.value.log.info(s"${name.value}: previous-artifact not set, not analyzing binary compatibility")
-        List.empty[(File, List[core.Problem])]
+        List.empty[(File, List[core.Problem], List[core.Problem])]
       }
       else {
-        previousClassfiles.value.map(previous => (previous, SbtMima.runMima(
-          previous,
-          currentClassfiles.value,
-          (fullClasspath in findBinaryIssues).value,
-          streams.value
-        )))(scala.collection.breakOut)
+        previousClassfiles.value.map { previous =>
+          val problems = SbtMima.runMima(
+            previous,
+            currentClassfiles.value,
+            (fullClasspath in findBinaryIssues).value,
+            mimaCheckDirection.value,
+            streams.value
+          )
+          (previous, problems._1, problems._2)
+        }(scala.collection.breakOut)
       }
     },
-    reportBinaryIssues <<= (findBinaryIssues, failOnProblem, binaryIssueFilters, streams, name) map SbtMima.reportErrors)
-
+    reportBinaryIssues <<= (findBinaryIssues, failOnProblem, binaryIssueFilters, mimaBackwardIssueFilters,
+                            mimaForwardIssueFilters, streams, name) map { (find, fail, bin, back, forw, s, n) =>
+                              SbtMima.reportErrors(find, fail, bin ++ back, bin ++ forw, s, n)
+                           })
   /** Setup mima with default settings, applicable for most projects. */
   def mimaDefaultSettings: Seq[Setting[_]] = Seq(
     failOnProblem := true,
