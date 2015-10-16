@@ -213,7 +213,9 @@ object MimaBuild extends Build {
   // scalaSource is the setting key that defines the directory for Scala sources
   // configuration gets the current configuration
   // expanded version: ss <<= (bd, conf) apply { (b,c) => b / c.name }
-  def shortSourceDir(testCase: String) = scalaSource <<= (baseDirectory, configuration) { _ / "src" / "test" / testCase / _.name }
+  def tcSettings(testCase: String) = Seq(
+    scalaSource := baseDirectory.value / "src" / "test" / testCase / configuration.value.name
+  )
 
   // this is the custom test task of the form (ta, tb, tc) map { (a,b,c) => ... }
   // tx are the tasks we need to do our job.
@@ -253,30 +255,30 @@ object MimaBuild extends Build {
       }
 
   def testFunctionalCommand = Command.args("testFunctional", "<test-case>") { (state, args) =>
+
     val extracted: Extracted = Project.extract(state)
 
     val bases = ((file("reporter") / "functional-tests" / "src" / "test") * (DirectoryFilter && GlobFilter(args.headOption.getOrElse("*")))).get.map(_.getName).toList
+    val results = bases.map { testCase =>
+      val sourceDirSettings = Seq(v1Config, v2Config).flatMap { conf =>
+        inScope(ThisScope.in(reporterFunctionalTests, conf))(tcSettings(testCase)) ++
+          inScope(ThisScope.in(reporterFunctionalTests))(target := baseDirectory.value / "target" / testCase)
+      }
 
-    @annotation.tailrec def runFunTest(tests: Seq[String]): State = tests match {
-      case Nil => state
-      case testCase :: remaining =>
-        val sourceDirSettings = Seq(v1Config, v2Config).flatMap(c => inScope(ThisScope.in(reporterFunctionalTests, c))(shortSourceDir(testCase)))
+      // set source directory to a particular test-case
+      val newState = extracted.append(sourceDirSettings, state)
 
-        // set source directory to a particular test-case
-        val newState = extracted.append(sourceDirSettings, state)
-
-        // clean up functional test project, otherwise incremental compilation kicks in
-        val Some((cleanState, _)) = Project.runTask(clean in reporterFunctionalTests, newState)
-
-        // run functional tests
-        val Some((_, result)) = Project.runTask(functionalTests in reporterFunctionalTests, cleanState)
-        result.toEither match {
-          case Right(_) => runFunTest(remaining)
-          case Left(_) => state.fail
-        }
+      // run functional tests
+      val Some((_, result)) = Project.runTask(functionalTests in reporterFunctionalTests, newState)
+      result.toEither
     }
 
-    runFunTest(bases)
+    results.seq.collect {
+      case Left(error) => error.directCause.map(_.getMessage)
+    }.flatten.foldLeft(state) { (_, error) =>
+      //state.log.error(error)
+      state.fail
+    }
   }
 
   def project(id: String, base: File, settings: Seq[Def.Setting[_]] = Nil) =
