@@ -263,7 +263,7 @@ object MimaBuild extends Build {
           testRunner.runTest(testClasspath, proj.project, v1.getAbsolutePath, v2.getAbsolutePath, oraclePath)
           streams.log.info("Test '" + proj.project + "' succeeded.")
         } catch {
-          case e: Exception =>  streams.log.error(e.toString)
+          case e: Exception =>  sys.error(e.toString)
         }
         ()
       }
