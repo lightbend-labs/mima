@@ -1,2 +1,2 @@
-method foo()Int in class A has now a different result type; was: Int, is now: java.lang.Object
-method foo_=(Int)Unit in class A's type has changed; was (Int)Unit, is now: (java.lang.Object)Unit
+method foo()Int in class A has a different result type in new version, where it is java.lang.Object rather than Int
+method foo_=(Int)Unit in class A's type is different in new version, where it is (java.lang.Object)Unit instead of (Int)Unit

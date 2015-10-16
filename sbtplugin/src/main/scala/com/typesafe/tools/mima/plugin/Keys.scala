@@ -13,7 +13,13 @@ object MimaKeys {
   val previousClassfiles = TaskKey[Set[File]]("mima-previous-classfiles", "Directories or jars containing the previous class files used to test compatibility.")
   val currentClassfiles = TaskKey[File]("mima-current-classfiles", "Directory or jar containing the current class files used to test compatibility.")
   // TODO - Create a task to make a MiMaLib, is that a good idea?
-  val findBinaryIssues = TaskKey[List[(File, List[core.Problem])]]("mima-find-binary-issues", "A list of all binary incompatibilities between two files.")
+  // findBinaryIssues returns *two* lists, one for backward and one for forward problems.
+  val findBinaryIssues = TaskKey[List[(File, List[core.Problem], List[core.Problem])]]("mima-find-binary-issues", "A list of all binary incompatibilities between two files.")
   val reportBinaryIssues = TaskKey[Unit]("mima-report-binary-issues", "Logs all binary incompatibilities to the sbt console/logs.")
-  val binaryIssueFilters = SettingKey[Seq[core.ProblemFilter]]("mima-binary-issue-filters", "A list of filters to apply to binary issues found.")
+
+  val binaryIssueFilters = SettingKey[Seq[core.ProblemFilter]]("mima-binary-issue-filters", "A list of filters to apply to binary issues found. Applies both to backward and forward binary compatibility checking.")
+  val backwardIssueFilters = SettingKey[Seq[core.ProblemFilter]]("mima-backward-issue-filters", "A list of filters to apply to binary issues found. These filters only apply to backward compatibility checking.")
+  val forwardIssueFilters = SettingKey[Seq[core.ProblemFilter]]("mima-forward-issue-filters", "A list of filters to apply to binary issues found. These filters only apply to forward compatibility checking.")
+
+  val checkDirection = SettingKey[String]("mima-check-direction", "Compatibility checking direction; default is \"backward\", but can also be \"forward\" or \"both\".")
 }

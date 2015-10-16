@@ -1,1 +1,1 @@
-abstract method foo()Int in class B does not have a correspondent in old version
+in new version there is abstract method foo()Int in class B, which does not have a correspondent

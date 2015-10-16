@@ -81,14 +81,10 @@ private[analyze] class ClassAnalyzer extends Analyzer {
     for (newAbstrMeth <- newclazz.deferredMethods) yield {
       oldclazz.lookupMethods(newAbstrMeth.bytecodeName).find(_.sig == newAbstrMeth.sig) match {
         case None =>
-          val p = MissingMethodProblem(newAbstrMeth)
-          p.affectedVersion = Problem.ClassVersion.Old
-          Some(p)
+          Some(ReversedMissingMethodProblem(newAbstrMeth))
         case Some(found) =>
           if(found.isConcrete) {
-        	val p = AbstractMethodProblem(newAbstrMeth)
-        	p.affectedVersion = Problem.ClassVersion.Old
-        	Some(p)
+        	Some(ReversedAbstractMethodProblem(newAbstrMeth))
           }
           else
         	None
@@ -111,8 +107,7 @@ private[analyze] class TraitAnalyzer extends Analyzer {
       if (!oldclazz.lookupMethods(newmeth.bytecodeName).exists(_.sig == newmeth.sig)) {
         // this means that the method is brand new and therefore the implementation
         // has to be injected
-        val problem = MissingMethodProblem(newmeth)
-        problem.affectedVersion = Problem.ClassVersion.Old
+        val problem = ReversedMissingMethodProblem(newmeth)
         res += problem
       }
       // else a static implementation for the same method existed already, therefore
@@ -126,8 +121,7 @@ private[analyze] class TraitAnalyzer extends Analyzer {
       oldmeths find (_.sig == newmeth.sig) match {
         case Some(oldmeth) => ()
         case _ =>
-          val problem = MissingMethodProblem(newmeth)
-          problem.affectedVersion = Problem.ClassVersion.Old
+          val problem = ReversedMissingMethodProblem(newmeth)
           res += problem
       }
     }
