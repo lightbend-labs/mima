@@ -114,7 +114,8 @@ object MimaBuild extends Build {
                  ui  -> loc("migration-manager-ui")
                )
              },
-             host in upload := "downloads.typesafe.com.s3.amazonaws.com"
+             host in upload := "downloads.typesafe.com.s3.amazonaws.com",
+             testScalaVersion in Global :=  sys.props.getOrElse("mima.testScalaVersion", buildScalaVer)
     )
     enablePlugins(GitVersioning)
   )
@@ -206,17 +207,22 @@ object MimaBuild extends Build {
 
   // defines a Project for the given base directory (for example, functional-tests/test1)
   // Its name is the directory name (test1) and it has compile+package tasks for sources in v1/ and v2/
-  def testProject(base: File) = project(base.name, base, settings = testProjectSettings)
-  								  .configs(v1Config, v2Config) dependsOn (reporterFunctionalTests)
+  def testProject(base: File) = project(base.name, base, settings = testProjectSettings).configs(v1Config, v2Config)
 
   lazy val testProjectSettings =
     commonSettings ++ // normal project defaults; can be trimmed later- test and run aren't needed, for example.
-      inConfig(v1Config)(perConfig) ++ // add compile/package for the v1 sources
-      inConfig(v2Config)(perConfig) :+  // add compile/package for the v2 sources
-      (functionalTests <<= runTest) // add the functional-tests task.
+    Seq(scalaVersion <<= testScalaVersion in Global) ++
+    inConfig(v1Config)(perConfig) ++ // add compile/package for the v1 sources
+    inConfig(v2Config)(perConfig) :+  // add compile/package for the v2 sources
+    (functionalTests <<= runTest) // add the functional-tests task.
 
   // this is the key for the task that runs the reporter's functional tests
   lazy val functionalTests = TaskKey[Unit]("test-functional")
+
+  // This is the key for the scala version used to compile the tests, so that we can cross test the MiMa version
+  // actually being used in the sbt plugin against multiple scala compiler versions.
+  // Also the base project has dependencies that don't resolve under newer versions of scala.
+  lazy val testScalaVersion = SettingKey[String]("test-scala-version", "The scala version to use to compile the test classes")
 
   // define configurations for the v1 and v2 sources
   lazy val v1Config = config("v1") extend Compile

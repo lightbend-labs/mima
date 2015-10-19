@@ -13,3 +13,5 @@ jdk:
    - oraclejdk8
 script:
    - sbt test testFunctional
+   - sbt -Dmima.testScalaVersion="2.11.7" testFunctional
+   - sbt -Dmima.testScalaVersion="2.12.0-M3" testFunctional
