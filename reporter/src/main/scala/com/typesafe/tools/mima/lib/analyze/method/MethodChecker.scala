@@ -37,7 +37,7 @@ private[analyze] abstract class BaseMethodChecker extends Checker[MemberInfo, Cl
 
 private[analyze] class ClassMethodChecker extends BaseMethodChecker {
   def check(method: MemberInfo, inclazz: ClassInfo): Option[Problem] = {
-    if (method.nonBridge && method.nonAccessible)
+    if (method.nonAccessible)
       None
     else if (method.isDeferred)
       super.check(method, inclazz.lookupMethods(method.bytecodeName))
@@ -48,7 +48,7 @@ private[analyze] class ClassMethodChecker extends BaseMethodChecker {
 
 private[analyze] class TraitMethodChecker extends BaseMethodChecker {
   def check(method: MemberInfo, inclazz: ClassInfo): Option[Problem] = {
-    if (method.nonBridge && method.nonAccessible)
+    if (method.nonAccessible)
       None
     else if (method.owner.hasStaticImpl(method))
       checkStaticImplMethod(method, inclazz)
