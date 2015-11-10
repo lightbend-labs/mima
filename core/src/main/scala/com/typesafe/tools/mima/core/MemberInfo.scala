@@ -66,7 +66,9 @@ class MemberInfo(val owner: ClassInfo, val bytecodeName: String, override val fl
 
   def hasSyntheticName: Boolean = decodedName contains '$'
 
-  def isAccessible: Boolean = isPublic && !hasSyntheticName
+  def isAccessible: Boolean = isPublic && !isSynthetic && !hasSyntheticName
+
+  def nonAccessible: Boolean = !isAccessible
 
   /** The name of the getter corresponding to this setter */
   private def getterName: String = {

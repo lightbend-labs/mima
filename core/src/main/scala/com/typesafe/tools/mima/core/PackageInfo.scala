@@ -72,10 +72,14 @@ abstract class PackageInfo(val owner: PackageInfo) {
     }
 
     def isAccessible(clazz: ClassInfo, prefix: Set[ClassInfo]) = {
-      val idx = clazz.decodedName.lastIndexOf("$")
-      lazy val isReachable =
-      	if (idx < 0) prefix.isEmpty // class name contains no $
-      	else (prefix exists (_.decodedName == clazz.decodedName.substring(0, idx))) // prefix before dollar is an accessible class detected previously
+      def isReachable = {
+        if (clazz.isSynthetic) false
+        else {
+          val idx = clazz.decodedName.lastIndexOf("$")
+          if (idx < 0) prefix.isEmpty // class name contains no $
+          else prefix exists (_.decodedName == clazz.decodedName.substring(0, idx)) // prefix before dollar is an accessible class detected previously
+        }
+      }
       clazz.isPublic && isReachable
     }
 
