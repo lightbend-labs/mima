@@ -105,7 +105,8 @@ object MimaBuild extends Build {
     project("root", file("."))
     aggregate(core, coreui, reporter, reporterui, sbtplugin)
     settings(s3Settings:_*)
-    settings(publish := (),
+    settings(name := buildName,
+             publish := (),
              publishLocal := (),
              mappings in upload <<= (assembly in reporter, assembly in reporterui, version) map { (cli, ui, v) =>
                def loc(name: String) = "migration-manager/%s/%s-%s.jar" format (v, name, v)
