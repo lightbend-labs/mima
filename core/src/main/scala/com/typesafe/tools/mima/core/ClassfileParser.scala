@@ -378,4 +378,8 @@ object ClassfileParser {
     (flags & JAVA_ACC_ABSTRACT) != 0
   @inline final def isFinal(flags: Int) =
     (flags & JAVA_ACC_FINAL) != 0
+  @inline final def isSynthetic(flags: Int) =
+    (flags & JAVA_ACC_SYNTHETIC) != 0
+  @inline final def isBridge(flags: Int) =
+    (flags & JAVA_ACC_BRIDGE) != 0
 }
