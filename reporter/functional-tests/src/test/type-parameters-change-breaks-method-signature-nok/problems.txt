@@ -1,1 +1,1 @@
-method contains(NodeImpl)Boolean in class Tree's type has changed; was (NodeImpl)Boolean, is now: (Node)Boolean
+method contains(NodeImpl)Boolean in class Tree's type is different in new version, where it is (Node)Boolean instead of (NodeImpl)Boolean

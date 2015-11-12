@@ -113,7 +113,7 @@ class ProblemInfoView extends Component {
     def updateWith(problem: Problem) = {
       container.infoPanel.file.text = problem.fileName
       container.infoPanel.member.text = problem.referredMember
-      container.infoPanel.description.text = problem.description
+      container.infoPanel.description.text = problem.description("new")
     }
   }
 

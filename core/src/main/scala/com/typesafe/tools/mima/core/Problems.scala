@@ -1,12 +1,5 @@
 package com.typesafe.tools.mima.core
 
-object Problem {
-  object ClassVersion extends Enumeration {
-    val New = Value("new")
-    val Old = Value("old")
-  }
-}
-
 trait ProblemRef {
   type Ref
   def ref: Ref
@@ -35,8 +28,12 @@ trait MemberRef extends ProblemRef {
 }
 
 sealed abstract class Problem extends ProblemRef {
-  var affectedVersion = Problem.ClassVersion.New
-  def description: String
+  // each description accepts a name for the affected files,
+  // and generates the corresponding diagnostic message.
+  // For backward checking, the affected version is "current",
+  // while for forward checking it could be "other" or "previous",
+  // for example.
+  def description: String => String
 }
 
 abstract class TemplateProblem(override val ref: ClassInfo) extends Problem with TemplateRef {
@@ -48,87 +45,97 @@ abstract class MemberProblem(override val ref: MemberInfo) extends Problem with 
 }
 
 case class MissingFieldProblem(oldfld: MemberInfo) extends MemberProblem(oldfld) {
-  def description = oldfld.fieldString + " does not have a correspondent in " + affectedVersion + " version"
+  def description = affectedVersion => oldfld.fieldString + " does not have a correspondent in " + affectedVersion + " version"
 }
 
 case class MissingMethodProblem(meth: MemberInfo) extends MemberProblem(meth) {
-  def description = (if (meth.isDeferred && !meth.owner.isTrait) "abstract " else "") + meth.methodString + " does not have a correspondent in " + affectedVersion + " version"
+  def description = affectedVersion => (if (meth.isDeferred && !meth.owner.isTrait) "abstract " else "") + meth.methodString + " does not have a correspondent in " + affectedVersion + " version"
+}
+
+case class ReversedMissingMethodProblem(meth: MemberInfo) extends MemberProblem(meth) {
+  def description = affectedVersion => (if (meth.isDeferred && !meth.owner.isTrait) "abstract " else "") + meth.methodString + " is present only in " + affectedVersion + " version"
 }
 
 case class UpdateForwarderBodyProblem(meth: MemberInfo) extends MemberProblem(meth) {
   assert(meth.owner.isTrait)
   assert(meth.owner.hasStaticImpl(meth))
 
-  def description = "classes mixing " + meth.owner.fullName + " needs to update body of " + meth.shortMethodString
+  def description = affectedVersion => "in " + affectedVersion + " version, classes mixing " + meth.owner.fullName + " needs to update body of " + meth.shortMethodString
 }
 
 case class MissingClassProblem(oldclazz: ClassInfo) extends TemplateProblem(oldclazz) {
-  def description = oldclazz.classString + " does not have a correspondent in " + affectedVersion + " version"
+  def description = affectedVersion => oldclazz.classString + " does not have a correspondent in " + affectedVersion + " version"
 }
 
 case class AbstractClassProblem(oldclazz: ClassInfo) extends TemplateProblem(oldclazz) {
-  def description = oldclazz.classString + " was concrete; is declared abstract in " + affectedVersion + " version"
+  def description = affectedVersion => oldclazz.classString + " was concrete; is declared abstract in " + affectedVersion + " version"
 }
 
 case class FinalClassProblem(oldclazz: ClassInfo) extends TemplateProblem(oldclazz) {
-  def description = oldclazz.classString + " is declared final in " + affectedVersion + " version"
+  def description = affectedVersion => oldclazz.classString + " is declared final in " + affectedVersion + " version"
 }
 
 case class FinalMethodProblem(newmemb: MemberInfo) extends MemberProblem(newmemb) {
-  def description = newmemb.methodString + " is declared final in " + affectedVersion + " version"
+  def description = affectedVersion => newmemb.methodString + " is declared final in " + affectedVersion + " version"
 }
 
 case class IncompatibleFieldTypeProblem(oldfld: MemberInfo, newfld: MemberInfo) extends MemberProblem(oldfld) {
-  def description = newfld.fieldString + "'s type has changed; was: " + oldfld.tpe + ", is now: " + newfld.tpe
+  def description = affectedVersion => newfld.fieldString + "'s type is different in " + affectedVersion + " version, where it is: " + newfld.tpe + " rather than: " + oldfld.tpe
 }
 
 case class IncompatibleMethTypeProblem(oldmeth: MemberInfo, newmeths: List[MemberInfo]) extends MemberProblem(oldmeth) {
-  def description = {
+  def description = affectedVersion => {
     oldmeth.methodString + (if (newmeths.tail.isEmpty)
-      "'s type has changed; was " + oldmeth.tpe + ", is now: " + newmeths.head.tpe
+      "'s type is different in " + affectedVersion + " version, where it is " + newmeths.head.tpe + " instead of " + oldmeth.tpe
     else
-      " does not have a correspondent with same parameter signature among " +
+      " in " + affectedVersion + " version does not have a correspondent with same parameter signature among " +
         (newmeths map (_.tpe) mkString ", "))
   }
 }
 
 case class IncompatibleResultTypeProblem(oldmeth: MemberInfo, newmeth: MemberInfo) extends MemberProblem(oldmeth) {
-  def description = {
-    oldmeth.methodString + " has now a different result type; was: " +
-      oldmeth.tpe.resultType + ", is now: " + newmeth.tpe.resultType
+  def description = affectedVersion => {
+    oldmeth.methodString + " has a different result type in " + affectedVersion + " version, where it is " + newmeth.tpe.resultType +
+       " rather than " + oldmeth.tpe.resultType
   }
 }
 
+// In some older code within Mima, the affectedVersion could be reversed. We split AbstractMethodProblem and MissingMethodProblem
+// into two, in case the affected version is the other one, rather than the current one. (reversed if forward check).
 case class AbstractMethodProblem(newmeth: MemberInfo) extends MemberProblem(newmeth) {
-  def description = "abstract " + newmeth.methodString + " does not have a correspondent in " + affectedVersion + " version"
+  def description = affectedVersion => "abstract " + newmeth.methodString + " does not have a correspondent in " + affectedVersion + " version"
+}
+
+case class ReversedAbstractMethodProblem(newmeth: MemberInfo) extends MemberProblem(newmeth) {
+  def description = affectedVersion => "in " + affectedVersion + " version there is abstract " + newmeth.methodString + ", which does not have a correspondent"
 }
 
 case class IncompatibleTemplateDefProblem(oldclazz: ClassInfo, newclazz: ClassInfo) extends TemplateProblem(oldclazz) {
-  def description = {
-    "declaration of " + oldclazz.description + " has changed to " + newclazz.description +
-      " in new version; changing " + oldclazz.declarationPrefix + " to " + newclazz.declarationPrefix + " breaks client code"
+  def description = affectedVersion => {
+    "declaration of " + oldclazz.description + " is " + newclazz.description +
+      " in " + affectedVersion + " version; changing " + oldclazz.declarationPrefix + " to " + newclazz.declarationPrefix + " breaks client code"
   }
 }
 
 case class MissingTypesProblem(newclazz: ClassInfo, missing: Iterable[ClassInfo]) extends TemplateProblem(newclazz) {
-  def description = "the type hierarchy of " + newclazz.description + " has changed in new version. " +
+  def description = affectedVersion => "the type hierarchy of " + newclazz.description + " is different in " + affectedVersion + " version. " +
     "Missing types " + missing.map(_.fullName).mkString("{", ",", "}")
 }
 
 case class CyclicTypeReferenceProblem(clz: ClassInfo) extends TemplateProblem(clz) {
-  def description = {
-    "the type hierarchy of " + clz.description + " has changed in new version. Type " + clz.bytecodeName + " appears to be a subtype of itself"
+  def description = affectedVersion => {
+    "the type hierarchy of " + clz.description + " is different in " + affectedVersion + " version. Type " + clz.bytecodeName + " appears to be a subtype of itself"
   }
 }
 
 case class InaccessibleFieldProblem(newfld: MemberInfo) extends MemberProblem(newfld) {
-  def description = newfld.fieldString + " was public; is inaccessible in " + affectedVersion + " version"
+  def description = affectedVersion => newfld.fieldString + " is inaccessible in " + affectedVersion + " version, it must be public."
 }
 
 case class InaccessibleMethodProblem(newmeth: MemberInfo) extends MemberProblem(newmeth) {
-  def description = newmeth.methodString + " was public; is inaccessible in " + affectedVersion + " version"
+  def description = affectedVersion => newmeth.methodString + " is inaccessible in " + affectedVersion + " version, it must be public."
 }
 
 case class InaccessibleClassProblem(newclazz: ClassInfo) extends TemplateProblem(newclazz) {
-  def description = newclazz.classString + " was public; is inaccessible in " + affectedVersion + " version"
+  def description = affectedVersion => newclazz.classString + " is inaccessible in " + affectedVersion + " version, it must be public."
 }
