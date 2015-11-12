@@ -80,8 +80,6 @@ object Dependencies {
   import BuildSettings._
 
   val compiler = "org.scala-lang" % "scala-compiler" % buildScalaVer
-  val swing = "org.scala-lang" % "scala-swing" % buildScalaVer
-  val actors = "org.scala-lang" % "scala-actors" % buildScalaVer
   val typesafeConfig = "com.typesafe" % "config" % "1.0.0"
 
   val testDeps = Seq(
@@ -99,20 +97,17 @@ object MimaBuild extends Build {
   // here we list all projects that are defined.
   override lazy val projects = Seq(root) ++ modules ++ tests :+ reporterFunctionalTests
 
-  lazy val modules = Seq(core, coreui, reporter, reporterui, sbtplugin)
+  lazy val modules = Seq(core, reporter, sbtplugin)
 
   lazy val root = (
     project("root", file("."))
-    aggregate(core, coreui, reporter, reporterui, sbtplugin)
+    aggregate(core, reporter, sbtplugin)
     settings(s3Settings:_*)
     settings(publish := (),
              publishLocal := (),
-             mappings in upload <<= (assembly in reporter, assembly in reporterui, version) map { (cli, ui, v) =>
+             mappings in upload <<= (assembly in reporter, version) map { (cli, v) =>
                def loc(name: String) = "migration-manager/%s/%s-%s.jar" format (v, name, v)
-               Seq(
-                 cli -> loc("migration-manager-cli"),
-                 ui  -> loc("migration-manager-ui")
-               )
+               Seq(cli -> loc("migration-manager-cli"))
              },
              host in upload := "downloads.typesafe.com.s3.amazonaws.com",
              testScalaVersion in Global :=  sys.props.getOrElse("mima.testScalaVersion", buildScalaVer)
@@ -129,16 +124,8 @@ object MimaBuild extends Build {
                 buildInfoObject  := "BuildInfo"
                 )
            )
-    settings(libraryDependencies ++= Seq(compiler) ++ testDeps,
+    settings(libraryDependencies ++= compiler +: testDeps,
              name := buildName + "-core")
-    settings(sonatypePublishSettings:_*)
-  )
-
-  lazy val coreui = (
-    project("core-ui", file("core-ui"), settings = commonSettings)
-    settings(libraryDependencies ++= Seq(actors, swing, compiler) ++ testDeps,
-             name := buildName + "-core-ui")
-    dependsOn(core)
     settings(sonatypePublishSettings:_*)
   )
 
@@ -160,7 +147,7 @@ object MimaBuild extends Build {
 
   lazy val reporter = (
     project("reporter", file("reporter"), settings = commonSettings)
-    settings(libraryDependencies ++= Seq(actors, swing, typesafeConfig),
+    settings(libraryDependencies += typesafeConfig,
              name := buildName + "-reporter",
              javaOptions += "-Xmx512m")
     dependsOn(core)
@@ -173,17 +160,6 @@ object MimaBuild extends Build {
       packageBin in Compile <<= packageBin in Compile dependsOn  functionalTests,
       mainClass in assembly := Some("com.typesafe.tools.mima.cli.Main")
     )
-  )
-
-  lazy val reporterui = (
-    project("reporter-ui", file("reporter-ui"), settings = commonSettings)
-    settings(myAssemblySettings:_*)
-    settings(sonatypePublishSettings:_*)
-    settings(libraryDependencies ++= Seq(swing),
-             name := buildName + "-reporter-ui",
-             javaOptions += "-Xmx512m",
-             mainClass in assembly := Some("com.typesafe.tools.mima.lib.ui.MimaLibApp"))
-    dependsOn(coreui, reporter)
   )
 
   lazy val sbtplugin = (
