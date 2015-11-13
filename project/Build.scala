@@ -22,11 +22,9 @@ object BuildSettings {
   val buildName = "mima"
   val buildOrganization = "com.typesafe"
 
-  val buildScalaVer = "2.10.6"
-
   val commonSettings = Defaults.coreDefaultSettings ++ Seq (
       organization := buildOrganization,
-      scalaVersion := buildScalaVer,
+      scalaVersion := "2.10.6",
       git.gitTagToVersionNumber := { tag: String =>
         if(tag matches "[0.9]+\\..*") Some(tag)
         else None
@@ -79,7 +77,6 @@ object BuildSettings {
 object Dependencies {
   import BuildSettings._
 
-  val compiler = "org.scala-lang" % "scala-compiler" % buildScalaVer
   val typesafeConfig = "com.typesafe" % "config" % "1.0.0"
 
   val testDeps = Seq(
@@ -111,7 +108,7 @@ object MimaBuild extends Build {
                Seq(cli -> loc("migration-manager-cli"))
              },
              host in upload := "downloads.typesafe.com.s3.amazonaws.com",
-             testScalaVersion in Global :=  sys.props.getOrElse("mima.testScalaVersion", buildScalaVer)
+             testScalaVersion in Global :=  sys.props.getOrElse("mima.testScalaVersion", scalaVersion.value)
     )
     enablePlugins(GitVersioning)
   )
@@ -125,7 +122,8 @@ object MimaBuild extends Build {
                 buildInfoObject  := "BuildInfo"
                 )
            )
-    settings(libraryDependencies ++= compiler +: testDeps,
+    settings(libraryDependencies ++= testDeps,
+             libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
              name := buildName + "-core")
     settings(sonatypePublishSettings:_*)
   )
