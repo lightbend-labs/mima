@@ -93,21 +93,6 @@ Tests within the `functional-tests` folder should always pass.
 
 Note: The `problems.txt` is the test oracle. Expected errors are declared using the MiMa's reporting output (i.e., the output of the tool and the expected errors should match perfectly). Admittedly, this coupling is an issue since the testing framework is highly coupled with the tool output used to report errors to the user. We should improve this and make the two independent. Until then, mind that by changing the output of the tool you will likely have to update some of the test oracles (i.e., problems.txt file).
 
-Releasing
----------
-MiMa releases to several different locations:
-
-1. Maven central (libraries)
-2. Bintray (sbt plugin)
-3. downloads.typesafe.com (bundled CLI + UI artifacts).
-
-To deploy to locations 1 and 2, use the `publish` task, but make sure your credentials for both Sonatype's OSSRH + Bintray typesafe organization are in order.   After deploying, you need to log in to [OSSRH](http://oss.sonatype.org) and close/release the repository containing library. To release sbt plugin repository use `sbtplugin/bintrayRelease` task.
-
-To deploy to downloads.typesafe.com, you need to run the `s3-upload` task, ensuring the appropriate credentials are in place (See [sbt-s3](https://github.com/sbt/sbt-s3) for more info).
-
-MiMa releases should also update the content found on the [Typesafe Website](http://typesafe.com/technology/migration-manager).
-
-
 FAQ
 -------
 
