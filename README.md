@@ -53,14 +53,8 @@ If you'd like to create distributable jar files run:
 
       $ sbt assembly
 
-This will create `reporter/target/mima-reporter-assembly-....jar` and `reporter-ui/target/mima-reporter-ui-assembly-....jar` jar files that can be used to launch the command line and ui version of MiMa.
+This will create `reporter/target/mima-reporter-assembly-....jar` jar file that can be used to launch the command line version of MiMa.
 
-
-Launch MiMa Reporter UI
--------
-Type the following command to run the MiMa Reporter
-
-	$ sbt reporter-ui/run
 
 Launch MiMa Reporter CLI
 -------
