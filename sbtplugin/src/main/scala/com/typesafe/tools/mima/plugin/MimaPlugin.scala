@@ -5,8 +5,15 @@ import sbt._
 import sbt.Keys.{ fullClasspath, streams, classDirectory, ivySbt, name, ivyScala }
 
 /** Sbt plugin for using MiMa. */
-object MimaPlugin extends Plugin {
-  import MimaKeys._
+object MimaPlugin extends AutoPlugin {
+  override def requires = plugins.JvmPlugin
+  override def trigger = allRequirements
+
+  override def projectSettings: Seq[Def.Setting[_]] = mimaDefaultSettings
+
+  object autoImport extends BaseMimaKeys
+  import autoImport._
+
   /** Just configures MiMa to compare previous/current classfiles.*/
   def mimaReportSettings: Seq[Setting[_]] = Seq(
     binaryIssueFilters := Nil,
@@ -25,6 +32,7 @@ object MimaPlugin extends Plugin {
       }
     },
     reportBinaryIssues <<= (findBinaryIssues, failOnProblem, binaryIssueFilters, streams, name) map SbtMima.reportErrors)
+
   /** Setup mima with default settings, applicable for most projects. */
   def mimaDefaultSettings: Seq[Setting[_]] = Seq(
     failOnProblem := true,
