@@ -1,1 +1,1 @@
-method foo()Int in class A has now a different result type; was: Int, is now: java.lang.Object
+method foo()Int in class A has a different result type in new version, where it is java.lang.Object rather than Int

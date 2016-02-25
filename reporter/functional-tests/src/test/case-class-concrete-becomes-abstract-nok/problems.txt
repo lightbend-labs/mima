@@ -1,3 +1,3 @@
 class A was concrete; is declared abstract in new version
 method apply()A in object A does not have a correspondent in new version
-the type hierarchy of object A has changed in new version. Missing types {scala.runtime.AbstractFunction0}
+the type hierarchy of object A is different in new version. Missing types {scala.runtime.AbstractFunction0}

@@ -1,1 +1,1 @@
-abstract method foo()Int in interface A does not have a correspondent in old version
+abstract method foo()Int in interface A is present only in new version
