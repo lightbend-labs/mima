@@ -7,11 +7,24 @@ cache:
   - $HOME/.sbt/launchers
 
 language: scala
+
 scala:
   - 2.10.6
+
 jdk:
-   - oraclejdk8
+  - oraclejdk8
+
+env:
+  matrix:
+    - TEST_COMMAND="test"
+    - TEST_COMMAND="scripted"
+    - TEST_COMMAND="testFunctional"
+    - TEST_COMMAND="-Dmima.testScalaVersion=2.11.7 testFunctional"
+    - TEST_COMMAND="-Dmima.testScalaVersion=2.12.0-M3 testFunctional"
+
 script:
-   - sbt test testFunctional
-   - sbt -Dmima.testScalaVersion="2.11.7" testFunctional
-   - sbt -Dmima.testScalaVersion="2.12.0-M3" testFunctional
+  - sbt -J-XX:ReservedCodeCacheSize=256M $TEST_COMMAND
+
+  # Tricks to avoid unnecessary cache updates
+  - find $HOME/.sbt -name "*.lock" | xargs rm
+  - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
