@@ -6,6 +6,8 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-s3" % "0.5")
 
 addSbtPlugin("me.lessis" % "bintray-sbt" % "0.3.0")
 
-addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.8.4")
+addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "0.8.5")
 
 scalacOptions ++= Seq("-feature", "-deprecation", "-Xfatal-warnings")
+
+libraryDependencies += "org.scala-sbt" % "scripted-plugin" % sbtVersion.value

@@ -16,6 +16,7 @@ import bintray.BintrayPlugin
 import bintray.BintrayPlugin.autoImport._
 import com.typesafe.sbt.GitVersioning
 import com.typesafe.sbt.GitPlugin.autoImport._
+import ScriptedPlugin._
 
 object BuildSettings {
 
@@ -155,16 +156,20 @@ object MimaBuild extends Build {
     settings(
       // add task functional-tests that depends on all functional tests
       functionalTests <<= runAllTests,
-      // make the main 'package' task depend on all functional tests passing  (TODO - Control this in root project...)
-      packageBin in Compile <<= packageBin in Compile dependsOn  functionalTests,
       mainClass in assembly := Some("com.typesafe.tools.mima.cli.Main")
     )
   )
 
   lazy val sbtplugin = (
     Project("sbtplugin", file("sbtplugin"), settings = commonSettings)
+    settings(scriptedSettings)
     settings(name := "sbt-mima-plugin",
-             sbtPlugin := true)
+             sbtPlugin := true,
+             scriptedLaunchOpts := scriptedLaunchOpts.value :+ "-Dplugin.version=" + version.value,
+             scriptedBufferLog := false,
+             // Scripted locally publishes sbt plugin and then runs test projects with locally published version.
+             // Therefore we also need to locally publish dependent projects on scripted test run.
+             scripted <<= scripted dependsOn (publishLocal in core, publishLocal in reporter))
     dependsOn(reporter)
     settings(sbtPublishSettings:_*)
   )
@@ -188,8 +193,8 @@ object MimaBuild extends Build {
     commonSettings ++ // normal project defaults; can be trimmed later- test and run aren't needed, for example.
     Seq(scalaVersion <<= testScalaVersion in Global) ++
     inConfig(v1Config)(perConfig) ++ // add compile/package for the v1 sources
-    inConfig(v2Config)(perConfig) :+  // add compile/package for the v2 sources
-    (functionalTests <<= runTest) // add the functional-tests task.
+    inConfig(v2Config)(perConfig) :+ // add compile/package for the v2 sources
+    (functionalTests <<= runTest) // add the functional-tests task
 
   // this is the key for the task that runs the reporter's functional tests
   lazy val functionalTests = TaskKey[Unit]("test-functional")
