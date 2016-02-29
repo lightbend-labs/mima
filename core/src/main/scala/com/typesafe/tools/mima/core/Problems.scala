@@ -48,11 +48,13 @@ case class MissingFieldProblem(oldfld: MemberInfo) extends MemberProblem(oldfld)
   def description = affectedVersion => oldfld.fieldString + " does not have a correspondent in " + affectedVersion + " version"
 }
 
-case class MissingMethodProblem(meth: MemberInfo) extends MemberProblem(meth) {
+abstract class MissingMethodProblem(meth: MemberInfo) extends MemberProblem(meth)
+
+case class DirectMissingMethodProblem(meth: MemberInfo) extends MissingMethodProblem(meth) {
   def description = affectedVersion => (if (meth.isDeferred && !meth.owner.isTrait) "abstract " else "") + meth.methodString + " does not have a correspondent in " + affectedVersion + " version"
 }
 
-case class ReversedMissingMethodProblem(meth: MemberInfo) extends MemberProblem(meth) {
+case class ReversedMissingMethodProblem(meth: MemberInfo) extends MissingMethodProblem(meth) {
   def description = affectedVersion => (if (meth.isDeferred && !meth.owner.isTrait) "abstract " else "") + meth.methodString + " is present only in " + affectedVersion + " version"
 }
 
@@ -102,7 +104,9 @@ case class IncompatibleResultTypeProblem(oldmeth: MemberInfo, newmeth: MemberInf
 
 // In some older code within Mima, the affectedVersion could be reversed. We split AbstractMethodProblem and MissingMethodProblem
 // into two, in case the affected version is the other one, rather than the current one. (reversed if forward check).
-case class AbstractMethodProblem(newmeth: MemberInfo) extends MemberProblem(newmeth) {
+abstract class AbstractMethodProblem(newmeth: MemberInfo) extends MemberProblem(newmeth)
+
+case class DirectAbstractMethodProblem(newmeth: MemberInfo) extends AbstractMethodProblem(newmeth) {
   def description = affectedVersion => "abstract " + newmeth.methodString + " does not have a correspondent in " + affectedVersion + " version"
 }
 
