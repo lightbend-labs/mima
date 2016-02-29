@@ -12,7 +12,7 @@ private[analyze] abstract class BaseMethodChecker extends Checker[MemberInfo, Cl
   protected def check(method: MemberInfo, in: TraversableOnce[MemberInfo]): Option[Problem] = {
     val meths = (in filter (method.params.size == _.params.size)).toList
     if (meths.isEmpty)
-      Some(MissingMethodProblem(method))
+      Some(DirectMissingMethodProblem(method))
     else {
       meths find (_.sig == method.sig) match {
         case None =>

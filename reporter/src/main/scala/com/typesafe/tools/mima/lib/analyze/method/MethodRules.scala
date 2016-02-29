@@ -29,7 +29,7 @@ private[method] object MethodRules {
     def apply(thisMember: MemberInfo, thatMember: MemberInfo): Option[Problem] = {
       // A concrete member that is made abstract entail a binary incompatibilities because client
       // code may be calling it when no concrete implementation exists
-      if (thisMember.isConcrete && thatMember.isDeferred) Some(AbstractMethodProblem(thatMember))
+      if (thisMember.isConcrete && thatMember.isDeferred) Some(DirectAbstractMethodProblem(thatMember))
       // note: Conversely, an abstract member that is made concrete does not entail incompatibilities
       // because no client code relied on it.
       else None
