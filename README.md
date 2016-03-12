@@ -19,6 +19,11 @@ MiMa is split into Several modules:
 - Reporter:  Raw reporting classes and the command line interface.
 - SBT Plugin:  The SBT plugin for usage inside SBT builds.
 
+Usage
+-----
+
+To use MiMa as an sbt plugin, see the [sbt plugin wiki page](https://github.com/typesafehub/migration-manager/wiki/Sbt-plugin).
+
 Eclipse
 -------
 
