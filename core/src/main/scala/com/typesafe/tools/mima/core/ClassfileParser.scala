@@ -46,20 +46,8 @@ abstract class ClassfileParser(definitions: Definitions) {
   def parse(clazz: ClassInfo) = {
     parsed += 1
     parsedClass = clazz
-    def handleError(e: Exception) = {
-      throw e;
-      throw new IOException("class file '" + clazz.file + "' is broken\n(" + {
-        if (e.getMessage() != null) e.getMessage()
-        else e.getClass.toString
-      } + ")")
-    }
-
     in = new BufferReader(clazz.file.toByteArray)
-    try {
-      parseAll(clazz)
-    } catch {
-      case e: RuntimeException => handleError(e)
-    }
+    parseAll(clazz)
   }
 
   protected def parseAll(clazz: ClassInfo) {
