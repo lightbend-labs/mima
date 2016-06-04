@@ -15,11 +15,33 @@ import java.lang.Double.longBitsToDouble
  * @author Philippe Altherr
  * @version 1.0, 23/03/2004
  */
-class BufferReader(val buf: Array[Byte]) {
+class BufferReader(val buffer: Array[Byte]) {
 
   /** the current input pointer
    */
-  var bp: Int = 0
+  private var bp: Int = 0
+
+  def position: Int = bp
+
+  def setPosition(pos: Int): Unit = {
+    rangeCheck(pos)
+    bp = pos
+  }
+
+  private def rangeCheck(pos: Int): Unit = {
+    if (pos < 0) {
+      throw new IndexOutOfBoundsException("Illegal index " + pos)
+    }
+
+    if (pos >= buffer.length) {
+      throw new IndexOutOfBoundsException("Position " + pos + " is larger than array size " + buffer.length)
+    }
+  }
+
+  private def buf(pos: Int) = {
+    rangeCheck(pos)
+    buffer(pos)
+  }
 
   /** return byte at offset 'pos'
    */
@@ -38,8 +60,12 @@ class BufferReader(val buf: Array[Byte]) {
   /** read some bytes
    */
   def nextBytes(len: Int): Array[Byte] = {
+    if (bp + len >= buffer.length) {
+      throw new IndexOutOfBoundsException("Length " + len + " plus bp " + bp + " is more than array size " + buffer.length)
+    }
+    val b = buffer.slice(bp, bp + len)
     bp += len
-    buf.slice(bp - len, bp)
+    b
   }
 
   /** read a character
@@ -85,6 +111,9 @@ class BufferReader(val buf: Array[Byte]) {
   /** Do read operattion `op` at position `n`
    */
   def at[T](n: Int)(op: => T): T = {
+    if (n >= buffer.length) {
+      throw new IndexOutOfBoundsException("input " + n + " more than buffer length " + buffer.length) 
+    }
     val oldbp = bp
     bp = n
     try {
