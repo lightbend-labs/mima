@@ -1,12 +1,13 @@
 package com.typesafe.tools.mima
 package cli
 
-import lib.MiMaLib
-import scala.tools.cmd._
-import scala.tools.nsc.util.{JavaClassPath,ClassPath}
-import ClassPath.DefaultJavaContext
-import core.{Config, ProblemFilter}
 import java.io.File
+
+import com.typesafe.tools.mima.core.{Config, ProblemFilter}
+import com.typesafe.tools.mima.lib.MiMaLib
+
+import scala.tools.cmd._
+import scala.tools.nsc.classpath.{AggregateClassPath, ClassPathFactory}
 
 /** A program to run the MIMA tools from the command line.
  */
@@ -54,9 +55,9 @@ class Main(args: List[String]) extends {
 
   def isDefined: Boolean = !(curr.isEmpty || prev.isEmpty)
 
-  def makeClasspath = new JavaClassPath(
-      // TODO expand path?
-      DefaultJavaContext.classesInPath(classpath).toIndexedSeq, DefaultJavaContext)
+  def makeClasspath = AggregateClassPath.createAggregate(
+    // TODO expand path?
+    new ClassPathFactory(Config.settings).classesInPath(classpath): _*)
 
   def makeMima = {
     // TODO: get mima to use paul's CMD library *or*
