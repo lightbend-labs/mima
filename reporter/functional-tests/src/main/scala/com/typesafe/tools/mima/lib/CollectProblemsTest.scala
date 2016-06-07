@@ -1,7 +1,9 @@
 package com.typesafe.tools.mima.lib
 
-import com.typesafe.tools.mima.core.{Config, Settings, PathResolver}
+import com.typesafe.tools.mima.core.Config
+
 import scala.io.Source
+import scala.tools.nsc.classpath.{AggregateClassPath, ClassPathFactory}
 import scala.tools.nsc.util._
 
 case class TestFailed(msg: String) extends Exception(msg)
@@ -11,9 +13,9 @@ class CollectProblemsTest {
   def runTest(testClasspath: Array[String])(testName: String, oldJarPath: String, newJarPath: String, oraclePath: String) {
     // load test setup
     Config.setup("scala com.typesafe.tools.mima.MiMaLibUI <old-dir> <new-dir>", Array(oldJarPath, newJarPath))
-    val cp = testClasspath ++ ClassPath.split(Config.baseClassPath.asClasspathString)
+    val cp = testClasspath ++ ClassPath.split(Config.baseClassPath.asClassPathString)
     val cpString = ClassPath.join(cp: _*)
-    Config.baseClassPath = new JavaClassPath(ClassPath.DefaultJavaContext.classesInPath(cpString).toIndexedSeq, ClassPath.DefaultJavaContext)
+    Config.baseClassPath = AggregateClassPath.createAggregate(new ClassPathFactory(Config.settings).classesInPath(cpString): _*)
 
     val mima = new MiMaLib(Config.baseClassPath)
 

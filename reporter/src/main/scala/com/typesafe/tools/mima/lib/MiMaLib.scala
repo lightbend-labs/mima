@@ -2,17 +2,16 @@ package com.typesafe.tools.mima.lib
 
 import com.typesafe.tools.mima.core.Config._
 import com.typesafe.tools.mima.core._
-import com.typesafe.tools.mima._
-import analyze.Analyzer
-import core.util.IndentedOutput._
-import scala.tools.nsc.io.{ File, AbstractFile }
-import scala.tools.nsc.util.{ DirectoryClassPath, JavaClassPath}
-import collection.mutable.ListBuffer
+import com.typesafe.tools.mima.core.util.IndentedOutput._
+import com.typesafe.tools.mima.core.util.log.{ConsoleLogging, Logging}
+import com.typesafe.tools.mima.lib.analyze.Analyzer
 
+import scala.collection.mutable.ListBuffer
+import scala.tools.nsc.classpath.ClassPathFactory
+import scala.tools.nsc.io.{AbstractFile, File}
+import scala.tools.nsc.util.ClassPath
 
-import com.typesafe.tools.mima.core.util.log.{Logging, ConsoleLogging}
-
-class MiMaLib(classpath: JavaClassPath, val log: Logging = ConsoleLogging) {
+class MiMaLib(classpath: ClassPath, val log: Logging = ConsoleLogging) {
   /*
   options:
   -classpath foo
@@ -26,7 +25,7 @@ class MiMaLib(classpath: JavaClassPath, val log: Logging = ConsoleLogging) {
     val f = new File(new java.io.File(name))
     val dir = AbstractFile.getDirectory(f)
     if (dir == null) None
-    else Some(new DirectoryClassPath(dir, DefaultJavaContext))
+    else Some(ClassPathFactory.newClassPath(dir, Config.settings))
   }
 
   private def root(name: String): Definitions = classPath(name) match {
@@ -80,7 +79,7 @@ class MiMaLib(classpath: JavaClassPath, val log: Logging = ConsoleLogging) {
     val newRoot = root(newDir)
     log.debugLog("[old version in: " + oldRoot + "]")
     log.debugLog("[new version in: " + newRoot + "]")
-    log.debugLog("classpath: " + Config.baseClassPath.asClasspathString)
+    log.debugLog("classpath: " + Config.baseClassPath.asClassPathString)
     traversePackages(oldRoot.targetPackage, newRoot.targetPackage)
     problems.toList
   }

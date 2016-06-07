@@ -1,6 +1,8 @@
 package com.typesafe.tools.mima.core
 
-import scala.tools.nsc.util.{ClassPath, JavaClassPath, DirectoryClassPath}
+import scala.tools.nsc.classpath.AggregateClassPath
+import scala.tools.nsc.mima._
+import scala.tools.nsc.util.ClassPath
 
 
 /** This class holds together a root package and a classpath. It
@@ -10,14 +12,17 @@ import scala.tools.nsc.util.{ClassPath, JavaClassPath, DirectoryClassPath}
  *  Each version of the input jar file has an instance of Definitions, used
  *  to resolve type names during classfile parsing.
  */
-class Definitions(val lib: Option[DirectoryClassPath], val classPath: JavaClassPath) {
+class Definitions(val lib: Option[ClassPath], val classPath: ClassPath) {
   import com.typesafe.tools.mima.core.util.log.ConsoleLogging._
 
-  lazy val root =
-    new ConcretePackageInfo(null,
-        new JavaClassPath(
-            if (lib.isDefined) Vector(lib.get, classPath)
-            else Vector(classPath), DefaultJavaContext), this)
+  lazy val root = {
+    val elems = lib.toList :+ classPath
+    new ConcretePackageInfo(
+      null,
+      AggregateClassPath.createAggregate(elems: _*),
+      ClassPath.RootPackage,
+      this)
+  }
 
   /** Return all packages in the target library. */
   lazy val targetPackage: PackageInfo = {
@@ -26,7 +31,8 @@ class Definitions(val lib: Option[DirectoryClassPath], val classPath: JavaClassP
       /** Needed to fetch classes located in the root (empty package) */
       override lazy val classes = Definitions.this.root.classes
     }
-    pkg.packages ++=  lib.get.packages map (cp => cp.name -> new ConcretePackageInfo(pkg, cp, this))
+    val cp = lib.get
+    pkg.packages ++= cp.packagesIn(ClassPath.RootPackage).map(p => p.name -> new ConcretePackageInfo(pkg, cp, p.name, this))
 
     debugLog("added packages to <root>: %s".format(pkg.packages.keys.mkString(", ")))
     pkg
@@ -100,6 +106,6 @@ class Definitions(val lib: Option[DirectoryClassPath], val classPath: JavaClassP
   }
 
   override def toString = {
-    "definitions:\n\tlib: %s\n%s".format(lib, classPath.asClasspathString)
+    "definitions:\n\tlib: %s\n%s".format(lib, classPath.asClassPathString)
   }
 }

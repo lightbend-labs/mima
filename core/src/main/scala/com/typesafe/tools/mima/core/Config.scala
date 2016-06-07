@@ -1,14 +1,14 @@
 package com.typesafe.tools.mima.core
 
-import scala.tools.nsc.io.{ Path, Directory }
-import scala.tools.nsc.util.JavaClassPath
-import scala.util.Properties
-import java.io.File
+import scala.tools.nsc.classpath.AggregateClassPath
+import scala.tools.nsc.io.{Directory, Path}
+import scala.tools.nsc.util.ClassPath
+import scala.tools.util.PathResolver
 
 object Config {
 
-  private var settings: Settings = _
-  private var _classpath: JavaClassPath = _
+  var settings: Settings = _
+  var baseClassPath: ClassPath = _
 
   def inPlace = settings.mimaOutDir.isDefault
 
@@ -19,13 +19,7 @@ object Config {
 
   def error(msg: String) = System.err.println(msg)
 
-  def baseClassPath: JavaClassPath = _classpath
-
   lazy val baseDefinitions = new Definitions(None, baseClassPath)
-
-  def baseClassPath_=(cp: JavaClassPath) {
-    _classpath = cp
-  }
 
   def fatal(msg: String): Nothing = {
     error(msg)
@@ -56,7 +50,7 @@ object Config {
   def setup(cmd: String, args: Array[String], validate: List[String] => Boolean, specificOptions: String*): List[String] = {
     settings = new Settings(specificOptions: _*)
     val (_, resargs) = settings.processArguments(args.toList, true)
-    baseClassPath = new PathResolver(settings).mimaResult
+    baseClassPath = AggregateClassPath.createAggregate(new PathResolver(settings).containers: _*)
     if (settings.help.value) {
       println(usageMsg(cmd))
       System.exit(0)

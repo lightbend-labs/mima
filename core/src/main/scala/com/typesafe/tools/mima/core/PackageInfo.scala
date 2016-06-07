@@ -1,8 +1,9 @@
 package com.typesafe.tools.mima.core
 
+import scala.collection.mutable
 import scala.tools.nsc.io.AbstractFile
+import scala.tools.nsc.mima._
 import scala.tools.nsc.util.ClassPath
-import collection.mutable
 
 object PackageInfo {
   val classExtension = ".class"
@@ -19,7 +20,7 @@ object PackageInfo {
   }
 }
 
-import PackageInfo._
+import com.typesafe.tools.mima.core.PackageInfo._
 
 class SyntheticPackageInfo(owner: PackageInfo, val name: String) extends PackageInfo(owner) {
   def definitions: Definitions = sys.error("Called definitions on synthetic package")
@@ -31,13 +32,13 @@ object NoPackageInfo extends SyntheticPackageInfo(null, "<no package>")
 
 /** A concrete package. cp should be a directory classpath.
  */
-class ConcretePackageInfo(owner: PackageInfo, cp: ClassPath[AbstractFile], val defs: Definitions) extends PackageInfo(owner) {
+class ConcretePackageInfo(owner: PackageInfo, cp: ClassPath, pkg: String, val defs: Definitions) extends PackageInfo(owner) {
   def definitions = defs
-  def name = cp.name
-  private def classFiles: IndexedSeq[AbstractFile] = cp.classes flatMap (_.binary)
+  def name = pkg.split('.').last
+  private def classFiles: IndexedSeq[AbstractFile] = cp.classesIn(pkg).flatMap(_.binary).toIndexedSeq
 
   lazy val packages: mutable.Map[String, PackageInfo] =
-    mutable.Map() ++= (cp.packages map (cp => cp.name -> new ConcretePackageInfo(this, cp, defs)))
+    mutable.Map() ++= (cp.packagesIn(pkg) map (p => p.name -> new ConcretePackageInfo(this, cp, pkg + p.name, defs)))
 
   lazy val classes: mutable.Map[String, ClassInfo] =
     mutable.Map() ++= (classFiles map (f => className(f.name) -> new ConcreteClassInfo(this, f)))
