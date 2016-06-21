@@ -1,0 +1,1 @@
+abstract method foo()Unit in class B is inherited by class A in new version.

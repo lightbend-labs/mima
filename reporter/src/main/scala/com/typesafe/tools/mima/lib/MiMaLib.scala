@@ -43,7 +43,6 @@ class MiMaLib(classpath: JavaClassPath, val log: Logging = ConsoleLogging) {
 
 
   private def comparePackages(oldpkg: PackageInfo, newpkg: PackageInfo) {
-    val traits = newpkg.traits // determine traits of new package first
     for (oldclazz <- oldpkg.accessibleClasses) {
       log.info("Analyzing class "+oldclazz.bytecodeName)
       newpkg.classes get oldclazz.bytecodeName match {
