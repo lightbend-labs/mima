@@ -1,0 +1,2 @@
+class A was concrete; is declared abstract in new version
+abstract method foo()Unit in class A is present only in new version
