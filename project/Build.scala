@@ -88,6 +88,10 @@ object Dependencies {
 
 }
 
+// we cannot switch to build.sbt style here because we
+// do `override lazy val projects = ... tests ...`;
+// blocked by sbt/sbt#2532
+
 object MimaBuild extends Build {
   import BuildSettings._
   import Dependencies._
@@ -148,8 +152,7 @@ object MimaBuild extends Build {
   lazy val reporter = (
     project("reporter", file("reporter"), settings = commonSettings)
     settings(libraryDependencies += typesafeConfig,
-             name := buildName + "-reporter",
-             javaOptions += "-Xmx512m")
+             name := buildName + "-reporter")
     dependsOn(core)
     settings(sonatypePublishSettings:_*)
     settings(myAssemblySettings:_*)

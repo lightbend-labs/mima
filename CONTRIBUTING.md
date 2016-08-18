@@ -4,11 +4,11 @@
 
 This is the process for committing code into master. There are of course exceptions to these rules, for example minor changes to comments and documentation, fixing a broken build etc.
 
-1. Make sure you have signed the [Typesafe CLA](http://www.typesafe.com/contribute/cla). If not, please sign it online.
+1. Make sure you have signed the [Lightbend CLA](http://www.lightbend.com/contribute/cla). If not, please sign it online.
 2. Before starting work on a feature or a fix, make sure that there is a ticket for your work in the project's issue tracker. If not, create it first.
 3. Fork the project and perform your work in a Git branch.
 4. When the feature or fix is completed you should open a [Pull Request](https://help.github.com/articles/using-pull-requests) on GitHub.
-5. The Pull Request should be reviewed by other maintainers (as many as feasible/practical). Note that the maintainers can consist of outside contributors, both within and outside Typesafe. Outside contributors are encouraged to participate in the review process, it is not a closed process.
+5. The Pull Request should be reviewed by other maintainers (as many as feasible/practical). Note that the maintainers can consist of outside contributors, both within and outside Lightbend. Outside contributors are encouraged to participate in the review process, it is not a closed process.
 6. After the review you should fix the issues as needed, **pushing the changes as additional commits**, iterating until the reviewers give their thumbs up.
 7. Once the code has passed review, it’s ok to amend commits as needed (see the ‘Creating Commits And Writing Commit Messages’ section below).
 8. The Pull Request can be merged into the master branch.
