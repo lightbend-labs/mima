@@ -88,6 +88,10 @@ object Dependencies {
 
 }
 
+// we cannot switch to build.sbt style here because we
+// do `override lazy val projects = ... tests ...`;
+// blocked by sbt/sbt#2532
+
 object MimaBuild extends Build {
   import BuildSettings._
   import Dependencies._

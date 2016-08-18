@@ -46,7 +46,7 @@ At the time of this writing, my ``project/eclipse.sbt`` contains the following:
 Build
 -------
 
-Using [sbt][sbt] 0.13.
+Using [sbt][sbt]:
 
       $ sbt compile
 
