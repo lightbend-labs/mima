@@ -148,8 +148,7 @@ object MimaBuild extends Build {
   lazy val reporter = (
     project("reporter", file("reporter"), settings = commonSettings)
     settings(libraryDependencies += typesafeConfig,
-             name := buildName + "-reporter",
-             javaOptions += "-Xmx512m")
+             name := buildName + "-reporter")
     dependsOn(core)
     settings(sonatypePublishSettings:_*)
     settings(myAssemblySettings:_*)
