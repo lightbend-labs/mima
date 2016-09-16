@@ -8,13 +8,13 @@ private[analyze] trait Checker[T, S] extends Function2[T,S,Option[Problem]]{
 
   def check(thisEl: T, thatEl: S): Option[Problem]
 
-  protected def checkRules[T,S](rules: Seq[Rule[T, S]])(oldEl: T, newEl: S): Option[Problem] = {
+  protected def checkRules[T1,S1](rules: Seq[Rule[T1, S1]])(oldEl: T1, newEl: S1): Option[Problem] = {
     if (rules.isEmpty) None
     else {
       val rule = rules.head
       rule(oldEl, newEl) match {
-        case None    => checkRules(rules.tail)(oldEl, newEl)
-        case res @ _ => res
+        case None => checkRules(rules.tail)(oldEl, newEl)
+        case res  => res
       }
     }
   }

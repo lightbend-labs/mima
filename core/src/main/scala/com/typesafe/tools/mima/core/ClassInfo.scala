@@ -166,15 +166,22 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
     methods.iterator.toList.filterNot(concreteSet)
   }
 
+  /** All deferred methods of this type as seen in the bytecode. */
+  def deferredMethodsInBytecode: List[MemberInfo] =
+    if(isTrait) methods.iterator.toList
+    else deferredMethods
+
   /** The inherited traits in the linearization of this class or trait,
    *  except any traits inherited by its superclass.
    *  Traits appear in linearization order of this class or trait.
    */
   lazy val directTraits: List[ClassInfo] = {
-    /** All traits in the transitive, reflexive inheritance closure of given trait `t' */
+    /* All traits in the transitive, reflexive inheritance closure of given trait `t' */
     def traitClosure(t: ClassInfo): List[ClassInfo] =
       if (superClass.allTraits contains t) Nil
-      else if (t.isTrait) parentsClosure(t) :+ t
+      // traits with only abstract methods are presented as interfaces, but nonetheless 
+      // they should still be collected
+      else if (t.isInterface) parentsClosure(t) :+ t
       else parentsClosure(t)
 
     def parentsClosure(c: ClassInfo) =

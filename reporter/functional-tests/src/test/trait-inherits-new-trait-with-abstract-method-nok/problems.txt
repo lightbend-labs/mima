@@ -1,0 +1,6 @@
+abstract method foo()Int in trait AA is inherited by class A in new version.
+abstract synthetic method AA$_setter_|_=(Int)Unit in trait AA is inherited by class A in new version.
+abstract method bar()Int in trait AA is inherited by class A in new version.
+abstract method foo()Int in trait AA is inherited by class B in new version.
+abstract synthetic method AA$_setter_|_=(Int)Unit in trait AA is inherited by class B in new version.
+abstract method bar()Int in trait AA is inherited by class B in new version.
