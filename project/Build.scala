@@ -228,7 +228,7 @@ object MimaBuild extends Build {
   lazy val runTest =
     (fullClasspath in (reporterFunctionalTests, Compile), // the test classpath from the functionalTest project for the test
       thisProjectRef, // gives us the ProjectRef this task is defined in
-      scalaInstance, // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
+      scalaInstance in core, // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
       packageBin in v1Config, // package the v1 sources and get the configuration used
       packageBin in v2Config, // same for v2
       streams) map { (cp, proj, si, v1, v2, streams) =>
