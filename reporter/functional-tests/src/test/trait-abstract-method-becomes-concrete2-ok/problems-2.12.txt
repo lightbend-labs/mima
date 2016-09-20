@@ -1,0 +1,1 @@
+method foo()Int in interface A1 is present only in new version

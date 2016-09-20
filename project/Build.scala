@@ -231,7 +231,8 @@ object MimaBuild extends Build {
       scalaInstance in core, // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
       packageBin in v1Config, // package the v1 sources and get the configuration used
       packageBin in v2Config, // same for v2
-      streams) map { (cp, proj, si, v1, v2, streams) =>
+      scalaVersion,
+      streams) map { (cp, proj, si, v1, v2, scalaV, streams) =>
         val urls = Attributed.data(cp).map(_.toURI.toURL).toArray
         val loader = new java.net.URLClassLoader(urls, si.loader)
 
@@ -245,9 +246,14 @@ object MimaBuild extends Build {
 
         val projectPath = proj.build.getPath + "reporter" + "/" + "functional-tests" + "/" + "src" + "/" + "test" + "/" + proj.project
 
-        val oraclePath = projectPath + "/problems.txt"
+        val oraclePath = {
+          val p = projectPath + "/problems.txt"
+          val p212 = projectPath + "/problems-2.12.txt"
+          if(!(scalaV.startsWith("2.10.") || scalaV.startsWith("2.11.")) && new  java.io.File(p212).exists) p212
+          else p
+        }
 
-      try {
+        try {
           import scala.language.reflectiveCalls
           testRunner.runTest(testClasspath, proj.project, v1.getAbsolutePath, v2.getAbsolutePath, oraclePath)
           streams.log.info("Test '" + proj.project + "' succeeded.")

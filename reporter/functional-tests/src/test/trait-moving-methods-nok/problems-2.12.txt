@@ -1,0 +1,2 @@
+method foo()Int in interface A does not have a correspondent in new version
+method foo()Int in interface B is present only in new version
