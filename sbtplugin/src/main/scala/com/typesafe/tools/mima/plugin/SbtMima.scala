@@ -116,8 +116,8 @@ object SbtMima {
       config <- report.configurations
       module <- config.modules
       (artifact, file) <- module.artifacts
-      // TODO - Hardcode this?
       if artifact.name == m.name
+      if artifact.classifier.isEmpty
     } yield file).headOption
     optFile getOrElse sys.error("Could not resolve previous ABI: " + m)
   }
