@@ -81,9 +81,9 @@ object Dependencies {
   val typesafeConfig = "com.typesafe" % "config" % "1.0.0"
 
   val testDeps = Seq(
-    "org.specs2" %% "specs2-core"    % "2.4.15" % "test",
-    "org.specs2" %% "specs2-mock"    % "2.4.15" % "test",
-    "org.specs2" %% "specs2-junit"   % "2.4.15" % "test"
+    "org.specs2" %% "specs2-core"    % "3.8.5" % "test",
+    "org.specs2" %% "specs2-mock"    % "3.8.5" % "test",
+    "org.specs2" %% "specs2-junit"   % "3.8.5" % "test"
   )
 
 }
