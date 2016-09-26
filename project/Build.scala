@@ -80,12 +80,6 @@ object Dependencies {
 
   val typesafeConfig = "com.typesafe" % "config" % "1.0.0"
 
-  val testDeps = Seq(
-    "org.specs2" %% "specs2-core"    % "3.8.5" % "test",
-    "org.specs2" %% "specs2-mock"    % "3.8.5" % "test",
-    "org.specs2" %% "specs2-junit"   % "3.8.5" % "test"
-  )
-
 }
 
 // we cannot switch to build.sbt style here because we
@@ -127,8 +121,7 @@ object MimaBuild extends Build {
                 buildInfoObject  := "BuildInfo"
                 )
            )
-    settings(libraryDependencies ++= testDeps,
-             libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+    settings(libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
              name := buildName + "-core")
     settings(sonatypePublishSettings:_*)
   )
