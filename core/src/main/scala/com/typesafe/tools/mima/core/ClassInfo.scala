@@ -155,8 +155,8 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
 
   /** The concrete methods of this trait */
   lazy val concreteMethods: List[MemberInfo] = {
-    if(isTrait) methods.iterator.filter(hasStaticImpl(_)).toList
-    else if(isClass) methods.iterator.filter(!_.isDeferred).toList
+    if(isTrait) methods.iterator.filter(m => hasStaticImpl(m) || !m.isDeferred).toList
+    else if(isClass || isInterface) methods.iterator.filter(!_.isDeferred).toList
     else Nil
   }
 

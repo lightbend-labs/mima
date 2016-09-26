@@ -1,1 +1,0 @@
-abstract method foo()Unit in interface B is inherited by class A in new version.

@@ -1,1 +1,0 @@
-abstract method toList(java.lang.Object)scala.collection.immutable.List in interface FoldableToList is inherited by class Foldable in new version.
