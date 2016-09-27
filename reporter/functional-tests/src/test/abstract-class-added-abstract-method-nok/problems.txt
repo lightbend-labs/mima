@@ -1,0 +1,1 @@
+abstract method foo()Unit in class A is present only in new version

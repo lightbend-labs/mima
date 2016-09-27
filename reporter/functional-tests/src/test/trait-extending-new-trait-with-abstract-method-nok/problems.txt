@@ -1,0 +1,2 @@
+abstract method a()Int in interface B is inherited by class A in new version.
+abstract method foo()Int in interface B is inherited by class A in new version.

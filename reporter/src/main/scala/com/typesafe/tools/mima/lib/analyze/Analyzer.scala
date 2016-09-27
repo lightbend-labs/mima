@@ -60,6 +60,33 @@ private[analyze] trait Analyzer extends Function2[ClassInfo, ClassInfo, List[Pro
   }
 
   def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem]
+
+  protected def collectNewAbstractMethodsInNewInheritedTypes(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
+    def allInheritedTypes(clazz: ClassInfo) = clazz.superClasses ++ clazz.allInterfaces
+    val oldInheritedTypes = allInheritedTypes(oldclazz)
+    val newInheritedTypes = allInheritedTypes(newclazz)
+    val diff = newInheritedTypes.diff(oldInheritedTypes)
+    def noInheritedMatchingMethod(clazz: ClassInfo, deferredMethod: MemberInfo)(extraMethodMatchingCond: MemberInfo => Boolean): Boolean = {
+      val methods = clazz.lookupMethods(deferredMethod.bytecodeName)
+      val matchingMethods = methods.filter(_.matchesType(deferredMethod))
+
+      !matchingMethods.exists { method =>
+        method.owner != deferredMethod.owner &&
+        extraMethodMatchingCond(method)
+      }
+    } 
+    (for {
+      tpe <- diff
+      // if `tpe` is a trait, then the trait's concrete methods should be counted as deferred methods
+      newDeferredMethod <- tpe.deferredMethodsInBytecode
+         // checks that the newDeferredMethod did not already exist in one of the oldclazz supertypes 
+      if noInheritedMatchingMethod(oldclazz, newDeferredMethod)(_ => true) &&
+         // checks that no concrete implementation of the newDeferredMethod is provided by one of the newclazz supertypes
+         noInheritedMatchingMethod(newclazz, newDeferredMethod)(_.isConcrete)
+    } yield
+       // report a binary incompatibility as there is a new inherited abstract method, which can lead to a AbstractErrorMethod at runtime
+       InheritedNewAbstractMethodProblem(newclazz, newDeferredMethod))(collection.breakOut)
+  }
 }
 
 private[analyze] class ClassAnalyzer extends Analyzer {
@@ -78,7 +105,7 @@ private[analyze] class ClassAnalyzer extends Analyzer {
 
   /** Analyze incompatibilities that may derive from methods in the `newclazz` */
   override def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
-    for (newAbstrMeth <- newclazz.deferredMethods) yield {
+    (for (newAbstrMeth <- newclazz.deferredMethods) yield {
       oldclazz.lookupMethods(newAbstrMeth.bytecodeName).find(_.sig == newAbstrMeth.sig) match {
         case None =>
           Some(ReversedMissingMethodProblem(newAbstrMeth))
@@ -89,7 +116,7 @@ private[analyze] class ClassAnalyzer extends Analyzer {
           else
         	None
       }
-    }
+    }) ::: collectNewAbstractMethodsInNewInheritedTypes(oldclazz, newclazz)
   }
 }
 
@@ -126,6 +153,8 @@ private[analyze] class TraitAnalyzer extends Analyzer {
       }
     }
 
+    
+    res ++= collectNewAbstractMethodsInNewInheritedTypes(oldclazz, newclazz)
     res.toList
   }
 }
