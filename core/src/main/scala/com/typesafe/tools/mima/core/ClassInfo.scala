@@ -160,6 +160,13 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
     else Nil
   }
 
+  /** The subset of concrete methods of this trait that are abstract at the JVM level.
+    * This corresponds to the pre-Scala-2.12 trait encoding where all `concreteMethods`
+    * are `emulatedConcreteMethods`. In 2.12 most concrete trait methods are translated
+    * to concrete interface methods. */
+  lazy val emulatedConcreteMethods: List[MemberInfo] =
+    concreteMethods.filter(_.isDeferred)
+
   /** The deferred methods of this trait */
   lazy val deferredMethods: List[MemberInfo] = {
     val concreteSet = concreteMethods.toSet
