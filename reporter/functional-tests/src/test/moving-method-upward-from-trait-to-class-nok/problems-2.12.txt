@@ -1,0 +1,1 @@
+method foo()Int in interface B does not have a correspondent in new version

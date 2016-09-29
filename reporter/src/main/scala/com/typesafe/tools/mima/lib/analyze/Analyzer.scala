@@ -130,7 +130,7 @@ private[analyze] class TraitAnalyzer extends Analyzer {
   override def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
     val res = collection.mutable.ListBuffer.empty[Problem]
 
-    for (newmeth <- newclazz.concreteMethods if !oldclazz.hasStaticImpl(newmeth)) {
+    for (newmeth <- newclazz.emulatedConcreteMethods if !oldclazz.hasStaticImpl(newmeth)) {
       if (!oldclazz.lookupMethods(newmeth.bytecodeName).exists(_.sig == newmeth.sig)) {
         // this means that the method is brand new and therefore the implementation
         // has to be injected
