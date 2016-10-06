@@ -43,7 +43,7 @@ abstract class ClassfileParser(definitions: Definitions) {
 
   def pool: ConstantPool = thepool
 
-  def parse(clazz: ClassInfo) = {
+  def parse(clazz: ClassInfo) = synchronized {
     parsed += 1
     parsedClass = clazz
     in = new BufferReader(clazz.file.toByteArray)
