@@ -168,7 +168,7 @@ object MimaBuild {
 
   // defines a Project for the given base directory (for example, functional-tests/test1)
   // Its name is the directory name (test1) and it has compile+package tasks for sources in v1/ and v2/
-  def testProject(base: File) = project(base.name, base, settings = testProjectSettings).configs(v1Config, v2Config)
+  def testProject(base: File) = project("test-" + base.name, base, settings = testProjectSettings).configs(v1Config, v2Config)
 
   lazy val testProjectSettings =
     commonSettings ++ // normal project defaults; can be trimmed later- test and run aren't needed, for example.
@@ -217,7 +217,7 @@ object MimaBuild {
     // Add the scala-library to the MiMa classpath used to run this test
     val testClasspath = Attributed.data(cp).filter(_.getName endsWith "scala-library.jar").map(_.getAbsolutePath).toArray
 
-    val projectPath = proj.build.getPath + "reporter" + "/" + "functional-tests" + "/" + "src" + "/" + "test" + "/" + proj.project
+    val projectPath = proj.build.getPath + "reporter" + "/" + "functional-tests" + "/" + "src" + "/" + "test" + "/" + proj.project.stripPrefix("test-")
 
     val oraclePath = {
       val p = projectPath + "/problems.txt"
