@@ -1,3 +1,5 @@
+import scala.language.higherKinds
+
 trait FoldableToList[F[_]] { self: Foldable[F] =>
   def toList[A](fa: F[A]): List[A] =
     self.foldLeft(fa, List.empty[A])((xs, x) => x :: xs).reverse

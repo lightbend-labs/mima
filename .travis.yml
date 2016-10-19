@@ -19,11 +19,11 @@ env:
     - TEST_COMMAND="test"
     - TEST_COMMAND="scripted"
     - TEST_COMMAND="testFunctional"
-    - TEST_COMMAND="-Dmima.testScalaVersion=2.11.7 testFunctional"
-    - TEST_COMMAND="-Dmima.testScalaVersion=2.12.0-RC1 testFunctional"
+    - TEST_COMMAND="-Dmima.testScalaVersion=2.11.8 testFunctional"
+    - TEST_COMMAND="-Dmima.testScalaVersion=2.12.0-RC2 testFunctional"
 
 script:
-  - sbt -J-XX:ReservedCodeCacheSize=256M -J-Xmx3072M $TEST_COMMAND
+  - sbt $TEST_COMMAND
 
   # Tricks to avoid unnecessary cache updates
   - find $HOME/.sbt -name "*.lock" | xargs rm
