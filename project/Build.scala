@@ -47,11 +47,10 @@ object BuildSettings {
     publishMavenStyle := true,
     publishArtifact in Test := false,
     // The Nexus repo we're publishing to.
-    publishTo <<= version { (v: String) =>
-      val nexus = "https://oss.sonatype.org/"
-      if (v.trim.endsWith("SNAPSHOT")) Some("snapshots" at nexus + "content/repositories/snapshots")
-      else                             Some("releases"  at nexus + "service/local/staging/deploy/maven2")
-    },
+    publishTo := Some(
+      if (isSnapshot.value) "snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
+      else                  "releases"  at "https://oss.sonatype.org/service/local/staging/deploy/maven2"
+    ),
     // Maven central cannot allow other repos.  We're ok here because the artifacts we
     // we use externally are *optional* dependencies.
     pomIncludeRepository := { x => false },
@@ -82,18 +81,9 @@ object Dependencies {
 
 }
 
-// we cannot switch to build.sbt style here because we
-// do `override lazy val projects = ... tests ...`;
-// blocked by sbt/sbt#2532
-
-object MimaBuild extends Build {
+object MimaBuild {
   import BuildSettings._
   import Dependencies._
-
-  // here we list all projects that are defined.
-  override lazy val projects = Seq(root) ++ modules ++ tests :+ reporterFunctionalTests
-
-  lazy val modules = Seq(core, reporter, sbtplugin)
 
   lazy val root = (
     project("root", file("."))
@@ -102,9 +92,9 @@ object MimaBuild extends Build {
     settings(name := buildName,
              publish := (),
              publishLocal := (),
-             mappings in upload <<= (assembly in reporter, version) map { (cli, v) =>
-               def loc(name: String) = "migration-manager/%s/%s-%s.jar" format (v, name, v)
-               Seq(cli -> loc("migration-manager-cli"))
+             mappings in upload := {
+               def loc(name: String) = "migration-manager/%s/%s-%s.jar" format (version.value, name, version.value)
+               Seq((assembly in reporter).value -> loc("migration-manager-cli"))
              },
              host in upload := "downloads.typesafe.com.s3.amazonaws.com",
              testScalaVersion in Global :=  sys.props.getOrElse("mima.testScalaVersion", scalaVersion.value)
@@ -115,7 +105,7 @@ object MimaBuild extends Build {
   lazy val core = (
     project("core", file("core"),
             settings = ((commonSettings ++ buildInfoSettings): Seq[Setting[_]]) ++: Seq(
-                sourceGenerators in Compile <+= buildInfo,
+                sourceGenerators in Compile += buildInfo.taskValue,
                 buildInfoKeys := Seq(version),
                 buildInfoPackage := "com.typesafe.tools.mima.core.buildinfo",
                 buildInfoObject  := "BuildInfo"
@@ -127,19 +117,14 @@ object MimaBuild extends Build {
   )
 
   val myAssemblySettings: Seq[Setting[_]] = (assemblySettings: Seq[Setting[_]]) ++ Seq(
-     mergeStrategy in assembly <<= (mergeStrategy in assembly) { (old) =>
-        {
-          case "LICENSE" => MergeStrategy.first
-          case x => old(x)
-        }
-     },
-     AssemblyKeys.excludedFiles in assembly <<= (AssemblyKeys.excludedFiles in assembly) { (old) =>
-       val tmp: Seq[File] => Seq[File] = { files: Seq[File] =>
-         // Hack to keep LICENSE files.
-         old(files) filterNot (_.getName contains "LICENSE")
-       }
-       tmp
-     }
+    mergeStrategy in assembly ~= (old => {
+      case "LICENSE" => MergeStrategy.first
+      case x         => old(x)
+    }),
+    AssemblyKeys.excludedFiles in assembly ~= (old =>
+      // Hack to keep LICENSE files.
+      { files: Seq[File] => old(files) filterNot (_.getName contains "LICENSE") }
+    )
   )
 
   lazy val reporter = (
@@ -151,7 +136,7 @@ object MimaBuild extends Build {
     settings(myAssemblySettings:_*)
     settings(
       // add task functional-tests that depends on all functional tests
-      functionalTests <<= runAllTests,
+      functionalTests := runAllTests.value,
       mainClass in assembly := Some("com.typesafe.tools.mima.cli.Main")
     )
   )
@@ -165,7 +150,7 @@ object MimaBuild extends Build {
              scriptedBufferLog := false,
              // Scripted locally publishes sbt plugin and then runs test projects with locally published version.
              // Therefore we also need to locally publish dependent projects on scripted test run.
-             scripted <<= scripted dependsOn (publishLocal in core, publishLocal in reporter))
+             scripted := (scripted dependsOn (publishLocal in core, publishLocal in reporter)).evaluated)
     dependsOn(reporter)
     settings(sbtPublishSettings:_*)
   )
@@ -183,14 +168,14 @@ object MimaBuild extends Build {
 
   // defines a Project for the given base directory (for example, functional-tests/test1)
   // Its name is the directory name (test1) and it has compile+package tasks for sources in v1/ and v2/
-  def testProject(base: File) = project(base.name, base, settings = testProjectSettings).configs(v1Config, v2Config)
+  def testProject(base: File) = project("test-" + base.name, base, settings = testProjectSettings).configs(v1Config, v2Config)
 
   lazy val testProjectSettings =
     commonSettings ++ // normal project defaults; can be trimmed later- test and run aren't needed, for example.
-    Seq(scalaVersion <<= testScalaVersion in Global) ++
+    Seq(scalaVersion := (testScalaVersion in Global).value) ++
     inConfig(v1Config)(perConfig) ++ // add compile/package for the v1 sources
     inConfig(v2Config)(perConfig) :+ // add compile/package for the v2 sources
-    (functionalTests <<= runTest) // add the functional-tests task
+    (functionalTests := runTest.value) // add the functional-tests task
 
   // this is the key for the task that runs the reporter's functional tests
   lazy val functionalTests = TaskKey[Unit]("test-functional")
@@ -211,65 +196,68 @@ object MimaBuild extends Build {
   // sets the source directory in this configuration to be: testN / vN
   // scalaSource is the setting key that defines the directory for Scala sources
   // configuration gets the current configuration
-  // expanded version: ss <<= (bd, conf) apply { (b,c) => b / c.name }
-  lazy val shortSourceDir = scalaSource <<= (baseDirectory, configuration) { _ / _.name }
+  lazy val shortSourceDir = scalaSource := baseDirectory.value / configuration.value.name
 
-  // this is the custom test task of the form (ta, tb, tc) map { (a,b,c) => ... }
-  // tx are the tasks we need to do our job.
-  // Once the task engine runs these tasks, it evaluates the function supplied to map with the task results bound to
-  // a,b,c
-  lazy val runTest =
-    (fullClasspath in (reporterFunctionalTests, Compile), // the test classpath from the functionalTest project for the test
-      thisProjectRef, // gives us the ProjectRef this task is defined in
-      scalaInstance in core, // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
-      packageBin in v1Config, // package the v1 sources and get the configuration used
-      packageBin in v2Config, // same for v2
-      scalaVersion,
-      streams) map { (cp, proj, si, v1, v2, scalaV, streams) =>
-        val urls = Attributed.data(cp).map(_.toURI.toURL).toArray
-        val loader = new java.net.URLClassLoader(urls, si.loader)
+  lazy val runTest = Def.task {
+    val cp = (fullClasspath in (reporterFunctionalTests, Compile)).value // the test classpath from the functionalTest project for the test
+    val proj = thisProjectRef.value // gives us the ProjectRef this task is defined in
+    val si = (scalaInstance in core).value // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
+    val v1 = (packageBin in v1Config).value // package the v1 sources and get the configuration used
+    val v2 = (packageBin in v2Config).value // same for v2
+    val scalaV = scalaVersion.value
+    val streams = Keys.streams.value
+    val urls = Attributed.data(cp).map(_.toURI.toURL).toArray
+    val loader = new java.net.URLClassLoader(urls, si.loader)
 
-        val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest")
-        val testRunner = testClass.newInstance().asInstanceOf[{
-          def runTest(testClasspath: Array[String], testName: String, oldJarPath: String, newJarPath: String, oraclePath: String): Unit
-        }]
+    val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest")
+    val testRunner = testClass.newInstance().asInstanceOf[{
+      def runTest(testClasspath: Array[String], testName: String, oldJarPath: String, newJarPath: String, oraclePath: String): Unit
+    }]
 
-        // Add the scala-library to the MiMa classpath used to run this test
-        val testClasspath = Attributed.data(cp).filter(_.getName endsWith "scala-library.jar").map(_.getAbsolutePath).toArray
+    // Add the scala-library to the MiMa classpath used to run this test
+    val testClasspath = Attributed.data(cp).filter(_.getName endsWith "scala-library.jar").map(_.getAbsolutePath).toArray
 
-        val projectPath = proj.build.getPath + "reporter" + "/" + "functional-tests" + "/" + "src" + "/" + "test" + "/" + proj.project
+    val projectPath = proj.build.getPath + "reporter" + "/" + "functional-tests" + "/" + "src" + "/" + "test" + "/" + proj.project.stripPrefix("test-")
 
-        val oraclePath = {
-          val p = projectPath + "/problems.txt"
-          val p212 = projectPath + "/problems-2.12.txt"
-          if(!(scalaV.startsWith("2.10.") || scalaV.startsWith("2.11.")) && new  java.io.File(p212).exists) p212
-          else p
-        }
+    val oraclePath = {
+      val p = projectPath + "/problems.txt"
+      val p212 = projectPath + "/problems-2.12.txt"
+      if(!(scalaV.startsWith("2.10.") || scalaV.startsWith("2.11.")) && new  java.io.File(p212).exists) p212
+      else p
+    }
 
-        try {
-          import scala.language.reflectiveCalls
-          testRunner.runTest(testClasspath, proj.project, v1.getAbsolutePath, v2.getAbsolutePath, oraclePath)
-          streams.log.info("Test '" + proj.project + "' succeeded.")
-        } catch {
-          case e: Exception =>  sys.error(e.toString)
-        }
-        ()
-      }
+    try {
+      import scala.language.reflectiveCalls
+      testRunner.runTest(testClasspath, proj.project, v1.getAbsolutePath, v2.getAbsolutePath, oraclePath)
+      streams.log.info("Test '" + proj.project + "' succeeded.")
+    } catch {
+      case e: Exception =>  sys.error(e.toString)
+    }
+    ()
+  }
 
-  lazy val runAllTests =
-    (state, // this is how we access all defined projects from a task
-      thisProjectRef, // gives us the ProjectRef this task is defined in
-      test in Test // requires unit tests to run first
-      ) flatMap { (s, proj, _) =>
-        // gets all defined projects, dropping this project (core) so the task doesn't depend on itself
-        val structure = Project.structure(s)
-        val allProjects = structure.units(proj.build).defined.values filter (_.id != proj.project)
-        // get the fun-tests task in each project
-        val allTests = allProjects.toSeq flatMap { p => functionalTests in ProjectRef(proj.build, p.id) get structure.data }
-        // depend on all fun-tests
-        allTests.join.map(_ => ())
-      }
+  lazy val runAllTests = Def.taskDyn {
+    val s = state.value // this is how we access all defined projects from a task
+    val proj = thisProjectRef.value // gives us the ProjectRef this task is defined in
+    val _ = (test in Test).value // requires unit tests to run first
 
-    def project(id: String, base: File, settings: Seq[Def.Setting[_]] = Nil) =
-      Project(id, base, settings = settings) disablePlugins(BintrayPlugin)
+    // gets all defined projects, dropping this project (core) so the task doesn't depend on itself
+    val structure = Project.structure(s)
+    val allProjects = structure.units(proj.build).defined.values filter (_.id != proj.project)
+
+    // get the fun-tests task in each project
+    val allTests = allProjects.toSeq flatMap { p => functionalTests in ProjectRef(proj.build, p.id) get structure.data }
+
+    // depend on all fun-tests
+    Def.task {
+      allTests.join.map(_ => ()).value
+    }
+  }
+
+  def project(id: String, base: File, settings: Seq[Def.Setting[_]] = Nil) =
+    Project(id, base, settings = settings) disablePlugins(BintrayPlugin)
+}
+
+object DefineTestProjectsPlugin extends AutoPlugin {
+  override def extraProjects = MimaBuild.tests
 }
