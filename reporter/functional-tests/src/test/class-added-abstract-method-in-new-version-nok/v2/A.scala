@@ -1,3 +1,3 @@
 abstract class A {
-  def foo: Unit
+  def foo(): Unit
 }
