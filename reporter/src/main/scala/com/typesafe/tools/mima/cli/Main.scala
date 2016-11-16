@@ -115,11 +115,12 @@ class Main(args: List[String]) extends {
 
   def run(): Int = {
     val mima = makeMima
-    val backwardProblems = (direction getOrElse Nil) match {
+    val effectiveDirection = direction.getOrElse("backwards")
+    val backwardProblems = effectiveDirection match {
       case "backward" | "backwards" | "both" => mima.collectProblems(prevfile, currentfile)
       case _ => Nil
     }
-    val forwardProblems = (direction getOrElse Nil) match {
+    val forwardProblems = effectiveDirection match {
       case "forward" | "forwards" | "both" => mima.collectProblems(currentfile, prevfile)
       case _ => Nil
     }
