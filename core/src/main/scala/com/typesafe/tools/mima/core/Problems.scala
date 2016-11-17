@@ -114,6 +114,13 @@ case class DirectAbstractMethodProblem(newmeth: MemberInfo) extends AbstractMeth
   def description = affectedVersion => "abstract " + newmeth.methodString + " does not have a correspondent in " + affectedVersion + " version"
 }
 
+case class StaticVirtualMemberProblem(newmeth: MemberInfo) extends AbstractMethodProblem(newmeth) {
+  def description = affectedVersion => "non-static " + newmeth.memberString + " is static in " + affectedVersion + " version"
+}
+case class VirtualStaticMemberProblem(newmeth: MemberInfo) extends AbstractMethodProblem(newmeth) {
+  def description = affectedVersion => "static " + newmeth.memberString + " is non-static in " + affectedVersion + " version"
+}
+
 case class ReversedAbstractMethodProblem(newmeth: MemberInfo) extends MemberProblem(newmeth) {
   def description = affectedVersion => "in " + affectedVersion + " version there is abstract " + newmeth.methodString + ", which does not have a correspondent"
 }

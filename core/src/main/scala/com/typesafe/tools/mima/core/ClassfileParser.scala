@@ -192,21 +192,14 @@ abstract class ClassfileParser(definitions: Definitions) {
       throw new RuntimeException("bad constant pool tag " + in.buf(start) + " at byte " + start)
   }
 
-  def parseFields(clazz: ClassInfo): Unit =
-    if (readFields(clazz)) clazz.fields = parseMembers(clazz)
-    else if (readMethods(clazz)) skipMembers()
-
-  def parseMethods(clazz: ClassInfo) =
-    if (readMethods(clazz)) clazz.methods = parseMembers(clazz)
-
   def parseMembers(clazz: ClassInfo): Members = {
-    val takeStatics = clazz.isImplClass
     val memberCount = in.nextChar
     var members = new ArrayBuffer[MemberInfo]
     for (i <- 0 until memberCount) {
       val jflags = in.nextChar.toInt
-      if (isPrivate(jflags) || takeStatics != isStatic(jflags)) {
-        in.skip(4); skipAttributes()
+      if (isPrivate(jflags)) {
+        in.skip(4)
+        skipAttributes()
       } else {
         members += parseMember(clazz, jflags)
       }
@@ -214,11 +207,12 @@ abstract class ClassfileParser(definitions: Definitions) {
     new Members(members)
   }
 
-  def skipMembers() {
+  def skipMembers(): Members = {
     val memberCount = in.nextChar
     for (i <- 0 until memberCount) {
       in.skip(6); skipAttributes()
     }
+    NoMembers
   }
 
   def parseMember(clazz: ClassInfo, jflags: Int): MemberInfo = {
@@ -246,9 +240,12 @@ abstract class ClassfileParser(definitions: Definitions) {
 
     clazz.superClass = parseSuperClass()
     clazz.interfaces = parseInterfaces()
-    parseFields(clazz)
-    parseMethods(clazz)
+    if (readFields(clazz)) clazz.fields = parseMembers(clazz) else skipMembers()
+    val methods =
+      if (readMethods(clazz)) parseMembers(clazz) else skipMembers()
     parseAttributes(clazz)
+    clazz.methods =
+      if (clazz.isScalaUnsafe && !clazz.isImplClass) methods.withoutStatic else methods
   }
 
   def skipAttributes() {
@@ -261,18 +258,19 @@ abstract class ClassfileParser(definitions: Definitions) {
   def parseAttributes(c: ClassInfo) {
     val attrCount = in.nextChar
      for (i <- 0 until attrCount) {
-      val attrIndex = in.nextChar
-      val attrName = pool.getName(attrIndex)
-      val attrLen = in.nextInt
-      val attrEnd = in.bp + attrLen
-      if (attrName == "SourceFile") {
-        if(in.bp + 1 <= attrEnd) {
-        	val attrNameIndex = in.nextChar
-          c.sourceFileName = pool.getName(attrNameIndex)
-        }
-      }
-
-      in.bp = attrEnd
+       val attrIndex = in.nextChar
+       val attrName = pool.getName(attrIndex)
+       val attrLen = in.nextInt
+       val attrEnd = in.bp + attrLen
+       if (attrName == "SourceFile") {
+         if (in.bp + 1 <= attrEnd) {
+           val attrNameIndex = in.nextChar
+           c.sourceFileName = pool.getName(attrNameIndex)
+         }
+       } else if (attrName == "Scala" || attrName == "ScalaSig") {
+         this.parsedClass.isScala = true
+       }
+       in.bp = attrEnd
      }
   }
 
@@ -356,7 +354,7 @@ object ClassfileParser {
     (flags & JAVA_ACC_PROTECTED) != 0
   @inline final def isPrivate(flags: Int) =
     (flags & JAVA_ACC_PRIVATE) != 0
-  @inline final private def isStatic(flags: Int) =
+  @inline final def isStatic(flags: Int) =
     (flags & JAVA_ACC_STATIC) != 0
   @inline final private def hasAnnotation(flags: Int) =
     (flags & JAVA_ACC_ANNOTATION) != 0

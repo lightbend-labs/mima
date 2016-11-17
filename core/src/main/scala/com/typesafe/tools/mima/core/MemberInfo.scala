@@ -23,6 +23,7 @@ class MemberInfo(val owner: ClassInfo, val bytecodeName: String, override val fl
     (if(hasSyntheticName) (if(isExtensionMethod) "extension " else "synthetic ") else "") +
     (if(isDeprecated) "deprecated " else "") + "method "+decodedName + tpe
   def methodString = shortMethodString + " in " + owner.classString
+  def memberString = if (isMethod) methodString else fieldString
   def defString = (if(isDeprecated) "@deprecated " else "") + "def " + decodedName + params.mkString("(", ",", ")") + ": " + tpe.resultType + " = "
   def applyString = decodedName + params.mkString("(", ",", ")")
 
@@ -77,6 +78,8 @@ class MemberInfo(val owner: ClassInfo, val bytecodeName: String, override val fl
   def isAccessible: Boolean = isPublic && !isSynthetic && (!hasSyntheticName || isExtensionMethod)
 
   def nonAccessible: Boolean = !isAccessible
+
+  def isStatic: Boolean = ClassfileParser.isStatic(flags)
 
   /** The name of the getter corresponding to this setter */
   private def getterName: String = {

@@ -101,8 +101,8 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
   def methods: Members = { ensureLoaded(); _methods }
   override def flags: Int = _flags
 
-  /** currently not set! */
   def isScala: Boolean = { ensureLoaded(); _isScala }
+  def isScalaUnsafe: Boolean = { _isScala }
 
   def superClass_=(x: ClassInfo) = _superClass = x
   def interfaces_=(x: List[ClassInfo]) = _interfaces = x
