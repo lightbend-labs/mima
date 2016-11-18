@@ -267,6 +267,17 @@ abstract class ClassfileParser(definitions: Definitions) {
            val attrNameIndex = in.nextChar
            c.sourceFileName = pool.getName(attrNameIndex)
          }
+       } else if (attrName == "InnerClasses") {
+         val entries = in.nextChar.toInt
+         c._innerClasses = (0 until entries).map { _ =>
+           val innerIndex, outerIndex, innerNameIndex = in.nextChar.toInt
+           in.skip(2)
+           if (innerIndex != 0 && outerIndex != 0 && innerNameIndex != 0) {
+             val n = pool.getClassName(innerIndex)
+             if (n == c.bytecodeName) c._isTopLevel = false // an inner class lists itself in InnerClasses
+             if (pool.getClassName(outerIndex) == c.bytecodeName) n else ""
+           } else ""
+         }.filterNot(_.isEmpty)
        } else if (attrName == "Scala" || attrName == "ScalaSig") {
          this.parsedClass.isScala = true
        }

@@ -1,5 +1,6 @@
 package com.typesafe.tools.mima.core
 
+import scala.annotation.tailrec
 import scala.tools.nsc.io.AbstractFile
 import scala.tools.nsc.util.ClassPath
 import collection.mutable
@@ -64,48 +65,24 @@ abstract class PackageInfo(val owner: PackageInfo) {
   def classes: mutable.Map[String, ClassInfo]
 
   lazy val accessibleClasses: Set[ClassInfo] = {
-    // FIXME: Make this a tailrecursive implementation
     /** Fixed point iteration for finding all accessible classes. */
-    def accessibleClassesUnder(prefix: Set[ClassInfo]): Set[ClassInfo] = { 
-      val vclasses = (classes.valuesIterator filter (isAccessible(_, prefix))).toSet
-      if (vclasses.isEmpty) vclasses
-      else vclasses union accessibleClassesUnder(vclasses)
+    @tailrec
+    def accessibleClassesUnder(prefix: Set[ClassInfo], found: Set[ClassInfo]): Set[ClassInfo] = {
+      val vclasses = (classes.valuesIterator.filter(isAccessible(_, prefix))).toSet
+      if (vclasses.isEmpty) found
+      else accessibleClassesUnder(vclasses, vclasses union found)
     }
 
     def isAccessible(clazz: ClassInfo, prefix: Set[ClassInfo]) = {
       def isReachable = {
         if (clazz.isSynthetic) false
-        else {
-          val idx = clazz.decodedName.lastIndexOf("$")
-          if (idx < 0) prefix.isEmpty // class name contains no $
-          else {
-            // A top-level module is compiled into a class plus a module class (for instance,
-            // for a top-level `object A`, scalac creates two classfiles `A.class` and `A$.class`.).
-            // While, for an inner module, scalac creates only one classfile, i.e., the module class 
-            // classfile.
-            //
-            // `clazz` is an inner module if:
-            // 1) `clazz` is a module, and 
-            // 2) `clazz` decoded name starts with one of the passed `prefix`.
-            def isInnerModule: Boolean = {
-              clazz.isModule && 
-              prefix.exists { outer =>
-                // this condition is to avoid looping indefinitely 
-                clazz.decodedName != outer.decodedName &&
-                // checks if `outer` is a prefix of `clazz` name 
-                clazz.decodedName.startsWith(outer.decodedName)
-              }
-            }
-            // class, trait, and top-level module go through this condition
-            (prefix exists (_.decodedName == clazz.decodedName.substring(0, idx))) || // prefix before dollar is an accessible class detected previously
-            isInnerModule
-          }
-        }
+        else if (prefix.isEmpty) clazz.isTopLevel && !clazz.bytecodeName.contains("$$")
+        else prefix.exists(_.innerClasses contains clazz.bytecodeName)
       }
       clazz.isPublic && isReachable
     }
 
-    accessibleClassesUnder(Set.empty)
+    accessibleClassesUnder(Set.empty, Set.empty)
   }
 
   /** All implementation classes of traits (classes that end in "$" followed by "class"). */
