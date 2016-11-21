@@ -19,7 +19,9 @@ class MemberInfo(val owner: ClassInfo, val bytecodeName: String, override val fl
   override def toString = "def " + bytecodeName + ": "+ sig
 
   def fieldString = "field "+decodedName+" in "+owner.classString
-  def shortMethodString = (if(hasSyntheticName) "synthetic " else "") + (if(isDeprecated) "deprecated " else "") + "method "+decodedName + tpe
+  def shortMethodString =
+    (if(hasSyntheticName) (if(isExtensionMethod) "extension " else "synthetic ") else "") +
+    (if(isDeprecated) "deprecated " else "") + "method "+decodedName + tpe
   def methodString = shortMethodString + " in " + owner.classString
   def defString = (if(isDeprecated) "@deprecated " else "") + "def " + decodedName + params.mkString("(", ",", ")") + ": " + tpe.resultType + " = "
   def applyString = decodedName + params.mkString("(", ",", ")")
@@ -66,7 +68,13 @@ class MemberInfo(val owner: ClassInfo, val bytecodeName: String, override val fl
 
   def hasSyntheticName: Boolean = decodedName contains '$'
 
-  def isAccessible: Boolean = isPublic && !isSynthetic && !hasSyntheticName
+  def isExtensionMethod: Boolean = {
+    var i = decodedName.length-1
+    while(i >= 0 && Character.isDigit(decodedName.charAt(i))) i -= 1
+    decodedName.substring(0, i+1).endsWith("$extension")
+  }
+
+  def isAccessible: Boolean = isPublic && !isSynthetic && (!hasSyntheticName || isExtensionMethod)
 
   def nonAccessible: Boolean = !isAccessible
 
