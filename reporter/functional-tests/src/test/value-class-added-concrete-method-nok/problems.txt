@@ -1,0 +1,1 @@
+extension method c$extension(java.lang.String,Int)Unit in object A#B does not have a correspondent in new version
