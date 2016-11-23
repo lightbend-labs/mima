@@ -1,0 +1,2 @@
+synthetic method copy$default$2()java.lang.String in class A has a different result type in new version, where it is Int rather than java.lang.String
+synthetic method copy$default$1()Int in class A has a different result type in new version, where it is Boolean rather than Int

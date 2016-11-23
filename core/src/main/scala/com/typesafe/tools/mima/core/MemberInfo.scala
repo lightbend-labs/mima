@@ -74,7 +74,9 @@ class MemberInfo(val owner: ClassInfo, val bytecodeName: String, override val fl
     decodedName.substring(0, i+1).endsWith("$extension")
   }
 
-  def isAccessible: Boolean = isPublic && !isSynthetic && (!hasSyntheticName || isExtensionMethod)
+  def isDefaultGetter: Boolean = decodedName.contains("$default$")
+
+  def isAccessible: Boolean = isPublic && !isSynthetic && (!hasSyntheticName || isExtensionMethod || isDefaultGetter)
 
   def nonAccessible: Boolean = !isAccessible
 
