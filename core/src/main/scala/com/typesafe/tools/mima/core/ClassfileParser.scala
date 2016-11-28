@@ -74,7 +74,7 @@ abstract class ClassfileParser(definitions: Definitions) {
 
     { var i = 1
       while (i < length) {
-        starts(i) = in.bp
+        starts(i) = in.position
         i += 1
         (in.nextByte.toInt: @switch) match {
           case CONSTANT_UTF8 | CONSTANT_UNICODE =>
@@ -91,7 +91,7 @@ abstract class ClassfileParser(definitions: Definitions) {
             in.skip(8)
             i += 1
           case _ =>
-            errorBadTag(in.bp - 1)
+            errorBadTag(in.position - 1)
         }
       }
     }
@@ -102,8 +102,8 @@ abstract class ClassfileParser(definitions: Definitions) {
       var name = values(index).asInstanceOf[String]
       if (name eq null) {
         val start = starts(index)
-        if (in.buf(start).toInt != CONSTANT_UTF8) errorBadTag(start)
-        name = UTF8Codec.decode(in.buf, start + 3, in.getChar(start + 1))
+        if (in.byteAt(start).toInt != CONSTANT_UTF8) errorBadTag(start)
+        name = UTF8Codec.decode(in.buffer, start + 3, in.getChar(start + 1))
         values(index) = name
       }
       name
@@ -123,7 +123,7 @@ abstract class ClassfileParser(definitions: Definitions) {
       var c = values(index).asInstanceOf[ClassInfo]
       if (c eq null) {
         val start = starts(index)
-        if (in.buf(start).toInt != CONSTANT_CLASS) errorBadTag(start)
+        if (in.byteAt(start).toInt != CONSTANT_CLASS) errorBadTag(start)
         val name = getExternalName(in.getChar(start + 1))
         c = definitions.fromName(name)
         //if (c == ClassInfo.NoClass) println("warning: missing class "+name+" referenced from "+parsedClass.file)
@@ -137,7 +137,7 @@ abstract class ClassfileParser(definitions: Definitions) {
      */
     def getClassName(index: Int): String = {
       val start = starts(index)
-      if (in.buf(start).toInt != CONSTANT_CLASS) errorBadTag(start)
+      if (in.byteAt(start).toInt != CONSTANT_CLASS) errorBadTag(start)
       getExternalName(in.getChar(start + 1))
     }
 
@@ -155,7 +155,7 @@ abstract class ClassfileParser(definitions: Definitions) {
       var p = values(index).asInstanceOf[(String, String)]
       if (p eq null) {
         val start = starts(index)
-        if (in.buf(start).toInt != CONSTANT_NAMEANDTYPE) errorBadTag(start)
+        if (in.byteAt(start).toInt != CONSTANT_NAMEANDTYPE) errorBadTag(start)
         val name = getName(in.getChar(start + 1).toInt)
         var tpe  = getName(in.getChar(start + 3).toInt)
         p = (name, tpe)
@@ -172,7 +172,7 @@ abstract class ClassfileParser(definitions: Definitions) {
       var r = values(index).asInstanceOf[Reference]
       if (r eq null) {
         val start = starts(index)
-        val first = in.buf(start).toInt
+        val first = in.byteAt(start).toInt
         if (first != CONSTANT_FIELDREF &&
             first != CONSTANT_METHODREF &&
             first != CONSTANT_INTFMETHODREF) errorBadTag(start)
@@ -185,11 +185,11 @@ abstract class ClassfileParser(definitions: Definitions) {
 
     /** Throws an exception signaling a bad constant index. */
     private def errorBadIndex(index: Int) =
-      throw new RuntimeException("bad constant pool index: " + index + " at pos: " + in.bp)
+      throw new RuntimeException("bad constant pool index: " + index + " at pos: " + in.position)
 
     /** Throws an exception signaling a bad tag at given address. */
     private def errorBadTag(start: Int) =
-      throw new RuntimeException("bad constant pool tag " + in.buf(start) + " at byte " + start)
+      throw new RuntimeException("bad constant pool tag " + in.byteAt(start) + " at byte " + start)
   }
 
   def parseFields(clazz: ClassInfo): Unit =
@@ -264,15 +264,15 @@ abstract class ClassfileParser(definitions: Definitions) {
       val attrIndex = in.nextChar
       val attrName = pool.getName(attrIndex)
       val attrLen = in.nextInt
-      val attrEnd = in.bp + attrLen
+      val attrEnd = in.position + attrLen
       if (attrName == "SourceFile") {
-        if(in.bp + 1 <= attrEnd) {
+        if(in.position + 1 <= attrEnd) {
         	val attrNameIndex = in.nextChar
           c.sourceFileName = pool.getName(attrNameIndex)
         }
       }
 
-      in.bp = attrEnd
+      in.setPosition(attrEnd)
      }
   }
 
@@ -284,12 +284,12 @@ abstract class ClassfileParser(definitions: Definitions) {
       val attrIndex = in.nextChar
       val attrName = pool.getName(attrIndex)
       val attrLen = in.nextInt
-      val attrEnd = in.bp + attrLen
+      val attrEnd = in.position + attrLen
       if (maybeTraitSetter && attrName == "RuntimeVisibleAnnotations") {
         val annotCount = in.nextChar
         var j = 0
         while (j < annotCount && !m.isTraitSetter) {
-          if (in.bp + 2 <= attrEnd) {
+          if (in.position + 2 <= attrEnd) {
             val annotIndex = in.nextChar
             if (pool.getName(annotIndex) == "Lscala/runtime/TraitSetter;")
               m.isTraitSetter = true
@@ -302,11 +302,11 @@ abstract class ClassfileParser(definitions: Definitions) {
         val maxStack = in.nextChar
         val maxLocals = in.nextChar
         val codeLength = in.nextInt
-        m.codeOpt = Some((in.bp, in.bp + codeLength))
+        m.codeOpt = Some((in.position, in.position + codeLength))
       } else if (attrName == "Deprecated") {
         m.isDeprecated = true
       }
-      in.bp = attrEnd
+      in.setPosition(attrEnd)
     }
   }
 
@@ -314,10 +314,10 @@ abstract class ClassfileParser(definitions: Definitions) {
    */
   def skipAnnotation(annotIndex: Int, attrEnd: Int) {
     try {
-      if (in.bp + 2 <= attrEnd) {
+      if (in.position + 2 <= attrEnd) {
         val nargs = in.nextChar
         for (i <- 0 until nargs)
-          if (in.bp + 2 <= attrEnd) {
+          if (in.position + 2 <= attrEnd) {
             val argname = in.nextChar
             skipAnnotArg(attrEnd)
           }
@@ -330,12 +330,12 @@ abstract class ClassfileParser(definitions: Definitions) {
   /** Skip a single annotation argument
    */
   def skipAnnotArg(attrEnd: Int) {
-    if (in.bp + 3 <= attrEnd) {
+    if (in.position + 3 <= attrEnd) {
       val tag = in.nextByte.toChar
       val index = in.nextChar
       tag match {
         case ENUM_TAG   =>
-          if (in.bp + 2 <= attrEnd) in.nextChar
+          if (in.position + 2 <= attrEnd) in.nextChar
         case ARRAY_TAG  =>
           for (i <- 0 until index)
             skipAnnotArg(attrEnd)
