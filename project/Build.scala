@@ -161,7 +161,8 @@ object MimaBuild {
   										.dependsOn(core, reporter)
 
   // select all testN directories.
-  val bases = (file("reporter") / "functional-tests" / "src" / "test") * (DirectoryFilter)
+  val bases = (file("reporter") / "functional-tests" / "src" / "test") *
+    (DirectoryFilter && new SimpleFileFilter(_.list.contains("problems.txt")))
 
   // make the Project for each discovered directory
   lazy val tests = bases.get map testProject
