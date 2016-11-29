@@ -1,6 +1,9 @@
 package com.typesafe.tools.mima.lib
 
-import com.typesafe.tools.mima.core.{Config, Settings, PathResolver}
+import java.io.{BufferedInputStream, FileInputStream}
+
+import com.typesafe.tools.mima.core.{Config, PathResolver, Settings}
+
 import scala.io.Source
 import scala.tools.nsc.util._
 
@@ -21,7 +24,10 @@ class CollectProblemsTest {
     val problems = mima.collectProblems(oldJarPath, newJarPath).map(_.description("new"))
 
     // load oracle
-    var expectedProblems = Source.fromFile(oraclePath).getLines.toList
+    val inputStream = new BufferedInputStream(new FileInputStream(oraclePath))
+    var expectedProblems = try {
+      Source.fromInputStream(inputStream).getLines.toList
+    } finally inputStream.close()
 
     // diff between the oracle and the collected problems
     val unexpectedProblems = problems.filterNot(expectedProblems.contains)

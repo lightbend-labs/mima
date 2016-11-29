@@ -3,7 +3,7 @@ package com.typesafe.tools.mima.core
 import collection.mutable
 import collection.TraversableOnce
 
-class Members(val members: TraversableOnce[MemberInfo]) {
+class Members(members: TraversableOnce[MemberInfo]) {
 
   private val bindings = new mutable.HashMap[String, List[MemberInfo]] {
     override def default(key: String) = List()
@@ -13,6 +13,8 @@ class Members(val members: TraversableOnce[MemberInfo]) {
   def iterator: Iterator[MemberInfo] =
     for (ms <- bindings.valuesIterator; m <- ms.iterator) yield m
   def get(name: String): Iterator[MemberInfo] = bindings(name).iterator
+
+  def withoutStatic: Members = new Members(iterator.filterNot(_.isStatic))
 }
 
 
