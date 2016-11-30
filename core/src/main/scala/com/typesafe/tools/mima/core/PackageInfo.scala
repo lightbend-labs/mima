@@ -79,7 +79,7 @@ abstract class PackageInfo(val owner: PackageInfo) {
         else if (prefix.isEmpty) clazz.isTopLevel && !clazz.bytecodeName.contains("$$")
         else prefix.exists(_.innerClasses contains clazz.bytecodeName)
       }
-      clazz.isPublic && isReachable
+      clazz.isPublic && !clazz.isLocalClass && isReachable
     }
 
     accessibleClassesUnder(Set.empty, Set.empty)
