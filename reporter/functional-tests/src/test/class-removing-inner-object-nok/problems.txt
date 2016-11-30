@@ -1,0 +1,2 @@
+object A#B does not have a correspondent in new version
+method B()A#B# in class A does not have a correspondent in new version

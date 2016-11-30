@@ -1,0 +1,2 @@
+object A#B does not have a correspondent in new version
+object A#B#C does not have a correspondent in new version

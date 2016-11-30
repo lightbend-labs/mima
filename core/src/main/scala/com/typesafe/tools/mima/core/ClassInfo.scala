@@ -56,6 +56,12 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
     else owner.fullName + "." + bytecodeName
   }
 
+  var _innerClasses: Seq[String] = Seq.empty
+  def innerClasses = { ensureLoaded(); _innerClasses }
+
+  var _isTopLevel = true
+  def isTopLevel = { ensureLoaded(); _isTopLevel }
+
   final override def equals(other: Any): Boolean = other match {
     case that: ClassInfo => (that canEqual this) && this.fullName == that.fullName
     case _               => false
@@ -65,10 +71,10 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
 
   override def canEqual(other: Any) = other.isInstanceOf[ClassInfo]
 
-  def formattedFullName = formatClassName(if (isObject) fullName.init else fullName)
+  def formattedFullName = formatClassName(if (isModule) fullName.init else fullName)
 
   def declarationPrefix = {
-    if (isObject) "object"
+    if (isModule) "object"
     else if (isTrait) "trait"
     else if (loaded && isInterface) "interface" // java interfaces and traits with no implementation methods
     else "class"
@@ -290,7 +296,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
     ClassfileParser.isInterface(flags)
   }
 
-  def isObject: Boolean = bytecodeName.endsWith("$")
+  def isModule: Boolean = bytecodeName.endsWith("$")
 
   /** Is this class public? */
   /*

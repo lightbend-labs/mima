@@ -1,5 +1,6 @@
 package com.typesafe.tools.mima.core
 
+import scala.annotation.tailrec
 import scala.tools.nsc.io.AbstractFile
 import scala.tools.nsc.util.ClassPath
 import collection.mutable
@@ -65,25 +66,23 @@ abstract class PackageInfo(val owner: PackageInfo) {
 
   lazy val accessibleClasses: Set[ClassInfo] = {
     /** Fixed point iteration for finding all accessible classes. */
-    def accessibleClassesUnder(prefix: Set[ClassInfo]): Set[ClassInfo] = {
-      val vclasses = (classes.valuesIterator filter (isAccessible(_, prefix))).toSet
-      if (vclasses.isEmpty) vclasses
-      else vclasses union accessibleClassesUnder(vclasses)
+    @tailrec
+    def accessibleClassesUnder(prefix: Set[ClassInfo], found: Set[ClassInfo]): Set[ClassInfo] = {
+      val vclasses = (classes.valuesIterator.filter(isAccessible(_, prefix))).toSet
+      if (vclasses.isEmpty) found
+      else accessibleClassesUnder(vclasses, vclasses union found)
     }
 
     def isAccessible(clazz: ClassInfo, prefix: Set[ClassInfo]) = {
       def isReachable = {
         if (clazz.isSynthetic) false
-        else {
-          val idx = clazz.decodedName.lastIndexOf("$")
-          if (idx < 0) prefix.isEmpty // class name contains no $
-          else prefix exists (_.decodedName == clazz.decodedName.substring(0, idx)) // prefix before dollar is an accessible class detected previously
-        }
+        else if (prefix.isEmpty) clazz.isTopLevel && !clazz.bytecodeName.contains("$$")
+        else prefix.exists(_.innerClasses contains clazz.bytecodeName)
       }
       clazz.isPublic && isReachable
     }
 
-    accessibleClassesUnder(Set.empty)
+    accessibleClassesUnder(Set.empty, Set.empty)
   }
 
   /** All implementation classes of traits (classes that end in "$" followed by "class"). */
