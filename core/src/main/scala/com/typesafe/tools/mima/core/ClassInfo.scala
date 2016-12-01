@@ -59,6 +59,9 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
   var _innerClasses: Seq[String] = Seq.empty
   def innerClasses = { ensureLoaded(); _innerClasses }
 
+  var _isLocalClass = false
+  def isLocalClass = { ensureLoaded(); _isLocalClass}
+
   var _isTopLevel = true
   def isTopLevel = { ensureLoaded(); _isTopLevel }
 

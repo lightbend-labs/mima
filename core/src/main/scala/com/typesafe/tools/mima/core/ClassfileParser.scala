@@ -278,6 +278,8 @@ abstract class ClassfileParser(definitions: Definitions) {
              if (pool.getClassName(outerIndex) == c.bytecodeName) n else ""
            } else ""
          }.filterNot(_.isEmpty)
+       } else if (attrName == "EnclosingMethod") {
+         c._isLocalClass = true
        } else if (attrName == "Scala" || attrName == "ScalaSig") {
          this.parsedClass.isScala = true
        }
