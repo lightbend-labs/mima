@@ -21,6 +21,7 @@ env:
     - TEST_COMMAND="testFunctional"
     - TEST_COMMAND="-Dmima.testScalaVersion=2.11.8 testFunctional"
     - TEST_COMMAND="-Dmima.testScalaVersion=2.12.0 testFunctional"
+    - TEST_COMMAND="it:test"
 
 script:
   - sbt $TEST_COMMAND
