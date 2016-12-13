@@ -33,7 +33,7 @@ For a Pull Request to be considered at all it has to meet these requirements:
     - If you want to force the Pull Request validator to run again, you can do so by adding a new comment in the Pull Request with the following text: ``PLS REBUILD ALL``. Again, the Pull Request validator will kick-in within 1 hour.
 
 
-If these requirements are not met then the code should **not** be merged into master, or even reviewed - regardless of how good or important it is. No exceptions. For any question, please drop us a message in the [mima-user](https://groups.google.com/group/migration-manager-user) mailing list
+If these requirements are not met then the code should **not** be merged into master, or even reviewed - regardless of how good or important it is.
 
 ## Creating Commits And Writing Commit Messages
 
@@ -63,4 +63,3 @@ Example:
 * [Contributor License Agreement](http://www.typesafe.com/contribute/cla)
 * [Issue Tracker](https://github.com/typesafehub/migration-manager/issues?page=1&state=open)
 * [User Documentation](https://github.com/typesafehub/migration-manager/wiki)
-* [mima-user mailing list](https://groups.google.com/group/migration-manager-user)
