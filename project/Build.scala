@@ -6,13 +6,7 @@ import com.typesafe.config.ConfigFactory
 import Project.inConfig
 import Configurations.config
 import Build.data
-import sbtassembly.Plugin.AssemblyKeys
-import sbtassembly.Plugin.AssemblyKeys._
-import sbtassembly.Plugin.assemblySettings
-import sbtassembly.Plugin.MergeStrategy
 import sbtbuildinfo.Plugin._
-import com.typesafe.sbt.S3Plugin._
-import S3._
 import bintray.BintrayPlugin
 import bintray.BintrayPlugin.autoImport._
 import com.typesafe.sbt.GitVersioning
@@ -89,15 +83,9 @@ object MimaBuild {
   lazy val root = (
     project("root", file("."))
     aggregate(core, reporter, sbtplugin)
-    settings(s3Settings:_*)
     settings(name := buildName,
              publish := (),
              publishLocal := (),
-             mappings in upload := {
-               def loc(name: String) = "migration-manager/%s/%s-%s.jar" format (version.value, name, version.value)
-               Seq((assembly in reporter).value -> loc("migration-manager-cli"))
-             },
-             host in upload := "downloads.typesafe.com.s3.amazonaws.com",
              testScalaVersion in Global :=  sys.props.getOrElse("mima.testScalaVersion", scalaVersion.value)
     )
     enablePlugins(GitVersioning)
@@ -117,29 +105,16 @@ object MimaBuild {
     settings(sonatypePublishSettings:_*)
   )
 
-  val myAssemblySettings: Seq[Setting[_]] = (assemblySettings: Seq[Setting[_]]) ++ Seq(
-    mergeStrategy in assembly ~= (old => {
-      case "LICENSE" => MergeStrategy.first
-      case x         => old(x)
-    }),
-    AssemblyKeys.excludedFiles in assembly ~= (old =>
-      // Hack to keep LICENSE files.
-      { files: Seq[File] => old(files) filterNot (_.getName contains "LICENSE") }
-    )
-  )
-
   lazy val reporter = (
     project("reporter", file("reporter"), settings = commonSettings)
     settings(libraryDependencies += typesafeConfig,
              name := buildName + "-reporter")
     dependsOn(core)
     settings(sonatypePublishSettings:_*)
-    settings(myAssemblySettings:_*)
     settings(
       // add task functional-tests that depends on all functional tests
       functionalTests := allTests(functionalTests in _).value,
-      test in IntegrationTest := allTests(test in IntegrationTest in _).value,
-      mainClass in assembly := Some("com.typesafe.tools.mima.cli.Main")
+      test in IntegrationTest := allTests(test in IntegrationTest in _).value
     )
   )
 
