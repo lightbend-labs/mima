@@ -40,14 +40,25 @@ object MimaPlugin extends AutoPlugin {
       }
     },
     mimaReportBinaryIssues := {
-      SbtMima.reportErrors(
-        mimaFindBinaryIssues.value,
-        mimaFailOnProblem.value,
-        mimaBinaryIssueFilters.value,
-        mimaBackwardIssueFilters.value,
-        mimaForwardIssueFilters.value,
-        streams.value,
-        name.value)
+      mimaPreviousClassfiles.value.foreach {
+        case (moduleId, file) =>
+          val problems = SbtMima.runMima(
+            file,
+            mimaCurrentClassfiles.value,
+            (fullClasspath in mimaFindBinaryIssues).value,
+            mimaCheckDirection.value,
+            streams.value
+          )
+          SbtMima.reportErrors(
+            moduleId,
+            problems._1, problems._2,
+            mimaFailOnProblem.value,
+            mimaBinaryIssueFilters.value,
+            mimaBackwardIssueFilters.value,
+            mimaForwardIssueFilters.value,
+            streams.value,
+            name.value)
+      }
     }
   )
 
