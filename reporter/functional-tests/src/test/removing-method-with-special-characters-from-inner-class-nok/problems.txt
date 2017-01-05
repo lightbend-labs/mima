@@ -1,0 +1,2 @@
+abstract method f()Int in class foo.A#B does not have a correspondent in new version
+abstract method f()Int in class foo.A#< does not have a correspondent in new version
