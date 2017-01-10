@@ -76,7 +76,7 @@ abstract class PackageInfo(val owner: PackageInfo) {
     def isAccessible(clazz: ClassInfo, prefix: Set[ClassInfo]) = {
       def isReachable = {
         if (clazz.isSynthetic) false
-        else if (prefix.isEmpty) clazz.isTopLevel && !clazz.bytecodeName.contains("$$")
+        else if (prefix.isEmpty) clazz.isTopLevel && !clazz.decodedName.contains("$$")
         else prefix.exists(_.innerClasses contains clazz.bytecodeName)
       }
       clazz.isPublic && !clazz.isLocalClass && isReachable
