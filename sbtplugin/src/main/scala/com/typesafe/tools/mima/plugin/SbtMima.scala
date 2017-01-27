@@ -44,9 +44,22 @@ object SbtMima {
   }
 
   /** Reports binary compatibility errors.
+    *  @param failOnProblem if true, fails the build on binary compatibility errors.
+    */
+  def reportErrors(problemsInFiles: Map[ModuleID, (List[core.Problem], List[core.Problem])],
+                   failOnProblem: Boolean,
+                   filters: Seq[core.ProblemFilter],
+                   backwardFilters: Map[String, Seq[core.ProblemFilter]],
+                   forwardFilters: Map[String, Seq[core.ProblemFilter]],
+                   s: TaskStreams, projectName: String): Unit =
+    problemsInFiles foreach { case (module, (backward, forward)) =>
+      reportModuleErrors(module, backward, forward, failOnProblem, filters, backwardFilters, forwardFilters, s, projectName)
+    }
+
+  /** Reports binary compatibility errors for a module.
    *  @param failOnProblem if true, fails the build on binary compatibility errors.
    */
-  def reportErrors(module: ModuleID,
+  def reportModuleErrors(module: ModuleID,
                    backward: List[core.Problem],
                    forward: List[core.Problem],
                    failOnProblem: Boolean,

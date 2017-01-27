@@ -40,24 +40,30 @@ object MimaPlugin extends AutoPlugin {
       }
     },
     mimaReportBinaryIssues := {
-      mimaPreviousClassfiles.value.foreach {
-        case (moduleId, file) =>
-          val problems = SbtMima.runMima(
-            file,
-            mimaCurrentClassfiles.value,
-            (fullClasspath in mimaFindBinaryIssues).value,
-            mimaCheckDirection.value,
-            streams.value
-          )
-          SbtMima.reportErrors(
-            moduleId,
-            problems._1, problems._2,
-            mimaFailOnProblem.value,
-            mimaBinaryIssueFilters.value,
-            mimaBackwardIssueFilters.value,
-            mimaForwardIssueFilters.value,
-            streams.value,
-            name.value)
+      if (mimaPreviousClassfiles.value.isEmpty) {
+        streams.value.log.info(s"${name.value}: previous-artifact not set, not analyzing binary compatibility")
+        Map.empty
+      }
+      else {
+        mimaPreviousClassfiles.value.foreach {
+          case (moduleId, file) =>
+            val problems = SbtMima.runMima(
+              file,
+              mimaCurrentClassfiles.value,
+              (fullClasspath in mimaFindBinaryIssues).value,
+              mimaCheckDirection.value,
+              streams.value
+            )
+            SbtMima.reportModuleErrors(
+              moduleId,
+              problems._1, problems._2,
+              mimaFailOnProblem.value,
+              mimaBinaryIssueFilters.value,
+              mimaBackwardIssueFilters.value,
+              mimaForwardIssueFilters.value,
+              streams.value,
+              name.value)
+        }
       }
     }
   )
