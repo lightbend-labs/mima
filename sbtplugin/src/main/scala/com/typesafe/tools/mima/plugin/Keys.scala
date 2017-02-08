@@ -14,9 +14,9 @@ class BaseMimaKeys {
   final val mimaFindBinaryIssues   = taskKey[Map[ModuleID, (List[core.Problem], List[core.Problem])]]("All backward and forward binary incompatibilities between a given module and current project.")
   final val mimaReportBinaryIssues = taskKey[Unit]("Logs all binary incompatibilities to the sbt console/logs.")
 
-  final val mimaBinaryIssueFilters   = settingKey[Seq[core.ProblemFilter]]("Filters to apply to binary issues found. Applies both to backward and forward binary compatibility checking.")
-  final val mimaBackwardIssueFilters = settingKey[Map[String, Seq[core.ProblemFilter]]]("Filters to apply to binary issues found grouped by version of a module checked against. These filters only apply to backward compatibility checking.")
-  final val mimaForwardIssueFilters  = settingKey[Map[String, Seq[core.ProblemFilter]]]("Filters to apply to binary issues found grouped by version of a module checked against. These filters only apply to forward compatibility checking.")
+  final val mimaBinaryIssueFilters   = taskKey[Seq[core.ProblemFilter]]("Filters to apply to binary issues found. Applies both to backward and forward binary compatibility checking.")
+  final val mimaBackwardIssueFilters = taskKey[Map[String, Seq[core.ProblemFilter]]]("Filters to apply to binary issues found grouped by version of a module checked against. These filters only apply to backward compatibility checking.")
+  final val mimaForwardIssueFilters  = taskKey[Map[String, Seq[core.ProblemFilter]]]("Filters to apply to binary issues found grouped by version of a module checked against. These filters only apply to forward compatibility checking.")
 
   final val mimaCheckDirection = settingKey[String]("Compatibility checking direction; default is \"backward\", but can also be \"forward\" or \"both\".")
 
