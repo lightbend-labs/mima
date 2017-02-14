@@ -20,7 +20,7 @@ env:
     - TEST_COMMAND="scripted"
     - TEST_COMMAND="testFunctional"
     - TEST_COMMAND="-Dmima.testScalaVersion=2.11.8 testFunctional"
-    - TEST_COMMAND="-Dmima.testScalaVersion=2.12.0 testFunctional"
+    - TEST_COMMAND="-Dmima.testScalaVersion=2.12.1 testFunctional"
     - TEST_COMMAND="it:test"
 
 script:
