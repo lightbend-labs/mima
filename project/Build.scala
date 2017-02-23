@@ -6,6 +6,10 @@ import com.typesafe.config.ConfigFactory
 import Project.inConfig
 import Configurations.config
 import Build.data
+import sbtassembly.Plugin.AssemblyKeys
+import sbtassembly.Plugin.AssemblyKeys._
+import sbtassembly.Plugin.assemblySettings
+import sbtassembly.Plugin.MergeStrategy
 import sbtbuildinfo.Plugin._
 import bintray.BintrayPlugin
 import bintray.BintrayPlugin.autoImport._
@@ -105,16 +109,29 @@ object MimaBuild {
     settings(sonatypePublishSettings:_*)
   )
 
+  val myAssemblySettings: Seq[Setting[_]] = (assemblySettings: Seq[Setting[_]]) ++ Seq(
+    mergeStrategy in assembly ~= (old => {
+      case "LICENSE" => MergeStrategy.first
+      case x         => old(x)
+    }),
+    AssemblyKeys.excludedFiles in assembly ~= (old =>
+      // Hack to keep LICENSE files.
+      { files: Seq[File] => old(files) filterNot (_.getName contains "LICENSE") }
+    )
+  )
+
   lazy val reporter = (
     project("reporter", file("reporter"), settings = commonSettings)
     settings(libraryDependencies += typesafeConfig,
              name := buildName + "-reporter")
     dependsOn(core)
     settings(sonatypePublishSettings:_*)
+    settings(myAssemblySettings:_*)
     settings(
       // add task functional-tests that depends on all functional tests
       functionalTests := allTests(functionalTests in _).value,
-      test in IntegrationTest := allTests(test in IntegrationTest in _).value
+      test in IntegrationTest := allTests(test in IntegrationTest in _).value,
+      mainClass in assembly := Some("com.typesafe.tools.mima.cli.Main")
     )
   )
 
