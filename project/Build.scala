@@ -77,6 +77,7 @@ object Dependencies {
   import BuildSettings._
 
   val typesafeConfig = "com.typesafe" % "config" % "1.0.0"
+  val scalatest = "org.scalatest" %% "scalatest" % "3.0.1" % Test
 
 }
 
@@ -104,7 +105,10 @@ object MimaBuild {
                 buildInfoObject  := "BuildInfo"
                 )
            )
-    settings(libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+    settings(libraryDependencies ++= Seq(
+               "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+               scalatest
+             ),
              name := buildName + "-core")
     settings(sonatypePublishSettings:_*)
   )
