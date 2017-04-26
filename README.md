@@ -8,8 +8,6 @@ The Migration Manager for Scala (MiMa in short) is a tool for diagnosing binary 
 
 If you don't know how to use MiMa, please [read the user documentation](https://github.com/typesafehub/migration-manager/wiki).
 
-Please, use the [mima-user Mailing List][mima-user-ml] for questions and comments.
-
 MiMa's Modules
 -------
 
@@ -54,7 +52,7 @@ Using [sbt][sbt]:
 
 This will recompile all MiMa's modules.
 
-If you'd like to create distributable jar files run:
+If you'd like to create distributable jar files for the CLI, run:
 
       $ sbt assembly
 
@@ -66,6 +64,10 @@ Launch MiMa Reporter CLI
 Type the following command to run the MiMa Reporter command-line
 
 	$ sbt reporter/run
+
+Alternatively, you can use the assembly jar to use the CLI as a standalone application:
+
+        $ java -jar path/to/mima-reporter-assembly-....jar --prev LIB-v1.jar --curr LIB-v2.jar
 
 MiMa Reporter: Functional Tests
 -------
@@ -100,7 +102,7 @@ FAQ
 Bugs and Feature requests
 -------
 
-Use the [GitHub project page][mima-github] for filing new tickets. For questions and comments, please use the [mima-user Mailing List][mima-user-ml].
+Use the [GitHub project page][mima-github] for filing new tickets.
 
 [mima-github]: https://github.com/typesafehub/migration-manager/issues
 
@@ -124,5 +126,3 @@ distributed under the License is distributed on an "AS IS" BASIS,
 WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
 See the License for the specific language governing permissions and
 limitations under the License.
-
-[mima-user-ml]: https://groups.google.com/group/migration-manager-user/topics

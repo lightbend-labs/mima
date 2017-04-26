@@ -7,7 +7,7 @@ import com.typesafe.tools.mima.lib.analyze.Checker
 private[analyze] abstract class BaseMethodChecker extends Checker[MemberInfo, ClassInfo] {
   import MethodRules._
 
-  protected val rules = Seq(AccessModifier, FinalModifier, AbstractModifier)
+  protected val rules = Seq(AccessModifier, FinalModifier, AbstractModifier, JavaStatic)
 
   protected def check(method: MemberInfo, in: TraversableOnce[MemberInfo]): Option[Problem] = {
     val meths = (in filter (method.params.size == _.params.size)).toList

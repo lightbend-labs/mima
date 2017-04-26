@@ -44,9 +44,24 @@ object SbtMima {
   }
 
   /** Reports binary compatibility errors.
+    *  @param failOnProblem if true, fails the build on binary compatibility errors.
+    */
+  def reportErrors(problemsInFiles: Map[ModuleID, (List[core.Problem], List[core.Problem])],
+                   failOnProblem: Boolean,
+                   filters: Seq[core.ProblemFilter],
+                   backwardFilters: Map[String, Seq[core.ProblemFilter]],
+                   forwardFilters: Map[String, Seq[core.ProblemFilter]],
+                   s: TaskStreams, projectName: String): Unit =
+    problemsInFiles foreach { case (module, (backward, forward)) =>
+      reportModuleErrors(module, backward, forward, failOnProblem, filters, backwardFilters, forwardFilters, s, projectName)
+    }
+
+  /** Reports binary compatibility errors for a module.
    *  @param failOnProblem if true, fails the build on binary compatibility errors.
    */
-  def reportErrors(problemsInFiles: Map[ModuleID, (List[core.Problem], List[core.Problem])],
+  def reportModuleErrors(module: ModuleID,
+                   backward: List[core.Problem],
+                   forward: List[core.Problem],
                    failOnProblem: Boolean,
                    filters: Seq[core.ProblemFilter],
                    backwardFilters: Map[String, Seq[core.ProblemFilter]],
@@ -75,26 +90,24 @@ object SbtMima {
       }
     }
 
-    problemsInFiles foreach { case (module, (backward, forward)) =>
-      val backErrors = backward filter isReported(module, backwardFilters)
-      val forwErrors = forward filter isReported(module, forwardFilters)
+    val backErrors = backward filter isReported(module, backwardFilters)
+    val forwErrors = forward filter isReported(module, forwardFilters)
 
-      val filteredCount = backward.size + forward.size - backErrors.size - forwErrors.size
-      val filteredNote = if (filteredCount > 0) " (filtered " + filteredCount + ")" else ""
+    val filteredCount = backward.size + forward.size - backErrors.size - forwErrors.size
+    val filteredNote = if (filteredCount > 0) " (filtered " + filteredCount + ")" else ""
 
-      // TODO - Line wrapping an other magikz
-      def prettyPrint(p: core.Problem, affected: String): String = {
-        " * " + p.description(affected) + p.howToFilter.map("\n   filter with: " + _).getOrElse("")
-      }
-
-      s.log.info(s"$projectName: found ${backErrors.size+forwErrors.size} potential binary incompatibilities while checking against $module $filteredNote")
-      ((backErrors map {p: core.Problem => prettyPrint(p, "current")}) ++
-       (forwErrors map {p: core.Problem => prettyPrint(p, "other")})) foreach { p =>
-        if (failOnProblem) s.log.error(p)
-        else s.log.warn(p)
-      }
-      if (failOnProblem && (backErrors.nonEmpty || forwErrors.nonEmpty)) sys.error(projectName + ": Binary compatibility check failed!")
+    // TODO - Line wrapping an other magikz
+    def prettyPrint(p: core.Problem, affected: String): String = {
+      " * " + p.description(affected) + p.howToFilter.map("\n   filter with: " + _).getOrElse("")
     }
+
+    s.log.info(s"$projectName: found ${backErrors.size+forwErrors.size} potential binary incompatibilities while checking against $module $filteredNote")
+    ((backErrors map {p: core.Problem => prettyPrint(p, "current")}) ++
+     (forwErrors map {p: core.Problem => prettyPrint(p, "other")})) foreach { p =>
+      if (failOnProblem) s.log.error(p)
+      else s.log.warn(p)
+    }
+    if (failOnProblem && (backErrors.nonEmpty || forwErrors.nonEmpty)) sys.error(projectName + ": Binary compatibility check failed!")
   }
   /** Resolves an artifact representing the previous abstract binary interface
    *  for testing.

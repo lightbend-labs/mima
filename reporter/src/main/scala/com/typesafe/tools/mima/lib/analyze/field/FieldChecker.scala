@@ -15,6 +15,10 @@ private[analyze] abstract class BaseFieldChecker extends Checker[MemberInfo, Cla
           Some(InaccessibleFieldProblem(newfld))
         else if(field.sig != newfld.sig)
           Some(IncompatibleFieldTypeProblem(field, newfld))
+        else if (field.isStatic && !newfld.isStatic)
+          Some(StaticVirtualMemberProblem(field))
+        else if (!field.isStatic && newfld.isStatic)
+          Some(VirtualStaticMemberProblem(field))
         else
           None
       }

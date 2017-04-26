@@ -1,4 +1,4 @@
 class A
 abstract class B {
-  def foo: Unit
+  def foo(): Unit
 }

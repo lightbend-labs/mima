@@ -40,34 +40,50 @@ object MimaPlugin extends AutoPlugin {
       }
     },
     mimaReportBinaryIssues := {
-      SbtMima.reportErrors(
-        mimaFindBinaryIssues.value,
-        mimaFailOnProblem.value,
-        mimaBinaryIssueFilters.value,
-        mimaBackwardIssueFilters.value,
-        mimaForwardIssueFilters.value,
-        streams.value,
-        name.value)
+      if (mimaPreviousClassfiles.value.isEmpty) {
+        streams.value.log.info(s"${name.value}: previous-artifact not set, not analyzing binary compatibility")
+        Map.empty
+      }
+      else {
+        mimaPreviousClassfiles.value.foreach {
+          case (moduleId, file) =>
+            val problems = SbtMima.runMima(
+              file,
+              mimaCurrentClassfiles.value,
+              (fullClasspath in mimaFindBinaryIssues).value,
+              mimaCheckDirection.value,
+              streams.value
+            )
+            SbtMima.reportModuleErrors(
+              moduleId,
+              problems._1, problems._2,
+              mimaFailOnProblem.value,
+              mimaBinaryIssueFilters.value,
+              mimaBackwardIssueFilters.value,
+              mimaForwardIssueFilters.value,
+              streams.value,
+              name.value)
+        }
+      }
     }
   )
 
   /** Setup mima with default settings, applicable for most projects. */
   def mimaDefaultSettings: Seq[Setting[_]] = Seq(
     mimaFailOnProblem := true,
-    previousArtifact := None,
     mimaPreviousArtifacts := Set.empty,
     mimaCurrentClassfiles := (classDirectory in Compile).value,
     mimaPreviousClassfiles := {
-      ((mimaPreviousArtifacts.value ++ previousArtifact.value) map { m =>
+      mimaPreviousArtifacts.value.map{ m =>
         // TODO - These should be better handled in sbt itself.
         // The cross version API is horribly intricately odd.
         CrossVersion(m, ivyScala.value) match {
           case Some(f) => m.copy(name = f(m.name))
           case None => m
         }
-      } map { id =>
+      }.map{ id =>
         id -> SbtMima.getPreviousArtifact(id, ivySbt.value, streams.value)
-      }).toMap
+      }.toMap
     },
     fullClasspath in mimaFindBinaryIssues := (fullClasspath in Compile).value
   ) ++ mimaReportSettings

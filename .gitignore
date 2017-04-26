@@ -11,3 +11,4 @@ bin/
 reporter/project/**
 **/eclipse.sbt
 **/.cache
+/.idea/
