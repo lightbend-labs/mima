@@ -1,12 +1,14 @@
 package com.typesafe.tools.mima.core
 import scala.reflect.ClassTag
+import java.util.regex.Pattern
 
 object ProblemFilters {
 
   private case class ExcludeByName[P <: ProblemRef: ClassTag](name: String) extends ProblemFilter {
+    private[this] val pattern = Pattern.compile(name.split("\\*", -1).map(Pattern.quote).mkString(".*"))
     override def apply(problem: Problem): Boolean = {
       !(implicitly[ClassTag[P]].runtimeClass.isAssignableFrom(problem.getClass) &&
-        Some(name) == problem.matchName)
+        pattern.matcher(problem.matchName.getOrElse("")).matches)
     }
 
     override def toString(): String = """ExcludeByName[%s]("%s")""".format(implicitly[ClassTag[P]].runtimeClass.getSimpleName, name)
@@ -28,12 +30,8 @@ object ProblemFilters {
     exclude(name)(ClassTag(problemClass))
   }
 
-  private case class ExcludeByPackage(excludedPackageName: String) extends ProblemFilter {
-    def apply(problem: Problem): Boolean = {
-      // careful to avoid excluding "com.foobar" with an exclusion "com.foo"
-      !problem.matchName.getOrElse("").startsWith(excludedPackageName + ".")
-    }
+  @deprecated("Replace with ProblemFilters.exclude[Problem](\"my.package.*\")", "0.1.15")
+  def excludePackage(packageName: String): ProblemFilter = {
+    exclude[Problem](packageName + ".*")
   }
-
-  def excludePackage(packageName: String): ProblemFilter = new ExcludeByPackage(packageName)
 }

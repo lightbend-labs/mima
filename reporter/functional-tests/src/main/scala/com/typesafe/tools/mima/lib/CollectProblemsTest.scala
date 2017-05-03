@@ -26,7 +26,7 @@ class CollectProblemsTest {
     val allProblems = mima.collectProblems(oldJarPath, newJarPath)
 
     val problems = (if(filterPath ne null) {
-      val fallback = ConfigFactory.parseString("filter { problems = []\npackages=[] }")
+      val fallback = ConfigFactory.parseString("filter { problems = [] }")
       val config = ConfigFactory.parseFile(new File(filterPath)).withFallback(fallback).resolve()
       val filters = ProblemFiltersConfig.parseProblemFilters(config)
       allProblems.filter(p => filters.forall(_.apply(p)))
