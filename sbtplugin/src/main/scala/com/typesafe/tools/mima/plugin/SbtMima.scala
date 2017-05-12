@@ -6,7 +6,6 @@ import com.typesafe.tools.mima.core.util.log.Logging
 import sbt.Keys.TaskStreams
 import sbt._
 
-import scala.tools.nsc.classpath.{AggregateClassPath, ClassPathFactory}
 import scala.util.Try
 
 /** Wrapper on SBT logging for MiMa */
@@ -24,7 +23,7 @@ object SbtMima {
     // TODO: Fix MiMa so we don't have to hack this bit in.
     core.Config.setup("sbt-mima-plugin", Array.empty)
     val cpstring = cp map (_.data.getAbsolutePath()) mkString System.getProperty("path.separator")
-    val classpath = AggregateClassPath.createAggregate(new ClassPathFactory(Config.settings).classesInPath(cpstring): _*)
+    val classpath = com.typesafe.tools.mima.core.reporterClassPath(cpstring)
     new lib.MiMaLib(classpath, new SbtLogger(s))
   }
 

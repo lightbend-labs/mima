@@ -3,8 +3,6 @@ package com.typesafe.tools.mima.core
 import scala.collection.mutable
 import scala.annotation.tailrec
 import scala.tools.nsc.io.AbstractFile
-import scala.tools.nsc.mima._
-import scala.tools.nsc.util.ClassPath
 
 object PackageInfo {
   val classExtension = ".class"
@@ -33,13 +31,13 @@ object NoPackageInfo extends SyntheticPackageInfo(null, "<no package>")
 
 /** A concrete package. cp should be a directory classpath.
  */
-class ConcretePackageInfo(owner: PackageInfo, cp: ClassPath, pkg: String, val defs: Definitions) extends PackageInfo(owner) {
+class ConcretePackageInfo(owner: PackageInfo, cp: CompilerClassPath, val pkg: String, val defs: Definitions) extends PackageInfo(owner) {
   def definitions = defs
   def name = pkg.split('.').last
-  private def classFiles: IndexedSeq[AbstractFile] = cp.classesIn(pkg).flatMap(_.binary).toIndexedSeq
+  private def classFiles: IndexedSeq[AbstractFile] = classFilesFrom(cp, pkg)
 
   lazy val packages: mutable.Map[String, PackageInfo] =
-    mutable.Map() ++= (cp.packagesIn(pkg) map (p => p.name -> new ConcretePackageInfo(this, cp, pkg + p.name, defs)))
+    mutable.Map() ++= packagesFrom(cp, this)
 
   lazy val classes: mutable.Map[String, ClassInfo] =
     mutable.Map() ++= (classFiles map (f => className(f.name) -> new ConcreteClassInfo(this, f)))
@@ -66,7 +64,7 @@ abstract class PackageInfo(val owner: PackageInfo) {
   def classes: mutable.Map[String, ClassInfo]
 
   lazy val accessibleClasses: Set[ClassInfo] = {
-    /** Fixed point iteration for finding all accessible classes. */
+    /* Fixed point iteration for finding all accessible classes. */
     @tailrec
     def accessibleClassesUnder(prefix: Set[ClassInfo], found: Set[ClassInfo]): Set[ClassInfo] = {
       val vclasses = (classes.valuesIterator.filter(isAccessible(_, prefix))).toSet

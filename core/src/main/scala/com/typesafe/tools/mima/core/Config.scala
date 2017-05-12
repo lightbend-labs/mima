@@ -1,14 +1,11 @@
 package com.typesafe.tools.mima.core
 
-import scala.tools.nsc.classpath.AggregateClassPath
 import scala.tools.nsc.io.{Directory, Path}
-import scala.tools.nsc.util.ClassPath
-import scala.tools.util.PathResolver
 
 object Config {
 
   var settings: Settings = _
-  var baseClassPath: ClassPath = _
+  var baseClassPath: CompilerClassPath = _
 
   def inPlace = settings.mimaOutDir.isDefault
 
@@ -50,7 +47,7 @@ object Config {
   def setup(cmd: String, args: Array[String], validate: List[String] => Boolean, specificOptions: String*): List[String] = {
     settings = new Settings(specificOptions: _*)
     val (_, resargs) = settings.processArguments(args.toList, true)
-    baseClassPath = AggregateClassPath.createAggregate(new PathResolver(settings).containers: _*)
+    baseClassPath = resolveClassPath()
     if (settings.help.value) {
       println(usageMsg(cmd))
       System.exit(0)

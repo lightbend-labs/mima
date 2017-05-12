@@ -1,9 +1,5 @@
 package com.typesafe.tools.mima.core
 
-import scala.tools.nsc.classpath.AggregateClassPath
-import scala.tools.nsc.mima._
-import scala.tools.nsc.util.ClassPath
-
 
 /** This class holds together a root package and a classpath. It
  *  also offers definitions of commonly used classes, including
@@ -12,17 +8,10 @@ import scala.tools.nsc.util.ClassPath
  *  Each version of the input jar file has an instance of Definitions, used
  *  to resolve type names during classfile parsing.
  */
-class Definitions(val lib: Option[ClassPath], val classPath: ClassPath) {
+class Definitions(val lib: Option[CompilerClassPath], val classPath: CompilerClassPath) {
   import com.typesafe.tools.mima.core.util.log.ConsoleLogging._
 
-  lazy val root = {
-    val elems = lib.toList :+ classPath
-    new ConcretePackageInfo(
-      null,
-      AggregateClassPath.createAggregate(elems: _*),
-      ClassPath.RootPackage,
-      this)
-  }
+  lazy val root = definitionsPackageInfo(this)
 
   /** Return all packages in the target library. */
   lazy val targetPackage: PackageInfo = {
@@ -32,8 +21,7 @@ class Definitions(val lib: Option[ClassPath], val classPath: ClassPath) {
       override lazy val classes = Definitions.this.root.classes
     }
     val cp = lib.get
-    pkg.packages ++= cp.packagesIn(ClassPath.RootPackage).map(p => p.name -> new ConcretePackageInfo(pkg, cp, p.name, this))
-
+    pkg.packages ++= definitionsTargetPackages(pkg, cp, this)
     debugLog("added packages to <root>: %s".format(pkg.packages.keys.mkString(", ")))
     pkg
   }
@@ -106,6 +94,6 @@ class Definitions(val lib: Option[ClassPath], val classPath: ClassPath) {
   }
 
   override def toString = {
-    "definitions:\n\tlib: %s\n%s".format(lib, classPath.asClassPathString)
+    "definitions:\n\tlib: %s\n%s".format(lib, asClassPathString(classPath))
   }
 }
