@@ -22,8 +22,8 @@ env:
     - TEST_COMMAND="-Dmima.testScalaVersion=2.11.8 testFunctional"
     - TEST_COMMAND="-Dmima.testScalaVersion=2.12.1 testFunctional"
     - TEST_COMMAND="it:test"
-    - TEST_COMMAND="'set every scalaVersion := \"2.12.2\"' testFunctional"
-    - TEST_COMMAND="'set every scalaVersion := \"2.12.2\"' it:test"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.2 testFunctional"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.2 it:test"
     # "test" and "scripted" require the plugin, which cannot yet be compiled on 2.12
 
 script:
