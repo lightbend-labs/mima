@@ -1,7 +1,7 @@
 package com.typesafe.tools.mima
 package plugin
 
-import com.typesafe.tools.mima.core.Config
+import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.core.util.log.Logging
 import sbt.Keys.TaskStreams
 import sbt._
@@ -75,7 +75,7 @@ object SbtMima {
     val versionOrdering = Ordering[(Int, Int, Int)].on { version: String =>
       val ModuleVersion = """(\d+)\.(\d+)\.(.*)""".r
       val ModuleVersion(epoch, major, minor) = version
-      val toNumeric = (revision: String) => Try(revision.filter(_.isDigit).toInt).getOrElse(0)
+      val toNumeric = (revision: String) => Try(revision.replace("x", Short.MaxValue.toString).filter(_.isDigit).toInt).getOrElse(0)
       (toNumeric(epoch), toNumeric(major), toNumeric(minor))
     }
 
