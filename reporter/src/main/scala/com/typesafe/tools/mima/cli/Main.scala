@@ -114,14 +114,14 @@ class Main(args: List[String]) extends {
   def parseFilters(os:Option[String]) = os.toSeq.map(filePath => loadFilters(new File(filePath))).flatten
 
   def run(): Int = {
-    val mima = makeMima
     val effectiveDirection = direction.getOrElse("backwards")
+    // MiMaLib collects problems to a mutable buffer, therefore we need a new instance every time
     val backwardProblems = effectiveDirection match {
-      case "backward" | "backwards" | "both" => mima.collectProblems(prevfile, currentfile)
+      case "backward" | "backwards" | "both" => makeMima.collectProblems(prevfile, currentfile)
       case _ => Nil
     }
     val forwardProblems = effectiveDirection match {
-      case "forward" | "forwards" | "both" => mima.collectProblems(currentfile, prevfile)
+      case "forward" | "forwards" | "both" => makeMima.collectProblems(currentfile, prevfile)
       case _ => Nil
     }
     val bothFilters = parseFilters(problemFilters)

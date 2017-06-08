@@ -32,13 +32,13 @@ object SbtMima {
       the first for backward compatibility checking, and the second for forward checking. */
   def runMima(prev: File, curr: File, cp: sbt.Keys.Classpath,
               dir: String, s: TaskStreams): (List[core.Problem], List[core.Problem]) = {
-    val mimaLib = makeMima(cp, s)
+    // MiMaLib collects problems to a mutable buffer, therefore we need a new instance every time
     (dir match {
-       case "backward" | "backwards" | "both" => mimaLib.collectProblems(prev.getAbsolutePath, curr.getAbsolutePath)
+       case "backward" | "backwards" | "both" => makeMima(cp, s).collectProblems(prev.getAbsolutePath, curr.getAbsolutePath)
        case _ => Nil
      },
      dir match {
-       case "forward" | "forwards" | "both" => mimaLib.collectProblems(curr.getAbsolutePath, prev.getAbsolutePath)
+       case "forward" | "forwards" | "both" => makeMima(cp, s).collectProblems(curr.getAbsolutePath, prev.getAbsolutePath)
        case _ => Nil
      })
   }
