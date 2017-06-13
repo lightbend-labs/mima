@@ -7,5 +7,3 @@ class PathResolver(settings: Settings) extends scala.tools.util.PathResolver(set
 }
 
 object DefaultJavaContext extends ClassPath.JavaContext
-
-

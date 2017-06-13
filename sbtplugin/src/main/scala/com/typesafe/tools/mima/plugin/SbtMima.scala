@@ -1,13 +1,12 @@
 package com.typesafe.tools.mima
 package plugin
 
-import sbt._
-import sbt.Keys.TaskStreams
+import com.typesafe.tools.mima.core.Config
 import com.typesafe.tools.mima.core.util.log.Logging
-import scala.tools.nsc.util.JavaClassPath
-import scala.tools.nsc.util.DirectoryClassPath
+import sbt.Keys.TaskStreams
+import sbt._
+
 import scala.util.Try
-import core.DefaultJavaContext
 
 /** Wrapper on SBT logging for MiMa */
 class SbtLogger(s: TaskStreams) extends Logging {
@@ -24,7 +23,7 @@ object SbtMima {
     // TODO: Fix MiMa so we don't have to hack this bit in.
     core.Config.setup("sbt-mima-plugin", Array.empty)
     val cpstring = cp map (_.data.getAbsolutePath()) mkString System.getProperty("path.separator")
-    val classpath = new JavaClassPath(DefaultJavaContext.classesInPath(cpstring).toIndexedSeq, DefaultJavaContext)
+    val classpath = com.typesafe.tools.mima.core.reporterClassPath(cpstring)
     new lib.MiMaLib(classpath, new SbtLogger(s))
   }
 

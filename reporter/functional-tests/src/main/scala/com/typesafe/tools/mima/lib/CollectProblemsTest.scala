@@ -1,10 +1,12 @@
 package com.typesafe.tools.mima.lib
 
+import com.typesafe.tools.mima.core.Config
+import com.typesafe.tools.mima.core.{asClassPathString, baseClassPath}
 import java.io.{BufferedInputStream, File, FileInputStream}
 
 import com.typesafe.config.ConfigFactory
 import com.typesafe.tools.mima.cli.ProblemFiltersConfig
-import com.typesafe.tools.mima.core.{Config, PathResolver, Settings}
+import com.typesafe.tools.mima.core.Config
 
 import scala.io.Source
 import scala.tools.nsc.util._
@@ -16,9 +18,9 @@ class CollectProblemsTest {
   def runTest(testClasspath: Array[String])(testName: String, oldJarPath: String, newJarPath: String, oraclePath: String, filterPath: String) {
     // load test setup
     Config.setup("scala com.typesafe.tools.mima.MiMaLibUI <old-dir> <new-dir>", Array(oldJarPath, newJarPath))
-    val cp = testClasspath ++ ClassPath.split(Config.baseClassPath.asClasspathString)
+    val cp = testClasspath ++ ClassPath.split(asClassPathString(Config.baseClassPath))
     val cpString = ClassPath.join(cp: _*)
-    Config.baseClassPath = new JavaClassPath(ClassPath.DefaultJavaContext.classesInPath(cpString).toIndexedSeq, ClassPath.DefaultJavaContext)
+    Config.baseClassPath = baseClassPath(cpString)
 
     val mima = new MiMaLib(Config.baseClassPath)
 

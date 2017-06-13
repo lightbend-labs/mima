@@ -1,9 +1,8 @@
 package com.typesafe.tools.mima.core
 
+import scala.collection.mutable
 import scala.annotation.tailrec
 import scala.tools.nsc.io.AbstractFile
-import scala.tools.nsc.util.ClassPath
-import collection.mutable
 
 object PackageInfo {
   val classExtension = ".class"
@@ -20,7 +19,7 @@ object PackageInfo {
   }
 }
 
-import PackageInfo._
+import com.typesafe.tools.mima.core.PackageInfo._
 
 class SyntheticPackageInfo(owner: PackageInfo, val name: String) extends PackageInfo(owner) {
   def definitions: Definitions = sys.error("Called definitions on synthetic package")
@@ -32,13 +31,13 @@ object NoPackageInfo extends SyntheticPackageInfo(null, "<no package>")
 
 /** A concrete package. cp should be a directory classpath.
  */
-class ConcretePackageInfo(owner: PackageInfo, cp: ClassPath[AbstractFile], val defs: Definitions) extends PackageInfo(owner) {
+class ConcretePackageInfo(owner: PackageInfo, cp: CompilerClassPath, val pkg: String, val defs: Definitions) extends PackageInfo(owner) {
   def definitions = defs
-  def name = cp.name
-  private def classFiles: IndexedSeq[AbstractFile] = cp.classes flatMap (_.binary)
+  def name = pkg.split('.').last
+  private def classFiles: IndexedSeq[AbstractFile] = classFilesFrom(cp, pkg)
 
   lazy val packages: mutable.Map[String, PackageInfo] =
-    mutable.Map() ++= (cp.packages map (cp => cp.name -> new ConcretePackageInfo(this, cp, defs)))
+    mutable.Map() ++= packagesFrom(cp, this)
 
   lazy val classes: mutable.Map[String, ClassInfo] =
     mutable.Map() ++= (classFiles map (f => className(f.name) -> new ConcreteClassInfo(this, f)))
@@ -65,7 +64,7 @@ abstract class PackageInfo(val owner: PackageInfo) {
   def classes: mutable.Map[String, ClassInfo]
 
   lazy val accessibleClasses: Set[ClassInfo] = {
-    /** Fixed point iteration for finding all accessible classes. */
+    /* Fixed point iteration for finding all accessible classes. */
     @tailrec
     def accessibleClassesUnder(prefix: Set[ClassInfo], found: Set[ClassInfo]): Set[ClassInfo] = {
       val vclasses = (classes.valuesIterator.filter(isAccessible(_, prefix))).toSet

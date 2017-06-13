@@ -12,8 +12,6 @@ object ClassInfo {
   lazy val ObjectClass = Config.baseDefinitions.ObjectClass
 }
 
-import com.typesafe.tools.mima.core.util.log.{ConsoleLogging, Logging}
-
 /** A placeholder class info for a class that is not found on the classpath or in a given
  *  package.
  */
