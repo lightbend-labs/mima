@@ -1,7 +1,5 @@
 package com.typesafe.tools.mima.core
 
-import scala.reflect.NameTransformer
-
 object MemberInfo {
 
  /** The index of the string $_setter_$ in this string */

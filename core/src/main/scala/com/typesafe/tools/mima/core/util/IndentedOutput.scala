@@ -1,7 +1,5 @@
 package com.typesafe.tools.mima.core.util
 
-import com.typesafe.tools.mima.core.Config
-
 object IndentedOutput {
   var indentMargin = 2
   private var indent = 0
