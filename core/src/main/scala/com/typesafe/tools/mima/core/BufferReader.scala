@@ -80,7 +80,7 @@ class BufferReader(val buf: Array[Byte]) {
 
   /** skip next 'n' bytes
    */
-  def skip(n: Int) { bp += n }
+  def skip(n: Int): Unit = { bp += n }
 
   /** Do read operattion `op` at position `n`
    */

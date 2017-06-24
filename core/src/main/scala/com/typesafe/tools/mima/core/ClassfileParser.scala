@@ -50,13 +50,13 @@ abstract class ClassfileParser(definitions: Definitions) {
     parseAll(clazz)
   }
 
-  protected def parseAll(clazz: ClassInfo) {
+  protected def parseAll(clazz: ClassInfo): Unit = {
     parseHeader()
     thepool = new ConstantPool
     parseClass(clazz)
   }
 
-  protected def parseHeader() {
+  protected def parseHeader(): Unit = {
     val magic = in.nextInt
     if (magic != JAVA_MAGIC)
       throw new IOException("class file '" + parsedClass.file + "' "
@@ -223,7 +223,7 @@ abstract class ClassfileParser(definitions: Definitions) {
     result
   }
 
-  def parseClass(clazz: ClassInfo) {
+  def parseClass(clazz: ClassInfo): Unit = {
     clazz.flags = in.nextChar
     val nameIdx = in.nextChar
     val externalName = pool.getClassName(nameIdx)
@@ -248,14 +248,14 @@ abstract class ClassfileParser(definitions: Definitions) {
       if (clazz.isScalaUnsafe && !clazz.isImplClass) methods.withoutStatic else methods
   }
 
-  def skipAttributes() {
+  def skipAttributes(): Unit = {
     val attrCount = in.nextChar
     for (i <- 0 until attrCount) {
       in.skip(2); in.skip(in.nextInt)
     }
   }
 
-  def parseAttributes(c: ClassInfo) {
+  def parseAttributes(c: ClassInfo): Unit = {
     val attrCount = in.nextChar
      for (i <- 0 until attrCount) {
        val attrIndex = in.nextChar
@@ -288,7 +288,7 @@ abstract class ClassfileParser(definitions: Definitions) {
   }
 
   /** Return true iff TraitSetter annotation found among attributes */
-  def parseAttributes(m: MemberInfo) {
+  def parseAttributes(m: MemberInfo): Unit = {
     val maybeTraitSetter = MemberInfo.maybeSetter(m.bytecodeName)
     val attrCount = in.nextChar
     for (i <- 0 until attrCount) {
@@ -323,7 +323,7 @@ abstract class ClassfileParser(definitions: Definitions) {
 
   /** Skip a single annotation
    */
-  def skipAnnotation(annotIndex: Int, attrEnd: Int) {
+  def skipAnnotation(annotIndex: Int, attrEnd: Int): Unit = {
     try {
       if (in.bp + 2 <= attrEnd) {
         val nargs = in.nextChar
@@ -340,7 +340,7 @@ abstract class ClassfileParser(definitions: Definitions) {
 
   /** Skip a single annotation argument
    */
-  def skipAnnotArg(attrEnd: Int) {
+  def skipAnnotArg(attrEnd: Int): Unit = {
     if (in.bp + 3 <= attrEnd) {
       val tag = in.nextByte.toChar
       val index = in.nextChar

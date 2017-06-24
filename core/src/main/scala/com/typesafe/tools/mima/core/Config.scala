@@ -37,7 +37,7 @@ object Config {
       map(s => s.helpSyntax.format().padTo(21, ' ') + " " + s.helpDescription).
       toList.sorted.mkString("Usage: " + cmd + " <options>\nwhere possible options include:\n  ", "\n  ", "\n")
 
-  def setup(s: Settings) {
+  def setup(s: Settings): Unit = {
     settings = s
   }
 

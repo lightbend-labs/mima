@@ -39,7 +39,7 @@ class MiMaLib(classpath: CompilerClassPath, val log: Logging = ConsoleLogging) {
   }
 
 
-  private def comparePackages(oldpkg: PackageInfo, newpkg: PackageInfo) {
+  private def comparePackages(oldpkg: PackageInfo, newpkg: PackageInfo): Unit = {
     for (oldclazz <- oldpkg.accessibleClasses) {
       log.info("Analyzing class "+oldclazz.bytecodeName)
       newpkg.classes get oldclazz.bytecodeName match {
@@ -55,7 +55,7 @@ class MiMaLib(classpath: CompilerClassPath, val log: Logging = ConsoleLogging) {
     }
   }
 
-  private def traversePackages(oldpkg: PackageInfo, newpkg: PackageInfo) {
+  private def traversePackages(oldpkg: PackageInfo, newpkg: PackageInfo): Unit = {
     log.info("Traversing package " + oldpkg.fullName)
     comparePackages(oldpkg, newpkg)
     indented {

@@ -32,7 +32,7 @@ object BuildSettings {
       git.useGitDescribe := true,
       licenses := Seq("Apache License v2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
       homepage := Some(url("http://github.com/typesafehub/migration-manager")),
-      scalacOptions := Seq("-feature", "-deprecation", "-Xlint")
+      scalacOptions := Seq("-feature", "-deprecation", "-Xlint", "-Xfuture")
   )
 
   def sbtPublishSettings: Seq[Def.Setting[_]] = Seq(
