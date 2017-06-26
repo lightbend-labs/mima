@@ -2,7 +2,6 @@ package com.typesafe.tools.mima.lib.analyze.field
 
 import com.typesafe.tools.mima.lib.analyze.Checker
 import com.typesafe.tools.mima.core._
-import com.typesafe.tools.mima._
 
 private[analyze] abstract class BaseFieldChecker extends Checker[MemberInfo, ClassInfo] {
 

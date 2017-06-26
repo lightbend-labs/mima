@@ -1,7 +1,6 @@
 package com.typesafe.tools.mima.lib.analyze.method
 
 import com.typesafe.tools.mima.core._
-import com.typesafe.tools.mima._
 import com.typesafe.tools.mima.lib.analyze.Rule
 
 private[method] object MethodRules {

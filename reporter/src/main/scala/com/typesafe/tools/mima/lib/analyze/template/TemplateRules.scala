@@ -1,7 +1,6 @@
 package com.typesafe.tools.mima.lib.analyze.template
 
 import com.typesafe.tools.mima.core._
-import com.typesafe.tools.mima._
 import com.typesafe.tools.mima.lib.analyze.Rule
 
 /*private[template]*/ object TemplateRules {

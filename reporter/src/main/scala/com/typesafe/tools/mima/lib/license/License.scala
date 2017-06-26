@@ -1,6 +1,5 @@
 package com.typesafe.tools.mima.lib.license
 
-import java.io.FileInputStream
 import com.typesafe.tools.mima.core.util.Prefs
 
 object License {
