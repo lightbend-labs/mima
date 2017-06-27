@@ -1,12 +1,14 @@
 package com.typesafe.tools.mima
 package plugin
 
-import com.typesafe.tools.mima.core.Config
+import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.core.util.log.Logging
 import sbt.Keys.TaskStreams
 import sbt._
 
-import scala.util.Try
+import scala.io.Source
+import scala.util._
+import scala.util.matching._
 
 /** Wrapper on SBT logging for MiMa */
 class SbtLogger(s: TaskStreams) extends Logging {
@@ -73,7 +75,7 @@ object SbtMima {
     val versionOrdering = Ordering[(Int, Int, Int)].on { version: String =>
       val ModuleVersion = """(\d+)\.(\d+)\.(.*)""".r
       val ModuleVersion(epoch, major, minor) = version
-      val toNumeric = (revision: String) => Try(revision.filter(_.isDigit).toInt).getOrElse(0)
+      val toNumeric = (revision: String) => Try(revision.replace("x", Short.MaxValue.toString).filter(_.isDigit).toInt).getOrElse(0)
       (toNumeric(epoch), toNumeric(major), toNumeric(minor))
     }
 
@@ -133,4 +135,57 @@ object SbtMima {
     } yield file).headOption
     optFile getOrElse sys.error("Could not resolve previous ABI: " + m)
   }
+
+  def issueFiltersFromFiles(filtersDirectory: File, fileExtension: Regex, s: TaskStreams): Map[String, Seq[ProblemFilter]] = {
+    if (filtersDirectory.exists) loadMimaIgnoredProblems(filtersDirectory, fileExtension, s.log)
+    else Map.empty
+  }
+
+  def loadMimaIgnoredProblems(directory: File, fileExtension: Regex, logger: Logger): Map[String, Seq[ProblemFilter]] = {
+    val ExclusionPattern = """ProblemFilters\.exclude\[([^\]]+)\]\("([^"]+)"\)""".r
+
+    def findFiles(): Seq[(File, String)] = directory.listFiles().flatMap(f => fileExtension.findFirstIn(f.getName).map((f, _)))
+    def parseFile(file: File, extension: String): Either[Seq[Throwable], (String, Seq[ProblemFilter])] = {
+      val version = file.getName.dropRight(extension.size)
+
+      def parseLine(text: String, line: Int): Try[ProblemFilter] =
+        Try {
+          text match {
+            case ExclusionPattern(className, target) => ProblemFilters.exclude(className, target)
+            case x => throw new RuntimeException(s"Couldn't parse '$x'")
+          }
+        }.transform(Success(_), ex => Failure(new ParsingException(file, line, ex)))
+
+      val (excludes, failures) =
+        Source.fromFile(file)
+          .getLines()
+          .zipWithIndex
+          .filterNot { case (str, line) => str.trim.isEmpty || str.trim.startsWith("#") }
+          .map((parseLine _).tupled)
+          .partition(_.isSuccess)
+
+      if (failures.isEmpty) Right(version -> excludes.map(_.get).toSeq)
+      else Left(failures.map(_.failed.get).toSeq)
+    }
+
+    require(directory.exists(), s"Mima filter directory did not exist: ${directory.getAbsolutePath}")
+
+    val (mappings, failures) =
+      findFiles()
+        .map((parseFile _).tupled)
+        .partition(_.isRight)
+
+    if (failures.isEmpty)
+      mappings
+        .map(_.right.get)
+        .groupBy(_._1)
+        .map { case (version, filters) => version -> filters.flatMap(_._2) }
+    else {
+      failures.flatMap(_.left.get).foreach(ex => logger.error(ex.getMessage))
+
+      throw new RuntimeException(s"Loading Mima filters failed with ${failures.size} failures.")
+    }
+  }
+
+  case class ParsingException(file: File, line: Int, ex: Throwable) extends RuntimeException(s"Error while parsing $file, line $line: ${ex.getMessage}", ex)
 }

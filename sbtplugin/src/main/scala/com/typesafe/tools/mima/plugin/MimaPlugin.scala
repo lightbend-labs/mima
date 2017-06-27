@@ -2,7 +2,7 @@ package com.typesafe.tools.mima
 package plugin
 
 import sbt._
-import sbt.Keys.{ fullClasspath, streams, classDirectory, ivySbt, name, ivyScala }
+import sbt.Keys._
 
 /** Sbt plugin for using MiMa. */
 object MimaPlugin extends AutoPlugin {
@@ -17,9 +17,10 @@ object MimaPlugin extends AutoPlugin {
   /** Just configures MiMa to compare previous/current classfiles.*/
   def mimaReportSettings: Seq[Setting[_]] = Seq(
     mimaCheckDirection := "backward",
+    mimaFiltersDirectory := (sourceDirectory in Compile).value / "mima-filters",
     mimaBinaryIssueFilters := Nil,
-    mimaBackwardIssueFilters := Map.empty,
-    mimaForwardIssueFilters := Map.empty,
+    mimaBackwardIssueFilters := SbtMima.issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:backward[s]?|both)\\.excludes".r, streams.value),
+    mimaForwardIssueFilters := SbtMima.issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:forward[s]?|both)\\.excludes".r, streams.value),
     mimaFindBinaryIssues := {
       if (mimaPreviousClassfiles.value.isEmpty) {
         streams.value.log.info(s"${name.value}: previous-artifact not set, not analyzing binary compatibility")
@@ -87,4 +88,5 @@ object MimaPlugin extends AutoPlugin {
     },
     fullClasspath in mimaFindBinaryIssues := (fullClasspath in Compile).value
   ) ++ mimaReportSettings
+
 }

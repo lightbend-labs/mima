@@ -7,11 +7,11 @@
 > publishLocal
 
 > set scalaSource in Compile := baseDirectory.value /"src" /"main" /"scala" /"v3"
-> set version := s"0.0.3-SNAPSHOT"
+> set version := s"0.1.0-SNAPSHOT"
 
-# filters are set in the build file, so mima check should pass
+# filters are read from file, so mima check should pass
 > mimaReportBinaryIssues
 
 # remove all filters so mima check fails
-> set mimaForwardIssueFilters := Map.empty
+> set mimaBackwardIssueFilters := Map.empty
 -> mimaReportBinaryIssues
