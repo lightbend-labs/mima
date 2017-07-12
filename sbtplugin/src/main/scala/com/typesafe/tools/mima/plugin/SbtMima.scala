@@ -110,31 +110,6 @@ object SbtMima {
     }
     if (failOnProblem && (backErrors.nonEmpty || forwErrors.nonEmpty)) sys.error(projectName + ": Binary compatibility check failed!")
   }
-  /** Resolves an artifact representing the previous abstract binary interface
-   *  for testing.
-   */
-  def getPreviousArtifact(m: ModuleID, ivy: IvySbt, s: TaskStreams): File = {
-    val moduleSettings = InlineConfiguration(
-      "dummy" % "test" % "version",
-      ModuleInfo("dummy-test-project-for-resolving"),
-      dependencies = Seq(m))
-    val module = new ivy.Module(moduleSettings)
-    val report = IvyActions.update(
-      module,
-      new UpdateConfiguration(
-        retrieve = None,
-        missingOk = false,
-        logging = UpdateLogging.DownloadOnly),
-      s.log)
-    val optFile = (for {
-      config <- report.configurations
-      module <- config.modules
-      (artifact, file) <- module.artifacts
-      if artifact.name == m.name
-      if artifact.classifier.isEmpty
-    } yield file).headOption
-    optFile getOrElse sys.error("Could not resolve previous ABI: " + m)
-  }
 
   def issueFiltersFromFiles(filtersDirectory: File, fileExtension: Regex, s: TaskStreams): Map[String, Seq[ProblemFilter]] = {
     if (filtersDirectory.exists) loadMimaIgnoredProblems(filtersDirectory, fileExtension, s.log)

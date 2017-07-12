@@ -17,7 +17,9 @@ jdk:
 env:
   matrix:
     - TEST_COMMAND="test"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.2 ^^1.0.0-M5 test"
     - TEST_COMMAND="scripted"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.2 ^^1.0.0-M5 scripted"
     - TEST_COMMAND="testFunctional"
     - TEST_COMMAND="-Dmima.testScalaVersion=2.11.8 testFunctional"
     - TEST_COMMAND="-Dmima.testScalaVersion=2.12.1 testFunctional"

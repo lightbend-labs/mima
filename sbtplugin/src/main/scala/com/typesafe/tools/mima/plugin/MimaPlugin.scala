@@ -22,49 +22,53 @@ object MimaPlugin extends AutoPlugin {
     mimaBackwardIssueFilters := SbtMima.issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:backward[s]?|both)\\.excludes".r, streams.value),
     mimaForwardIssueFilters := SbtMima.issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:forward[s]?|both)\\.excludes".r, streams.value),
     mimaFindBinaryIssues := {
-      if (mimaPreviousClassfiles.value.isEmpty) {
-        streams.value.log.info(s"${name.value}: previous-artifact not set, not analyzing binary compatibility")
-        Map.empty
+      val streamsValue = streams.value
+      val nameValue = name.value
+
+      val issues = mimaPreviousClassfiles.value.map {
+        case (moduleId, file) =>
+          val problems = SbtMima.runMima(
+            file,
+            mimaCurrentClassfiles.value,
+            (fullClasspath in mimaFindBinaryIssues).value,
+            mimaCheckDirection.value,
+            streamsValue
+          )
+          (moduleId, (problems._1, problems._2))
       }
-      else {
-        mimaPreviousClassfiles.value.map {
-          case (moduleId, file) =>
-            val problems = SbtMima.runMima(
-              file,
-              mimaCurrentClassfiles.value,
-              (fullClasspath in mimaFindBinaryIssues).value,
-              mimaCheckDirection.value,
-              streams.value
-            )
-            (moduleId, (problems._1, problems._2))
-        }
+
+      if (issues.isEmpty) {
+        streamsValue.log.info(s"$nameValue: previous-artifact not set, not analyzing binary compatibility")
       }
+
+      issues
     },
     mimaReportBinaryIssues := {
-      if (mimaPreviousClassfiles.value.isEmpty) {
-        streams.value.log.info(s"${name.value}: previous-artifact not set, not analyzing binary compatibility")
-        Map.empty
+      val streamsValue = streams.value
+      val nameValue = name.value
+
+      mimaPreviousClassfiles.value.foreach {
+        case (moduleId, file) =>
+          val problems = SbtMima.runMima(
+            file,
+            mimaCurrentClassfiles.value,
+            (fullClasspath in mimaFindBinaryIssues).value,
+            mimaCheckDirection.value,
+            streamsValue
+          )
+          SbtMima.reportModuleErrors(
+            moduleId,
+            problems._1, problems._2,
+            mimaFailOnProblem.value,
+            mimaBinaryIssueFilters.value,
+            mimaBackwardIssueFilters.value,
+            mimaForwardIssueFilters.value,
+            streamsValue,
+            name.value)
       }
-      else {
-        mimaPreviousClassfiles.value.foreach {
-          case (moduleId, file) =>
-            val problems = SbtMima.runMima(
-              file,
-              mimaCurrentClassfiles.value,
-              (fullClasspath in mimaFindBinaryIssues).value,
-              mimaCheckDirection.value,
-              streams.value
-            )
-            SbtMima.reportModuleErrors(
-              moduleId,
-              problems._1, problems._2,
-              mimaFailOnProblem.value,
-              mimaBinaryIssueFilters.value,
-              mimaBackwardIssueFilters.value,
-              mimaForwardIssueFilters.value,
-              streams.value,
-              name.value)
-        }
+
+      if (mimaPreviousClassfiles.value.isEmpty) {
+        streamsValue.log.info(s"$nameValue: previous-artifact not set, not analyzing binary compatibility")
       }
     }
   )
@@ -75,15 +79,19 @@ object MimaPlugin extends AutoPlugin {
     mimaPreviousArtifacts := Set.empty,
     mimaCurrentClassfiles := (classDirectory in Compile).value,
     mimaPreviousClassfiles := {
-      mimaPreviousArtifacts.value.map{ m =>
+      val ivyScalaValue = ivyScala.value
+      val ivySbtValue = ivySbt.value
+      val streamsValue = streams.value
+
+      mimaPreviousArtifacts.value.map { m =>
         // TODO - These should be better handled in sbt itself.
         // The cross version API is horribly intricately odd.
-        CrossVersion(m, ivyScala.value) match {
-          case Some(f) => m.copy(name = f(m.name))
+        CrossVersion(m, ivyScalaValue) match {
+          case Some(f) => ModuleIdOps(m).withName(f(m.name))
           case None => m
         }
       }.map{ id =>
-        id -> SbtMima.getPreviousArtifact(id, ivySbt.value, streams.value)
+        id -> LibraryManagement.getPreviousArtifact(id, ivyScalaValue, ivySbtValue, streamsValue)
       }.toMap
     },
     fullClasspath in mimaFindBinaryIssues := (fullClasspath in Compile).value
