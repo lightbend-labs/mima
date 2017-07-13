@@ -28,8 +28,8 @@ object LibraryManagement {
         missingOk = false,
         logging = librarymanagement.UpdateLogging.DownloadOnly,
         artifactFilter = artifactFilter,
-        /*offline = false, These will be required for 1.0.0-M6
-        frozen = false*/),
+        offline = false,
+        frozen = false),
       UnresolvedWarningConfiguration(),
       LogicalClock.unknown,
       None,
