@@ -25,6 +25,13 @@ object BuildSettings {
   val commonSettings = Defaults.coreDefaultSettings ++ Seq (
       organization := buildOrganization,
       scalaVersion := sys.props.getOrElse("mima.buildScalaVersion", "2.10.6"),
+      scalaVersion := sys.props.getOrElse("mima.buildScalaVersion",
+        (CrossVersion partialVersion (sbtVersion in pluginCrossBuild).value match {
+          case Some((0, 13)) => "2.10.6"
+          case Some((1, _))  => "2.12.2"
+          case _             => sys error s"Unhandled sbt version ${(sbtVersion in pluginCrossBuild).value}"
+        })
+      ),
       git.gitTagToVersionNumber := { tag: String =>
         if(tag matches "[0.9]+\\..*") Some(tag)
         else None
@@ -91,6 +98,7 @@ object MimaBuild {
     settings(name := buildName,
              publish := (),
              publishLocal := (),
+             crossSbtVersions := List("0.13.16-M1", "1.0.0-RC2"),
              testScalaVersion in Global :=  sys.props.getOrElse("mima.testScalaVersion", scalaVersion.value)
     )
     enablePlugins(GitVersioning)
@@ -151,6 +159,22 @@ object MimaBuild {
              scripted := (scripted dependsOn (publishLocal in core, publishLocal in reporter)).evaluated)
     dependsOn(reporter)
     settings(sbtPublishSettings:_*)
+  )
+
+  // WORKAROUND https://github.com/sbt/sbt/issues/3325
+  def scriptedSettings = Def settings (
+    ScriptedPlugin.scriptedSettings filterNot (_.key.key.label == libraryDependencies.key.label),
+    libraryDependencies ++= {
+      val cross = CrossVersion.partialVersion(scriptedSbt.value) match {
+        case Some((0, 13)) => CrossVersion.Disabled
+        case Some((1, _))  => CrossVersion.binary
+        case _             => sys error s"Unhandled sbt version ${scriptedSbt.value}"
+      }
+      Seq(
+        "org.scala-sbt" % "scripted-sbt" % scriptedSbt.value % scriptedConf.toString cross cross,
+        "org.scala-sbt" % "sbt-launch" % scriptedSbt.value % scriptedLaunchConf.toString
+      )
+    }
   )
 
   lazy val reporterFunctionalTests = project("reporter-functional-tests",
