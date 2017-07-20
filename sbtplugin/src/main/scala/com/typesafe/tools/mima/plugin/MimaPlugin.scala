@@ -3,6 +3,7 @@ package plugin
 
 import sbt._
 import sbt.Keys._
+import sbt.compat._
 
 /** Sbt plugin for using MiMa. */
 object MimaPlugin extends AutoPlugin {
@@ -22,27 +23,38 @@ object MimaPlugin extends AutoPlugin {
     mimaBackwardIssueFilters := SbtMima.issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:backward[s]?|both)\\.excludes".r, streams.value),
     mimaForwardIssueFilters := SbtMima.issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:forward[s]?|both)\\.excludes".r, streams.value),
     mimaFindBinaryIssues := {
+      val taskStreams = streams.value
+      val log = taskStreams.log
+      val projectName = name.value
+      val previousClassfiles =  mimaPreviousClassfiles.value
+      val currentClassfiles = mimaCurrentClassfiles.value
+      val cp = (fullClasspath in mimaFindBinaryIssues).value
+      val checkDirection = mimaCheckDirection.value
       if (mimaPreviousClassfiles.value.isEmpty) {
-        streams.value.log.info(s"${name.value}: previous-artifact not set, not analyzing binary compatibility")
+        log.info(s"$projectName: previous-artifact not set, not analyzing binary compatibility")
         Map.empty
       }
       else {
-        mimaPreviousClassfiles.value.map {
+        previousClassfiles.map {
           case (moduleId, file) =>
-            val problems = SbtMima.runMima(
-              file,
-              mimaCurrentClassfiles.value,
-              (fullClasspath in mimaFindBinaryIssues).value,
-              mimaCheckDirection.value,
-              streams.value
-            )
+            val problems = SbtMima.runMima(file, currentClassfiles, cp, checkDirection, taskStreams)
             (moduleId, (problems._1, problems._2))
         }
       }
     },
     mimaReportBinaryIssues := {
+      val taskStreams = streams.value
+      val log = taskStreams.log
+      val projectName = name.value
+      val currentClassfiles = mimaCurrentClassfiles.value
+      val cp = (fullClasspath in mimaFindBinaryIssues).value
+      val checkDirection = mimaCheckDirection.value
+      val failOnProblem = mimaFailOnProblem.value
+      val binaryIssueFilters = mimaBinaryIssueFilters.value
+      val backwardIssueFilters = mimaBackwardIssueFilters.value
+      val forwardIssueFilters = mimaForwardIssueFilters.value
       if (mimaPreviousClassfiles.value.isEmpty) {
-        streams.value.log.info(s"${name.value}: previous-artifact not set, not analyzing binary compatibility")
+        log.info(s"$projectName: previous-artifact not set, not analyzing binary compatibility")
         Map.empty
       }
       else {
@@ -50,20 +62,20 @@ object MimaPlugin extends AutoPlugin {
           case (moduleId, file) =>
             val problems = SbtMima.runMima(
               file,
-              mimaCurrentClassfiles.value,
-              (fullClasspath in mimaFindBinaryIssues).value,
-              mimaCheckDirection.value,
-              streams.value
+              currentClassfiles,
+              cp,
+              checkDirection,
+              taskStreams
             )
             SbtMima.reportModuleErrors(
               moduleId,
               problems._1, problems._2,
-              mimaFailOnProblem.value,
-              mimaBinaryIssueFilters.value,
-              mimaBackwardIssueFilters.value,
-              mimaForwardIssueFilters.value,
-              streams.value,
-              name.value)
+              failOnProblem,
+              binaryIssueFilters,
+              backwardIssueFilters,
+              forwardIssueFilters,
+              taskStreams,
+              projectName)
         }
       }
     }
@@ -75,15 +87,19 @@ object MimaPlugin extends AutoPlugin {
     mimaPreviousArtifacts := Set.empty,
     mimaCurrentClassfiles := (classDirectory in Compile).value,
     mimaPreviousClassfiles := {
+      val scalaModuleInfoV = scalaModuleInfo.value
+      val ivy = ivySbt.value
+      val taskStreams = streams.value
+
       mimaPreviousArtifacts.value.map{ m =>
         // TODO - These should be better handled in sbt itself.
         // The cross version API is horribly intricately odd.
-        CrossVersion(m, ivyScala.value) match {
-          case Some(f) => m.copy(name = f(m.name))
+        CrossVersion(m, scalaModuleInfoV) match {
+          case Some(f) => m withName f(m.name)
           case None => m
         }
       }.map{ id =>
-        id -> SbtMima.getPreviousArtifact(id, ivySbt.value, streams.value)
+        id -> SbtMima.getPreviousArtifact(id, ivy, taskStreams)
       }.toMap
     },
     fullClasspath in mimaFindBinaryIssues := (fullClasspath in Compile).value

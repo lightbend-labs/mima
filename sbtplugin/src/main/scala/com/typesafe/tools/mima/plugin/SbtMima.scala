@@ -5,6 +5,9 @@ import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.core.util.log.Logging
 import sbt.Keys.TaskStreams
 import sbt._
+import librarymanagement.{ UpdateLogging => _, _ }
+import ivy._
+import internal.librarymanagement._
 
 import scala.io.Source
 import scala.util._
@@ -110,22 +113,20 @@ object SbtMima {
     }
     if (failOnProblem && (backErrors.nonEmpty || forwErrors.nonEmpty)) sys.error(projectName + ": Binary compatibility check failed!")
   }
+
   /** Resolves an artifact representing the previous abstract binary interface
    *  for testing.
    */
   def getPreviousArtifact(m: ModuleID, ivy: IvySbt, s: TaskStreams): File = {
-    val moduleSettings = InlineConfiguration(
-      "dummy" % "test" % "version",
-      ModuleInfo("dummy-test-project-for-resolving"),
-      dependencies = Seq(m))
-    val module = new ivy.Module(moduleSettings)
-    val report = IvyActions.update(
+    val depRes = IvyDependencyResolution(ivy.configuration)
+    val module = depRes.wrapDependencyInModule(m)
+    val reportEither = depRes.update(
       module,
-      new UpdateConfiguration(
-        retrieve = None,
-        missingOk = false,
-        logging = UpdateLogging.DownloadOnly),
-      s.log)
+      UpdateConfiguration() withLogging UpdateLogging.DownloadOnly,
+      UnresolvedWarningConfiguration(),
+      s.log
+    )
+    val report = reportEither.fold(x => throw x.resolveException, x => x)
     val optFile = (for {
       config <- report.configurations
       module <- config.modules
