@@ -28,7 +28,7 @@ package object core {
     cp.classesIn(pkg).flatMap(_.binary).toIndexedSeq
 
   def packagesFrom(cp: CompilerClassPath, owner: ConcretePackageInfo): Seq[(String, PackageInfo)] =
-    (cp.packagesIn(owner.pkg) map (p => p.name -> new ConcretePackageInfo(owner, cp, owner.pkg + p.name, owner.defs)))
+    (cp.packagesIn(owner.pkg) map (p => p.name.stripPrefix(owner.pkg + ".") -> new ConcretePackageInfo(owner, cp, p.name, owner.defs)))
 
   def definitionsTargetPackages(pkg: PackageInfo, cp: CompilerClassPath, defs: Definitions): Seq[(String, PackageInfo)] =
     cp.packagesIn(ClassPath.RootPackage).map(p => p.name -> new ConcretePackageInfo(pkg, cp, p.name, defs))

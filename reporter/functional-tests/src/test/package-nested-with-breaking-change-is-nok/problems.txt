@@ -1,0 +1,5 @@
+method toHex(Array[Byte])java.lang.String in class A does not have a correspondent in new version
+method toHex(Array[Byte])java.lang.String in class p.A does not have a correspondent in new version
+method toHex(Array[Byte])java.lang.String in class p.q.A does not have a correspondent in new version
+method toHex(Array[Byte])java.lang.String in class p.q.r.A does not have a correspondent in new version
+method toHex(Array[Byte])java.lang.String in class p.q.r.s.A does not have a correspondent in new version
