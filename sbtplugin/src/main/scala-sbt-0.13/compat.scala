@@ -6,10 +6,6 @@ package sbt
 
 object compat {
   val scalaModuleInfo = SettingKey[Option[librarymanagement.ScalaModuleInfo]]("ivyScala")
-
-  implicit class ModuleIdOps(val _m: ModuleID) extends AnyVal {
-    def withName(n: String): ModuleID = _m copy (name = n)
-  }
 }
 
 package librarymanagement {
