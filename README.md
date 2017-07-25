@@ -22,24 +22,6 @@ Usage
 
 To use MiMa as an sbt plugin, see the [sbt plugin wiki page](https://github.com/typesafehub/migration-manager/wiki/Sbt-plugin).
 
-Eclipse
--------
-
-In order to create Eclipse metadata files (i.e., .classpath and .project) we recomend to use [sbteclipse][sbteclipse].
-
-Setting up [sbteclipse][sbteclipse] is a simple three-steps process:
-
-* Create a ``eclipse.sbt`` file under the ``project`` folder and add the [sbteclipse][sbteclipse] plugin.
-At the time of this writing, my ``project/eclipse.sbt`` contains the following:
-
-	``addSbtPlugin("com.typesafe.sbteclipse" % "sbteclipse-plugin" % "2.3.0")``
-
-* Start ``sbt`` from command line on the project's root, and execute the following command ``eclipse`` (or ``eclipse with-source=true`` if you want source attachments correctly set)
-
-* Once done, import all modules in Eclipse, i.e., just click on `File > Import > General > Exisiting Projects Into Workspace`, select the MiMa project's root folder, all modules should be correctly loaded.
-
-
-[sbteclipse]: https://github.com/typesafehub/sbteclipse/
 
 Build
 -------
