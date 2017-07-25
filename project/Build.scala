@@ -16,6 +16,7 @@ import bintray.BintrayPlugin.autoImport._
 import com.typesafe.sbt.GitVersioning
 import com.typesafe.sbt.GitPlugin.autoImport._
 import ScriptedPlugin._
+import com.typesafe.sbt.pgp.PgpKeys.publishSigned
 
 object BuildSettings {
 
@@ -97,6 +98,7 @@ object MimaBuild {
     settings(name := buildName,
              publish := (),
              publishLocal := (),
+             publishSigned := (),
              crossSbtVersions := List("0.13.16-RC1", "1.0.0-RC2"),
              testScalaVersion in Global :=  sys.props.getOrElse("mima.testScalaVersion", scalaVersion.value)
     )
