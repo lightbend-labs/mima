@@ -17,6 +17,7 @@ import com.typesafe.sbt.GitVersioning
 import com.typesafe.sbt.GitPlugin.autoImport._
 import ScriptedPlugin._
 import com.typesafe.sbt.pgp.PgpKeys.publishSigned
+import com.typesafe.tools.mima.plugin.MimaPlugin.autoImport._
 
 object BuildSettings {
 
@@ -42,13 +43,25 @@ object BuildSettings {
       scalacOptions := Seq("-feature", "-deprecation", "-Xlint", "-Xfuture")
   )
 
-  def sbtPublishSettings: Seq[Def.Setting[_]] = Seq(
+  val mimaSettings = Def settings (
+    mimaPreviousArtifacts := Set({
+      val m = organization.value % moduleName.value % "0.1.15"
+      if (sbtPlugin.value)
+        Defaults.sbtPluginExtra(m, (sbtBinaryVersion in pluginCrossBuild).value, (scalaBinaryVersion in update).value)
+      else
+        m cross CrossVersion.binary
+    })
+  )
+
+  def sbtPublishSettings: Seq[Def.Setting[_]] = Def settings (
+    mimaSettings,
     bintrayOrganization := Some("typesafe"),
     bintrayRepository := "sbt-plugins",
     bintrayReleaseOnPublish := false
   )
 
-  def sonatypePublishSettings: Seq[Def.Setting[_]] = Seq(
+  def sonatypePublishSettings: Seq[Def.Setting[_]] = Def settings (
+    mimaSettings,
     // If we want on maven central, we need to be in maven style.
     publishMavenStyle := true,
     publishArtifact in Test := false,
