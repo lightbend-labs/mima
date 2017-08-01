@@ -113,9 +113,7 @@ object MimaBuild {
              publishLocal := (),
              publishSigned := (),
              sbtVersion in Global := "0.13.13", // Should be ThisBuild, but ^^ uses Global (incorrectly)
-             inThisBuild(Seq(
-               crossSbtVersions := List("0.13.13", "1.0.0-RC3")
-             )),
+             crossSbtVersions := List("0.13.13", "1.0.0-RC3"), // Should be ThisBuild, but Defaults defines it at project level..
              testScalaVersion in Global :=  sys.props.getOrElse("mima.testScalaVersion", scalaVersion.value)
     )
     enablePlugins(GitVersioning)
