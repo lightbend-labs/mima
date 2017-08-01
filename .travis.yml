@@ -19,15 +19,15 @@ env:
     - TEST_COMMAND="test"
     - TEST_COMMAND="scripted"
     - TEST_COMMAND="testFunctional"
-    - TEST_COMMAND="-Dmima.testScalaVersion=2.11.8 testFunctional"
-    - TEST_COMMAND="-Dmima.testScalaVersion=2.12.1 testFunctional"
+    - TEST_COMMAND="-Dmima.testScalaVersion=2.11.11 testFunctional"
+    - TEST_COMMAND="-Dmima.testScalaVersion=2.12.3 testFunctional"
     - TEST_COMMAND="it:test"
     - TEST_COMMAND="mimaReportBinaryIssues"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.2 ^^1.0.0-RC2 test"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.2 ^^1.0.0-RC2 scripted"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.2 testFunctional"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.2 it:test"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.2 ^^1.0.0-RC2 mimaReportBinaryIssues"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.3 ^^1.0.0-RC3 test"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.3 ^^1.0.0-RC3 scripted"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.3 testFunctional"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.3 it:test"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.3 ^^1.0.0-RC3 mimaReportBinaryIssues"
 
 script:
   - sbt $TEST_COMMAND
