@@ -1,3 +1,0 @@
-package sbt
-
-object compat

@@ -167,13 +167,37 @@ object MimaBuild {
     settings(scriptedSettings)
     settings(name := "sbt-mima-plugin",
              sbtPlugin := true,
+             libraryDependencies += Defaults.sbtPluginExtra(
+               "com.dwijnand" % "sbt-compat" % "1.0.0",
+               (sbtBinaryVersion in pluginCrossBuild).value,
+               (scalaBinaryVersion in update).value
+             ),
              scriptedLaunchOpts := scriptedLaunchOpts.value :+ "-Dplugin.version=" + version.value,
              scriptedBufferLog := false,
              // Scripted locally publishes sbt plugin and then runs test projects with locally published version.
              // Therefore we also need to locally publish dependent projects on scripted test run.
              scripted := (scripted dependsOn (publishLocal in core, publishLocal in reporter)).evaluated)
     dependsOn(reporter)
-    settings(sbtPublishSettings:_*)
+    settings(
+      sbtPublishSettings,
+      mimaBinaryIssueFilters ++= {
+        import com.typesafe.tools.mima.core._
+        Seq(
+          // sbt-compat has been created to define these and has been added as a dependency of sbt-mima-plugin
+          ProblemFilters.exclude[MissingClassProblem]("sbt.compat"),
+          ProblemFilters.exclude[MissingClassProblem]("sbt.compat$"),
+          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.package"),
+          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.package$"),
+          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.package$UpdateConfigurationOps"),
+          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.package$UpdateConfigurationOps$"),
+          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.UpdateConfiguration"),
+          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.UpdateConfiguration$"),
+          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.DependencyResolution"),
+          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.ivy.IvyDependencyResolution"),
+          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.ivy.IvyDependencyResolution$")
+        )
+      }
+    )
   )
 
   lazy val reporterFunctionalTests = project("reporter-functional-tests",
