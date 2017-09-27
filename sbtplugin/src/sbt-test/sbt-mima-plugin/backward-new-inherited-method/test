@@ -1,0 +1,13 @@
+> set scalaSource in Compile := baseDirectory.value /"src" /"main" /"scala" /"v1"
+> set version := s"0.0.1-SNAPSHOT"
+> publishLocal
+
+> set scalaSource in Compile := baseDirectory.value /"src" /"main" /"scala" /"v2"
+> set version := s"0.0.2-SNAPSHOT"
+
+# filters are set in the build file, so mima check should pass
+> mimaReportBinaryIssues
+
+# remove all filters so mima check fails
+> set mimaBinaryIssueFilters := Seq.empty
+-> mimaReportBinaryIssues

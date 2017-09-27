@@ -106,7 +106,8 @@ case class IncompatibleResultTypeProblem(oldmeth: MemberInfo, newmeth: MemberInf
 // into two, in case the affected version is the other one, rather than the current one. (reversed if forward check).
 abstract class AbstractMethodProblem(newmeth: MemberInfo) extends MemberProblem(newmeth)
 
-case class InheritedNewAbstractMethodProblem(clazz: ClassInfo, inheritedMethod: MemberInfo) extends AbstractMethodProblem(inheritedMethod) {
+case class InheritedNewAbstractMethodProblem(clazz: ClassInfo, inheritedMethod: MemberInfo)
+    extends AbstractMethodProblem(new MemberInfo(clazz, inheritedMethod.bytecodeName, inheritedMethod.flags, inheritedMethod.sig)) {
   def description = affectedVersion => "abstract " + inheritedMethod.methodString+ " is inherited by class " + clazz.bytecodeName + " in " + affectedVersion + " version."
 }
 
