@@ -9,7 +9,7 @@ cache:
 language: scala
 
 scala:
-  - 2.10.6
+  - 2.10.7
 
 jdk:
   - oraclejdk8
@@ -19,19 +19,22 @@ env:
     - TEST_COMMAND="test"
     - TEST_COMMAND="scripted"
     - TEST_COMMAND="testFunctional"
-    - TEST_COMMAND="-Dmima.testScalaVersion=2.11.11 testFunctional"
-    - TEST_COMMAND="-Dmima.testScalaVersion=2.12.3 testFunctional"
+    - TEST_COMMAND="-Dmima.testScalaVersion=2.11.12 testFunctional"
+    - TEST_COMMAND="-Dmima.testScalaVersion=2.12.4 testFunctional"
     - TEST_COMMAND="it:test"
     - TEST_COMMAND="mimaReportBinaryIssues"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.3 ^^1.0.0-RC3 test"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.3 ^^1.0.0-RC3 scripted"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.3 testFunctional"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.3 it:test"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.3 ^^1.0.0-RC3 mimaReportBinaryIssues"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.4 ^^1.0.0 test"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.4 ^^1.0.0 scripted"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.4 ^^1.1.1 test"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.4 ^^1.1.1 scripted"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.4 testFunctional"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.4 it:test"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.4 ^^1.0.0 mimaReportBinaryIssues"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.4 ^^1.1.1 mimaReportBinaryIssues"
 
 script:
   - sbt $TEST_COMMAND
 
-  # Tricks to avoid unnecessary cache updates
+before_cache:
   - find $HOME/.sbt -name "*.lock" | xargs rm
   - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
