@@ -79,7 +79,8 @@ abstract class ClassfileParser(definitions: Definitions) {
         (in.nextByte.toInt: @switch) match {
           case CONSTANT_UTF8 | CONSTANT_UNICODE =>
             in.skip(in.nextChar)
-          case CONSTANT_CLASS | CONSTANT_STRING | CONSTANT_METHODTYPE =>
+          case CONSTANT_CLASS | CONSTANT_STRING | CONSTANT_METHODTYPE
+             | CONSTANT_MODULE | CONSTANT_PACKAGE =>
             in.skip(2)
           case CONSTANT_METHODHANDLE =>
             in.skip(3)
@@ -381,4 +382,8 @@ object ClassfileParser {
     (flags & JAVA_ACC_SYNTHETIC) != 0
   @inline final def isBridge(flags: Int) =
     (flags & JAVA_ACC_BRIDGE) != 0
+
+  // 2 new tags in Java 9: https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-4.html#jvms-4.4
+  private[core] final val CONSTANT_MODULE  = 19
+  private[core] final val CONSTANT_PACKAGE = 20
 }
