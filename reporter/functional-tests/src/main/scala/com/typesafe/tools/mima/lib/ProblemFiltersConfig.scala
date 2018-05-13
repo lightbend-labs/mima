@@ -1,5 +1,5 @@
 package com.typesafe.tools.mima
-package cli
+package lib
 
 import com.typesafe.tools.mima.core.{ProblemFilter, ProblemFilters}
 import com.typesafe.config._

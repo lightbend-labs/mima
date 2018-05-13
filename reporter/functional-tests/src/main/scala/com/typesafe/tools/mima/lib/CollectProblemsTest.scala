@@ -5,7 +5,6 @@ import com.typesafe.tools.mima.core.{asClassPathString, baseClassPath}
 import java.io.{BufferedInputStream, File, FileInputStream}
 
 import com.typesafe.config.ConfigFactory
-import com.typesafe.tools.mima.cli.ProblemFiltersConfig
 import com.typesafe.tools.mima.core.Config
 
 import scala.io.Source
