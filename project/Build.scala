@@ -157,8 +157,7 @@ object MimaBuild {
     settings(
       // add task functional-tests that depends on all functional tests
       functionalTests := allTests(functionalTests in _).value,
-      test in IntegrationTest := allTests(test in IntegrationTest in _).value,
-      mainClass in assembly := Some("com.typesafe.tools.mima.cli.Main")
+      test in IntegrationTest := allTests(test in IntegrationTest in _).value
     )
   )
 
