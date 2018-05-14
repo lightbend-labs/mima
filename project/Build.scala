@@ -157,7 +157,26 @@ object MimaBuild {
     settings(
       // add task functional-tests that depends on all functional tests
       functionalTests := allTests(functionalTests in _).value,
-      test in IntegrationTest := allTests(test in IntegrationTest in _).value
+      test in IntegrationTest := allTests(test in IntegrationTest in _).value,
+
+      mimaBinaryIssueFilters ++= {
+        import com.typesafe.tools.mima.core._
+        Seq(
+          // Removed because unused
+          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.lib.license.License"),
+          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.lib.license.License$"),
+
+          // Removed because CLI dropped
+          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.MimaSpec"),
+          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.MimaSpec$"),
+          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.Main"),
+          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.Main$"),
+
+          // Moved (to functional-tests) because otherwise unused
+          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.ProblemFiltersConfig"),
+          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.ProblemFiltersConfig$")
+        )
+      }
     )
   )
 
