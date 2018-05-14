@@ -1,5 +1,5 @@
 package com.typesafe.tools.mima
-package cli
+package lib
 
 import com.typesafe.tools.mima.core.{ProblemFilter, ProblemFilters}
 import com.typesafe.config._
@@ -24,17 +24,5 @@ object ProblemFiltersConfig {
       val matchName = problemConfig.getString(matchNameKey)
       ProblemFilters.exclude(problemClassName, matchName)
     }
-  }
-
-  /**
-   * Generates Config definition that filters passed collection of problems.
-   */
-  def problemsToProblemFilterConfig(problems: Seq[core.Problem]): Config = {
-    val configValues = for {
-      p <- problems
-      matchName <- p.matchName
-      problemName = p.getClass.getSimpleName
-    } yield Map(problemNameKey -> problemName, matchNameKey -> matchName).asJava
-    ConfigValueFactory.fromIterable(configValues.asJava).atPath(filterProblemsPath)
   }
 }
