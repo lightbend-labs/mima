@@ -1,21 +1,18 @@
 Migration Manager for Scala
-==============
-
-A tool for diagnosing migration problems for Scala libraries
-============================================================
+===========================
 
 The Migration Manager for Scala (MiMa in short) is a tool for diagnosing binary incompatibilities for Scala libraries.
 
 If you don't know how to use MiMa, please [read the user documentation](https://github.com/typesafehub/migration-manager/wiki).
 
 MiMa's Modules
--------
+--------------
 
 MiMa is split into Several modules:
 
-- Core: Classes that are used for detection.
-- Reporter:  Raw reporting classes and the command line interface.
-- SBT Plugin:  The SBT plugin for usage inside SBT builds.
+- Core: classes that are used for detection.
+- Reporter: reporting classes.
+- SBT Plugin: the sbt plugin for usage inside sbt builds.
 
 Usage
 -----
@@ -24,7 +21,7 @@ To use MiMa as an sbt plugin, see the [sbt plugin wiki page](https://github.com/
 
 
 Build
--------
+-----
 
 Using [sbt][sbt]:
 
@@ -41,18 +38,8 @@ If you'd like to create distributable jar files for the CLI, run:
 This will create `reporter/target/mima-reporter-assembly-....jar` jar file that can be used to launch the command line version of MiMa.
 
 
-Launch MiMa Reporter CLI
--------
-Type the following command to run the MiMa Reporter command-line
-
-	$ sbt reporter/run
-
-Alternatively, you can use the assembly jar to use the CLI as a standalone application:
-
-        $ java -jar path/to/mima-reporter-assembly-....jar --prev LIB-v1.jar --curr LIB-v2.jar
-
 MiMa Reporter: Functional Tests
--------
+-------------------------------
 
 The directory containing the MiMa Reporter module ('reporter') there is a 'functional-tests' folder that contains several functional tests exercising the system. All tests are executed as part of the build, therefore when running
 
@@ -77,12 +64,12 @@ Tests within the `functional-tests` folder should always pass.
 Note: The `problems.txt` is the test oracle. Expected errors are declared using the MiMa's reporting output (i.e., the output of the tool and the expected errors should match perfectly). Admittedly, this coupling is an issue since the testing framework is highly coupled with the tool output used to report errors to the user. We should improve this and make the two independent. Until then, mind that by changing the output of the tool you will likely have to update some of the test oracles (i.e., problems.txt file). When running tests against Scala 2.12 or higher, `problems-2.12.txt` is preferred over `problems.txt` if the former exists.
 
 FAQ
--------
+---
 
 `java.lang.OutOfMemoryError - Java heap space:` If you are experiencing out of memory exception you may need to increase the VM arguments for the initial heap size and the maximum heap size. The default values are `-Xms64m` for for the initial heap size and `-Xmx256m` for the maximum heap size.
 
 Bugs and Feature requests
--------
+-------------------------
 
 Use the [GitHub project page][mima-github] for filing new tickets.
 
