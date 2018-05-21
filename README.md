@@ -82,7 +82,7 @@ If you'd like to contribute to the MiMa project, please sign the [contributor's 
 
 License
 -------
-Copyright 2012-2016 Lightbend, Inc.
+Copyright 2012-2018 Lightbend, Inc.
 
 Licensed under the Apache License, Version 2.0 (the "License");
 you may not use this file except in compliance with the License.
