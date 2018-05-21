@@ -1,5 +1,59 @@
 # Contributing to Migration Manager
 
+## CLA
+
+If you'd like to contribute to the MiMa project, please sign the [contributor's licensing agreement](http://www.lightbend.com/contribute/cla).
+
+## Modules
+
+MiMa is split into Several modules:
+
+- Core: classes that are used for detection.
+- Reporter: reporting classes.
+- SBT Plugin: the sbt plugin for usage inside sbt builds.
+
+## Building
+
+Using [sbt][sbt]:
+
+      $ sbt compile
+
+[sbt]: http://www.scala-sbt.org/
+
+This will recompile all MiMa's modules.
+
+If you'd like to create distributable jar files for the CLI, run:
+
+      $ sbt assembly
+
+This will create `reporter/target/mima-reporter-assembly-....jar` jar file that can be used to launch the command line version of MiMa.
+
+
+## Functional tests
+
+The directory containing the MiMa Reporter module ('reporter') there is a 'functional-tests' folder that contains several functional tests exercising the system. All tests are executed as part of the build, therefore when running
+
+    $ sbt testFunctional
+
+if one (or more) test fails the build is stop and no jar will not be produced.
+
+To add a new functional test to the suite, create a new folder within 'functional-tests' directory with the following structure:
+
+    functional-tests
+        |
+        | --> <your-new-test-folder> (folder for your new test)
+            |
+            |-----> problems.txt (the expected list of reported errors - 1 line per error)
+            |-----> v1 (folder containing sources @ version 1)
+            |-----> v2 (folder containing sources @ version 2)
+
+After doing that, `reload` if you are in a `sbt` console session (if that makes no sense to you, it means you are fine and you can run the test as usual).
+
+Tests within the `functional-tests` folder should always pass.
+
+Note: The `problems.txt` is the test oracle. Expected errors are declared using the MiMa's reporting output (i.e., the output of the tool and the expected errors should match perfectly). Admittedly, this coupling is an issue since the testing framework is highly coupled with the tool output used to report errors to the user. We should improve this and make the two independent. Until then, mind that by changing the output of the tool you will likely have to update some of the test oracles (i.e., problems.txt file). When running tests against Scala 2.12 or higher, `problems-2.12.txt` is preferred over `problems.txt` if the former exists.
+
+
 ## General Workflow
 
 This is the process for committing code into master. There are of course exceptions to these rules, for example minor changes to comments and documentation, fixing a broken build etc.
@@ -58,8 +112,60 @@ Example:
 
     Fix #2731, Fix #2732, Re #2733
 
-## Resources
+## Releasing
 
-* [Contributor License Agreement](http://www.typesafe.com/contribute/cla)
-* [Issue Tracker](https://github.com/lightbend/migration-manager/issues?page=1&state=open)
-* [User Documentation](https://github.com/lightbend/migration-manager/wiki)
+this section is out of date
+
+see https://github.com/lightbend/migration-manager/issues/165 for a more complete set of steps, though by now they might not be completely up-to-date either?
+
+### Prerequisites
+
+**You are using sbt 0.13**.
+
+Then, make sure that you have:
+
+* push rights to this project,
+
+* credentials to deploy artifacts on both ``oss.sonatype.org`` and ``bintray.com/typesafe/sbt-plugins``. This usually means that in your local ``~/.sbt`` folder you have a ``.sbt`` file (e.g., ``user.sbt``, ``credentials.sbt``) that contains something like the following:
+```bash
+    credentials += Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", <username>, <password>)
+
+    credentials += Credentials("Bintray API Realm", "api.bintray.com", <username>, <password>)
+```
+
+(Make sure you're not using an ancient version of sbt-pgp in `~/.sbt/0.13/plugins`.)
+
+### Preparation
+
+Before starting, make sure that:
+
+* A milestone exists for the release you are about to perform. If it doesn't create one.
+* The milestone due date is the day of the release.
+* All tickets fixed in the current development cycle are associated to the current milestone.
+
+Now, you are all ready and set to cut a MiMa release!
+
+### Cutting a release
+
+1. Run `clean`. (particularly if you've recently bumped `scalaVersion` - see [#191](https://github.com/typesafehub/migration-manager/issues/191))
+
+2. Create a tag and push it. The name of the tag should follow the format of previous tags. Verify that `show version` in sbt picks up the version number from the tag.
+
+3. Now enter sbt command-line, and type `^publishSigned`
+
+```bash
+$ sbt
+> ^publishSigned
+[info] ... (and after a while, you should start seeing thing like the one below)
+[info] published mima-reporter_2.10 to https://oss.sonatype.org/service/local/staging/deploy/maven2/com/typesafe/mima-reporter_2.10/0.1.6/mima-reporter_2.10-0.1.6.jar
+[info] ...
+[success] Total time: 113 s, completed Sep 24, 2013 11:19:48 AM
+```
+
+4. Login on [Sonatype](https://oss.sonatype.org/) and follow [this guide](https://docs.sonatype.org/display/Repository/Sonatype+OSS+Maven+Repository+Usage+Guide#SonatypeOSSMavenRepositoryUsageGuide-8a.ReleaseIt) to release the staged MiMa artifacts.
+
+5. Login to [Bintray](https://bintray.com/typesafe/sbt-plugins/sbt-mima-plugin/view) and publish sbt plugin artifacts.
+
+6. Announce the release in the [Announce category of Scala Users](https://users.scala-lang.org/c/announce) and update the version number in this wiki.
+
+7. You are done!
