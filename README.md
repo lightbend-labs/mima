@@ -65,7 +65,7 @@ Run `mimaReportBinaryIssues`.  You should see something like the following:
 
 ## Advanced Usage (Filtering Binary Incompatibilities)
 
-Sometimes you may want to filter out some binary incompatibility. For instance, because you warn your users to never use a class or method marked with a particular annotation (e.g., `@experimental` - note, this annotation is **not** part of the Scala standard library), you may want to exclude all classes/methods that use such annotation. In MiMa you can do this by _explicitly list each binary incompatibility_ that you want to ignore (unfortunately, it doesn't yet support annotation-based filtering - PR is welcomed! :)). 
+Sometimes you may want to filter out some binary incompatibility. For instance, because you warn your users to never use a class or method marked with a particular annotation (e.g., [`@experimental`](https://github.com/lightbend/migration-manager/issues/160) - note, this annotation is **not** part of the Scala standard library), you may want to exclude all classes/methods that use such annotation. In MiMa you can do this by _explicitly list each binary incompatibility_ that you want to ignore (unfortunately, it doesn't yet support annotation-based filtering - PR is welcomed! :)). 
 
 Open your `build.sbt` file, and
 
