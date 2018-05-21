@@ -3,7 +3,7 @@ Migration Manager for Scala
 
 The Migration Manager for Scala (MiMa in short) is a tool for diagnosing binary incompatibilities for Scala libraries.
 
-If you don't know how to use MiMa, please [read the user documentation](https://github.com/typesafehub/migration-manager/wiki).
+If you don't know how to use MiMa, please [read the user documentation](https://github.com/lightbend/migration-manager/wiki).
 
 MiMa's Modules
 --------------
@@ -17,7 +17,7 @@ MiMa is split into Several modules:
 Usage
 -----
 
-To use MiMa as an sbt plugin, see the [sbt plugin wiki page](https://github.com/typesafehub/migration-manager/wiki/Sbt-plugin).
+To use MiMa as an sbt plugin, see the [sbt plugin wiki page](https://github.com/lightbend/migration-manager/wiki/Sbt-plugin).
 
 
 Build
@@ -73,7 +73,7 @@ Bugs and Feature requests
 
 Use the [GitHub project page][mima-github] for filing new tickets.
 
-[mima-github]: https://github.com/typesafehub/migration-manager/issues
+[mima-github]: https://github.com/lightbend/migration-manager/issues
 
 
 Contributing
