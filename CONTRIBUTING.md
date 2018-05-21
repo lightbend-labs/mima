@@ -25,7 +25,7 @@ For a Pull Request to be considered at all it has to meet these requirements:
 2. Regardless of whether the code introduces new features or fixes bugs or regressions, it must have comprehensive tests. The only exception is UI code, because our infrastructure allows running tests only in a headless environment.
 3. The code must be well documented.
 4. User documentation should be provided for all new features:
-   - Fork the [Wiki repository](https://github.com/typesafehub/migration-manager/wiki/_access) and perform your work in a Git branch.
+   - Fork the [Wiki repository](https://github.com/lightbend/migration-manager/wiki/_access) and perform your work in a Git branch.
    - In the Pull Request’s description, add a link to a branch containing the updated documentation so that it can be reviewed together with the code.
 5. Rebase your branch on the latest master if it can’t be cleanly merged.
 6. The Pull Request validator successfully builds. What the Pull Request validator does is make sure that the current master branch will still compile fine after the currently in-review Pull Request is merged.
@@ -61,5 +61,5 @@ Example:
 ## Resources
 
 * [Contributor License Agreement](http://www.typesafe.com/contribute/cla)
-* [Issue Tracker](https://github.com/typesafehub/migration-manager/issues?page=1&state=open)
-* [User Documentation](https://github.com/typesafehub/migration-manager/wiki)
+* [Issue Tracker](https://github.com/lightbend/migration-manager/issues?page=1&state=open)
+* [User Documentation](https://github.com/lightbend/migration-manager/wiki)
