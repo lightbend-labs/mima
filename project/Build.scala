@@ -126,6 +126,10 @@ object MimaBuild {
       mimaBinaryIssueFilters ++= {
         import com.typesafe.tools.mima.core._
         Seq(
+          // Removed because unused
+          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.core.buildinfo.BuildInfo"),
+          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.core.buildinfo.BuildInfo$"),
+
           // Add support for versions with less segments (#212)
           ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.warn"),
           ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.error")
