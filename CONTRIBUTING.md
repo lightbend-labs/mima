@@ -22,13 +22,6 @@ Using [sbt][sbt]:
 
 This will recompile all MiMa's modules.
 
-If you'd like to create distributable jar files for the CLI, run:
-
-      $ sbt assembly
-
-This will create `reporter/target/mima-reporter-assembly-....jar` jar file that can be used to launch the command line version of MiMa.
-
-
 ## Functional tests
 
 The directory containing the MiMa Reporter module ('reporter') there is a 'functional-tests' folder that contains several functional tests exercising the system. All tests are executed as part of the build, therefore when running

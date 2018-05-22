@@ -6,11 +6,6 @@ import com.typesafe.config.ConfigFactory
 import Project.inConfig
 import Configurations.config
 import Build.data
-import sbtassembly.Plugin.AssemblyKeys
-import sbtassembly.Plugin.AssemblyKeys._
-import sbtassembly.Plugin.assemblySettings
-import sbtassembly.Plugin.MergeStrategy
-import sbtbuildinfo.Plugin._
 import bintray.BintrayPlugin
 import bintray.BintrayPlugin.autoImport._
 import com.typesafe.sbt.GitVersioning
@@ -120,14 +115,7 @@ object MimaBuild {
   )
 
   lazy val core = (
-    project("core", file("core"),
-            settings = ((commonSettings ++ buildInfoSettings): Seq[Setting[_]]) ++: Seq(
-                sourceGenerators in Compile += buildInfo.taskValue,
-                buildInfoKeys := Seq(version),
-                buildInfoPackage := "com.typesafe.tools.mima.core.buildinfo",
-                buildInfoObject  := "BuildInfo"
-                )
-           )
+    project("core", file("core"), settings = commonSettings)
     settings(libraryDependencies ++= Seq(
                "org.scala-lang" % "scala-compiler" % scalaVersion.value,
                scalatest
@@ -138,22 +126,15 @@ object MimaBuild {
       mimaBinaryIssueFilters ++= {
         import com.typesafe.tools.mima.core._
         Seq(
+          // Removed because unused
+          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.core.buildinfo.BuildInfo"),
+          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.core.buildinfo.BuildInfo$"),
+
           // Add support for versions with less segments (#212)
           ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.warn"),
           ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.error")
         )
       }
-    )
-  )
-
-  val myAssemblySettings: Seq[Setting[_]] = (assemblySettings: Seq[Setting[_]]) ++ Seq(
-    mergeStrategy in assembly ~= (old => {
-      case "LICENSE" => MergeStrategy.first
-      case x         => old(x)
-    }),
-    AssemblyKeys.excludedFiles in assembly ~= (old =>
-      // Hack to keep LICENSE files.
-      { files: Seq[File] => old(files) filterNot (_.getName contains "LICENSE") }
     )
   )
 
@@ -163,7 +144,6 @@ object MimaBuild {
              name := buildName + "-reporter")
     dependsOn(core)
     settings(sonatypePublishSettings:_*)
-    settings(myAssemblySettings:_*)
     settings(
       // add task functional-tests that depends on all functional tests
       functionalTests := allTests(functionalTests in _).value,
