@@ -107,15 +107,9 @@ Example:
 
 ## Releasing
 
-this section is out of date
-
-see https://github.com/lightbend/migration-manager/issues/165 for a more complete set of steps, though by now they might not be completely up-to-date either?
-
 ### Prerequisites
 
-**You are using sbt 0.13**.
-
-Then, make sure that you have:
+Make sure that you have:
 
 * push rights to this project,
 
@@ -134,17 +128,21 @@ Before starting, make sure that:
 
 * A milestone exists for the release you are about to perform. If it doesn't create one.
 * The milestone due date is the day of the release.
+* Travis passes against latest Scala versions (past example: https://github.com/lightbend/migration-manager/pull/164)
 * All tickets fixed in the current development cycle are associated to the current milestone.
+* All open issues & PRs are assigned to the next milestone.
 
 Now, you are all ready and set to cut a MiMa release!
 
 ### Cutting a release
 
-1. Run `clean`. (particularly if you've recently bumped `scalaVersion` - see [#191](https://github.com/typesafehub/migration-manager/issues/191))
+1. Bump the version in the `README.md` and `git commit`.
 
-2. Create a tag and push it. The name of the tag should follow the format of previous tags. Verify that `show version` in sbt picks up the version number from the tag.
+2. Run `clean`. (particularly if you've recently bumped `scalaVersion` - see [#191](https://github.com/typesafehub/migration-manager/issues/191))
 
-3. Now enter sbt command-line, and type `^publishSigned`
+3. Create a (signed!) git tag and push it. The name of the tag should follow the format of previous tags. Verify that `show version` in sbt picks up the version number from the tag.
+
+4. Now enter sbt command-line, and type `^publishSigned`
 
 ```bash
 $ sbt
@@ -155,10 +153,18 @@ $ sbt
 [success] Total time: 113 s, completed Sep 24, 2013 11:19:48 AM
 ```
 
-4. Login on [Sonatype](https://oss.sonatype.org/) and follow [this guide](https://docs.sonatype.org/display/Repository/Sonatype+OSS+Maven+Repository+Usage+Guide#SonatypeOSSMavenRepositoryUsageGuide-8a.ReleaseIt) to release the staged MiMa artifacts.
+5. Login on [Sonatype](https://oss.sonatype.org/) and follow [this guide](https://docs.sonatype.org/display/Repository/Sonatype+OSS+Maven+Repository+Usage+Guide#SonatypeOSSMavenRepositoryUsageGuide-8a.ReleaseIt) to release the staged MiMa artifacts.
 
-5. Login to [Bintray](https://bintray.com/typesafe/sbt-plugins/sbt-mima-plugin/view) and publish sbt plugin artifacts.
+6. Login to [Bintray](https://bintray.com/typesafe/sbt-plugins/sbt-mima-plugin/view) and publish sbt plugin artifacts. (or use `sbtplugin/bintrayRelease`)
 
-6. Announce the release in the [Announce category of Scala Users](https://users.scala-lang.org/c/announce) and update the version number in this wiki.
+7. Wait for artifacts to show up on Maven Central
+  * sbt plugin jar and dependent jars resolvable by sbt
+  * virtual directory appears: https://repo1.maven.org/maven2/com/typesafe/mima-core_2.10/0.1.14
 
-7. You are done!
+8. Close milestone
+9. Add release notes to [tag](https://github.com/typesafehub/migration-manager/releases/tag/0.1.14)
+10. Hit "Publish Release" on GitHub
+
+11. Announce the release in the [Announce category of Scala Users](https://users.scala-lang.org/c/announce) and update the version number in this wiki.
+
+You are done!
