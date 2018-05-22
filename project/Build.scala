@@ -139,7 +139,7 @@ object MimaBuild {
         import com.typesafe.tools.mima.core._
         Seq(
           // Add support for versions with less segments (#212)
-          ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.warn")
+          ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.warn"),
           ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.error")
         )
       }
