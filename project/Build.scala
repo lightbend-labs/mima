@@ -6,7 +6,6 @@ import com.typesafe.config.ConfigFactory
 import Project.inConfig
 import Configurations.config
 import Build.data
-import sbtbuildinfo.Plugin._
 import bintray.BintrayPlugin
 import bintray.BintrayPlugin.autoImport._
 import com.typesafe.sbt.GitVersioning
@@ -116,14 +115,7 @@ object MimaBuild {
   )
 
   lazy val core = (
-    project("core", file("core"),
-            settings = ((commonSettings ++ buildInfoSettings): Seq[Setting[_]]) ++: Seq(
-                sourceGenerators in Compile += buildInfo.taskValue,
-                buildInfoKeys := Seq(version),
-                buildInfoPackage := "com.typesafe.tools.mima.core.buildinfo",
-                buildInfoObject  := "BuildInfo"
-                )
-           )
+    project("core", file("core"), settings = commonSettings)
     settings(libraryDependencies ++= Seq(
                "org.scala-lang" % "scala-compiler" % scalaVersion.value,
                scalatest
