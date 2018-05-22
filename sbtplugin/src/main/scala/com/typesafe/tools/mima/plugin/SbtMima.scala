@@ -75,7 +75,10 @@ object SbtMima {
 
     log.info(s"$projectName: found ${backErrors.size+forwErrors.size} potential binary incompatibilities while checking against $module $filteredNote")
     ((backErrors map {p: core.Problem => prettyPrint(p, "current")}) ++
-     (forwErrors map {p: core.Problem => prettyPrint(p, "other")})) foreach { log.error }
+     (forwErrors map {p: core.Problem => prettyPrint(p, "other")})) foreach { p =>
+      if (failOnProblem) log.error(p)
+      else log.info(p)
+    }
     if (failOnProblem && (backErrors.nonEmpty || forwErrors.nonEmpty)) sys.error(projectName + ": Binary compatibility check failed!")
   }
 
