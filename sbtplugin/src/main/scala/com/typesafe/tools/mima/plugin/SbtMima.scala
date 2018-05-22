@@ -84,11 +84,7 @@ object SbtMima {
     // version string "x.y.z" is converted to an Int tuple (x, y, z) for comparison
     val versionOrdering = Ordering[(Int, Int, Int)].on { version: String =>
       val ModuleVersion = """(\d+)\.?(\d+)?\.?(.*)?""".r
-      val (epoch, major, minor) = version match {
-        case ModuleVersion(e, m, mi) => (e, m, mi)
-        case ModuleVersion(e, m, null) => (e, m, "0")
-        case ModuleVersion(e, null, null) => (e, "0", "0")
-      }
+      val ModuleVersion(epoch, major, minor) = version
       val toNumeric = (revision: String) => Try(revision.replace("x", Short.MaxValue.toString).filter(_.isDigit).toInt).getOrElse(0)
       (toNumeric(epoch), toNumeric(major), toNumeric(minor))
     }
