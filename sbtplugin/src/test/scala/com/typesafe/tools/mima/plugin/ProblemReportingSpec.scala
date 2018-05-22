@@ -53,6 +53,7 @@ object ProblemReportingSpec {
   final val NoOpLogger = new Logging {
     override def info(str: String): Unit = ()
     override def debugLog(str: String): Unit = ()
+    override def warn(str: String): Unit = ()
     override def error(str: String): Unit = ()
   }
 
