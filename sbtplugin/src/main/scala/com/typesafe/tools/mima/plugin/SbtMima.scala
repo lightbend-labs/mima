@@ -18,47 +18,36 @@ class SbtLogger(s: TaskStreams) extends Logging {
   // Mima is prety chatty
   def info(str: String): Unit = s.log.debug(str)
   def debugLog(str: String): Unit = s.log.debug(str)
+  def warn(str: String): Unit = s.log.warn(str)
+  def error(str: String): Unit = s.log.error(str)
 }
 
 object SbtMima {
   val x = sbt.Keys.fullClasspath
 
   /** Creates a new MiMaLib object to run analysis. */
-  private def makeMima(cp: sbt.Keys.Classpath, s: TaskStreams): lib.MiMaLib = {
+  private def makeMima(cp: sbt.Keys.Classpath, log: Logging): lib.MiMaLib = {
     // TODO: Fix MiMa so we don't have to hack this bit in.
     core.Config.setup("sbt-mima-plugin", Array.empty)
     val cpstring = cp map (_.data.getAbsolutePath()) mkString System.getProperty("path.separator")
     val classpath = com.typesafe.tools.mima.core.reporterClassPath(cpstring)
-    new lib.MiMaLib(classpath, new SbtLogger(s))
+    new lib.MiMaLib(classpath, log)
   }
 
   /** Runs MiMa and returns a two lists of potential binary incompatibilities,
       the first for backward compatibility checking, and the second for forward checking. */
   def runMima(prev: File, curr: File, cp: sbt.Keys.Classpath,
-              dir: String, s: TaskStreams): (List[core.Problem], List[core.Problem]) = {
+              dir: String, log: Logging): (List[core.Problem], List[core.Problem]) = {
     // MiMaLib collects problems to a mutable buffer, therefore we need a new instance every time
     (dir match {
-       case "backward" | "backwards" | "both" => makeMima(cp, s).collectProblems(prev.getAbsolutePath, curr.getAbsolutePath)
+       case "backward" | "backwards" | "both" => makeMima(cp, log).collectProblems(prev.getAbsolutePath, curr.getAbsolutePath)
        case _ => Nil
      },
      dir match {
-       case "forward" | "forwards" | "both" => makeMima(cp, s).collectProblems(curr.getAbsolutePath, prev.getAbsolutePath)
+       case "forward" | "forwards" | "both" => makeMima(cp, log).collectProblems(curr.getAbsolutePath, prev.getAbsolutePath)
        case _ => Nil
      })
   }
-
-  /** Reports binary compatibility errors.
-    *  @param failOnProblem if true, fails the build on binary compatibility errors.
-    */
-  def reportErrors(problemsInFiles: Map[ModuleID, (List[core.Problem], List[core.Problem])],
-                   failOnProblem: Boolean,
-                   filters: Seq[core.ProblemFilter],
-                   backwardFilters: Map[String, Seq[core.ProblemFilter]],
-                   forwardFilters: Map[String, Seq[core.ProblemFilter]],
-                   s: TaskStreams, projectName: String): Unit =
-    problemsInFiles foreach { case (module, (backward, forward)) =>
-      reportModuleErrors(module, backward, forward, failOnProblem, filters, backwardFilters, forwardFilters, s, projectName)
-    }
 
   /** Reports binary compatibility errors for a module.
    *  @param failOnProblem if true, fails the build on binary compatibility errors.
@@ -70,32 +59,12 @@ object SbtMima {
                    filters: Seq[core.ProblemFilter],
                    backwardFilters: Map[String, Seq[core.ProblemFilter]],
                    forwardFilters: Map[String, Seq[core.ProblemFilter]],
-                   s: TaskStreams, projectName: String): Unit = {
+                         log: Logging, projectName: String): Unit = {
     // filters * found is n-squared, it's fixable in principle by special-casing known
     // filter types or something, not worth it most likely...
 
-    // version string "x.y.z" is converted to an Int tuple (x, y, z) for comparison
-    val versionOrdering = Ordering[(Int, Int, Int)].on { version: String =>
-      val ModuleVersion = """(\d+)\.(\d+)\.(.*)""".r
-      val ModuleVersion(epoch, major, minor) = version
-      val toNumeric = (revision: String) => Try(revision.replace("x", Short.MaxValue.toString).filter(_.isDigit).toInt).getOrElse(0)
-      (toNumeric(epoch), toNumeric(major), toNumeric(minor))
-    }
-
-    def isReported(module: ModuleID, verionedFilters: Map[String, Seq[core.ProblemFilter]])(problem: core.Problem) = (verionedFilters.collect {
-      // get all filters that apply to given module version or any version after it
-      case f @ (version, filters) if versionOrdering.gteq(version, module.revision) => filters
-    }.flatten ++ filters).forall { f =>
-      if (f(problem)) {
-        true
-      } else {
-        s.log.debug(projectName + ": filtered out: " + problem.description + "\n  filtered by: " + f)
-        false
-      }
-    }
-
-    val backErrors = backward filter isReported(module, backwardFilters)
-    val forwErrors = forward filter isReported(module, forwardFilters)
+    val backErrors = backward filter isReported(module, filters, backwardFilters)(log, projectName)
+    val forwErrors = forward filter isReported(module, filters, forwardFilters)(log, projectName)
 
     val filteredCount = backward.size + forward.size - backErrors.size - forwErrors.size
     val filteredNote = if (filteredCount > 0) " (filtered " + filteredCount + ")" else ""
@@ -105,13 +74,36 @@ object SbtMima {
       " * " + p.description(affected) + p.howToFilter.map("\n   filter with: " + _).getOrElse("")
     }
 
-    s.log.info(s"$projectName: found ${backErrors.size+forwErrors.size} potential binary incompatibilities while checking against $module $filteredNote")
+    log.info(s"$projectName: found ${backErrors.size+forwErrors.size} potential binary incompatibilities while checking against $module $filteredNote")
     ((backErrors map {p: core.Problem => prettyPrint(p, "current")}) ++
      (forwErrors map {p: core.Problem => prettyPrint(p, "other")})) foreach { p =>
-      if (failOnProblem) s.log.error(p)
-      else s.log.warn(p)
+      if (failOnProblem) log.error(p)
+      else log.warn(p)
     }
     if (failOnProblem && (backErrors.nonEmpty || forwErrors.nonEmpty)) sys.error(projectName + ": Binary compatibility check failed!")
+  }
+
+  private[mima] def isReported(module: ModuleID, filters: Seq[core.ProblemFilter], versionedFilters: Map[String, Seq[core.ProblemFilter]])(log: Logging, projectName: String)(problem: core.Problem) = {
+
+    // version string "x.y.z" is converted to an Int tuple (x, y, z) for comparison
+    val versionOrdering = Ordering[(Int, Int, Int)].on { version: String =>
+      val ModuleVersion = """(\d+)\.?(\d+)?\.?(.*)?""".r
+      val ModuleVersion(epoch, major, minor) = version
+      val toNumeric = (revision: String) => Try(revision.replace("x", Short.MaxValue.toString).filter(_.isDigit).toInt).getOrElse(0)
+      (toNumeric(epoch), toNumeric(major), toNumeric(minor))
+    }
+
+    (versionedFilters.collect {
+      // get all filters that apply to given module version or any version after it
+      case f @ (version, versionFilters) if versionOrdering.gteq(version, module.revision) => versionFilters
+    }.flatten ++ filters).forall { f =>
+      if (f(problem)) {
+        true
+      } else {
+        log.debugLog(projectName + ": filtered out: " + problem.description + "\n  filtered by: " + f)
+        false
+      }
+    }
   }
 
   /** Resolves an artifact representing the previous abstract binary interface

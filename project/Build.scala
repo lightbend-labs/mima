@@ -134,6 +134,16 @@ object MimaBuild {
              ),
              name := buildName + "-core")
     settings(sonatypePublishSettings:_*)
+    settings(
+      mimaBinaryIssueFilters ++= {
+        import com.typesafe.tools.mima.core._
+        Seq(
+          // Add support for versions with less segments (#212)
+          ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.warn")
+          ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.error")
+        )
+      }
+    )
   )
 
   val myAssemblySettings: Seq[Setting[_]] = (assemblySettings: Seq[Setting[_]]) ++ Seq(
@@ -190,6 +200,7 @@ object MimaBuild {
                (sbtBinaryVersion in pluginCrossBuild).value,
                (scalaBinaryVersion in update).value
              ),
+             libraryDependencies += scalatest,
              scriptedLaunchOpts := scriptedLaunchOpts.value :+ "-Dplugin.version=" + version.value,
              scriptedBufferLog := false,
              // Scripted locally publishes sbt plugin and then runs test projects with locally published version.
@@ -212,7 +223,13 @@ object MimaBuild {
           ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.UpdateConfiguration$"),
           ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.DependencyResolution"),
           ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.ivy.IvyDependencyResolution"),
-          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.ivy.IvyDependencyResolution$")
+          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.ivy.IvyDependencyResolution$"),
+
+          // Add support for versions with less segments (#212)
+          // All of these are MiMa sbtplugin internals and can be safely filtered
+          ProblemFilters.exclude[IncompatibleMethTypeProblem]("com.typesafe.tools.mima.plugin.SbtMima.runMima"),
+          ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.plugin.SbtMima.reportErrors"),
+          ProblemFilters.exclude[IncompatibleMethTypeProblem]("com.typesafe.tools.mima.plugin.SbtMima.reportModuleErrors")
         )
       }
     )
