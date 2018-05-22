@@ -23,8 +23,7 @@ object MimaPlugin extends AutoPlugin {
     mimaBackwardIssueFilters := SbtMima.issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:backward[s]?|both)\\.excludes".r, streams.value),
     mimaForwardIssueFilters := SbtMima.issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:forward[s]?|both)\\.excludes".r, streams.value),
     mimaFindBinaryIssues := {
-      val taskStreams = streams.value
-      val log = taskStreams.log
+      val log = new SbtLogger(streams.value)
       val projectName = name.value
       val previousClassfiles =  mimaPreviousClassfiles.value
       val currentClassfiles = mimaCurrentClassfiles.value
@@ -37,14 +36,13 @@ object MimaPlugin extends AutoPlugin {
       else {
         previousClassfiles.map {
           case (moduleId, file) =>
-            val problems = SbtMima.runMima(file, currentClassfiles, cp, checkDirection, taskStreams)
+            val problems = SbtMima.runMima(file, currentClassfiles, cp, checkDirection, log)
             (moduleId, (problems._1, problems._2))
         }
       }
     },
     mimaReportBinaryIssues := {
-      val taskStreams = streams.value
-      val log = taskStreams.log
+      val log = new SbtLogger(streams.value)
       val projectName = name.value
       val currentClassfiles = mimaCurrentClassfiles.value
       val cp = (fullClasspath in mimaFindBinaryIssues).value
@@ -65,7 +63,7 @@ object MimaPlugin extends AutoPlugin {
               currentClassfiles,
               cp,
               checkDirection,
-              taskStreams
+              log
             )
             SbtMima.reportModuleErrors(
               moduleId,
@@ -74,7 +72,7 @@ object MimaPlugin extends AutoPlugin {
               binaryIssueFilters,
               backwardIssueFilters,
               forwardIssueFilters,
-              taskStreams,
+              log,
               projectName)
         }
       }

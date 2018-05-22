@@ -190,6 +190,7 @@ object MimaBuild {
                (sbtBinaryVersion in pluginCrossBuild).value,
                (scalaBinaryVersion in update).value
              ),
+             libraryDependencies += scalatest,
              scriptedLaunchOpts := scriptedLaunchOpts.value :+ "-Dplugin.version=" + version.value,
              scriptedBufferLog := false,
              // Scripted locally publishes sbt plugin and then runs test projects with locally published version.
