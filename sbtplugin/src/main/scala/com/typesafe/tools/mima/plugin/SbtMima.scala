@@ -18,6 +18,7 @@ class SbtLogger(s: TaskStreams) extends Logging {
   // Mima is prety chatty
   def info(str: String): Unit = s.log.debug(str)
   def debugLog(str: String): Unit = s.log.debug(str)
+  def error(str: String): Unit = s.log.error(str)
 }
 
 object SbtMima {
@@ -74,7 +75,7 @@ object SbtMima {
 
     log.info(s"$projectName: found ${backErrors.size+forwErrors.size} potential binary incompatibilities while checking against $module $filteredNote")
     ((backErrors map {p: core.Problem => prettyPrint(p, "current")}) ++
-     (forwErrors map {p: core.Problem => prettyPrint(p, "other")})) foreach { log.info }
+     (forwErrors map {p: core.Problem => prettyPrint(p, "other")})) foreach { log.error }
     if (failOnProblem && (backErrors.nonEmpty || forwErrors.nonEmpty)) sys.error(projectName + ": Binary compatibility check failed!")
   }
 
