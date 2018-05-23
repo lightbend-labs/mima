@@ -138,10 +138,11 @@ Create a new issue with the following checklist and get going.
 - [ ] Login to [Bintray](https://bintray.com/typesafe/sbt-plugins/sbt-mima-plugin/view) and publish sbt plugin artifacts. (or use `sbtplugin/bintrayRelease`)
 - [ ] Wait for artifacts to show up on Maven Central
   - [ ] sbt plugin jar and dependent jars resolvable by sbt
-  - [ ] virtual directory appears: https://repo1.maven.org/maven2/com/typesafe/mima-core_2.10/0.1.14
+  - [ ] virtual directory appears: https://repo1.maven.org/maven2/com/typesafe/mima-core_2.12/0.3.0/
 - [ ] Close milestone
-- [ ] Add release notes to [tag](https://github.com/typesafehub/migration-manager/releases/tag/0.1.14)
+- [ ] Add release notes to tag
 - [ ] Hit "Publish Release" on GitHub
-- [ ] Announce the release in the [Announce category of Scala Users](https://users.scala-lang.org/c/announce) and update the version number in this wiki.
+- [ ] Announce the release in the [Announce category of Scala Users](https://users.scala-lang.org/c/announce)
+    (e.g https://users.scala-lang.org/t/announcing-mima-migration-manager-0-3-0/2782)
 
 You are done!
