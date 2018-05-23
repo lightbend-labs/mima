@@ -42,7 +42,7 @@ The sbt plugin is released for sbt versions 0.13.x and 1.x.  To try it, do the f
 Add the following to your `project/plugins.sbt` file:
 
 ```
-addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.2.0")
+addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.3.0")
 ```
 
 Add the following to your `build.sbt` file:
