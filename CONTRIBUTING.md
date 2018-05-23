@@ -130,7 +130,6 @@ Create a new issue with the following checklist and get going.
 - [ ] The milestone due date is the day of the release.
 - [ ] Travis passes against latest Scala versions (past example: https://github.com/lightbend/migration-manager/pull/164)
 - [ ] All tickets fixed in the current development cycle are associated to the current milestone.
-- [ ] All open issues & PRs are assigned to the next milestone.
 - [ ] Bump the version in the `README.md` and `git commit`.
 - [ ] Run `clean`. (particularly if you've recently bumped `scalaVersion` - see [#191](https://github.com/typesafehub/migration-manager/issues/191))
 - [ ] Create a (signed!) git tag and push it. The name of the tag should follow the format of previous tags. Verify that `show version` in sbt picks up the version number from the tag.
