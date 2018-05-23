@@ -132,7 +132,7 @@ Create a new issue with the following checklist and get going.
 - [ ] All tickets fixed in the current development cycle are associated to the current milestone.
 - [ ] Bump the version in the `README.md` and `git commit`.
 - [ ] Run `clean`. (particularly if you've recently bumped `scalaVersion` - see [#191](https://github.com/typesafehub/migration-manager/issues/191))
-- [ ] Create an annotated, signed git tag (`git tag -a -s`) and push it. The name of the tag should follow the format of previous tags (not 'v' prefix). Verify that `show version` in sbt picks up the version number from the tag.
+- [ ] Create an annotated, signed git tag (`git tag -a -s`) and push it. The name of the tag should follow the format of previous tags (not 'v' prefix). `reload` and verify that `show version` in sbt picks up the version number from the tag.
 - [ ] Run `^publishSigned`. You should start seeing "published mima-.. to https://oss.sonatype.org/service/local/staging/deploy/maven2/.."
 - [ ] Login on [Sonatype](https://oss.sonatype.org/) and follow [this guide](https://docs.sonatype.org/display/Repository/Sonatype+OSS+Maven+Repository+Usage+Guide#SonatypeOSSMavenRepositoryUsageGuide-8a.ReleaseIt) to release the staged MiMa artifacts.
 - [ ] Login to [Bintray](https://bintray.com/typesafe/sbt-plugins/sbt-mima-plugin/view) and publish sbt plugin artifacts. (or use `sbtplugin/bintrayRelease`)
