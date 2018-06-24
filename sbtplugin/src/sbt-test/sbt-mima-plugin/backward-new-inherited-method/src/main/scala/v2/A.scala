@@ -1,5 +1,5 @@
 trait T {
-  def bar
+  def bar: Unit
 }
 
 abstract class A extends T {
