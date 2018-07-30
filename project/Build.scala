@@ -116,11 +116,11 @@ object MimaBuild {
 
   lazy val core = (
     project("core", file("core"), settings = commonSettings)
-    settings(libraryDependencies ++= Seq(
-               "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-               scalatest
-             ),
-             name := buildName + "-core")
+    settings(
+      name := buildName + "-core",
+      libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+      libraryDependencies += scalatest
+    )
     settings(sonatypePublishSettings:_*)
     settings(
       mimaBinaryIssueFilters ++= {
