@@ -62,8 +62,8 @@ abstract class ClassfileParser(definitions: Definitions) {
       throw new IOException("class file '" + parsedClass.file + "' "
                             + "has wrong magic number 0x" + magic.toHexString
                             + ", should be 0x" + JAVA_MAGIC.toHexString)
-    val minorVersion = in.nextChar.toInt
-    val majorVersion = in.nextChar.toInt
+    in.nextChar.toInt // minorVersion
+    in.nextChar.toInt // majorVersion
   }
 
   class ConstantPool {
@@ -158,7 +158,7 @@ abstract class ClassfileParser(definitions: Definitions) {
         val start = starts(index)
         if (in.buf(start).toInt != CONSTANT_NAMEANDTYPE) errorBadTag(start)
         val name = getName(in.getChar(start + 1).toInt)
-        var tpe  = getName(in.getChar(start + 3).toInt)
+        val tpe  = getName(in.getChar(start + 3).toInt)
         p = (name, tpe)
       }
       p
@@ -195,8 +195,8 @@ abstract class ClassfileParser(definitions: Definitions) {
 
   def parseMembers(clazz: ClassInfo): Members = {
     val memberCount = in.nextChar
-    var members = new ArrayBuffer[MemberInfo]
-    for (i <- 0 until memberCount) {
+    val members = new ArrayBuffer[MemberInfo]
+    for (_ <- 0 until memberCount) {
       val jflags = in.nextChar.toInt
       if (isPrivate(jflags)) {
         in.skip(4)
@@ -210,7 +210,7 @@ abstract class ClassfileParser(definitions: Definitions) {
 
   def skipMembers(): Members = {
     val memberCount = in.nextChar
-    for (i <- 0 until memberCount) {
+    for (_ <- 0 until memberCount) {
       in.skip(6); skipAttributes()
     }
     NoMembers
@@ -227,7 +227,7 @@ abstract class ClassfileParser(definitions: Definitions) {
   def parseClass(clazz: ClassInfo): Unit = {
     clazz.flags = in.nextChar
     val nameIdx = in.nextChar
-    val externalName = pool.getClassName(nameIdx)
+    pool.getClassName(nameIdx) // externalName
 
     def parseSuperClass(): ClassInfo =
       if (hasAnnotation(clazz.flags)) { in.nextChar; definitions.AnnotationClass }
@@ -235,7 +235,7 @@ abstract class ClassfileParser(definitions: Definitions) {
 
     def parseInterfaces(): List[ClassInfo] = {
       val rawInterfaces =
-        for (i <- List.range(0, in.nextChar)) yield pool.getSuperClass(in.nextChar)
+        for (_ <- List.range(0, in.nextChar)) yield pool.getSuperClass(in.nextChar)
       rawInterfaces filter (_ != NoClass)
     }
 
@@ -251,14 +251,14 @@ abstract class ClassfileParser(definitions: Definitions) {
 
   def skipAttributes(): Unit = {
     val attrCount = in.nextChar
-    for (i <- 0 until attrCount) {
+    for (_ <- 0 until attrCount) {
       in.skip(2); in.skip(in.nextInt)
     }
   }
 
   def parseAttributes(c: ClassInfo): Unit = {
     val attrCount = in.nextChar
-     for (i <- 0 until attrCount) {
+     for (_ <- 0 until attrCount) {
        val attrIndex = in.nextChar
        val attrName = pool.getName(attrIndex)
        val attrLen = in.nextInt
@@ -292,7 +292,7 @@ abstract class ClassfileParser(definitions: Definitions) {
   def parseAttributes(m: MemberInfo): Unit = {
     val maybeTraitSetter = MemberInfo.maybeSetter(m.bytecodeName)
     val attrCount = in.nextChar
-    for (i <- 0 until attrCount) {
+    for (_ <- 0 until attrCount) {
       val attrIndex = in.nextChar
       val attrName = pool.getName(attrIndex)
       val attrLen = in.nextInt
@@ -311,8 +311,8 @@ abstract class ClassfileParser(definitions: Definitions) {
           j += 1
         }
       } else if (attrName == "Code" && readCode(m)) {
-        val maxStack = in.nextChar
-        val maxLocals = in.nextChar
+        in.nextChar // maxStack
+        in.nextChar // maxLocals
         val codeLength = in.nextInt
         m.codeOpt = Some((in.bp, in.bp + codeLength))
       } else if (attrName == "Deprecated") {
@@ -328,14 +328,14 @@ abstract class ClassfileParser(definitions: Definitions) {
     try {
       if (in.bp + 2 <= attrEnd) {
         val nargs = in.nextChar
-        for (i <- 0 until nargs)
+        for (_ <- 0 until nargs)
           if (in.bp + 2 <= attrEnd) {
-            val argname = in.nextChar
+            in.nextChar // argname
             skipAnnotArg(attrEnd)
           }
       }
     } catch {
-      case ex: Exception =>
+      case _: Exception =>
     }
   }
 
@@ -349,7 +349,7 @@ abstract class ClassfileParser(definitions: Definitions) {
         case ENUM_TAG   =>
           if (in.bp + 2 <= attrEnd) in.nextChar
         case ARRAY_TAG  =>
-          for (i <- 0 until index)
+          for (_ <- 0 until index)
             skipAnnotArg(attrEnd)
         case ANNOTATION_TAG =>
           skipAnnotation(index, attrEnd)

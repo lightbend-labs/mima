@@ -114,13 +114,20 @@ object MimaBuild {
     enablePlugins(GitVersioning)
   )
 
+  val scalaPartV = Def setting (CrossVersion partialVersion scalaVersion.value)
+
   lazy val core = (
     project("core", file("core"), settings = commonSettings)
-    settings(libraryDependencies ++= Seq(
-               "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-               scalatest
-             ),
-             name := buildName + "-core")
+    settings(
+      name := buildName + "-core",
+      libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+      libraryDependencies ++= (if (scalaVersion.value == "2.13.0-M4") Nil else Seq(scalatest)),
+      // WORKAROUND https://github.com/sbt/sbt/issues/2819
+      inConfig(Compile)(
+        unmanagedSourceDirectories ++=
+          scalaPartV.value.collect { case (2, 13) => sourceDirectory.value / "scala-2.13" }.toList
+      )
+    )
     settings(sonatypePublishSettings:_*)
     settings(
       mimaBinaryIssueFilters ++= {

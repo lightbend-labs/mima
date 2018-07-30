@@ -136,7 +136,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
     lookupClassMethods(name) ++ lookupInterfaceMethods(name)
 
   def lookupConcreteTraitMethods(name: String): Iterator[MemberInfo] =
-    allTraits.toList.flatten(_.concreteMethods).filter(_.bytecodeName == bytecodeName).toIterator
+    allTraits.toList.flatten(_.concreteMethods).filter(_.bytecodeName == bytecodeName).iterator
 
   /** Is this class a non-trait that inherits !from a trait */
   lazy val isClassInheritsTrait = !isInterface && _interfaces.exists(_.isTrait)
@@ -214,11 +214,11 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
     if (this == ClassInfo.ObjectClass) Set.empty
     else superClass.allInterfaces ++ interfaces ++ (interfaces flatMap (_.allInterfaces))
 
-  private def unimplemented(sel: ClassInfo => Traversable[MemberInfo]): List[MemberInfo] = {
+  private def unimplemented(sel: ClassInfo => Iterable[MemberInfo]): List[MemberInfo] = {
     ensureLoaded()
     if (isClassInheritsTrait) {
       for {
-        t <- directTraits.toList
+        t <- directTraits
         m <- sel(t)
         if !hasInstanceImpl(m)
       } yield m
