@@ -19,20 +19,18 @@ matrix:
 
 env:
   matrix:
-    - TEST_COMMAND="test"
-    - TEST_COMMAND="scripted"
+    - TEST_COMMAND="mimaReportBinaryIssues test it:test"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.6 ^^1.1.5 mimaReportBinaryIssues test it:test"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.13.0-M4 core/compile"
     - TEST_COMMAND="testFunctional"
     - TEST_COMMAND="-Dmima.testScalaVersion=2.11.12 testFunctional"
     - TEST_COMMAND="-Dmima.testScalaVersion=2.12.6 testFunctional"
-    - TEST_COMMAND="it:test"
-    - TEST_COMMAND="mimaReportBinaryIssues"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.6 ^^1.0.0 scripted"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.6 ^^1.1.5 test"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.6 ^^1.1.5 scripted"
     - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.6 testFunctional"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.6 it:test"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.6 ^^1.1.5 mimaReportBinaryIssues"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.13.0-M4 core/compile"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.6 -Dmima.testScalaVersion=2.11.12 testFunctional"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.6 -Dmima.testScalaVersion=2.12.6 testFunctional"
+    - TEST_COMMAND="scripted"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.6 ^^1.0.0 scripted"
+    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.6 ^^1.1.5 scripted"
 
 script:
   - sbt $TEST_COMMAND
