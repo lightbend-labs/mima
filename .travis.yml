@@ -14,6 +14,9 @@ scala:
 jdk:
   - oraclejdk8
 
+matrix:
+  fast_finish: true
+
 env:
   matrix:
     - TEST_COMMAND="test"
