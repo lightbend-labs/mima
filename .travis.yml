@@ -23,7 +23,6 @@ env:
     - TEST_COMMAND="-Dmima.testScalaVersion=2.12.6 testFunctional"
     - TEST_COMMAND="it:test"
     - TEST_COMMAND="mimaReportBinaryIssues"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.6 ^^1.0.0 test"
     - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.6 ^^1.0.0 scripted"
     - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.6 ^^1.1.5 test"
     - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.6 ^^1.1.5 scripted"
