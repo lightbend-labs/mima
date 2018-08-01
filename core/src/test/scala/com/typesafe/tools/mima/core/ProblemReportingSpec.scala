@@ -1,9 +1,7 @@
-package com.typesafe.tools.mima.plugin
+package com.typesafe.tools.mima.core
 
 import com.typesafe.tools.mima.core.util.log.Logging
-import com.typesafe.tools.mima.core._
-import sbt._
-import org.scalatest.{Matchers, WordSpec}
+import org.scalatest.{ Matchers, WordSpec }
 
 class ProblemReportingSpec extends WordSpec with Matchers {
   import ProblemReportingSpec._
@@ -43,9 +41,9 @@ class ProblemReportingSpec extends WordSpec with Matchers {
   }
 
   private def isReported(moduleVersion: String, filters: Seq[ProblemFilter]) =
-    SbtMima.isReported("test" % "module" % moduleVersion, filters, Map.empty)(NoOpLogger, "test")(MissingFieldProblem(NoMemberInfo))
+    ProblemReporting.isReported(moduleVersion, filters, Map.empty)(NoOpLogger, "test")(MissingFieldProblem(NoMemberInfo))
   private def isReported(moduleVersion: String, versionedFilters: Map[String, Seq[ProblemFilter]]) =
-    SbtMima.isReported("test" % "module" % moduleVersion, Seq.empty, versionedFilters)(NoOpLogger, "test")(MissingFieldProblem(NoMemberInfo))
+    ProblemReporting.isReported(moduleVersion, Seq.empty, versionedFilters)(NoOpLogger, "test")(MissingFieldProblem(NoMemberInfo))
 
 }
 
