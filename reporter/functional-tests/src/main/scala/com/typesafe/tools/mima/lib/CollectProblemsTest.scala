@@ -35,7 +35,7 @@ class CollectProblemsTest {
 
     // load oracle
     val inputStream = new BufferedInputStream(new FileInputStream(oraclePath))
-    var expectedProblems = try {
+    val expectedProblems = try {
       Source.fromInputStream(inputStream).getLines.toList
     } finally inputStream.close()
 

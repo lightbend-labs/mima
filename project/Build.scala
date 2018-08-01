@@ -92,7 +92,7 @@ object Dependencies {
   import BuildSettings._
 
   val typesafeConfig = "com.typesafe" % "config" % "1.0.0"
-  val scalatest = "org.scalatest" %% "scalatest" % "3.0.5" % Test
+  val scalatest = "org.scalatest" %% "scalatest" % "3.0.6-SNAP1" % Test
 
 }
 
@@ -121,7 +121,7 @@ object MimaBuild {
     settings(
       name := buildName + "-core",
       libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      libraryDependencies ++= (if (scalaVersion.value == "2.13.0-M4") Nil else Seq(scalatest)),
+      libraryDependencies += scalatest,
       // WORKAROUND https://github.com/sbt/sbt/issues/2819
       inConfig(Compile)(
         unmanagedSourceDirectories ++=
