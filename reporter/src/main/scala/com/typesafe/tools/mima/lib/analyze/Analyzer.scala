@@ -48,7 +48,10 @@ private[analyze] trait Analyzer extends Function2[ClassInfo, ClassInfo, List[Pro
     analyzeFields(oldclazz, newclazz) ::: analyzeMethods(oldclazz, newclazz)
 
   def analyzeFields(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
-    for (oldfld <- oldclazz.fields.iterator.toList) yield fieldChecker.check(oldfld, newclazz)
+    for {
+      oldfld <- oldclazz.fields.iterator.toList
+      p <- fieldChecker.check(oldfld, newclazz)
+    } yield p
   }
 
   def analyzeMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] =
@@ -56,7 +59,10 @@ private[analyze] trait Analyzer extends Function2[ClassInfo, ClassInfo, List[Pro
 
   /** Analyze incompatibilities that may derive from methods in the `oldclazz`*/
   def analyzeOldClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
-    for (oldmeth <- oldclazz.methods.iterator.toList) yield methodChecker.check(oldmeth, newclazz)
+    for {
+      oldmeth <- oldclazz.methods.iterator.toList
+      p <- methodChecker.check(oldmeth, newclazz)
+    } yield p
   }
 
   def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem]
@@ -76,7 +82,7 @@ private[analyze] trait Analyzer extends Function2[ClassInfo, ClassInfo, List[Pro
       }
     } 
     (for {
-      tpe <- diff
+      tpe <- diff.iterator
       // if `tpe` is a trait, then the trait's concrete methods should be counted as deferred methods
       newDeferredMethod <- tpe.deferredMethodsInBytecode
          // checks that the newDeferredMethod did not already exist in one of the oldclazz supertypes 
@@ -85,7 +91,7 @@ private[analyze] trait Analyzer extends Function2[ClassInfo, ClassInfo, List[Pro
          noInheritedMatchingMethod(newclazz, newDeferredMethod)(_.isConcrete)
     } yield
        // report a binary incompatibility as there is a new inherited abstract method, which can lead to a AbstractErrorMethod at runtime
-       InheritedNewAbstractMethodProblem(newclazz, newDeferredMethod))(collection.breakOut)
+       InheritedNewAbstractMethodProblem(newclazz, newDeferredMethod)).toList
   }
 }
 
