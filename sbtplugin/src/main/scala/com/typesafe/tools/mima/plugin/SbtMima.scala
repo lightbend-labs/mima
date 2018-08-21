@@ -129,16 +129,21 @@ object SbtMima {
           }
         }.transform(Success(_), ex => Failure(new ParsingException(file, line, ex)))
 
+      val lines = try {
+        Source.fromFile(file).getLines().toVector
+      } catch {
+        case t: Throwable => throw new RuntimeException(s"Couldn't load '$file'")
+      }
+
       val (excludes, failures) =
-        Source.fromFile(file)
-          .getLines()
+        lines
           .zipWithIndex
           .filterNot { case (str, line) => str.trim.isEmpty || str.trim.startsWith("#") }
           .map((parseLine _).tupled)
           .partition(_.isSuccess)
 
-      if (failures.isEmpty) Right(version -> excludes.map(_.get).toSeq)
-      else Left(failures.map(_.failed.get).toSeq)
+      if (failures.isEmpty) Right(version -> excludes.map(_.get))
+      else Left(failures.map(_.failed.get))
     }
 
     require(directory.exists(), s"Mima filter directory did not exist: ${directory.getAbsolutePath}")
