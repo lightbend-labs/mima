@@ -132,7 +132,7 @@ object SbtMima {
       val lines = try {
         Source.fromFile(file).getLines().toVector
       } catch {
-        case t: Throwable => throw new RuntimeException(s"Couldn't load '$file'")
+        case t: Throwable => throw new RuntimeException(s"Couldn't load '$file'", t)
       }
 
       val (excludes, failures) =
