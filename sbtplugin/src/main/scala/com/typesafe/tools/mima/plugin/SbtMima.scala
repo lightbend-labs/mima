@@ -11,6 +11,7 @@ import internal.librarymanagement._
 
 import scala.io.Source
 import scala.util._
+import scala.util.control.NonFatal
 import scala.util.matching._
 
 /** Wrapper on SBT logging for MiMa */
@@ -129,16 +130,21 @@ object SbtMima {
           }
         }.transform(Success(_), ex => Failure(new ParsingException(file, line, ex)))
 
+      val lines = try {
+        Source.fromFile(file).getLines().toVector
+      } catch {
+        case NonFatal(t) => throw new RuntimeException(s"Couldn't load '$file'", t)
+      }
+
       val (excludes, failures) =
-        Source.fromFile(file)
-          .getLines()
+        lines
           .zipWithIndex
           .filterNot { case (str, line) => str.trim.isEmpty || str.trim.startsWith("#") }
           .map((parseLine _).tupled)
           .partition(_.isSuccess)
 
-      if (failures.isEmpty) Right(version -> excludes.map(_.get).toSeq)
-      else Left(failures.map(_.failed.get).toSeq)
+      if (failures.isEmpty) Right(version -> excludes.map(_.get))
+      else Left(failures.map(_.failed.get))
     }
 
     require(directory.exists(), s"Mima filter directory did not exist: ${directory.getAbsolutePath}")
