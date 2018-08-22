@@ -11,6 +11,7 @@ import internal.librarymanagement._
 
 import scala.io.Source
 import scala.util._
+import scala.util.control.NonFatal
 import scala.util.matching._
 
 /** Wrapper on SBT logging for MiMa */
@@ -132,7 +133,7 @@ object SbtMima {
       val lines = try {
         Source.fromFile(file).getLines().toVector
       } catch {
-        case t: Throwable => throw new RuntimeException(s"Couldn't load '$file'", t)
+        case NonFatal(t) => throw new RuntimeException(s"Couldn't load '$file'", t)
       }
 
       val (excludes, failures) =
