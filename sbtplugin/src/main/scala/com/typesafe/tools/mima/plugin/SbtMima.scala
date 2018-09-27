@@ -1,6 +1,8 @@
 package com.typesafe.tools.mima
 package plugin
 
+import java.io.File
+
 import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.core.util.log.Logging
 import sbt.Keys.TaskStreams
@@ -119,32 +121,48 @@ object SbtMima {
     val ExclusionPattern = """ProblemFilters\.exclude\[([^\]]+)\]\("([^"]+)"\)""".r
 
     def findFiles(): Seq[(File, String)] = directory.listFiles().flatMap(f => fileExtension.findFirstIn(f.getName).map((f, _)))
-    def parseFile(file: File, extension: String): Either[Seq[Throwable], (String, Seq[ProblemFilter])] = {
-      val version = file.getName.dropRight(extension.size)
+    def parseFile(fileOrDir: File, extension: String): Either[Seq[Throwable], (String, Seq[ProblemFilter])] = {
+      val version = fileOrDir.getName.dropRight(extension.size)
 
-      def parseLine(text: String, line: Int): Try[ProblemFilter] =
-        Try {
-          text match {
-            case ExclusionPattern(className, target) => ProblemFilters.exclude(className, target)
-            case x => throw new RuntimeException(s"Couldn't parse '$x'")
-          }
-        }.transform(Success(_), ex => Failure(new ParsingException(file, line, ex)))
+      def parseOneFile(file: File): Either[Seq[Throwable],Seq[ProblemFilter]] = {
+        def parseLine(text: String, line: Int): Try[ProblemFilter] =
+          Try {
+            text match {
+              case ExclusionPattern(className, target) => ProblemFilters.exclude(className, target)
+              case x => throw new RuntimeException(s"Couldn't parse '$x'")
+            }
+          }.transform(Success(_), ex => Failure(new ParsingException(file, line, ex)))
 
-      val lines = try {
-        Source.fromFile(file).getLines().toVector
-      } catch {
-        case NonFatal(t) => throw new RuntimeException(s"Couldn't load '$file'", t)
+        val lines = try {
+          Source.fromFile(file).getLines().toVector
+        } catch {
+          case NonFatal(t) => throw new RuntimeException(s"Couldn't load '$file'", t)
+        }
+
+        val (excludes, failures) =
+          lines
+            .zipWithIndex
+            .filterNot { case (str, line) => str.trim.isEmpty || str.trim.startsWith("#") }
+            .map((parseLine _).tupled)
+            .partition(_.isSuccess)
+
+        if (failures.isEmpty) Right(excludes.map(_.get))
+        else Left(failures.map(_.failed.get))
       }
 
-      val (excludes, failures) =
-        lines
-          .zipWithIndex
-          .filterNot { case (str, line) => str.trim.isEmpty || str.trim.startsWith("#") }
-          .map((parseLine _).tupled)
-          .partition(_.isSuccess)
-
-      if (failures.isEmpty) Right(version -> excludes.map(_.get))
-      else Left(failures.map(_.failed.get))
+      if (fileOrDir.isDirectory) {
+        val allResults =
+          fileOrDir.listFiles().filter(_.getName.endsWith(".excludes"))
+            .toSeq
+            .map(parseOneFile)
+        val (mappings, failures) = allResults.partition(_.isRight)
+        if (failures.nonEmpty) Left(failures.flatMap(_.left.get))
+        else {
+          val allMappings = mappings.flatMap(_.right.get)
+          Right(version -> allMappings)
+        }
+      } else
+        parseOneFile(fileOrDir).right.map(version -> _)
     }
 
     require(directory.exists(), s"Mima filter directory did not exist: ${directory.getAbsolutePath}")
