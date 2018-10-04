@@ -152,7 +152,7 @@ object SbtMima {
 
       if (fileOrDir.isDirectory) {
         val allResults =
-          fileOrDir.listFiles().filter(_.getName.endsWith(".excludes"))
+          fileOrDir.listFiles()
             .toSeq
             .map(parseOneFile)
         val (mappings, failures) = allResults.partition(_.isRight)
