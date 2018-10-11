@@ -91,7 +91,7 @@ object BuildSettings {
 object Dependencies {
   import BuildSettings._
 
-  val typesafeConfig = "com.typesafe" % "config" % "1.0.0"
+  val typesafeConfig = "com.typesafe" % "config" % "1.0.2"
   val scalatest = "org.scalatest" %% "scalatest" % "3.0.6-SNAP1" % Test
 
 }
