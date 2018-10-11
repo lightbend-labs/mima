@@ -9,7 +9,7 @@ scalacOptions ++= Seq("-feature", "-deprecation")
 
 libraryDependencies += "org.scala-sbt" % "scripted-plugin" % sbtVersion.value
 
-libraryDependencies += "com.typesafe" % "config" % "1.3.0"
+libraryDependencies += "com.typesafe" % "config" % "1.3.3"
 
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.1")
 
