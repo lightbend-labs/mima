@@ -91,7 +91,7 @@ object BuildSettings {
 object Dependencies {
   import BuildSettings._
 
-  val typesafeConfig = "com.typesafe" % "config" % "1.0.0"
+  val typesafeConfig = "com.typesafe" % "config" % "1.0.2"
   val scalatest = "org.scalatest" %% "scalatest" % "3.0.6-SNAP1" % Test
 
 }
@@ -183,7 +183,7 @@ object MimaBuild {
     settings(name := "sbt-mima-plugin",
              sbtPlugin := true,
              libraryDependencies += Defaults.sbtPluginExtra(
-               "com.dwijnand" % "sbt-compat" % "1.0.0",
+               "com.dwijnand" % "sbt-compat" % "1.2.6",
                (sbtBinaryVersion in pluginCrossBuild).value,
                (scalaBinaryVersion in update).value
              ),

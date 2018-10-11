@@ -1,4 +1,4 @@
-addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.5.3")
+addSbtPlugin("org.foundweekends" % "sbt-bintray" % "0.5.4")
 
 addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "1.0.0")
 
@@ -9,8 +9,8 @@ scalacOptions ++= Seq("-feature", "-deprecation")
 
 libraryDependencies += "org.scala-sbt" % "scripted-plugin" % sbtVersion.value
 
-libraryDependencies += "com.typesafe" % "config" % "1.3.0"
+libraryDependencies += "com.typesafe" % "config" % "1.3.3"
 
 addSbtPlugin("com.jsuereth" % "sbt-pgp" % "1.1.1")
 
-addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.1.18")
+addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.3.0")
