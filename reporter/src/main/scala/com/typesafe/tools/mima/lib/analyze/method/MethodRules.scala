@@ -10,7 +10,7 @@ private[method] object MethodRules {
     def apply(thisMember: MemberInfo, thatMember: MemberInfo): Option[Problem] = {
       // A non-final member that is made final entails a binary incompatibilities because client
       // code may be overriding it
-      if (thisMember.nonFinal && thatMember.isFinal) Some(FinalMethodProblem(thatMember))
+      if (!thisMember.owner.isFinal && thisMember.nonFinal && thatMember.isFinal) Some(FinalMethodProblem(thatMember))
       // note: Conversely, a final member that is made non-final does not entail incompatibilities
       else None
     }
