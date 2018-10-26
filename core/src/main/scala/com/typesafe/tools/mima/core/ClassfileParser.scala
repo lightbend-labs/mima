@@ -42,6 +42,8 @@ abstract class ClassfileParser(definitions: Definitions) {
   private var thepool: ConstantPool = _
   protected var parsedClass: ClassInfo = _
 
+  private val unpickler = new MiMaUnPickler
+
   def pool: ConstantPool = thepool
 
   def parse(clazz: ClassInfo) = synchronized {
@@ -304,8 +306,30 @@ abstract class ClassfileParser(definitions: Definitions) {
          }.filterNot(_.isEmpty)
        } else if (attrName == "EnclosingMethod") {
          c._isLocalClass = true
-       } else if (attrName == "Scala" || attrName == "ScalaSig") {
+       } else if (attrName == "Scala") {
          this.parsedClass.isScala = true
+       } else if (attrName == "ScalaSig") {
+         unpickler.unpickle(in.buf, in.bp, c)
+       } else if (attrName == "RuntimeVisibleAnnotations") {
+         val annotCount = in.nextChar
+         var j = 0
+         while (j < annotCount && c.privateWithin == "") {
+           if (in.bp + 2 <= attrEnd) {
+             val annotIndex = in.nextChar
+             val annotName = pool.getName(annotIndex)
+             val nargs = in.nextChar
+             for (i <- 0 until nargs) {
+               val argName = pool.getName(in.nextChar)
+               if (annotName == "Lscala/reflect/ScalaSignature;" && argName == "bytes") {
+                 val tag = in.nextByte.toChar
+                 val bytes = pool getBytes in.nextChar
+                 unpickler.unpickle(bytes, 0, c)
+               } else
+                 skipAnnotation(annotIndex, attrEnd)
+             }
+           }
+           j += 1
+         }
        }
        in.bp = attrEnd
      }
