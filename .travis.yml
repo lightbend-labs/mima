@@ -35,7 +35,6 @@ env:
     - TEST_COMMAND="-Dmima.buildScalaVersion=2.13.0-M4 -Dmima.testScalaVersion=2.12.7 testFunctional"
     - TEST_COMMAND="-Dmima.buildScalaVersion=2.13.0-M4 -Dmima.testScalaVersion=2.13.0-M4 testFunctional"
     - TEST_COMMAND="scripted"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.7 ^^1.0.0 scripted"
     - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.7 ^^1.1.5 scripted"
 
 script:
