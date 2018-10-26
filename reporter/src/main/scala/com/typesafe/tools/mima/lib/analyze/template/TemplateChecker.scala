@@ -13,5 +13,5 @@ private[analyze] object TemplateChecker extends Checker[ClassInfo, ClassInfo] {
 		  								       )
 
   def check(oldclz: ClassInfo, newclz: ClassInfo): Option[Problem] =
-    checkRules(rules)(oldclz,newclz)
+    if (oldclz.privateWithin == "") checkRules(rules)(oldclz,newclz) else None
 }
