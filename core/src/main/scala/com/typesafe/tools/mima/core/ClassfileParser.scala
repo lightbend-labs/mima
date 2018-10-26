@@ -9,6 +9,7 @@ import java.io.IOException
 import scala.collection.mutable.ArrayBuffer
 import scala.tools.nsc.symtab.classfile.ClassfileConstants._
 import scala.annotation.switch
+import scala.reflect.internal.pickling.ByteCodecs
 
 class ClientClassfileParser(definitions: Definitions) extends ClassfileParser(definitions) {
   var readFields = (clazz: ClassInfo) => false
@@ -182,6 +183,28 @@ abstract class ClassfileParser(definitions: Definitions) {
         r = Reference(clazz, name, tpe)
       }
       r
+    }
+
+    private def getSubArray(bytes: Array[Byte]): Array[Byte] = {
+      val decodedLength = ByteCodecs.decode(bytes)
+      val arr           = new Array[Byte](decodedLength)
+      System.arraycopy(bytes, 0, arr, 0, decodedLength)
+      arr
+    }
+
+    def getBytes(index: Int): Array[Byte] = {
+      if (index <= 0 || length <= index) errorBadIndex(index)
+      var value = values(index).asInstanceOf[Array[Byte]]
+      if (value eq null) {
+        val start = starts(index)
+        if (in.buf(start).toInt != CONSTANT_UTF8) errorBadTag(start)
+        val len   = in.getChar(start + 1)
+        val bytes = new Array[Byte](len)
+        System.arraycopy(in.buf, start + 3, bytes, 0, len)
+        value = getSubArray(bytes)
+        values(index) = value
+      }
+      value
     }
 
     /** Throws an exception signaling a bad constant index. */
