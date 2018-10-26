@@ -101,6 +101,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
   private var _methods: Members = NoMembers
   private var _flags: Int = 0
   private var _isScala: Boolean = false
+  var privateWithin: String = ""
 
   def superClass: ClassInfo = { ensureLoaded(); _superClass }
   def interfaces: List[ClassInfo] = { ensureLoaded(); _interfaces }
