@@ -19,12 +19,6 @@ matrix:
 
 env:
   matrix:
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.10.7 core/test reporter/test reporter-functional-tests/test it:test"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.10.7 testFunctional"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.10.7 -Dmima.testScalaVersion=2.11.12 testFunctional"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.10.7 -Dmima.testScalaVersion=2.12.7 testFunctional"
-    - TEST_COMMAND="-Dmima.buildScalaVersion=2.10.7 -Dmima.testScalaVersion=2.13.0-M5 testFunctional"
-
     - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.7 mimaReportBinaryIssues test it:test"
     - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.7 testFunctional"
     - TEST_COMMAND="-Dmima.buildScalaVersion=2.12.7 -Dmima.testScalaVersion=2.11.12 testFunctional"
