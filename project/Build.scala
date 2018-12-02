@@ -1,17 +1,16 @@
 import sbt._
 import Keys._
 import com.typesafe.config.ConfigFactory
+import sbt.internal.inc.ScalaInstance
+import sbt.librarymanagement.{ DependencyResolution, UnresolvedWarningConfiguration, UpdateConfiguration }
+import sbt.plugins.SbtPlugin
 
-// I need to make these imported by default
-import Project.inConfig
-import Configurations.config
-import Build.data
 import bintray.BintrayPlugin
 import bintray.BintrayPlugin.autoImport._
 import com.typesafe.sbt.GitVersioning
 import com.typesafe.sbt.GitPlugin.autoImport._
-import ScriptedPlugin._
-import com.typesafe.sbt.pgp.PgpKeys.publishSigned
+import sbt.ScriptedPlugin.autoImport._
+import com.typesafe.sbt.SbtPgp.autoImport.PgpKeys.publishSigned
 import com.typesafe.tools.mima.plugin.MimaPlugin.autoImport._
 
 object BuildSettings {
@@ -19,17 +18,11 @@ object BuildSettings {
   val buildName = "mima"
   val buildOrganization = "com.typesafe"
 
-  val commonSettings = Defaults.coreDefaultSettings ++ Seq (
+  val commonSettings = Seq(
       organization := buildOrganization,
-      scalaVersion := sys.props.getOrElse("mima.buildScalaVersion",
-        (CrossVersion partialVersion (sbtVersion in pluginCrossBuild).value match {
-          case Some((0, 13)) => "2.10.7"
-          case Some((1, _))  => "2.12.7"
-          case _             => sys error s"Unhandled sbt version ${(sbtVersion in pluginCrossBuild).value}"
-        })
-      ),
+      scalaVersion := sys.props.getOrElse("mima.buildScalaVersion", "2.12.7"),
       git.gitTagToVersionNumber := { tag: String =>
-        if(tag matches "[0.9]+\\..*") Some(tag)
+        if (tag matches "[0.9]+\\..*") Some(tag)
         else None
       },
       git.useGitDescribe := true,
@@ -67,7 +60,7 @@ object BuildSettings {
     ),
     // Maven central cannot allow other repos.  We're ok here because the artifacts we
     // we use externally are *optional* dependencies.
-    pomIncludeRepository := { x => false },
+    pomIncludeRepository := { _ => false },
     // Maven central wants some extra metadata to keep things 'clean'.
     pomExtra := (
       <scm>
@@ -89,8 +82,6 @@ object BuildSettings {
 }
 
 object Dependencies {
-  import BuildSettings._
-
   val typesafeConfig = "com.typesafe" % "config" % "1.3.3"
   val scalatest = "org.scalatest" %% "scalatest" % "3.0.6-SNAP5" % Test
 
@@ -104,11 +95,9 @@ object MimaBuild {
     project("root", file("."))
     aggregate(core, reporter, sbtplugin)
     settings(name := buildName,
-             publish := (),
-             publishLocal := (),
-             publishSigned := (),
-             sbtVersion in Global := "0.13.13", // Should be ThisBuild, but ^^ uses Global (incorrectly)
-             crossSbtVersions := List("0.13.13", "1.0.0"), // Should be ThisBuild, but Defaults defines it at project level..
+             publish := {},
+             publishLocal := {},
+             publishSigned := {},
              testScalaVersion in Global :=  sys.props.getOrElse("mima.testScalaVersion", scalaVersion.value)
     )
     enablePlugins(GitVersioning)
@@ -117,8 +106,9 @@ object MimaBuild {
   val scalaPartV = Def setting (CrossVersion partialVersion scalaVersion.value)
 
   lazy val core = (
-    project("core", file("core"), settings = commonSettings)
+    project("core", file("core"))
     settings(
+      commonSettings,
       name := buildName + "-core",
       libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       libraryDependencies += scalatest,
@@ -146,12 +136,13 @@ object MimaBuild {
   )
 
   lazy val reporter = (
-    project("reporter", file("reporter"), settings = commonSettings)
-    settings(libraryDependencies += typesafeConfig,
-             name := buildName + "-reporter")
+    project("reporter", file("reporter"))
     dependsOn(core)
-    settings(sonatypePublishSettings:_*)
     settings(
+      commonSettings,
+      libraryDependencies += typesafeConfig,
+      name := buildName + "-reporter",
+      sonatypePublishSettings,
       // add task functional-tests that depends on all functional tests
       functionalTests := allTests(functionalTests in _).value,
       test in IntegrationTest := allTests(test in IntegrationTest in _).value,
@@ -178,10 +169,10 @@ object MimaBuild {
   )
 
   lazy val sbtplugin = (
-    Project("sbtplugin", file("sbtplugin"), settings = commonSettings)
-    settings(scriptedSettings)
+    Project("sbtplugin", file("sbtplugin"))
+    enablePlugins(SbtPlugin)
     settings(name := "sbt-mima-plugin",
-             sbtPlugin := true,
+             commonSettings,
              libraryDependencies += Defaults.sbtPluginExtra(
                "com.dwijnand" % "sbt-compat" % "1.2.6",
                (sbtBinaryVersion in pluginCrossBuild).value,
@@ -192,7 +183,8 @@ object MimaBuild {
              scriptedBufferLog := false,
              // Scripted locally publishes sbt plugin and then runs test projects with locally published version.
              // Therefore we also need to locally publish dependent projects on scripted test run.
-             scripted := (scripted dependsOn (publishLocal in core, publishLocal in reporter)).evaluated)
+             scriptedDependencies := scriptedDependencies.dependsOn(publishLocal in core, publishLocal in reporter).value,
+    )
     dependsOn(reporter)
     settings(
       sbtPublishSettings,
@@ -222,10 +214,9 @@ object MimaBuild {
     )
   )
 
-  lazy val reporterFunctionalTests = project("reporter-functional-tests",
-  										file("reporter") / "functional-tests" ,
-  										settings = commonSettings)
-  										.dependsOn(core, reporter)
+  lazy val reporterFunctionalTests = project("reporter-functional-tests", file("reporter") / "functional-tests")
+    .dependsOn(core, reporter)
+    .settings(commonSettings)
 
   // select all testN directories.
   val bases = (file("reporter") / "functional-tests" / "src" / "test") *
@@ -239,14 +230,14 @@ object MimaBuild {
 
   // defines a Project for the given base directory (for example, functional-tests/test1)
   // Its name is the directory name (test1) and it has compile+package tasks for sources in v1/ and v2/
-  def testProject(base: File) = project("test-" + base.name, base, settings = testProjectSettings).configs(v1Config, v2Config)
-  def integrationTestProject(base: File) = project("it-" + base.name, base, settings = integrationTestProjectSettings)
+  def testProject(base: File) = project("test-" + base.name, base).settings(testProjectSettings).configs(V1, V2)
+  def integrationTestProject(base: File) = project("it-" + base.name, base).settings(integrationTestProjectSettings)
 
   lazy val testProjectSettings =
     commonSettings ++ // normal project defaults; can be trimmed later- test and run aren't needed, for example.
     Seq(scalaVersion := (testScalaVersion in Global).value) ++
-    inConfig(v1Config)(perConfig) ++ // add compile/package for the v1 sources
-    inConfig(v2Config)(perConfig) :+ // add compile/package for the v2 sources
+    inConfig(V1)(perConfig) ++ // add compile/package for the V1 sources
+    inConfig(V2)(perConfig) :+ // add compile/package for the V2 sources
     (functionalTests := runTest.value) // add the functional-tests task
   lazy val integrationTestProjectSettings =
     commonSettings ++
@@ -261,18 +252,18 @@ object MimaBuild {
   // Also the base project has dependencies that don't resolve under newer versions of scala.
   lazy val testScalaVersion = SettingKey[String]("test-scala-version", "The scala version to use to compile the test classes")
 
-  // define configurations for the v1 and v2 sources
-  lazy val v1Config = config("v1") extend Compile
-  lazy val v2Config = config("v2") extend Compile
+  // define configurations for the V1 and V2 sources
+  val V1 = config("V1") extend Compile
+  val V2 = config("V2") extend Compile
 
-  // these are settings defined for each configuration (v1 and v2).
-  // We use the normal per-configuration settings, but modify the source directory to be just v1/ instead of src/v1/scala/
+  // these are settings defined for each configuration (V1 and V2).
+  // We use the normal per-configuration settings, but modify the source directory to be just V1/ instead of src/V1/scala/
   lazy val perConfig = Defaults.configSettings :+ shortSourceDir
 
   // sets the source directory in this configuration to be: testN / vN
   // scalaSource is the setting key that defines the directory for Scala sources
   // configuration gets the current configuration
-  lazy val shortSourceDir = scalaSource := baseDirectory.value / configuration.value.name
+  lazy val shortSourceDir = scalaSource := baseDirectory.value / configuration.value.name.toLowerCase
 
   lazy val runTest = Def.task {
     val proj = thisProjectRef.value // gives us the ProjectRef this task is defined in
@@ -281,8 +272,8 @@ object MimaBuild {
       (scalaInstance in core).value, // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
       streams.value,
       proj.project,
-      (packageBin in v1Config).value, // package the v1 sources and get the configuration used
-      (packageBin in v2Config).value, // same for v2
+      (packageBin in V1).value, // package the V1 sources and get the configuration used
+      (packageBin in V2).value, // same for V2
       baseDirectory.value,
       scalaVersion.value,
       null)
@@ -293,8 +284,9 @@ object MimaBuild {
     val confFile = baseDirectory.value / "test.conf"
     val conf = ConfigFactory.parseFile(confFile).resolve()
     val moduleBase = conf.getString("groupId") % conf.getString("artifactId")
-    val jar1 = getArtifact(moduleBase % conf.getString("v1"), ivySbt.value, streams.value)
-    val jar2 = getArtifact(moduleBase % conf.getString("v2"), ivySbt.value, streams.value)
+    val depRes: DependencyResolution = dependencyResolution.value
+    val jar1 = getArtifact(depRes, moduleBase % conf.getString("v1"), streams.value)
+    val jar2 = getArtifact(depRes, moduleBase % conf.getString("v2"), streams.value)
     streams.value.log.info(s"Comparing $jar1 -> $jar2")
     runCollectProblemsTest(
       (fullClasspath in (reporterFunctionalTests, Compile)).value, // the test classpath from the functionalTest project for the test
@@ -308,48 +300,66 @@ object MimaBuild {
       confFile.getAbsolutePath)
   }
 
-  def runCollectProblemsTest(cp: Keys.Classpath, si: ScalaInstance, streams: Keys.TaskStreams, testName: String, v1: File, v2: File, projectPath: File, scalaV: String, filterPath: String): Unit = {
+  def runCollectProblemsTest(
+      cp: Keys.Classpath,
+      si: ScalaInstance,
+      streams: Keys.TaskStreams,
+      testName: String,
+      v1: File,
+      v2: File,
+      projectPath: File,
+      scalaV: String,
+      filterPath: String,
+  ): Unit = {
     val urls = Attributed.data(cp).map(_.toURI.toURL).toArray
     val loader = new java.net.URLClassLoader(urls, si.loader)
 
     val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest")
-    val testRunner = testClass.newInstance().asInstanceOf[{
-      def runTest(testClasspath: Array[String], testName: String, oldJarPath: String, newJarPath: String, oraclePath: String, filterPath: String): Unit
+    val testRunner = testClass.newInstance().asInstanceOf[ {
+      def runTest(testClasspath: Array[String], testName: String, oldJarPath: String,
+          newJarPath: String, oraclePath: String, filterPath: String): Unit
     }]
 
     // Add the scala-library to the MiMa classpath used to run this test
-    val testClasspath = Attributed.data(cp).filter(_.getName endsWith "scala-library.jar").map(_.getAbsolutePath).toArray
+    val testClasspath = Attributed.data(cp).filter(_.getName endsWith "scala-library.jar")
+        .map(_.getAbsolutePath).toArray
 
     val oracleFile = {
       val p = projectPath / "problems.txt"
       val p212 = projectPath / "problems-2.12.txt"
-      if(!(scalaV.startsWith("2.10.") || scalaV.startsWith("2.11.")) && p212.exists) p212
+      if (!(scalaV.startsWith("2.10.") || scalaV.startsWith("2.11.")) && p212.exists) p212
       else p
     }
 
     try {
       import scala.language.reflectiveCalls
-      testRunner.runTest(testClasspath, testName, v1.getAbsolutePath, v2.getAbsolutePath, oracleFile.getAbsolutePath, filterPath)
+      testRunner.runTest(testClasspath, testName, v1.getAbsolutePath, v2.getAbsolutePath,
+        oracleFile.getAbsolutePath, filterPath)
       streams.log.info("Test '" + testName + "' succeeded.")
     } catch {
-      case e: Exception =>  sys.error(e.toString)
+      case e: Exception => sys.error(e.toString)
     }
   }
 
-  def getArtifact(m: ModuleID, ivy: IvySbt, s: TaskStreams): File = {
-    val moduleSettings = InlineConfiguration(
-      "dummy" % "test" % "version",
-      ModuleInfo("dummy-test-project-for-resolving"),
-      dependencies = Seq(m))
-    val module = new ivy.Module(moduleSettings)
-    val report = Deprecated.Inner.ivyUpdate(ivy)(module, s)
-    val optFile = (for {
-      config <- report.configurations
-      module <- config.modules
-      (artifact, file) <- module.artifacts
-      if artifact.name == m.name
-    } yield file).headOption
-    optFile getOrElse sys.error("Could not resolve artifact: " + m)
+  def getArtifact(depResolver: DependencyResolution, m: ModuleID, s: TaskStreams): File = {
+    val md = depResolver.wrapDependencyInModule(m)
+    val updateConf = UpdateConfiguration().withLogging(UpdateLogging.DownloadOnly)
+    depResolver.update(md, updateConf, UnresolvedWarningConfiguration(), s.log) match {
+      case Left(unresolvedWarning) =>
+        import sbt.util.ShowLines._
+        unresolvedWarning.lines.foreach(s.log.warn(_))
+        throw unresolvedWarning.resolveException
+      case Right(updateReport) =>
+        val allFiles =
+          for {
+            conf <- updateReport.configurations
+            module <- conf.modules
+            (artifact, file) <- module.artifacts
+            if artifact.name == m.name
+          } yield file
+
+        allFiles.headOption getOrElse sys.error(s"Could not resolve artifact: $m")
+    }
   }
 
   def allTests(f: ProjectRef => TaskKey[Unit]) = Def.taskDyn {
@@ -371,27 +381,9 @@ object MimaBuild {
   }
 
   def project(id: String, base: File, settings: Seq[Def.Setting[_]] = Nil) =
-    Project(id, base, settings = settings) disablePlugins(BintrayPlugin)
+    Project(id, base).settings(settings).disablePlugins(BintrayPlugin)
 }
 
 object DefineTestProjectsPlugin extends AutoPlugin {
   override def extraProjects = MimaBuild.tests ++ MimaBuild.integrationTests
-}
-
-// use the SI-7934 workaround to silence a deprecation warning on an sbt API
-// we have no choice but to call.  on the lack of any suitable alternative,
-// see https://gitter.im/sbt/sbt-dev?at=5616e2681b0e279854bd74a4 :
-// "it's my intention to eventually come up with a public API" says Eugene Y
-object Deprecated {
-  @deprecated("", "") class Inner {
-    def ivyUpdate(ivy: IvySbt)(module: ivy.Module, s: TaskStreams) =
-      IvyActions.update(
-        module,
-        new UpdateConfiguration(
-          retrieve = None,
-          missingOk = false,
-          logging = UpdateLogging.DownloadOnly),
-        s.log)
-  }
-  object Inner extends Inner
 }

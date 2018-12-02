@@ -7,7 +7,7 @@ addSbtPlugin("com.typesafe.sbt" % "sbt-git" % "1.0.0")
 // warning
 scalacOptions ++= Seq("-feature", "-deprecation")
 
-libraryDependencies += "org.scala-sbt" % "scripted-plugin" % sbtVersion.value
+libraryDependencies += "org.scala-sbt" %% "scripted-plugin" % sbtVersion.value
 
 libraryDependencies += "com.typesafe" % "config" % "1.3.3"
 
