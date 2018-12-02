@@ -1,16 +1,18 @@
 import sbt._
 import Keys._
 import com.typesafe.config.ConfigFactory
+import sbt.internal.inc.ScalaInstance
+import sbt.librarymanagement.{ DependencyResolution, UnresolvedWarningConfiguration, UpdateConfiguration }
+import sbt.plugins.SbtPlugin
 
 // I need to make these imported by default
 import Project.inConfig
 import Configurations.config
-import Build.data
 import bintray.BintrayPlugin
 import bintray.BintrayPlugin.autoImport._
 import com.typesafe.sbt.GitVersioning
 import com.typesafe.sbt.GitPlugin.autoImport._
-import ScriptedPlugin._
+import sbt.ScriptedPlugin.autoImport._
 import com.typesafe.sbt.pgp.PgpKeys.publishSigned
 import com.typesafe.tools.mima.plugin.MimaPlugin.autoImport._
 
@@ -104,11 +106,11 @@ object MimaBuild {
     project("root", file("."))
     aggregate(core, reporter, sbtplugin)
     settings(name := buildName,
-             publish := (),
-             publishLocal := (),
-             publishSigned := (),
-             sbtVersion in Global := "0.13.13", // Should be ThisBuild, but ^^ uses Global (incorrectly)
-             crossSbtVersions := List("0.13.13", "1.0.0"), // Should be ThisBuild, but Defaults defines it at project level..
+             publish := {},
+             publishLocal := {},
+             publishSigned := {},
+             sbtVersion in Global := "1.2.7", // Should be ThisBuild, but ^^ uses Global (incorrectly)
+             crossSbtVersions := List("0.13.18", "1.2.7"), // Should be ThisBuild, but Defaults defines it at project level..
              testScalaVersion in Global :=  sys.props.getOrElse("mima.testScalaVersion", scalaVersion.value)
     )
     enablePlugins(GitVersioning)
@@ -181,10 +183,9 @@ object MimaBuild {
 
   lazy val sbtplugin = (
     Project("sbtplugin", file("sbtplugin"))
+    enablePlugins(SbtPlugin)
     settings(name := "sbt-mima-plugin",
              commonSettings,
-             sbtPlugin := true,
-             scriptedSettings,
              libraryDependencies += Defaults.sbtPluginExtra(
                "com.dwijnand" % "sbt-compat" % "1.2.6",
                (sbtBinaryVersion in pluginCrossBuild).value,
@@ -195,7 +196,8 @@ object MimaBuild {
              scriptedBufferLog := false,
              // Scripted locally publishes sbt plugin and then runs test projects with locally published version.
              // Therefore we also need to locally publish dependent projects on scripted test run.
-             scripted := (scripted dependsOn (publishLocal in core, publishLocal in reporter)).evaluated)
+             scriptedDependencies := scriptedDependencies.dependsOn(publishLocal in core, publishLocal in reporter).value,
+    )
     dependsOn(reporter)
     settings(
       sbtPublishSettings,
@@ -295,8 +297,9 @@ object MimaBuild {
     val confFile = baseDirectory.value / "test.conf"
     val conf = ConfigFactory.parseFile(confFile).resolve()
     val moduleBase = conf.getString("groupId") % conf.getString("artifactId")
-    val jar1 = getArtifact(moduleBase % conf.getString("v1"), ivySbt.value, streams.value)
-    val jar2 = getArtifact(moduleBase % conf.getString("v2"), ivySbt.value, streams.value)
+    val depRes: DependencyResolution = dependencyResolution.value
+    val jar1 = getArtifact(depRes, moduleBase % conf.getString("v1"), streams.value)
+    val jar2 = getArtifact(depRes, moduleBase % conf.getString("v2"), streams.value)
     streams.value.log.info(s"Comparing $jar1 -> $jar2")
     runCollectProblemsTest(
       (fullClasspath in (reporterFunctionalTests, Compile)).value, // the test classpath from the functionalTest project for the test
@@ -338,20 +341,25 @@ object MimaBuild {
     }
   }
 
-  def getArtifact(m: ModuleID, ivy: IvySbt, s: TaskStreams): File = {
-    val moduleSettings = InlineConfiguration(
-      "dummy" % "test" % "version",
-      ModuleInfo("dummy-test-project-for-resolving"),
-      dependencies = Seq(m))
-    val module = new ivy.Module(moduleSettings)
-    val report = Deprecated.Inner.ivyUpdate(ivy)(module, s)
-    val optFile = (for {
-      config <- report.configurations
-      module <- config.modules
-      (artifact, file) <- module.artifacts
-      if artifact.name == m.name
-    } yield file).headOption
-    optFile getOrElse sys.error("Could not resolve artifact: " + m)
+  def getArtifact(depResolver: DependencyResolution, m: ModuleID, s: TaskStreams): File = {
+    val md = depResolver.wrapDependencyInModule(m)
+    val updateConf = UpdateConfiguration().withLogging(UpdateLogging.DownloadOnly)
+    depResolver.update(md, updateConf, UnresolvedWarningConfiguration(), s.log) match {
+      case Left(unresolvedWarning) =>
+        import sbt.util.ShowLines._
+        unresolvedWarning.lines.foreach(s.log.warn(_))
+        throw unresolvedWarning.resolveException
+      case Right(updateReport) =>
+        val allFiles =
+          for {
+            conf <- updateReport.configurations
+            module <- conf.modules
+            (artifact, file) <- module.artifacts
+            if artifact.name == m.name
+          } yield file
+
+        allFiles.headOption getOrElse sys.error(s"Could not resolve artifact: $m")
+    }
   }
 
   def allTests(f: ProjectRef => TaskKey[Unit]) = Def.taskDyn {
@@ -378,22 +386,4 @@ object MimaBuild {
 
 object DefineTestProjectsPlugin extends AutoPlugin {
   override def extraProjects = MimaBuild.tests ++ MimaBuild.integrationTests
-}
-
-// use the SI-7934 workaround to silence a deprecation warning on an sbt API
-// we have no choice but to call.  on the lack of any suitable alternative,
-// see https://gitter.im/sbt/sbt-dev?at=5616e2681b0e279854bd74a4 :
-// "it's my intention to eventually come up with a public API" says Eugene Y
-object Deprecated {
-  @deprecated("", "") class Inner {
-    def ivyUpdate(ivy: IvySbt)(module: ivy.Module, s: TaskStreams) =
-      IvyActions.update(
-        module,
-        new UpdateConfiguration(
-          retrieve = None,
-          missingOk = false,
-          logging = UpdateLogging.DownloadOnly),
-        s.log)
-  }
-  object Inner extends Inner
 }
