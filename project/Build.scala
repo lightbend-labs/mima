@@ -247,8 +247,8 @@ object MimaBuild {
   lazy val testProjectSettings =
     commonSettings ++ // normal project defaults; can be trimmed later- test and run aren't needed, for example.
     Seq(scalaVersion := (testScalaVersion in Global).value) ++
-    inConfig(v1Config)(perConfig) ++ // add compile/package for the v1 sources
-    inConfig(v2Config)(perConfig) :+ // add compile/package for the v2 sources
+    inConfig(V1)(perConfig) ++ // add compile/package for the V1 sources
+    inConfig(V2)(perConfig) :+ // add compile/package for the V2 sources
     (functionalTests := runTest.value) // add the functional-tests task
   lazy val integrationTestProjectSettings =
     commonSettings ++
@@ -263,18 +263,18 @@ object MimaBuild {
   // Also the base project has dependencies that don't resolve under newer versions of scala.
   lazy val testScalaVersion = SettingKey[String]("test-scala-version", "The scala version to use to compile the test classes")
 
-  // define configurations for the v1 and v2 sources
-  lazy val v1Config = config("v1") extend Compile
-  lazy val v2Config = config("v2") extend Compile
+  // define configurations for the V1 and V2 sources
+  val V1 = config("V1") extend Compile
+  val V2 = config("V2") extend Compile
 
-  // these are settings defined for each configuration (v1 and v2).
-  // We use the normal per-configuration settings, but modify the source directory to be just v1/ instead of src/v1/scala/
+  // these are settings defined for each configuration (V1 and V2).
+  // We use the normal per-configuration settings, but modify the source directory to be just V1/ instead of src/V1/scala/
   lazy val perConfig = Defaults.configSettings :+ shortSourceDir
 
   // sets the source directory in this configuration to be: testN / vN
   // scalaSource is the setting key that defines the directory for Scala sources
   // configuration gets the current configuration
-  lazy val shortSourceDir = scalaSource := baseDirectory.value / configuration.value.name
+  lazy val shortSourceDir = scalaSource := baseDirectory.value / configuration.value.name.toLowerCase
 
   lazy val runTest = Def.task {
     val proj = thisProjectRef.value // gives us the ProjectRef this task is defined in
@@ -283,8 +283,8 @@ object MimaBuild {
       (scalaInstance in core).value, // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
       streams.value,
       proj.project,
-      (packageBin in v1Config).value, // package the v1 sources and get the configuration used
-      (packageBin in v2Config).value, // same for v2
+      (packageBin in V1).value, // package the V1 sources and get the configuration used
+      (packageBin in V2).value, // same for V2
       baseDirectory.value,
       scalaVersion.value,
       null)
