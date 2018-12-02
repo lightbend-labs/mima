@@ -19,7 +19,7 @@ object BuildSettings {
   val buildName = "mima"
   val buildOrganization = "com.typesafe"
 
-  val commonSettings = Defaults.coreDefaultSettings ++ Seq (
+  val commonSettings = Seq(
       organization := buildOrganization,
       scalaVersion := sys.props.getOrElse("mima.buildScalaVersion",
         (CrossVersion partialVersion (sbtVersion in pluginCrossBuild).value match {
@@ -117,8 +117,9 @@ object MimaBuild {
   val scalaPartV = Def setting (CrossVersion partialVersion scalaVersion.value)
 
   lazy val core = (
-    project("core", file("core"), settings = commonSettings)
+    project("core", file("core"))
     settings(
+      commonSettings,
       name := buildName + "-core",
       libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       libraryDependencies += scalatest,
@@ -146,12 +147,13 @@ object MimaBuild {
   )
 
   lazy val reporter = (
-    project("reporter", file("reporter"), settings = commonSettings)
-    settings(libraryDependencies += typesafeConfig,
-             name := buildName + "-reporter")
+    project("reporter", file("reporter"))
     dependsOn(core)
-    settings(sonatypePublishSettings:_*)
     settings(
+      commonSettings,
+      libraryDependencies += typesafeConfig,
+      name := buildName + "-reporter",
+      sonatypePublishSettings,
       // add task functional-tests that depends on all functional tests
       functionalTests := allTests(functionalTests in _).value,
       test in IntegrationTest := allTests(test in IntegrationTest in _).value,
@@ -178,10 +180,11 @@ object MimaBuild {
   )
 
   lazy val sbtplugin = (
-    Project("sbtplugin", file("sbtplugin"), settings = commonSettings)
-    settings(scriptedSettings)
+    Project("sbtplugin", file("sbtplugin"))
     settings(name := "sbt-mima-plugin",
+             commonSettings,
              sbtPlugin := true,
+             scriptedSettings,
              libraryDependencies += Defaults.sbtPluginExtra(
                "com.dwijnand" % "sbt-compat" % "1.2.6",
                (sbtBinaryVersion in pluginCrossBuild).value,
@@ -222,10 +225,9 @@ object MimaBuild {
     )
   )
 
-  lazy val reporterFunctionalTests = project("reporter-functional-tests",
-  										file("reporter") / "functional-tests" ,
-  										settings = commonSettings)
-  										.dependsOn(core, reporter)
+  lazy val reporterFunctionalTests = project("reporter-functional-tests", file("reporter") / "functional-tests")
+    .dependsOn(core, reporter)
+    .settings(commonSettings)
 
   // select all testN directories.
   val bases = (file("reporter") / "functional-tests" / "src" / "test") *
@@ -239,8 +241,8 @@ object MimaBuild {
 
   // defines a Project for the given base directory (for example, functional-tests/test1)
   // Its name is the directory name (test1) and it has compile+package tasks for sources in v1/ and v2/
-  def testProject(base: File) = project("test-" + base.name, base, settings = testProjectSettings).configs(v1Config, v2Config)
-  def integrationTestProject(base: File) = project("it-" + base.name, base, settings = integrationTestProjectSettings)
+  def testProject(base: File) = project("test-" + base.name, base).settings(testProjectSettings).configs(V1, V2)
+  def integrationTestProject(base: File) = project("it-" + base.name, base).settings(integrationTestProjectSettings)
 
   lazy val testProjectSettings =
     commonSettings ++ // normal project defaults; can be trimmed later- test and run aren't needed, for example.
@@ -371,7 +373,7 @@ object MimaBuild {
   }
 
   def project(id: String, base: File, settings: Seq[Def.Setting[_]] = Nil) =
-    Project(id, base, settings = settings) disablePlugins(BintrayPlugin)
+    Project(id, base).settings(settings).disablePlugins(BintrayPlugin)
 }
 
 object DefineTestProjectsPlugin extends AutoPlugin {
