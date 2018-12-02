@@ -5,15 +5,12 @@ import sbt.internal.inc.ScalaInstance
 import sbt.librarymanagement.{ DependencyResolution, UnresolvedWarningConfiguration, UpdateConfiguration }
 import sbt.plugins.SbtPlugin
 
-// I need to make these imported by default
-import Project.inConfig
-import Configurations.config
 import bintray.BintrayPlugin
 import bintray.BintrayPlugin.autoImport._
 import com.typesafe.sbt.GitVersioning
 import com.typesafe.sbt.GitPlugin.autoImport._
 import sbt.ScriptedPlugin.autoImport._
-import com.typesafe.sbt.pgp.PgpKeys.publishSigned
+import com.typesafe.sbt.SbtPgp.autoImport.PgpKeys.publishSigned
 import com.typesafe.tools.mima.plugin.MimaPlugin.autoImport._
 
 object BuildSettings {
@@ -31,7 +28,7 @@ object BuildSettings {
         })
       ),
       git.gitTagToVersionNumber := { tag: String =>
-        if(tag matches "[0.9]+\\..*") Some(tag)
+        if (tag matches "[0.9]+\\..*") Some(tag)
         else None
       },
       git.useGitDescribe := true,
@@ -69,7 +66,7 @@ object BuildSettings {
     ),
     // Maven central cannot allow other repos.  We're ok here because the artifacts we
     // we use externally are *optional* dependencies.
-    pomIncludeRepository := { x => false },
+    pomIncludeRepository := { _ => false },
     // Maven central wants some extra metadata to keep things 'clean'.
     pomExtra := (
       <scm>
@@ -91,8 +88,6 @@ object BuildSettings {
 }
 
 object Dependencies {
-  import BuildSettings._
-
   val typesafeConfig = "com.typesafe" % "config" % "1.3.3"
   val scalatest = "org.scalatest" %% "scalatest" % "3.0.6-SNAP5" % Test
 
@@ -313,31 +308,44 @@ object MimaBuild {
       confFile.getAbsolutePath)
   }
 
-  def runCollectProblemsTest(cp: Keys.Classpath, si: ScalaInstance, streams: Keys.TaskStreams, testName: String, v1: File, v2: File, projectPath: File, scalaV: String, filterPath: String): Unit = {
+  def runCollectProblemsTest(
+      cp: Keys.Classpath,
+      si: ScalaInstance,
+      streams: Keys.TaskStreams,
+      testName: String,
+      v1: File,
+      v2: File,
+      projectPath: File,
+      scalaV: String,
+      filterPath: String,
+  ): Unit = {
     val urls = Attributed.data(cp).map(_.toURI.toURL).toArray
     val loader = new java.net.URLClassLoader(urls, si.loader)
 
     val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest")
-    val testRunner = testClass.newInstance().asInstanceOf[{
-      def runTest(testClasspath: Array[String], testName: String, oldJarPath: String, newJarPath: String, oraclePath: String, filterPath: String): Unit
+    val testRunner = testClass.newInstance().asInstanceOf[ {
+      def runTest(testClasspath: Array[String], testName: String, oldJarPath: String,
+          newJarPath: String, oraclePath: String, filterPath: String): Unit
     }]
 
     // Add the scala-library to the MiMa classpath used to run this test
-    val testClasspath = Attributed.data(cp).filter(_.getName endsWith "scala-library.jar").map(_.getAbsolutePath).toArray
+    val testClasspath = Attributed.data(cp).filter(_.getName endsWith "scala-library.jar")
+        .map(_.getAbsolutePath).toArray
 
     val oracleFile = {
       val p = projectPath / "problems.txt"
       val p212 = projectPath / "problems-2.12.txt"
-      if(!(scalaV.startsWith("2.10.") || scalaV.startsWith("2.11.")) && p212.exists) p212
+      if (!(scalaV.startsWith("2.10.") || scalaV.startsWith("2.11.")) && p212.exists) p212
       else p
     }
 
     try {
       import scala.language.reflectiveCalls
-      testRunner.runTest(testClasspath, testName, v1.getAbsolutePath, v2.getAbsolutePath, oracleFile.getAbsolutePath, filterPath)
+      testRunner.runTest(testClasspath, testName, v1.getAbsolutePath, v2.getAbsolutePath,
+        oracleFile.getAbsolutePath, filterPath)
       streams.log.info("Test '" + testName + "' succeeded.")
     } catch {
-      case e: Exception =>  sys.error(e.toString)
+      case e: Exception => sys.error(e.toString)
     }
   }
 
