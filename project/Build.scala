@@ -20,13 +20,7 @@ object BuildSettings {
 
   val commonSettings = Seq(
       organization := buildOrganization,
-      scalaVersion := sys.props.getOrElse("mima.buildScalaVersion",
-        (CrossVersion partialVersion (sbtVersion in pluginCrossBuild).value match {
-          case Some((0, 13)) => "2.10.7"
-          case Some((1, _))  => "2.12.7"
-          case _             => sys error s"Unhandled sbt version ${(sbtVersion in pluginCrossBuild).value}"
-        })
-      ),
+      scalaVersion := sys.props.getOrElse("mima.buildScalaVersion", "2.12.7"),
       git.gitTagToVersionNumber := { tag: String =>
         if (tag matches "[0.9]+\\..*") Some(tag)
         else None
@@ -104,8 +98,6 @@ object MimaBuild {
              publish := {},
              publishLocal := {},
              publishSigned := {},
-             sbtVersion in Global := "1.2.7", // Should be ThisBuild, but ^^ uses Global (incorrectly)
-             crossSbtVersions := List("0.13.18", "1.2.7"), // Should be ThisBuild, but Defaults defines it at project level..
              testScalaVersion in Global :=  sys.props.getOrElse("mima.testScalaVersion", scalaVersion.value)
     )
     enablePlugins(GitVersioning)
