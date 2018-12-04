@@ -34,7 +34,7 @@ env:
     - TEST_COMMAND="-Dmima.buildScalaVersion=2.13.0-M5 -Dmima.testScalaVersion=2.13.0-M5 testFunctional"
 
 script:
-  - sbt $TEST_COMMAND
+  - sbt "$TEST_COMMAND"
 
 before_cache:
   - find $HOME/.sbt -name "*.lock" | xargs rm
