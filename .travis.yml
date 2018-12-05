@@ -20,11 +20,7 @@ matrix:
 env:
   matrix:
     - TEST_COMMAND="(-Dmima.buildScalaVersion=2.12.7 'scripted sbt-mima-plugin/*1of9')"
-    - TEST_COMMAND='(-Dmima.buildScalaVersion=2.12.7 'scripted sbt-mima-plugin/*1of9')'
-    - TEST_COMMAND="'(-Dmima.buildScalaVersion=2.12.7 'scripted sbt-mima-plugin/*1of9')'"
-    - TEST_COMMAND='"(-Dmima.buildScalaVersion=2.12.7 'scripted sbt-mima-plugin/*1of9')"'
     - "'TEST_COMMAND=(-Dmima.buildScalaVersion=2.12.7 'scripted sbt-mima-plugin/*1of9')'"
-    - '"TEST_COMMAND=(-Dmima.buildScalaVersion=2.12.7 'scripted sbt-mima-plugin/*1of9')"'
 
 script:
   - sbt -v "${TEST_COMMAND[@]}"
