@@ -1,1 +1,0 @@
-../../../../../../scala-2.12/com/typesafe/tools/mima/core/package.scala
