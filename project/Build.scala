@@ -129,7 +129,13 @@ object MimaBuild {
 
           // Add support for versions with less segments (#212)
           ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.warn"),
-          ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.error")
+          ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.error"),
+
+          // Removed because defined in terms of Option#get partial function
+          ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.ClassInfo.ObjectClass"),
+          ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.Config.baseDefinitions"),
+          ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.Definitions.lib"),
+          ProblemFilters.exclude[IncompatibleMethTypeProblem]("com.typesafe.tools.mima.core.Definitions.this"),
         )
       }
     )

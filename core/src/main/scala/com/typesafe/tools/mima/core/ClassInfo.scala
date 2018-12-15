@@ -5,11 +5,6 @@ import scala.reflect.NameTransformer
 
 object ClassInfo {
   def formatClassName(str: String) = NameTransformer.decode(str).replace('$', '#')
-
-  /** We assume there can be only one java.lang.Object class, and that comes from the configuration
-   *  class path.
-   */
-  lazy val ObjectClass = Config.baseDefinitions.ObjectClass
 }
 
 /** A placeholder class info for a class that is not found on the classpath or in a given
@@ -18,7 +13,7 @@ object ClassInfo {
 class SyntheticClassInfo(owner: PackageInfo, override val bytecodeName: String) extends ClassInfo(owner) {
   loaded = true
   def file: AbstractFile = throw new UnsupportedOperationException
-  override lazy val superClasses = Set(ClassInfo.ObjectClass)
+  override lazy val superClasses = Set(owner.definitions.ObjectClass)
   override lazy val allTraits = Set.empty[ClassInfo]
   override lazy val allInterfaces: Set[ClassInfo] = Set.empty[ClassInfo]
   override def canEqual(other: Any) = other.isInstanceOf[SyntheticClassInfo]
@@ -119,7 +114,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
   def isScala_=(x: Boolean) = _isScala = x
 
   lazy val superClasses: Set[ClassInfo] =
-    if (this == ClassInfo.ObjectClass) Set.empty
+    if (this == owner.definitions.ObjectClass) Set.empty
     else superClass.superClasses + superClass
 
   def lookupClassFields(name: String): Iterator[MemberInfo] =
@@ -206,12 +201,12 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
 
   /** All traits inherited directly or indirectly by this class */
   lazy val allTraits: Set[ClassInfo] =
-    if (this == ClassInfo.ObjectClass) Set.empty
+    if (this == owner.definitions.ObjectClass) Set.empty
     else superClass.allTraits ++ directTraits
 
   /** All interfaces inherited directly or indirectly by this class */
   lazy val allInterfaces: Set[ClassInfo] =
-    if (this == ClassInfo.ObjectClass) Set.empty
+    if (this == owner.definitions.ObjectClass) Set.empty
     else superClass.allInterfaces ++ interfaces ++ (interfaces flatMap (_.allInterfaces))
 
   private def unimplemented(sel: ClassInfo => Iterable[MemberInfo]): List[MemberInfo] = {

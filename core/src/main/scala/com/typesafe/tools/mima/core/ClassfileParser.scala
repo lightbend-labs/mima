@@ -143,7 +143,7 @@ abstract class ClassfileParser(definitions: Definitions) {
     }
 
     def getSuperClass(index: Int): ClassInfo =
-      if (index == 0) ClassInfo.ObjectClass else getClassInfo(index)
+      if (index == 0) definitions.ObjectClass else getClassInfo(index)
 
     /** Return a name string and a type string at the given index. If the type is a method
      *  type, a dummy symbol is created in 'ownerTpe', which is used as the

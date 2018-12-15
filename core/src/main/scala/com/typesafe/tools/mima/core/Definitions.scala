@@ -8,7 +8,7 @@ package com.typesafe.tools.mima.core
  *  Each version of the input jar file has an instance of Definitions, used
  *  to resolve type names during classfile parsing.
  */
-class Definitions(val lib: Option[CompilerClassPath], val classPath: CompilerClassPath) {
+class Definitions(val cp: CompilerClassPath, val classPath: CompilerClassPath) {
   import com.typesafe.tools.mima.core.util.log.ConsoleLogging._
 
   lazy val root = definitionsPackageInfo(this)
@@ -20,7 +20,6 @@ class Definitions(val lib: Option[CompilerClassPath], val classPath: CompilerCla
       /** Needed to fetch classes located in the root (empty package) */
       override lazy val classes = Definitions.this.root.classes
     }
-    val cp = lib.get
     pkg.packages ++= definitionsTargetPackages(pkg, cp, this)
     debugLog("added packages to <root>: %s".format(pkg.packages.keys.mkString(", ")))
     pkg
@@ -94,6 +93,6 @@ class Definitions(val lib: Option[CompilerClassPath], val classPath: CompilerCla
   }
 
   override def toString = {
-    "definitions:\n\tlib: %s\n%s".format(lib, asClassPathString(classPath))
+    "definitions:\n\tcp: %s\n%s".format(cp, asClassPathString(classPath))
   }
 }

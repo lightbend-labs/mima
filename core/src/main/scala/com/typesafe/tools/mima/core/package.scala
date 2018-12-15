@@ -14,10 +14,9 @@ package object core {
     AggregateClassPath.createAggregate(new PathResolver(Config.settings).containers: _*)
 
   def definitionsPackageInfo(defs: Definitions): ConcretePackageInfo = {
-      val elems = defs.lib.toList :+ defs.classPath
       new ConcretePackageInfo(
         null,
-        AggregateClassPath.createAggregate(elems: _*),
+        AggregateClassPath.createAggregate(defs.cp, defs.classPath),
         ClassPath.RootPackage,
         defs)
     }

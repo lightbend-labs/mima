@@ -16,8 +16,6 @@ object Config {
 
   def error(msg: String) = System.err.println(msg)
 
-  lazy val baseDefinitions = new Definitions(None, baseClassPath)
-
   def fatal(msg: String): Nothing = {
     error(msg)
     System.exit(-1)

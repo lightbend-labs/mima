@@ -22,7 +22,7 @@ object PackageInfo {
 import com.typesafe.tools.mima.core.PackageInfo._
 
 class SyntheticPackageInfo(owner: PackageInfo, val name: String) extends PackageInfo(owner) {
-  def definitions: Definitions = sys.error("Called definitions on synthetic package")
+  def definitions: Definitions = owner.definitions
   lazy val packages = mutable.Map.empty[String, PackageInfo]
   lazy val classes = mutable.Map.empty[String, ClassInfo]
 }

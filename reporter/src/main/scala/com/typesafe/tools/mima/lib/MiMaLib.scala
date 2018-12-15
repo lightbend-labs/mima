@@ -27,8 +27,8 @@ class MiMaLib(classpath: CompilerClassPath, val log: Logging = ConsoleLogging) {
   }
 
   private def root(name: String): Definitions = classPath(name) match {
-    case cp @ Some(_) => new Definitions(cp, classpath)
-    case None         => fatal("not a directory or jar file: " + name)
+    case Some(cp) => new Definitions(cp, classpath)
+    case None     => fatal("not a directory or jar file: " + name)
   }
 
   private val problems = new ListBuffer[Problem]
