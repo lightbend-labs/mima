@@ -29,6 +29,6 @@ class ProblemFiltersSpec extends WordSpec with TableDrivenPropertyChecks with Ma
 object ProblemFiltersSpec {
   def problem(name: String) = new TemplateProblem(NoClass) {
     override def description: (String) => String = ???
-    override def matchName: Some[String] = Some(name)
+    override def matchName = name
   }
 }

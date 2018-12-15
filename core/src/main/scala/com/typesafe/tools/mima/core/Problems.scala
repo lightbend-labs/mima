@@ -1,33 +1,18 @@
 package com.typesafe.tools.mima.core
 
-trait ProblemRef {
+sealed abstract class Problem {
   type Ref
   def ref: Ref
   def fileName: String
   def referredMember: String
 
   // name that can be used to write a matching filter
-  def matchName: Option[String] = None
+  def matchName: String
 
   // description of how to make a filter rule
-  def howToFilter: Option[String] = matchName map { name =>
-    """ProblemFilters.exclude[%s]("%s")""".format(this.getClass.getSimpleName, name)
-  }
-}
+  def howToFilter: String =
+    """ProblemFilters.exclude[%s]("%s")""".format(this.getClass.getSimpleName, matchName)
 
-trait TemplateRef extends ProblemRef {
-  type Ref = ClassInfo
-  def fileName: String = ref.sourceFileName
-  def referredMember: String = ref.shortDescription
-}
-
-trait MemberRef extends ProblemRef {
-  type Ref = MemberInfo
-  def fileName: String = ref.owner.sourceFileName
-  def referredMember: String = ref.fullName
-}
-
-sealed abstract class Problem extends ProblemRef {
   // each description accepts a name for the affected files,
   // and generates the corresponding diagnostic message.
   // For backward checking, the affected version is "current",
@@ -36,12 +21,18 @@ sealed abstract class Problem extends ProblemRef {
   def description: String => String
 }
 
-abstract class TemplateProblem(override val ref: ClassInfo) extends Problem with TemplateRef {
-  override def matchName = Some(ref.fullName)
+abstract class TemplateProblem(override val ref: ClassInfo) extends Problem {
+  type Ref = ClassInfo
+  def fileName: String = ref.sourceFileName
+  def referredMember: String = ref.shortDescription
+  def matchName = ref.fullName
 }
 
-abstract class MemberProblem(override val ref: MemberInfo) extends Problem with MemberRef {
-  override def matchName = Some(referredMember)
+abstract class MemberProblem(override val ref: MemberInfo) extends Problem {
+  type Ref = MemberInfo
+  def fileName: String = ref.owner.sourceFileName
+  def referredMember: String = ref.fullName
+  def matchName = referredMember
 }
 
 case class MissingFieldProblem(oldfld: MemberInfo) extends MemberProblem(oldfld) {

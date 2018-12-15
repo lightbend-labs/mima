@@ -129,7 +129,17 @@ object MimaBuild {
 
           // Add support for versions with less segments (#212)
           ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.warn"),
-          ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.error")
+          ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.error"),
+
+          // Remove ProblemRef/TemplateRef/MemberRef from parent types
+          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.core.MemberRef"),
+          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.core.ProblemRef"),
+          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.core.TemplateRef"),
+          ProblemFilters.exclude[MissingTypesProblem]("com.typesafe.tools.mima.core.*Problem"),
+          // and then simplified matchName/howToFilter to just String
+          ProblemFilters.exclude[IncompatibleResultTypeProblem]("com.typesafe.tools.mima.core.*Problem.matchName"),
+          ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.Problem.matchName"),
+          ProblemFilters.exclude[IncompatibleResultTypeProblem]("com.typesafe.tools.mima.core.Problem.howToFilter"),
         )
       }
     )

@@ -74,7 +74,7 @@ object SbtMima {
 
     // TODO - Line wrapping an other magikz
     def prettyPrint(p: core.Problem, affected: String): String = {
-      " * " + p.description(affected) + p.howToFilter.map("\n   filter with: " + _).getOrElse("")
+      " * " + p.description(affected) + p.howToFilter.map("\n   filter with: " + _)
     }
 
     log.info(s"$projectName: found ${backErrors.size+forwErrors.size} potential binary incompatibilities while checking against $module $filteredNote")
