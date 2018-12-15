@@ -66,8 +66,10 @@ object SbtMima {
     // filters * found is n-squared, it's fixable in principle by special-casing known
     // filter types or something, not worth it most likely...
 
-    val backErrors = backward filter isReported(module, filters, backwardFilters)(log, projectName)
-    val forwErrors = forward filter isReported(module, filters, forwardFilters)(log, projectName)
+    val version = module.revision
+
+    val backErrors = backward filter ProblemReporting.isReported(version, filters, backwardFilters)(log, projectName, "current")
+    val forwErrors = forward filter ProblemReporting.isReported(version, filters, forwardFilters)(log, projectName, "other")
 
     val filteredCount = backward.size + forward.size - backErrors.size - forwErrors.size
     val filteredNote = if (filteredCount > 0) " (filtered " + filteredCount + ")" else ""
@@ -85,9 +87,6 @@ object SbtMima {
     }
     if (failOnProblem && (backErrors.nonEmpty || forwErrors.nonEmpty)) sys.error(projectName + ": Binary compatibility check failed!")
   }
-
-  private[mima] def isReported(module: ModuleID, filters: Seq[ProblemFilter], versionedFilters: Map[String, Seq[ProblemFilter]])(log: Logging, projectName: String)(problem: Problem) =
-    ProblemReporting.isReported(module.revision, filters, versionedFilters)(log, projectName)(problem)
 
   /** Resolves an artifact representing the previous abstract binary interface
    *  for testing.

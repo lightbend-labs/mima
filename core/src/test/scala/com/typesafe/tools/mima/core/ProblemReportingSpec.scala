@@ -41,9 +41,9 @@ class ProblemReportingSpec extends WordSpec with Matchers {
   }
 
   private def isReported(moduleVersion: String, filters: Seq[ProblemFilter]) =
-    ProblemReporting.isReported(moduleVersion, filters, Map.empty)(NoOpLogger, "test")(MissingFieldProblem(NoMemberInfo))
+    ProblemReporting.isReported(moduleVersion, filters, Map.empty)(NoOpLogger, "test", "current")(FinalClassProblem(SafeNoClass))
   private def isReported(moduleVersion: String, versionedFilters: Map[String, Seq[ProblemFilter]]) =
-    ProblemReporting.isReported(moduleVersion, Seq.empty, versionedFilters)(NoOpLogger, "test")(MissingFieldProblem(NoMemberInfo))
+    ProblemReporting.isReported(moduleVersion, Seq.empty, versionedFilters)(NoOpLogger, "test", "current")(FinalClassProblem(SafeNoClass))
 
 }
 
@@ -55,7 +55,10 @@ object ProblemReportingSpec {
     override def error(str: String): Unit = ()
   }
 
-  final val NoMemberInfo = new MemberInfo(NoClass, "", 0, "")
+  object SafeNoClass extends SyntheticClassInfo(NoPackageInfo, "<noclass>") {
+    override def canEqual(other: Any) = other.isInstanceOf[NoClass.type]
+    override lazy val superClasses = Set.empty[ClassInfo]
+  }
 
   final val AllMatchingFilter = (_: Problem) => false
 }
