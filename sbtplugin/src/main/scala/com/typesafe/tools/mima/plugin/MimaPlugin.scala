@@ -3,7 +3,6 @@ package plugin
 
 import sbt._
 import sbt.Keys._
-import sbt.compat._
 
 /** Sbt plugin for using MiMa. */
 object MimaPlugin extends AutoPlugin {
