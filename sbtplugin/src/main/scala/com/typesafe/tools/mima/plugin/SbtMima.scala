@@ -40,7 +40,7 @@ object SbtMima {
   /** Runs MiMa and returns a two lists of potential binary incompatibilities,
       the first for backward compatibility checking, and the second for forward checking. */
   def runMima(prev: File, curr: File, cp: sbt.Keys.Classpath,
-              dir: String, log: Logging): (List[core.Problem], List[core.Problem]) = {
+              dir: String, log: Logging): (List[Problem], List[Problem]) = {
     // MiMaLib collects problems to a mutable buffer, therefore we need a new instance every time
     (dir match {
        case "backward" | "backwards" | "both" => makeMima(cp, log).collectProblems(prev.getAbsolutePath, curr.getAbsolutePath)
@@ -56,38 +56,37 @@ object SbtMima {
    *  @param failOnProblem if true, fails the build on binary compatibility errors.
    */
   def reportModuleErrors(module: ModuleID,
-                   backward: List[core.Problem],
-                   forward: List[core.Problem],
+                   backward: List[Problem],
+                   forward: List[Problem],
                    failOnProblem: Boolean,
-                   filters: Seq[core.ProblemFilter],
-                   backwardFilters: Map[String, Seq[core.ProblemFilter]],
-                   forwardFilters: Map[String, Seq[core.ProblemFilter]],
+                   filters: Seq[ProblemFilter],
+                   backwardFilters: Map[String, Seq[ProblemFilter]],
+                   forwardFilters: Map[String, Seq[ProblemFilter]],
                          log: Logging, projectName: String): Unit = {
     // filters * found is n-squared, it's fixable in principle by special-casing known
     // filter types or something, not worth it most likely...
 
-    val backErrors = backward filter isReported(module, filters, backwardFilters)(log, projectName)
-    val forwErrors = forward filter isReported(module, filters, forwardFilters)(log, projectName)
+    val version = module.revision
+
+    val backErrors = backward filter ProblemReporting.isReported(version, filters, backwardFilters)(log, projectName, "current")
+    val forwErrors = forward filter ProblemReporting.isReported(version, filters, forwardFilters)(log, projectName, "other")
 
     val filteredCount = backward.size + forward.size - backErrors.size - forwErrors.size
     val filteredNote = if (filteredCount > 0) " (filtered " + filteredCount + ")" else ""
 
     // TODO - Line wrapping an other magikz
-    def prettyPrint(p: core.Problem, affected: String): String = {
+    def prettyPrint(p: Problem, affected: String): String = {
       " * " + p.description(affected) + p.howToFilter.map("\n   filter with: " + _).getOrElse("")
     }
 
     log.info(s"$projectName: found ${backErrors.size+forwErrors.size} potential binary incompatibilities while checking against $module $filteredNote")
-    ((backErrors map {p: core.Problem => prettyPrint(p, "current")}) ++
-     (forwErrors map {p: core.Problem => prettyPrint(p, "other")})) foreach { p =>
+    ((backErrors map {p: Problem => prettyPrint(p, "current")}) ++
+     (forwErrors map {p: Problem => prettyPrint(p, "other")})) foreach { p =>
       if (failOnProblem) log.error(p)
       else log.warn(p)
     }
     if (failOnProblem && (backErrors.nonEmpty || forwErrors.nonEmpty)) sys.error(projectName + ": Binary compatibility check failed!")
   }
-
-  private[mima] def isReported(module: ModuleID, filters: Seq[core.ProblemFilter], versionedFilters: Map[String, Seq[core.ProblemFilter]])(log: Logging, projectName: String)(problem: core.Problem) =
-    ProblemReporting.isReported(module.revision, filters, versionedFilters)(log, projectName)(problem)
 
   /** Resolves an artifact representing the previous abstract binary interface
    *  for testing.

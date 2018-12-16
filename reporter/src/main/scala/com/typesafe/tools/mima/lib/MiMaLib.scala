@@ -35,7 +35,7 @@ class MiMaLib(classpath: CompilerClassPath, val log: Logging = ConsoleLogging) {
 
   private def raise(problem: Problem) = {
     problems += problem
-    log.debugLog("Problem: " + problem.description)
+    log.debugLog("Problem: " + problem.description("new"))
   }
 
 

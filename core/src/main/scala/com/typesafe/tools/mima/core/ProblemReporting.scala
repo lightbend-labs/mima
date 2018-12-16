@@ -9,7 +9,7 @@ object ProblemReporting {
       version: String,
       filters: Seq[ProblemFilter],
       versionedFilters: Map[String, Seq[ProblemFilter]]
-  )(log: Logging, projectName: String)(problem: Problem): Boolean = {
+  )(log: Logging, projectName: String, classification: String)(problem: Problem): Boolean = {
     // version string "x.y.z" is converted to an Int tuple (x, y, z) for comparison
     val versionOrdering = Ordering[(Int, Int, Int)].on { version: String =>
       val ModuleVersion = """(\d+)\.?(\d+)?\.?(.*)?""".r
@@ -20,12 +20,12 @@ object ProblemReporting {
 
     (versionedFilters.collect {
       // get all filters that apply to given module version or any version after it
-      case f @ (version2, versionFilters) if versionOrdering.gteq(version2, version) => versionFilters
+      case (version2, versionFilters) if versionOrdering.gteq(version2, version) => versionFilters
     }.flatten ++ filters).forall { f =>
       if (f(problem)) {
         true
       } else {
-        log.debugLog(projectName + ": filtered out: " + problem.description + "\n  filtered by: " + f)
+        log.debugLog(projectName + ": filtered out: " + problem.description(classification) + "\n  filtered by: " + f)
         false
       }
     }
