@@ -3,6 +3,7 @@ package com.typesafe.tools.mima.core
 import scala.collection.mutable
 import scala.annotation.tailrec
 import scala.tools.nsc.io.AbstractFile
+import scala.tools.nsc.util.ClassPath
 
 object PackageInfo {
   val classExtension = ".class"
@@ -31,7 +32,7 @@ object NoPackageInfo extends SyntheticPackageInfo(null, "<no package>")
 
 /** A concrete package. cp should be a directory classpath.
  */
-class ConcretePackageInfo(owner: PackageInfo, cp: CompilerClassPath, val pkg: String, val defs: Definitions) extends PackageInfo(owner) {
+class ConcretePackageInfo(owner: PackageInfo, cp: ClassPath, val pkg: String, val defs: Definitions) extends PackageInfo(owner) {
   def definitions = defs
   def name = pkg.split('.').last
   private def classFiles: IndexedSeq[AbstractFile] = classFilesFrom(cp, pkg)

@@ -1,11 +1,12 @@
 package com.typesafe.tools.mima.core
 
 import scala.tools.nsc.io.{Directory, Path}
+import scala.tools.nsc.util.ClassPath
 
 object Config {
 
   var settings: Settings = _
-  var baseClassPath: CompilerClassPath = _
+  var baseClassPath: ClassPath = _
 
   def inPlace = settings.mimaOutDir.isDefault
 
