@@ -1,5 +1,6 @@
 package com.typesafe.tools.mima.core
 
+import scala.tools.nsc.classpath.AggregateClassPath
 import scala.tools.nsc.util.ClassPath
 
 /** This class holds together a root package and a classpath. It
@@ -21,7 +22,7 @@ class Definitions(val lib: Option[ClassPath], val classPath: ClassPath) {
       /** Needed to fetch classes located in the root (empty package) */
       override lazy val classes = Definitions.this.root.classes
     }
-    val cp = lib.get
+    val cp = lib.getOrElse(AggregateClassPath.createAggregate())
     pkg.packages ++= definitionsTargetPackages(pkg, cp, this)
     debugLog("added packages to <root>: %s".format(pkg.packages.keys.mkString(", ")))
     pkg
