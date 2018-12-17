@@ -8,8 +8,9 @@ import com.typesafe.tools.mima.lib.analyze.Analyzer
 
 import scala.collection.mutable.ListBuffer
 import scala.tools.nsc.io.{AbstractFile, File}
+import scala.tools.nsc.util.ClassPath
 
-class MiMaLib(classpath: CompilerClassPath, val log: Logging = ConsoleLogging) {
+class MiMaLib(classpath: ClassPath, val log: Logging = ConsoleLogging) {
   /*
   options:
   -classpath foo

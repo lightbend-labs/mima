@@ -1,5 +1,6 @@
 package com.typesafe.tools.mima.core
 
+import scala.tools.nsc.util.ClassPath
 
 /** This class holds together a root package and a classpath. It
  *  also offers definitions of commonly used classes, including
@@ -8,7 +9,7 @@ package com.typesafe.tools.mima.core
  *  Each version of the input jar file has an instance of Definitions, used
  *  to resolve type names during classfile parsing.
  */
-class Definitions(val lib: Option[CompilerClassPath], val classPath: CompilerClassPath) {
+class Definitions(val lib: Option[ClassPath], val classPath: ClassPath) {
   import com.typesafe.tools.mima.core.util.log.ConsoleLogging._
 
   lazy val root = definitionsPackageInfo(this)
