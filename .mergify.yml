@@ -1,0 +1,10 @@
+pull_request_rules:
+  - name: Merge PRs that are ready
+    conditions:
+      - status-success=continuous-integration/travis-ci/pr
+      - "#changes-requested-reviews-by=0"
+      - label=merge-when-green
+    actions:
+      merge:
+        method: merge
+        strict: smart
