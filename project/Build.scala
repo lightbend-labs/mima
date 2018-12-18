@@ -180,6 +180,10 @@ object MimaBuild {
              ),
              libraryDependencies += scalatest,
              scriptedLaunchOpts := scriptedLaunchOpts.value :+ "-Dplugin.version=" + version.value,
+             scriptedLaunchOpts ++= Seq(
+               "-Xdebug",
+               "-Xrunjdwp:transport=dt_socket,server=y,suspend=n,address=5005",
+             ),
              scriptedBufferLog := false,
              // Scripted locally publishes sbt plugin and then runs test projects with locally published version.
              // Therefore we also need to locally publish dependent projects on scripted test run.
