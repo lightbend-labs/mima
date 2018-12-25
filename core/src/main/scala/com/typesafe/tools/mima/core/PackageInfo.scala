@@ -80,7 +80,7 @@ abstract class PackageInfo(val owner: PackageInfo) {
 
   def definitions: Definitions
 
-  def isRoot = owner == null
+  def isRoot = false
 
   private lazy val root: PackageInfo = if (isRoot) this else owner.root
 
