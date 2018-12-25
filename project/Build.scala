@@ -173,11 +173,6 @@ object MimaBuild {
     enablePlugins(SbtPlugin)
     settings(name := "sbt-mima-plugin",
              commonSettings,
-             libraryDependencies += Defaults.sbtPluginExtra(
-               "com.dwijnand" % "sbt-compat" % "1.2.6",
-               (sbtBinaryVersion in pluginCrossBuild).value,
-               (scalaBinaryVersion in update).value
-             ),
              libraryDependencies += scalatest,
              scriptedLaunchOpts := scriptedLaunchOpts.value :+ "-Dplugin.version=" + version.value,
              scriptedBufferLog := false,
