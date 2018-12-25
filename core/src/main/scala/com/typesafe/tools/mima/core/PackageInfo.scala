@@ -49,11 +49,14 @@ class ConcretePackageInfo(owner: PackageInfo, cp: ClassPath, val pkg: String, va
 
 final private[core] class DefinitionsPackageInfo(defs: Definitions)
   extends ConcretePackageInfo(
-    null,
+    NoPackageInfo,
     AggregateClassPath.createAggregate(defs.lib.toList :+ defs.classPath: _*),
     ClassPath.RootPackage,
     defs,
   )
+{
+  override def isRoot = true
+}
 
 final private[core] class DefinitionsTargetPackageInfo(root: ConcretePackageInfo)
   extends SyntheticPackageInfo(root, "<root>")
