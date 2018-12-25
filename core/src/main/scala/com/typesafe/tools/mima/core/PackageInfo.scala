@@ -3,6 +3,7 @@ package com.typesafe.tools.mima.core
 import scala.collection.mutable
 import scala.annotation.tailrec
 import scala.tools.nsc.io.AbstractFile
+import scala.tools.nsc.classpath.AggregateClassPath
 import scala.tools.nsc.util.ClassPath
 
 object PackageInfo {
@@ -42,6 +43,23 @@ class ConcretePackageInfo(owner: PackageInfo, cp: ClassPath, val pkg: String, va
 
   lazy val classes: mutable.Map[String, ClassInfo] =
     mutable.Map() ++= (classFiles map (f => className(f.name) -> new ConcreteClassInfo(this, f)))
+}
+
+final private[core] class DefinitionsPackageInfo(defs: Definitions)
+  extends ConcretePackageInfo(
+    null,
+    AggregateClassPath.createAggregate(defs.lib.toList :+ defs.classPath: _*),
+    ClassPath.RootPackage,
+    defs,
+  )
+
+final private[core] class DefinitionsTargetPackageInfo(root: ConcretePackageInfo)
+  extends SyntheticPackageInfo(root, "<root>")
+{
+  override def isRoot = true
+
+  /** Needed to fetch classes located in the root (empty package) */
+  override lazy val classes = root.classes
 }
 
 /** Package information, including available classes and packages, and what is
@@ -101,4 +119,3 @@ abstract class PackageInfo(val owner: PackageInfo) {
 
   def packageString = "package "+fullName
 }
-

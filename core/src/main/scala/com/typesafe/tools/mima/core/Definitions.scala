@@ -17,11 +17,7 @@ class Definitions(val lib: Option[ClassPath], val classPath: ClassPath) {
 
   /** Return all packages in the target library. */
   lazy val targetPackage: PackageInfo = {
-    val pkg = new SyntheticPackageInfo(root, "<root>") {
-      override def isRoot = true
-      /** Needed to fetch classes located in the root (empty package) */
-      override lazy val classes = Definitions.this.root.classes
-    }
+    val pkg = new DefinitionsTargetPackageInfo(root)
     val cp = lib.getOrElse(AggregateClassPath.createAggregate())
     pkg.packages ++= definitionsTargetPackages(pkg, cp, this)
     debugLog("added packages to <root>: %s".format(pkg.packages.keys.mkString(", ")))
