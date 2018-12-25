@@ -25,7 +25,7 @@ class SyntheticClassInfo(owner: PackageInfo, override val bytecodeName: String) 
 }
 
 /** As the name implies. */
-object NoClass extends SyntheticClassInfo(null, "<noclass>") {
+object NoClass extends SyntheticClassInfo(NoPackageInfo, "<noclass>") {
   override def canEqual(other: Any) = other.isInstanceOf[NoClass.type]
   override lazy val superClasses = Set.empty[ClassInfo]
 }
