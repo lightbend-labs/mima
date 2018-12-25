@@ -7,6 +7,8 @@ import scala.tools.nsc.classpath.AggregateClassPath
 import scala.tools.nsc.util.ClassPath
 
 object PackageInfo {
+  final private[core] def NoPackageInfo = com.typesafe.tools.mima.core.NoPackageInfo
+
   val classExtension = ".class"
   val implClassSuffix = "$class"
 
@@ -29,7 +31,9 @@ class SyntheticPackageInfo(owner: PackageInfo, val name: String) extends Package
   lazy val classes = mutable.Map.empty[String, ClassInfo]
 }
 
-object NoPackageInfo extends SyntheticPackageInfo(null, "<no package>") {
+object NoPackageInfo extends SyntheticPackageInfo(PackageInfo.NoPackageInfo, "<no package>") {
+  override val owner = this
+  override def isRoot = true
   override def definitions: Definitions = sys.error("Called definitions on NoPackageInfo")
 }
 
