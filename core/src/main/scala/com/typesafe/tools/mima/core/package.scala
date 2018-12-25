@@ -12,14 +12,8 @@ package object core {
   def resolveClassPath(): ClassPath =
     AggregateClassPath.createAggregate(new PathResolver(Config.settings).containers: _*)
 
-  def definitionsPackageInfo(defs: Definitions): ConcretePackageInfo = {
-      val elems = defs.lib.toList :+ defs.classPath
-      new ConcretePackageInfo(
-        null,
-        AggregateClassPath.createAggregate(elems: _*),
-        ClassPath.RootPackage,
-        defs)
-    }
+  def definitionsPackageInfo(defs: Definitions): ConcretePackageInfo =
+    new DefinitionsPackageInfo(defs)
 
   def asClassPathString(cp: ClassPath): String = cp.asClassPathString
 
@@ -35,8 +29,8 @@ package object core {
   def baseClassPath(cpString: String): ClassPath =
     AggregateClassPath.createAggregate(new ClassPathFactory(Config.settings).classesInPath(cpString): _*)
 
-  def reporterClassPath(classpath: String): ClassPath = AggregateClassPath.createAggregate(
-    new ClassPathFactory(Config.settings).classesInPath(classpath): _*)
+  def reporterClassPath(classpath: String): ClassPath =
+    AggregateClassPath.createAggregate(new ClassPathFactory(Config.settings).classesInPath(classpath): _*)
 
   def dirClassPath(dir: AbstractFile): ClassPath =
     ClassPathFactory.newClassPath(dir, Config.settings)

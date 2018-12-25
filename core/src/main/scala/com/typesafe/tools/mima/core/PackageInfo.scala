@@ -3,9 +3,12 @@ package com.typesafe.tools.mima.core
 import scala.collection.mutable
 import scala.annotation.tailrec
 import scala.tools.nsc.io.AbstractFile
+import scala.tools.nsc.classpath.AggregateClassPath
 import scala.tools.nsc.util.ClassPath
 
 object PackageInfo {
+  final private[core] def NoPackageInfo = com.typesafe.tools.mima.core.NoPackageInfo
+
   val classExtension = ".class"
   val implClassSuffix = "$class"
 
@@ -23,12 +26,16 @@ object PackageInfo {
 import com.typesafe.tools.mima.core.PackageInfo._
 
 class SyntheticPackageInfo(owner: PackageInfo, val name: String) extends PackageInfo(owner) {
-  def definitions: Definitions = sys.error("Called definitions on synthetic package")
+  def definitions: Definitions = owner.definitions
   lazy val packages = mutable.Map.empty[String, PackageInfo]
   lazy val classes = mutable.Map.empty[String, ClassInfo]
 }
 
-object NoPackageInfo extends SyntheticPackageInfo(null, "<no package>")
+object NoPackageInfo extends SyntheticPackageInfo(PackageInfo.NoPackageInfo, "<no package>") {
+  override val owner = this
+  override def isRoot = true
+  override def definitions: Definitions = sys.error("Called definitions on NoPackageInfo")
+}
 
 /** A concrete package. cp should be a directory classpath.
  */
@@ -44,6 +51,26 @@ class ConcretePackageInfo(owner: PackageInfo, cp: ClassPath, val pkg: String, va
     mutable.Map() ++= (classFiles map (f => className(f.name) -> new ConcreteClassInfo(this, f)))
 }
 
+final private[core] class DefinitionsPackageInfo(defs: Definitions)
+  extends ConcretePackageInfo(
+    NoPackageInfo,
+    AggregateClassPath.createAggregate(defs.lib.toList :+ defs.classPath: _*),
+    ClassPath.RootPackage,
+    defs,
+  )
+{
+  override def isRoot = true
+}
+
+final private[core] class DefinitionsTargetPackageInfo(root: ConcretePackageInfo)
+  extends SyntheticPackageInfo(root, "<root>")
+{
+  override def isRoot = true
+
+  /** Needed to fetch classes located in the root (empty package) */
+  override lazy val classes = root.classes
+}
+
 /** Package information, including available classes and packages, and what is
  *  accessible.
  */
@@ -53,7 +80,7 @@ abstract class PackageInfo(val owner: PackageInfo) {
 
   def definitions: Definitions
 
-  def isRoot = owner == null
+  def isRoot = false
 
   private lazy val root: PackageInfo = if (isRoot) this else owner.root
 
@@ -101,4 +128,3 @@ abstract class PackageInfo(val owner: PackageInfo) {
 
   def packageString = "package "+fullName
 }
-
