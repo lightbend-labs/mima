@@ -41,9 +41,9 @@ class ProblemReportingSpec extends WordSpec with Matchers {
   }
 
   private def isReported(moduleVersion: String, filters: Seq[ProblemFilter]) =
-    ProblemReporting.isReported(moduleVersion, filters, Map.empty)(NoOpLogger, "test", "current")(FinalClassProblem(SafeNoClass))
+    ProblemReporting.isReported(moduleVersion, filters, Map.empty)(NoOpLogger, "test", "current")(FinalClassProblem(NoClass))
   private def isReported(moduleVersion: String, versionedFilters: Map[String, Seq[ProblemFilter]]) =
-    ProblemReporting.isReported(moduleVersion, Seq.empty, versionedFilters)(NoOpLogger, "test", "current")(FinalClassProblem(SafeNoClass))
+    ProblemReporting.isReported(moduleVersion, Seq.empty, versionedFilters)(NoOpLogger, "test", "current")(FinalClassProblem(NoClass))
 
 }
 
@@ -53,11 +53,6 @@ object ProblemReportingSpec {
     override def debugLog(str: String): Unit = ()
     override def warn(str: String): Unit = ()
     override def error(str: String): Unit = ()
-  }
-
-  object SafeNoClass extends SyntheticClassInfo(NoPackageInfo, "<noclass>") {
-    override def canEqual(other: Any) = other.isInstanceOf[NoClass.type]
-    override lazy val superClasses = Set.empty[ClassInfo]
   }
 
   final val AllMatchingFilter = (_: Problem) => false
