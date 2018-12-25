@@ -6,6 +6,8 @@ import scala.tools.nsc.io.AbstractFile
 import scala.tools.nsc.classpath.AggregateClassPath
 import scala.tools.nsc.util.ClassPath
 
+import com.typesafe.tools.mima.core.util.EmptyMutableMap
+
 object PackageInfo {
   final private[core] def NoPackageInfo = com.typesafe.tools.mima.core.NoPackageInfo
 
@@ -35,6 +37,12 @@ object NoPackageInfo extends SyntheticPackageInfo(PackageInfo.NoPackageInfo, "<n
   override val owner = this
   override def isRoot = true
   override def definitions: Definitions = sys.error("Called definitions on NoPackageInfo")
+
+  // overide to avoid memory leaks...
+  override lazy val packages = EmptyMutableMap.get
+  override lazy val classes = EmptyMutableMap.get
+  override lazy val implClasses = EmptyMutableMap.get
+  override lazy val traits = EmptyMutableMap.get
 }
 
 /** A concrete package. cp should be a directory classpath.
