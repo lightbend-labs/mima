@@ -21,59 +21,26 @@ object MimaPlugin extends AutoPlugin {
     mimaBinaryIssueFilters := Nil,
     mimaBackwardIssueFilters := SbtMima.issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:backward[s]?|both)\\.excludes".r, streams.value),
     mimaForwardIssueFilters := SbtMima.issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:forward[s]?|both)\\.excludes".r, streams.value),
-    mimaFindBinaryIssues := {
-      val log = new SbtLogger(streams.value)
-      val projectName = name.value
-      val previousClassfiles =  mimaPreviousClassfiles.value
-      val currentClassfiles = mimaCurrentClassfiles.value
-      val cp = (fullClasspath in mimaFindBinaryIssues).value
-      val checkDirection = mimaCheckDirection.value
-      if (mimaPreviousClassfiles.value.isEmpty) {
-        log.info(s"$projectName: previous-artifact not set, not analyzing binary compatibility")
-        Map.empty
-      }
-      else {
-        previousClassfiles.map {
-          case (moduleId, file) =>
-            val problems = SbtMima.runMima(file, currentClassfiles, cp, checkDirection, log)
-            (moduleId, (problems._1, problems._2))
-        }
-      }
-    },
+    mimaFindBinaryIssues := binaryIssuesIterator.value.toMap,
     mimaReportBinaryIssues := {
       val log = new SbtLogger(streams.value)
       val projectName = name.value
-      val currentClassfiles = mimaCurrentClassfiles.value
-      val cp = (fullClasspath in mimaFindBinaryIssues).value
-      val checkDirection = mimaCheckDirection.value
       val failOnProblem = mimaFailOnProblem.value
       val binaryIssueFilters = mimaBinaryIssueFilters.value
       val backwardIssueFilters = mimaBackwardIssueFilters.value
       val forwardIssueFilters = mimaForwardIssueFilters.value
-      if (mimaPreviousClassfiles.value.isEmpty) {
-        log.info(s"$projectName: previous-artifact not set, not analyzing binary compatibility")
-        Map.empty
-      }
-      else {
-        mimaPreviousClassfiles.value.foreach {
-          case (moduleId, file) =>
-            val problems = SbtMima.runMima(
-              file,
-              currentClassfiles,
-              cp,
-              checkDirection,
-              log
-            )
-            SbtMima.reportModuleErrors(
-              moduleId,
-              problems._1, problems._2,
-              failOnProblem,
-              binaryIssueFilters,
-              backwardIssueFilters,
-              forwardIssueFilters,
-              log,
-              projectName)
-        }
+      binaryIssuesIterator.value.foreach { case (moduleId, problems) =>
+        SbtMima.reportModuleErrors(
+          moduleId,
+          problems._1,
+          problems._2,
+          failOnProblem,
+          binaryIssueFilters,
+          backwardIssueFilters,
+          forwardIssueFilters,
+          log,
+          projectName,
+        )
       }
     }
   )
@@ -97,4 +64,24 @@ object MimaPlugin extends AutoPlugin {
     fullClasspath in mimaFindBinaryIssues := (fullClasspath in Compile).value
   ) ++ mimaReportSettings
 
+  // Allows reuse between mimaFindBinaryIssues and mimaReportBinaryIssues
+  // without blowing up the Akka build's heap
+  private def binaryIssuesIterator = Def.task {
+    val log = new SbtLogger(streams.value)
+    val projectName = name.value
+    val previousClassfiles = mimaPreviousClassfiles.value
+    val currentClassfiles = mimaCurrentClassfiles.value
+    val cp = (fullClasspath in mimaFindBinaryIssues).value
+    val checkDirection = mimaCheckDirection.value
+    if (previousClassfiles.isEmpty) {
+      log.info(s"$projectName: previous-artifact not set, not analyzing binary compatibility")
+      Iterator.empty
+    }
+    else {
+      previousClassfiles.iterator.map { case (moduleId, file) =>
+        val problems = SbtMima.runMima(file, currentClassfiles, cp, checkDirection, log)
+        (moduleId, (problems._1, problems._2))
+      }
+    }
+  }
 }
