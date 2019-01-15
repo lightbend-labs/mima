@@ -88,14 +88,9 @@ object MimaPlugin extends AutoPlugin {
       val ivy = ivySbt.value
       val taskStreams = streams.value
 
-      mimaPreviousArtifacts.value.map{ m =>
-        // TODO - These should be better handled in sbt itself.
-        // The cross version API is horribly intricately odd.
-        CrossVersion(m, scalaModuleInfoV) match {
-          case Some(f) => m withName f(m.name)
-          case None => m
-        }
-      }.map{ id =>
+      mimaPreviousArtifacts.value.iterator.map { m =>
+        val nameMod = CrossVersion(m, scalaModuleInfoV).getOrElse(idFun)
+        val id = m.withName(nameMod(m.name))
         id -> SbtMima.getPreviousArtifact(id, ivy, taskStreams)
       }.toMap
     },
