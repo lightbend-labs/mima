@@ -9,10 +9,14 @@ object MimaPlugin extends AutoPlugin {
   override def requires = plugins.JvmPlugin
   override def trigger = allRequirements
 
-  override def projectSettings: Seq[Def.Setting[_]] = mimaDefaultSettings
-
   object autoImport extends BaseMimaKeys
   import autoImport._
+
+  override def globalSettings: Seq[Def.Setting[_]] = Seq(
+    mimaFailOnNoPrevious := true,
+  )
+
+  override def projectSettings: Seq[Def.Setting[_]] = mimaDefaultSettings
 
   /** Just configures MiMa to compare previous/current classfiles.*/
   def mimaReportSettings: Seq[Setting[_]] = Seq(
@@ -70,11 +74,14 @@ object MimaPlugin extends AutoPlugin {
     val log = new SbtLogger(streams.value)
     val projectName = name.value
     val previousClassfiles = mimaPreviousClassfiles.value
+    val failOnNoPrevious = mimaFailOnNoPrevious.value
     val currentClassfiles = mimaCurrentClassfiles.value
     val cp = (fullClasspath in mimaFindBinaryIssues).value
     val checkDirection = mimaCheckDirection.value
     if (previousClassfiles.isEmpty) {
-      log.info(s"$projectName: previous-artifact not set, not analyzing binary compatibility")
+      val msg = s"$projectName: mimaPreviousArtifacts not set, not analyzing binary compatibility"
+      if (failOnNoPrevious) sys.error(msg)
+      log.info(msg)
       Iterator.empty
     }
     else {
