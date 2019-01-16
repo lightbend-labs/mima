@@ -8,6 +8,7 @@ object MimaKeys extends BaseMimaKeys
 class BaseMimaKeys {
 
   final val mimaFailOnProblem      = settingKey[Boolean]("if true, fail the build on binary incompatibility detection.")
+  final val mimaFailOnNoPrevious   = settingKey[Boolean]("if true, fail the build if no previous artifacts are set.")
   final val mimaPreviousArtifacts  = settingKey[Set[ModuleID]]("Previous released artifacts used to test binary compatibility.")
   final val mimaPreviousClassfiles = taskKey[Map[ModuleID, File]]("Directories or jars containing the previous class files used to test compatibility with a given module.")
   final val mimaCurrentClassfiles  = taskKey[File]("Directory or jar containing the current class files used to test compatibility.")
