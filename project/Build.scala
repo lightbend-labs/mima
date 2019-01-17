@@ -83,7 +83,7 @@ object BuildSettings {
 
 object Dependencies {
   val typesafeConfig = "com.typesafe" % "config" % "1.3.3"
-  val scalatest = "org.scalatest" %% "scalatest" % "3.0.6-SNAP5" % Test
+  val scalatest = "org.scalatest" %% "scalatest" % "3.0.6-SNAP6" % Test
 
 }
 
