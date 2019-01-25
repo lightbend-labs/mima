@@ -1,7 +1,7 @@
 # Migration Manager for Scala
 
 The Migration Manager for Scala (MiMa in short) is a tool for
-diagnosing binary incompatibilities for Scala libraries.
+diagnosing [binary incompatibilities](https://docs.scala-lang.org/overviews/core/binary-compatibility-for-library-authors.html) for Scala libraries.
 
 ## What it is
 
