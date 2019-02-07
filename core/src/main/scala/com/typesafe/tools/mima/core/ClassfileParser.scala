@@ -245,8 +245,7 @@ abstract class ClassfileParser(definitions: Definitions) {
     val methods =
       if (readMethods(clazz)) parseMembers(clazz) else skipMembers()
     parseAttributes(clazz)
-    clazz.methods =
-      if (clazz.isScalaUnsafe && !clazz.isImplClass) methods.withoutStatic else methods
+    clazz.methods = methods
   }
 
   def skipAttributes(): Unit = {
