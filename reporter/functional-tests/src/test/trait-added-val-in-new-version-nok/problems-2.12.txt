@@ -1,2 +1,0 @@
-abstract synthetic method A$_setter_|_=(Int)Unit in interface A is present only in new version
-abstract method bar()Int in interface A is present only in new version

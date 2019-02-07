@@ -1,1 +1,0 @@
-in new version, classes mixing B needs to update body of method foo()Int

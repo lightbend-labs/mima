@@ -1,1 +1,0 @@
-abstract synthetic method A$_setter_$foo_=(Int)Unit in interface A is present only in new version

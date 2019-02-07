@@ -319,12 +319,7 @@ object MimaBuild {
     val testClasspath = Attributed.data(cp).filter(_.getName endsWith "scala-library.jar")
         .map(_.getAbsolutePath).toArray
 
-    val oracleFile = {
-      val p = projectPath / "problems.txt"
-      val p212 = projectPath / "problems-2.12.txt"
-      if (!(scalaV.startsWith("2.10.") || scalaV.startsWith("2.11.")) && p212.exists) p212
-      else p
-    }
+    val oracleFile = projectPath / "problems.txt"
 
     try {
       import scala.language.reflectiveCalls
