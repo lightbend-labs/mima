@@ -322,8 +322,13 @@ object MimaBuild {
     val oracleFile = {
       val p = projectPath / "problems.txt"
       val p212 = projectPath / "problems-2.12.txt"
-      if (!(scalaV.startsWith("2.10.") || scalaV.startsWith("2.11.")) && p212.exists) p212
-      else p
+      val p213 = projectPath / "problems-2.13.txt"
+      scalaV.take(4) match {
+        case "2.13" if p213.exists() => p213
+        case "2.13" if p212.exists() => p212
+        case "2.12" if p212.exists() => p212
+        case _ => p
+      }
     }
 
     try {
