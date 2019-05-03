@@ -65,6 +65,9 @@ class MemberInfo(val owner: ClassInfo, val bytecodeName: String, override val fl
 
   var isDeprecated = false
 
+  // The full 'Signature' attribute, which includes generics
+  var signature = ""
+
   def hasSyntheticName: Boolean = decodedName contains '$'
 
   def isExtensionMethod: Boolean = {
