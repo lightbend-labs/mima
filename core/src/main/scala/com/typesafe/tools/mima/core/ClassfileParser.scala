@@ -218,8 +218,8 @@ abstract class ClassfileParser(definitions: Definitions) {
 
   def parseMember(clazz: ClassInfo, jflags: Int): MemberInfo = {
     val name = pool.getName(in.nextChar)
-    val sig = pool.getExternalName(in.nextChar)
-    val result = new MemberInfo(clazz, name, jflags, sig)
+    val descriptor = pool.getExternalName(in.nextChar)
+    val result = new MemberInfo(clazz, name, jflags, descriptor)
     parseAttributes(result)
     result
   }

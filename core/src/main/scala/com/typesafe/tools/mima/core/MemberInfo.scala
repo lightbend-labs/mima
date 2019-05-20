@@ -13,8 +13,8 @@ object MemberInfo {
   def maybeSetter(name: String) = name.endsWith(setterSuffix)
 }
 
-class MemberInfo(val owner: ClassInfo, val bytecodeName: String, override val flags: Int, val sig: String) extends HasDeclarationName with WithAccessFlags {
-  override def toString = "def " + bytecodeName + ": "+ sig
+class MemberInfo(val owner: ClassInfo, val bytecodeName: String, override val flags: Int, val descriptor: String) extends HasDeclarationName with WithAccessFlags {
+  override def toString = "def " + bytecodeName + ": "+ descriptor
 
   def fieldString = "field "+decodedName+" in "+owner.classString
   def shortMethodString =
@@ -32,24 +32,24 @@ class MemberInfo(val owner: ClassInfo, val bytecodeName: String, override val fl
 
   def fullName = owner.formattedFullName + "." + decodedName
 
-  def tpe: Type = owner.owner.definitions.fromSig(sig)
+  def tpe: Type = owner.owner.definitions.fromDescriptor(descriptor)
 
   def staticImpl = owner.implClass.staticImpl(this)
 
-  def isMethod: Boolean = sig(0) == '('
+  def isMethod: Boolean = descriptor(0) == '('
 
-  def parametersSig = {
+  def parametersDesc = {
     assert(isMethod)
-    sig substring (1, sig indexOf ")")
+    descriptor substring (1, descriptor indexOf ")")
   }
 
   def matchesType(other: MemberInfo): Boolean =
-    if (isMethod) other.isMethod && parametersSig == other.parametersSig
-    else !other.isMethod && sig == other.sig
+    if (isMethod) other.isMethod && parametersDesc == other.parametersDesc
+    else !other.isMethod && descriptor == other.descriptor
 
-  def resultSig = {
-    assert(sig(0) == '(')
-    sig substring ((sig indexOf ")") + 1)
+  def resultDesc = {
+    assert(descriptor(0) == '(')
+    descriptor substring ((descriptor indexOf ")") + 1)
   }
 
 
@@ -65,7 +65,8 @@ class MemberInfo(val owner: ClassInfo, val bytecodeName: String, override val fl
 
   var isDeprecated = false
 
-  // The full 'Signature' attribute, which includes generics
+  // The full 'Signature' attribute, which includes generics.
+  // For type without generics, see the 'descriptor'
   var signature = ""
 
   def hasSyntheticName: Boolean = decodedName contains '$'
@@ -93,10 +94,17 @@ class MemberInfo(val owner: ClassInfo, val bytecodeName: String, override val fl
 
   /** The getter that corresponds to this setter */
   def getter: MemberInfo = {
-    val argsig = "()" + parametersSig
-    owner.methods.get(getterName).find(_.sig == argsig).get
+    val argsig = "()" + parametersDesc
+    owner.methods.get(getterName).find(_.descriptor == argsig).get
   }
 
-  def description: String = bytecodeName + ": " + sig + " from " + owner.description
+  def description: String = bytecodeName + ": " + descriptor + " from " + owner.description
+
+  @deprecated("Use 'descriptor' to get the type without, or 'signature' to get the type with generics", "0.3.1")
+  val sig = descriptor
+  @deprecated("Replaced with 'parametersDesc'", "0.3.1")
+  def parametersSig = parametersDesc
+  @deprecated("Replaced with 'resultDesc'", "0.3.1")
+  def resultSig = resultDesc
 }
 

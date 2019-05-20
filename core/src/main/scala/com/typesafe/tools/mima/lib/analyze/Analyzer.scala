@@ -112,7 +112,7 @@ private[analyze] class ClassAnalyzer extends Analyzer {
   /** Analyze incompatibilities that may derive from methods in the `newclazz` */
   override def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
     (for (newAbstrMeth <- newclazz.deferredMethods) yield {
-      oldclazz.lookupMethods(newAbstrMeth.bytecodeName).find(_.sig == newAbstrMeth.sig) match {
+      oldclazz.lookupMethods(newAbstrMeth.bytecodeName).find(_.descriptor == newAbstrMeth.descriptor) match {
         case None =>
           Some(ReversedMissingMethodProblem(newAbstrMeth))
         case Some(found) =>
@@ -137,7 +137,7 @@ private[analyze] class TraitAnalyzer extends Analyzer {
     val res = collection.mutable.ListBuffer.empty[Problem]
 
     for (newmeth <- newclazz.emulatedConcreteMethods if !oldclazz.hasStaticImpl(newmeth)) {
-      if (!oldclazz.lookupMethods(newmeth.bytecodeName).exists(_.sig == newmeth.sig)) {
+      if (!oldclazz.lookupMethods(newmeth.bytecodeName).exists(_.descriptor == newmeth.descriptor)) {
         // this means that the method is brand new and therefore the implementation
         // has to be injected
         val problem = ReversedMissingMethodProblem(newmeth)
@@ -151,7 +151,7 @@ private[analyze] class TraitAnalyzer extends Analyzer {
 
     for (newmeth <- newclazz.deferredMethods) {
       val oldmeths = oldclazz.lookupMethods(newmeth.bytecodeName)
-      oldmeths find (_.sig == newmeth.sig) match {
+      oldmeths find (_.descriptor == newmeth.descriptor) match {
         case Some(oldmeth) => ()
         case _ =>
           val problem = ReversedMissingMethodProblem(newmeth)

@@ -13,7 +13,7 @@ private[analyze] abstract class BaseMethodChecker extends Checker[MemberInfo, Cl
     if (meths.isEmpty)
       Some(DirectMissingMethodProblem(method))
     else {
-      meths find (m => m.sig == method.sig && m.signature == method.signature) match {
+      meths find (m => m.descriptor == method.descriptor && m.signature == method.signature) match {
         case None =>
           meths find (method matchesType _) match {
             case None =>
@@ -34,7 +34,7 @@ private[analyze] abstract class BaseMethodChecker extends Checker[MemberInfo, Cl
   }
 
   private def uniques(methods: List[MemberInfo]): List[MemberInfo] =
-    methods.groupBy(_.parametersSig).values.map(_.head).toList
+    methods.groupBy(_.parametersDesc).values.map(_.head).toList
 }
 
 private[analyze] class ClassMethodChecker extends BaseMethodChecker {

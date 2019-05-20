@@ -119,7 +119,7 @@ case class IncompatibleSignatureProblem(oldmeth: MemberInfo, newmeth: MemberInfo
 abstract class AbstractMethodProblem(newmeth: MemberInfo) extends MemberProblem(newmeth)
 
 case class InheritedNewAbstractMethodProblem(clazz: ClassInfo, inheritedMethod: MemberInfo)
-    extends AbstractMethodProblem(new MemberInfo(clazz, inheritedMethod.bytecodeName, inheritedMethod.flags, inheritedMethod.sig)) {
+    extends AbstractMethodProblem(new MemberInfo(clazz, inheritedMethod.bytecodeName, inheritedMethod.flags, inheritedMethod.descriptor)) {
   def description = affectedVersion => "abstract " + inheritedMethod.methodString+ " is inherited by class " + clazz.bytecodeName + " in " + affectedVersion + " version."
 }
 

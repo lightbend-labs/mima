@@ -54,14 +54,14 @@ class Definitions(val lib: Option[ClassPath], val classPath: ClassPath) {
 
   import Type._
 
-  /** Return the type corresponding to 'sig'. Class names are resolved
+  /** Return the type corresponding to this descriptor. Class names are resolved
    *  relative to the current classpath.
    */
-  def fromSig(sig: String): Type = {
+  def fromDescriptor(descriptor: String): Type = {
     var in = 0
 
     def getType(): Type = {
-      val ch = sig(in)
+      val ch = descriptor(in)
       in += 1
       abbrevToValueType get ch match {
         case Some(tp) =>
@@ -70,8 +70,8 @@ class Definitions(val lib: Option[ClassPath], val classPath: ClassPath) {
           if (ch == '[') {
             ArrayType(getType())
           } else if (ch == 'L') {
-            val end = sig indexOf (';', in)
-            val fullname = sig.substring(in, end) replace ('/', '.')
+            val end = descriptor indexOf (';', in)
+            val fullname = descriptor.substring(in, end) replace ('/', '.')
             in = end + 1
             ClassType(fromName(fullname))
           } else if (ch == '(') {
@@ -79,17 +79,19 @@ class Definitions(val lib: Option[ClassPath], val classPath: ClassPath) {
             in += 1
             MethodType(params, getType())
           } else {
-            throw new MatchError("unknown signature: "+sig.substring(in))
+            throw new MatchError("unknown signature: "+descriptor.substring(in))
           }
       }
     }
 
     def getParamTypes(): List[Type] =
-      if (sig(in) == ')') List()
+      if (descriptor(in) == ')') List()
       else getType() :: getParamTypes()
 
     getType()
   }
+  @deprecated("Replaced by fromDescriptor", "0.3.1")
+  def fromSig(sig: String): Type = fromDescriptor(sig)
 
   override def toString = {
     "definitions:\n\tlib: %s\n%s".format(lib, asClassPathString(classPath))
