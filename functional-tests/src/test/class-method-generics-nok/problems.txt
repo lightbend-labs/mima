@@ -1,0 +1,2 @@
+method genericWithChangingName()scala.Option in class A has a different signature in new version, where it is <T:Ljava/lang/Object;>()Lscala/Option<TT;>; rather than <U:Ljava/lang/Object;>()Lscala/Option<TU;>;
+method backwardsCompatibleNarrowing()scala.Option in class A has a different signature in new version, where it is ()Lscala/Option<Ljava/lang/String;>; rather than ()Lscala/Option<Ljava/lang/Object;>;
