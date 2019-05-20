@@ -20,7 +20,7 @@ object BuildSettings {
 
   val commonSettings = Seq(
       organization := buildOrganization,
-      scalaVersion := sys.props.getOrElse("mima.buildScalaVersion", "2.12.7"),
+      scalaVersion := sys.props.getOrElse("mima.buildScalaVersion", "2.12.8"),
       git.gitTagToVersionNumber := { tag: String =>
         if (tag matches "[0.9]+\\..*") Some(tag)
         else None
@@ -83,8 +83,7 @@ object BuildSettings {
 
 object Dependencies {
   val typesafeConfig = "com.typesafe" % "config" % "1.3.4"
-  val scalatest = "org.scalatest" %% "scalatest" % "3.0.7" % Test
-
+  val scalatest = "org.scalatest" %% "scalatest" % "3.1.0-SNAP11" % Test
 }
 
 object MimaBuild {
