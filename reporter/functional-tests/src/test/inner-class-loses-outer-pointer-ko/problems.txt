@@ -1,0 +1,1 @@
+class C#Inner is declared final in new version
