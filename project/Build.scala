@@ -82,14 +82,8 @@ object BuildSettings {
   )
 }
 
-object Dependencies {
-  val typesafeConfig = "com.typesafe" % "config" % "1.3.4"
-  val scalatest = "org.scalatest" %% "scalatest" % "3.1.0-SNAP11" % Test
-}
-
 object MimaBuild {
   import BuildSettings._
-  import Dependencies._
 
   lazy val root = (
     project("root", file("."))
@@ -110,9 +104,9 @@ object MimaBuild {
     settings(
       commonSettings,
       name := buildName + "-core",
-      libraryDependencies += typesafeConfig,
+      libraryDependencies += "com.typesafe" % "config" % "1.3.4",
       libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      libraryDependencies += scalatest,
+      libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.0-SNAP11" % Test,
       // WORKAROUND https://github.com/sbt/sbt/issues/2819
       inConfig(Compile)(
         unmanagedSourceDirectories ++=
@@ -153,7 +147,6 @@ object MimaBuild {
     enablePlugins(SbtPlugin)
     settings(name := "sbt-mima-plugin",
              commonSettings,
-             libraryDependencies += scalatest,
              scriptedLaunchOpts += "-Dplugin.version=" + version.value,
              // Scripted locally publishes sbt plugin and then runs test projects with locally published version.
              // Therefore we also need to locally publish dependent projects on scripted test run.
