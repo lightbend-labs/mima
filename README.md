@@ -37,7 +37,7 @@ all potential binary incompatibilties.
 
 ## Usage
 
-The sbt plugin is released for sbt versions 0.13.x and 1.x.  To try it, do the following:
+The sbt plugin is released for sbt 1.x only (use 0.3.0 for sbt 0.13).  To try it, do the following:
 
 Add the following to your `project/plugins.sbt` file:
 

@@ -120,7 +120,7 @@ Make sure that you have:
     credentials += Credentials("Bintray API Realm", "api.bintray.com", <username>, <password>)
 ```
 
-(Make sure you're not using an ancient version of sbt-pgp in `~/.sbt/0.13/plugins`.)
+(Make sure you're not using an ancient version of sbt-pgp in `~/.sbt/1.0/plugins`.)
 
 ### Steps
 
