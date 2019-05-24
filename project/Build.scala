@@ -173,8 +173,7 @@ object MimaBuild {
     settings(name := "sbt-mima-plugin",
              commonSettings,
              libraryDependencies += scalatest,
-             scriptedLaunchOpts := scriptedLaunchOpts.value :+ "-Dplugin.version=" + version.value,
-             scriptedBufferLog := false,
+             scriptedLaunchOpts += "-Dplugin.version=" + version.value,
              // Scripted locally publishes sbt plugin and then runs test projects with locally published version.
              // Therefore we also need to locally publish dependent projects on scripted test run.
              scriptedDependencies := scriptedDependencies.dependsOn(publishLocal in core, publishLocal in reporter).value,
