@@ -6,11 +6,10 @@ If you'd like to contribute to the MiMa project, please sign the [contributor's 
 
 ## Modules
 
-MiMa is split into Several modules:
+MiMa is split into several modules:
 
-- Core: classes that are used for detection.
-- Reporter: reporting classes.
-- SBT Plugin: the sbt plugin for usage inside sbt builds.
+- mima-core: classes that are used for detection and reporting
+- sbt-mima-plugin: the sbt plugin to run MiMa within an sbt build
 
 ## Building
 

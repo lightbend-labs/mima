@@ -11,6 +11,7 @@ import com.typesafe.sbt.GitVersioning
 import com.typesafe.sbt.GitPlugin.autoImport._
 import sbt.ScriptedPlugin.autoImport._
 import com.typesafe.sbt.SbtPgp.autoImport.PgpKeys.publishSigned
+import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.plugin.MimaPlugin.autoImport._
 
 object BuildSettings {
@@ -92,7 +93,7 @@ object MimaBuild {
 
   lazy val root = (
     project("root", file("."))
-    aggregate(core, reporter, sbtplugin)
+    aggregate(core, sbtplugin)
     settings(name := buildName,
              publish := {},
              publishLocal := {},
@@ -109,61 +110,41 @@ object MimaBuild {
     settings(
       commonSettings,
       name := buildName + "-core",
+      libraryDependencies += typesafeConfig,
       libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
       libraryDependencies += scalatest,
       // WORKAROUND https://github.com/sbt/sbt/issues/2819
       inConfig(Compile)(
         unmanagedSourceDirectories ++=
           scalaPartV.value.collect { case (2, 13) => sourceDirectory.value / "scala-2.13" }.toList
-      )
-    )
-    settings(sonatypePublishSettings:_*)
-    settings(
-      mimaBinaryIssueFilters ++= {
-        import com.typesafe.tools.mima.core._
-        Seq(
-          // Removed because unused
-          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.core.buildinfo.BuildInfo"),
-          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.core.buildinfo.BuildInfo$"),
-
-          // Add support for versions with less segments (#212)
-          ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.warn"),
-          ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.error")
-        )
-      }
-    )
-  )
-
-  lazy val reporter = (
-    project("reporter", file("reporter"))
-    dependsOn(core)
-    settings(
-      commonSettings,
-      libraryDependencies += typesafeConfig,
-      name := buildName + "-reporter",
-      sonatypePublishSettings,
+      ),
       // add task testFunctional that depends on all the functional tests
       testFunctional := allTests(testFunctional in _).value,
       test in IntegrationTest := allTests(test in IntegrationTest in _).value,
+      sonatypePublishSettings,
+      mimaBinaryIssueFilters ++= Seq(
+        // Removed because unused
+        ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.core.buildinfo.BuildInfo"),
+        ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.core.buildinfo.BuildInfo$"),
 
-      mimaBinaryIssueFilters ++= {
-        import com.typesafe.tools.mima.core._
-        Seq(
-          // Removed because unused
-          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.lib.license.License"),
-          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.lib.license.License$"),
+        // Add support for versions with less segments (#212)
+        ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.warn"),
+        ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.error"),
 
-          // Removed because CLI dropped
-          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.MimaSpec"),
-          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.MimaSpec$"),
-          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.Main"),
-          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.Main$"),
+        // Removed because unused
+        ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.lib.license.License"),
+        ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.lib.license.License$"),
 
-          // Moved (to functional-tests) because otherwise unused
-          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.ProblemFiltersConfig"),
-          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.ProblemFiltersConfig$")
-        )
-      }
+        // Removed because CLI dropped
+        ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.MimaSpec"),
+        ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.MimaSpec$"),
+        ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.Main"),
+        ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.Main$"),
+
+        // Moved (to functional-tests) because otherwise unused
+        ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.ProblemFiltersConfig"),
+        ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.ProblemFiltersConfig$"),
+      ),
     )
   )
 
@@ -176,39 +157,36 @@ object MimaBuild {
              scriptedLaunchOpts += "-Dplugin.version=" + version.value,
              // Scripted locally publishes sbt plugin and then runs test projects with locally published version.
              // Therefore we also need to locally publish dependent projects on scripted test run.
-             scriptedDependencies := scriptedDependencies.dependsOn(publishLocal in core, publishLocal in reporter).value,
+             scriptedDependencies := scriptedDependencies.dependsOn(publishLocal in core).value,
     )
-    dependsOn(reporter)
+    dependsOn(core)
     settings(
       sbtPublishSettings,
-      mimaBinaryIssueFilters ++= {
-        import com.typesafe.tools.mima.core._
-        Seq(
-          // sbt-compat has been created to define these and has been added as a dependency of sbt-mima-plugin
-          ProblemFilters.exclude[MissingClassProblem]("sbt.compat"),
-          ProblemFilters.exclude[MissingClassProblem]("sbt.compat$"),
-          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.package"),
-          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.package$"),
-          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.package$UpdateConfigurationOps"),
-          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.package$UpdateConfigurationOps$"),
-          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.UpdateConfiguration"),
-          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.UpdateConfiguration$"),
-          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.DependencyResolution"),
-          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.ivy.IvyDependencyResolution"),
-          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.ivy.IvyDependencyResolution$"),
+      mimaBinaryIssueFilters ++= Seq(
+        // sbt-compat has been created to define these and has been added as a dependency of sbt-mima-plugin
+        ProblemFilters.exclude[MissingClassProblem]("sbt.compat"),
+        ProblemFilters.exclude[MissingClassProblem]("sbt.compat$"),
+        ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.package"),
+        ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.package$"),
+        ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.package$UpdateConfigurationOps"),
+        ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.package$UpdateConfigurationOps$"),
+        ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.UpdateConfiguration"),
+        ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.UpdateConfiguration$"),
+        ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.DependencyResolution"),
+        ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.ivy.IvyDependencyResolution"),
+        ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.ivy.IvyDependencyResolution$"),
 
-          // Add support for versions with less segments (#212)
-          // All of these are MiMa sbtplugin internals and can be safely filtered
-          ProblemFilters.exclude[IncompatibleMethTypeProblem]("com.typesafe.tools.mima.plugin.SbtMima.runMima"),
-          ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.plugin.SbtMima.reportErrors"),
-          ProblemFilters.exclude[IncompatibleMethTypeProblem]("com.typesafe.tools.mima.plugin.SbtMima.reportModuleErrors")
-        )
-      }
+        // Add support for versions with less segments (#212)
+        // All of these are MiMa sbtplugin internals and can be safely filtered
+        ProblemFilters.exclude[IncompatibleMethTypeProblem]("com.typesafe.tools.mima.plugin.SbtMima.runMima"),
+        ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.plugin.SbtMima.reportErrors"),
+        ProblemFilters.exclude[IncompatibleMethTypeProblem]("com.typesafe.tools.mima.plugin.SbtMima.reportModuleErrors"),
+      ),
     )
   )
 
   lazy val functionalTests = project("functional-tests", file("functional-tests"))
-    .dependsOn(core, reporter)
+    .dependsOn(core)
     .settings(commonSettings)
 
   // select all testN directories.
