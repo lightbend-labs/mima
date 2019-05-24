@@ -24,13 +24,13 @@ This will recompile all MiMa's modules.
 
 ## Functional tests
 
-The directory containing the MiMa Reporter module ('reporter') there is a 'functional-tests' folder that contains several functional tests exercising the system. All tests are executed as part of the build, therefore when running
+The directory 'functional-tests' contains several functional tests exercising MiMa. All tests are executed as part of the build, therefore when running
 
     $ sbt testFunctional
 
-if one (or more) test fails the build is stop and no jar will not be produced.
+if one (or more) test fails, the build is stopped and no jar will be produced.
 
-To add a new functional test to the suite, create a new folder within 'functional-tests' directory with the following structure:
+To add a new functional test to the suite, create a new folder within the 'functional-tests' directory with the following structure:
 
     functional-tests
         |
@@ -40,12 +40,11 @@ To add a new functional test to the suite, create a new folder within 'functiona
             |-----> v1 (folder containing sources @ version 1)
             |-----> v2 (folder containing sources @ version 2)
 
-After doing that, `reload` if you are in a `sbt` console session (if that makes no sense to you, it means you are fine and you can run the test as usual).
+After doing that, `reload` if you are in an `sbt` shell session (if that makes no sense to you, it means you are fine and you can run the test as usual).
 
 Tests within the `functional-tests` folder should always pass.
 
 Note: The `problems.txt` is the test oracle. Expected errors are declared using the MiMa's reporting output (i.e., the output of the tool and the expected errors should match perfectly). Admittedly, this coupling is an issue since the testing framework is highly coupled with the tool output used to report errors to the user. We should improve this and make the two independent. Until then, mind that by changing the output of the tool you will likely have to update some of the test oracles (i.e., problems.txt file). When running tests against Scala 2.12 or higher, `problems-2.12.txt` is preferred over `problems.txt` if the former exists.
-
 
 ## General Workflow
 

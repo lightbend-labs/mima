@@ -142,8 +142,8 @@ object MimaBuild {
       libraryDependencies += typesafeConfig,
       name := buildName + "-reporter",
       sonatypePublishSettings,
-      // add task functional-tests that depends on all functional tests
-      functionalTests := allTests(functionalTests in _).value,
+      // add task testFunctional that depends on all the functional tests
+      testFunctional := allTests(testFunctional in _).value,
       test in IntegrationTest := allTests(test in IntegrationTest in _).value,
 
       mimaBinaryIssueFilters ++= {
@@ -207,14 +207,15 @@ object MimaBuild {
     )
   )
 
-  lazy val reporterFunctionalTests = project("reporter-functional-tests", file("reporter") / "functional-tests")
+  lazy val functionalTests = project("functional-tests", file("functional-tests"))
     .dependsOn(core, reporter)
     .settings(commonSettings)
 
   // select all testN directories.
-  val bases = (file("reporter") / "functional-tests" / "src" / "test") *
+  val bases = (file("functional-tests") / "src" / "test") *
     (DirectoryFilter && new SimpleFileFilter(_.list.contains("problems.txt")))
-  val integrationTestBases = (file("reporter") / "functional-tests" / "src" / "it") *
+
+  val integrationTestBases = (file("functional-tests") / "src" / "it") *
     (DirectoryFilter && new SimpleFileFilter(_.list.contains("test.conf")))
 
   // make the Project for each discovered directory
@@ -231,19 +232,18 @@ object MimaBuild {
     Seq(scalaVersion := (testScalaVersion in Global).value) ++
     inConfig(V1)(perConfig) ++ // add compile/package for the V1 sources
     inConfig(V2)(perConfig) :+ // add compile/package for the V2 sources
-    (functionalTests := runTest.value) // add the functional-tests task
+    (testFunctional := runTest.value) // add the testFunctional task
   lazy val integrationTestProjectSettings =
     commonSettings ++
     Seq(scalaVersion := (testScalaVersion in Global).value) ++
     (test in IntegrationTest := runIntegrationTest.value)
 
-  // this is the key for the task that runs the reporter's functional tests
-  lazy val functionalTests = TaskKey[Unit]("test-functional")
+  val testFunctional = taskKey[Unit]("Run the functional test")
 
   // This is the key for the scala version used to compile the tests, so that we can cross test the MiMa version
   // actually being used in the sbt plugin against multiple scala compiler versions.
   // Also the base project has dependencies that don't resolve under newer versions of scala.
-  lazy val testScalaVersion = SettingKey[String]("test-scala-version", "The scala version to use to compile the test classes")
+  val testScalaVersion = settingKey[String]("The scala version to use to compile the test classes")
 
   // define configurations for the V1 and V2 sources
   val V1 = config("V1") extend Compile
@@ -261,7 +261,7 @@ object MimaBuild {
   lazy val runTest = Def.task {
     val proj = thisProjectRef.value // gives us the ProjectRef this task is defined in
     runCollectProblemsTest(
-      (fullClasspath in (reporterFunctionalTests, Compile)).value, // the test classpath from the functionalTest project for the test
+      (fullClasspath in (functionalTests, Compile)).value, // the test classpath from the functionalTest project for the test
       (scalaInstance in core).value, // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
       streams.value,
       proj.project,
@@ -282,7 +282,7 @@ object MimaBuild {
     val jar2 = getArtifact(depRes, moduleBase % conf.getString("v2"), streams.value)
     streams.value.log.info(s"Comparing $jar1 -> $jar2")
     runCollectProblemsTest(
-      (fullClasspath in (reporterFunctionalTests, Compile)).value, // the test classpath from the functionalTest project for the test
+      (fullClasspath in (functionalTests, Compile)).value, // the test classpath from the functionalTest project for the test
       (scalaInstance in core).value, // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
       streams.value,
       proj.project,
