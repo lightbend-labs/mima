@@ -274,7 +274,7 @@ object MimaBuild {
     val loader = new java.net.URLClassLoader(urls, si.loader)
 
     val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest")
-    val testRunner = testClass.newInstance().asInstanceOf[ {
+    val testRunner = testClass.getDeclaredConstructor().newInstance().asInstanceOf[ {
       def runTest(testClasspath: Array[String], testName: String, oldJarPath: String,
           newJarPath: String, oraclePath: String, filterPath: String): Unit
     }]
