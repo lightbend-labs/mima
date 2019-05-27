@@ -25,7 +25,7 @@ object BuildSettings {
       },
       git.useGitDescribe := true,
       licenses := Seq("Apache License v2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
-      homepage := Some(url("http://github.com/lightbend/migration-manager")),
+      homepage := Some(url("http://github.com/lightbend/mima")),
       scalacOptions := Seq("-feature", "-deprecation", "-Xlint", "-Xfuture")
   )
 
@@ -62,8 +62,8 @@ object BuildSettings {
     // Maven central wants some extra metadata to keep things 'clean'.
     pomExtra := (
       <scm>
-        <url>git@github.com:lightbend/migration-manager.git</url>
-        <connection>scm:git:git@github.com:lightbend/migration-manager.git</connection>
+        <url>git@github.com:lightbend/mima.git</url>
+        <connection>scm:git:git@github.com:lightbend/mima.git</connection>
       </scm>
       <developers>
         <developer>
