@@ -11,15 +11,13 @@ import com.typesafe.sbt.GitVersioning
 import com.typesafe.sbt.GitPlugin.autoImport._
 import sbt.ScriptedPlugin.autoImport._
 import com.typesafe.sbt.SbtPgp.autoImport.PgpKeys.publishSigned
+import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.plugin.MimaPlugin.autoImport._
 
 object BuildSettings {
 
-  val buildName = "mima"
-  val buildOrganization = "com.typesafe"
-
   val commonSettings = Seq(
-      organization := buildOrganization,
+      organization := "com.typesafe",
       scalaVersion := sys.props.getOrElse("mima.buildScalaVersion", "2.12.8"),
       git.gitTagToVersionNumber := { tag: String =>
         if (tag matches "[0.9]+\\..*") Some(tag)
@@ -81,141 +79,103 @@ object BuildSettings {
   )
 }
 
-object Dependencies {
-  val typesafeConfig = "com.typesafe" % "config" % "1.3.4"
-  val scalatest = "org.scalatest" %% "scalatest" % "3.1.0-SNAP11" % Test
-}
-
 object MimaBuild {
   import BuildSettings._
-  import Dependencies._
 
-  lazy val root = (
-    project("root", file("."))
-    aggregate(core, reporter, sbtplugin)
-    settings(name := buildName,
-             publish := {},
-             publishLocal := {},
-             publishSigned := {},
-             testScalaVersion in Global :=  sys.props.getOrElse("mima.testScalaVersion", scalaVersion.value)
+  lazy val root = project.in(file("."))
+    .disablePlugins(BintrayPlugin)
+    .aggregate(core, sbtplugin)
+    .settings(
+      name := "mima",
+      publish := {},
+      publishLocal := {},
+      publishSigned := {},
+      testScalaVersion in Global :=  sys.props.getOrElse("mima.testScalaVersion", scalaVersion.value),
     )
-    enablePlugins(GitVersioning)
-  )
+    .enablePlugins(GitVersioning)
 
   val scalaPartV = Def setting (CrossVersion partialVersion scalaVersion.value)
 
-  lazy val core = (
-    project("core", file("core"))
-    settings(
-      commonSettings,
-      name := buildName + "-core",
-      libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-      libraryDependencies += scalatest,
-      // WORKAROUND https://github.com/sbt/sbt/issues/2819
-      inConfig(Compile)(
-        unmanagedSourceDirectories ++=
-          scalaPartV.value.collect { case (2, 13) => sourceDirectory.value / "scala-2.13" }.toList
-      )
-    )
-    settings(sonatypePublishSettings:_*)
-    settings(
-      mimaBinaryIssueFilters ++= {
-        import com.typesafe.tools.mima.core._
-        Seq(
-          // Removed because unused
-          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.core.buildinfo.BuildInfo"),
-          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.core.buildinfo.BuildInfo$"),
+  lazy val core = project.disablePlugins(BintrayPlugin).settings(
+    commonSettings,
+    name := "mima-core",
+    libraryDependencies += "com.typesafe" % "config" % "1.3.4",
+    libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
+    libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.0-SNAP11" % Test,
+    // WORKAROUND https://github.com/sbt/sbt/issues/2819
+    inConfig(Compile)(
+      unmanagedSourceDirectories ++=
+        scalaPartV.value.collect { case (2, 13) => sourceDirectory.value / "scala-2.13" }.toList
+    ),
+    // add task testFunctional that depends on all the functional tests
+    testFunctional := allTests(testFunctional in _).value,
+    test in IntegrationTest := allTests(test in IntegrationTest in _).value,
+    sonatypePublishSettings,
+    mimaBinaryIssueFilters ++= Seq(
+      // Removed because unused
+      ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.core.buildinfo.BuildInfo"),
+      ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.core.buildinfo.BuildInfo$"),
 
-          // Add support for versions with less segments (#212)
-          ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.warn"),
-          ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.error")
-        )
-      }
-    )
+      // Add support for versions with less segments (#212)
+      ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.warn"),
+      ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.util.log.Logging.error"),
+
+      // Removed because unused
+      ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.lib.license.License"),
+      ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.lib.license.License$"),
+
+      // Removed because CLI dropped
+      ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.MimaSpec"),
+      ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.MimaSpec$"),
+      ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.Main"),
+      ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.Main$"),
+
+      // Moved (to functional-tests) because otherwise unused
+      ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.ProblemFiltersConfig"),
+      ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.ProblemFiltersConfig$"),
+    ),
   )
 
-  lazy val reporter = (
-    project("reporter", file("reporter"))
-    dependsOn(core)
-    settings(
-      commonSettings,
-      libraryDependencies += typesafeConfig,
-      name := buildName + "-reporter",
-      sonatypePublishSettings,
-      // add task functional-tests that depends on all functional tests
-      functionalTests := allTests(functionalTests in _).value,
-      test in IntegrationTest := allTests(test in IntegrationTest in _).value,
+  lazy val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core).settings(
+    name := "sbt-mima-plugin",
+    commonSettings,
+    scriptedLaunchOpts += "-Dplugin.version=" + version.value,
+    // Scripted locally publishes sbt plugin and then runs test projects with locally published version.
+    // Therefore we also need to locally publish dependent projects on scripted test run.
+    scriptedDependencies := scriptedDependencies.dependsOn(publishLocal in core).value,
+    sbtPublishSettings,
+    mimaBinaryIssueFilters ++= Seq(
+      // sbt-compat has been created to define these and has been added as a dependency of sbt-mima-plugin
+      ProblemFilters.exclude[MissingClassProblem]("sbt.compat"),
+      ProblemFilters.exclude[MissingClassProblem]("sbt.compat$"),
+      ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.package"),
+      ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.package$"),
+      ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.package$UpdateConfigurationOps"),
+      ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.package$UpdateConfigurationOps$"),
+      ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.UpdateConfiguration"),
+      ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.UpdateConfiguration$"),
+      ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.DependencyResolution"),
+      ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.ivy.IvyDependencyResolution"),
+      ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.ivy.IvyDependencyResolution$"),
 
-      mimaBinaryIssueFilters ++= {
-        import com.typesafe.tools.mima.core._
-        Seq(
-          // Removed because unused
-          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.lib.license.License"),
-          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.lib.license.License$"),
-
-          // Removed because CLI dropped
-          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.MimaSpec"),
-          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.MimaSpec$"),
-          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.Main"),
-          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.Main$"),
-
-          // Moved (to functional-tests) because otherwise unused
-          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.ProblemFiltersConfig"),
-          ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.cli.ProblemFiltersConfig$")
-        )
-      }
-    )
+      // Add support for versions with less segments (#212)
+      // All of these are MiMa sbtplugin internals and can be safely filtered
+      ProblemFilters.exclude[IncompatibleMethTypeProblem]("com.typesafe.tools.mima.plugin.SbtMima.runMima"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.plugin.SbtMima.reportErrors"),
+      ProblemFilters.exclude[IncompatibleMethTypeProblem]("com.typesafe.tools.mima.plugin.SbtMima.reportModuleErrors"),
+    ),
   )
 
-  lazy val sbtplugin = (
-    Project("sbtplugin", file("sbtplugin"))
-    enablePlugins(SbtPlugin)
-    settings(name := "sbt-mima-plugin",
-             commonSettings,
-             libraryDependencies += scalatest,
-             scriptedLaunchOpts := scriptedLaunchOpts.value :+ "-Dplugin.version=" + version.value,
-             scriptedBufferLog := false,
-             // Scripted locally publishes sbt plugin and then runs test projects with locally published version.
-             // Therefore we also need to locally publish dependent projects on scripted test run.
-             scriptedDependencies := scriptedDependencies.dependsOn(publishLocal in core, publishLocal in reporter).value,
-    )
-    dependsOn(reporter)
-    settings(
-      sbtPublishSettings,
-      mimaBinaryIssueFilters ++= {
-        import com.typesafe.tools.mima.core._
-        Seq(
-          // sbt-compat has been created to define these and has been added as a dependency of sbt-mima-plugin
-          ProblemFilters.exclude[MissingClassProblem]("sbt.compat"),
-          ProblemFilters.exclude[MissingClassProblem]("sbt.compat$"),
-          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.package"),
-          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.package$"),
-          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.package$UpdateConfigurationOps"),
-          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.package$UpdateConfigurationOps$"),
-          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.UpdateConfiguration"),
-          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.UpdateConfiguration$"),
-          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.DependencyResolution"),
-          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.ivy.IvyDependencyResolution"),
-          ProblemFilters.exclude[MissingClassProblem]("sbt.librarymanagement.ivy.IvyDependencyResolution$"),
-
-          // Add support for versions with less segments (#212)
-          // All of these are MiMa sbtplugin internals and can be safely filtered
-          ProblemFilters.exclude[IncompatibleMethTypeProblem]("com.typesafe.tools.mima.plugin.SbtMima.runMima"),
-          ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.plugin.SbtMima.reportErrors"),
-          ProblemFilters.exclude[IncompatibleMethTypeProblem]("com.typesafe.tools.mima.plugin.SbtMima.reportModuleErrors")
-        )
-      }
-    )
-  )
-
-  lazy val reporterFunctionalTests = project("reporter-functional-tests", file("reporter") / "functional-tests")
-    .dependsOn(core, reporter)
+  lazy val functionalTests = Project("functional-tests", file("functional-tests"))
+    .disablePlugins(BintrayPlugin)
+    .dependsOn(core)
     .settings(commonSettings)
 
   // select all testN directories.
-  val bases = (file("reporter") / "functional-tests" / "src" / "test") *
+  val bases = (file("functional-tests") / "src" / "test") *
     (DirectoryFilter && new SimpleFileFilter(_.list.contains("problems.txt")))
-  val integrationTestBases = (file("reporter") / "functional-tests" / "src" / "it") *
+
+  val integrationTestBases = (file("functional-tests") / "src" / "it") *
     (DirectoryFilter && new SimpleFileFilter(_.list.contains("test.conf")))
 
   // make the Project for each discovered directory
@@ -224,27 +184,32 @@ object MimaBuild {
 
   // defines a Project for the given base directory (for example, functional-tests/test1)
   // Its name is the directory name (test1) and it has compile+package tasks for sources in v1/ and v2/
-  def testProject(base: File) = project("test-" + base.name, base).settings(testProjectSettings).configs(V1, V2)
-  def integrationTestProject(base: File) = project("it-" + base.name, base).settings(integrationTestProjectSettings)
+  def testProject(base: File) =
+    Project("test-" + base.name, base).disablePlugins(BintrayPlugin).settings(testProjectSettings).configs(V1, V2)
 
-  lazy val testProjectSettings =
-    commonSettings ++ // normal project defaults; can be trimmed later- test and run aren't needed, for example.
-    Seq(scalaVersion := (testScalaVersion in Global).value) ++
-    inConfig(V1)(perConfig) ++ // add compile/package for the V1 sources
-    inConfig(V2)(perConfig) :+ // add compile/package for the V2 sources
-    (functionalTests := runTest.value) // add the functional-tests task
-  lazy val integrationTestProjectSettings =
-    commonSettings ++
-    Seq(scalaVersion := (testScalaVersion in Global).value) ++
-    (test in IntegrationTest := runIntegrationTest.value)
+  def integrationTestProject(base: File) =
+    Project("it-" + base.name, base).disablePlugins(BintrayPlugin).settings(integrationTestProjectSettings)
 
-  // this is the key for the task that runs the reporter's functional tests
-  lazy val functionalTests = TaskKey[Unit]("test-functional")
+  lazy val testProjectSettings = Def.settings(
+    commonSettings, // normal project defaults; can be trimmed later- test and run aren't needed, for example.
+    scalaVersion := (testScalaVersion in Global).value,
+    inConfig(V1)(perConfig), // add compile/package for the V1 sources
+    inConfig(V2)(perConfig), // add compile/package for the V2 sources
+    testFunctional := runTest.value, // add the testFunctional task
+  )
+
+  lazy val integrationTestProjectSettings = Def.settings(
+    commonSettings,
+    scalaVersion := (testScalaVersion in Global).value,
+    test in IntegrationTest := runIntegrationTest.value,
+  )
+
+  val testFunctional = taskKey[Unit]("Run the functional test")
 
   // This is the key for the scala version used to compile the tests, so that we can cross test the MiMa version
   // actually being used in the sbt plugin against multiple scala compiler versions.
   // Also the base project has dependencies that don't resolve under newer versions of scala.
-  lazy val testScalaVersion = SettingKey[String]("test-scala-version", "The scala version to use to compile the test classes")
+  val testScalaVersion = settingKey[String]("The scala version to use to compile the test classes")
 
   // define configurations for the V1 and V2 sources
   val V1 = config("V1") extend Compile
@@ -262,7 +227,7 @@ object MimaBuild {
   lazy val runTest = Def.task {
     val proj = thisProjectRef.value // gives us the ProjectRef this task is defined in
     runCollectProblemsTest(
-      (fullClasspath in (reporterFunctionalTests, Compile)).value, // the test classpath from the functionalTest project for the test
+      (fullClasspath in (functionalTests, Compile)).value, // the test classpath from the functionalTest project for the test
       (scalaInstance in core).value, // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
       streams.value,
       proj.project,
@@ -283,7 +248,7 @@ object MimaBuild {
     val jar2 = getArtifact(depRes, moduleBase % conf.getString("v2"), streams.value)
     streams.value.log.info(s"Comparing $jar1 -> $jar2")
     runCollectProblemsTest(
-      (fullClasspath in (reporterFunctionalTests, Compile)).value, // the test classpath from the functionalTest project for the test
+      (fullClasspath in (functionalTests, Compile)).value, // the test classpath from the functionalTest project for the test
       (scalaInstance in core).value, // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
       streams.value,
       proj.project,
@@ -378,9 +343,6 @@ object MimaBuild {
       allTests.join.map(_ => ()).value
     }
   }
-
-  def project(id: String, base: File, settings: Seq[Def.Setting[_]] = Nil) =
-    Project(id, base).settings(settings).disablePlugins(BintrayPlugin)
 }
 
 object DefineTestProjectsPlugin extends AutoPlugin {

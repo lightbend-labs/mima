@@ -8,7 +8,6 @@ bin/
 .history
 .classpath
 .project
-reporter/project/**
 **/eclipse.sbt
 **/.cache
 /.idea/
