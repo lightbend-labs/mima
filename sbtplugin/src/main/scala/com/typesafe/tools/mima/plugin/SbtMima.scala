@@ -42,14 +42,14 @@ object SbtMima {
   def runMima(prev: File, curr: File, cp: sbt.Keys.Classpath,
               dir: String, log: Logging): (List[Problem], List[Problem]) = {
     // MiMaLib collects problems to a mutable buffer, therefore we need a new instance every time
-    (dir match {
-       case "backward" | "backwards" | "both" => makeMima(cp, log).collectProblems(prev.getAbsolutePath, curr.getAbsolutePath)
-       case _ => Nil
-     },
-     dir match {
-       case "forward" | "forwards" | "both" => makeMima(cp, log).collectProblems(curr.getAbsolutePath, prev.getAbsolutePath)
-       case _ => Nil
-     })
+    def checkBC = makeMima(cp, log).collectProblems(prev.getAbsolutePath, curr.getAbsolutePath)
+    def checkFC = makeMima(cp, log).collectProblems(curr.getAbsolutePath, prev.getAbsolutePath)
+    dir match {
+       case "backward" | "backwards" => (checkBC, Nil)
+       case "forward" | "forwards"   => (Nil, checkFC)
+       case "both"                   => (checkBC, checkFC)
+       case _                        => (Nil, Nil)
+    }
   }
 
   /** Reports binary compatibility errors for a module.
