@@ -1,4 +1,4 @@
-# Contributing to Migration Manager
+# Contributing to MiMa
 
 ## CLA
 
@@ -70,7 +70,7 @@ For a Pull Request to be considered at all it has to meet these requirements:
 2. Regardless of whether the code introduces new features or fixes bugs or regressions, it must have comprehensive tests. The only exception is UI code, because our infrastructure allows running tests only in a headless environment.
 3. The code must be well documented.
 4. User documentation should be provided for all new features:
-   - Fork the [Wiki repository](https://github.com/lightbend/migration-manager/wiki/_access) and perform your work in a Git branch.
+   - Fork the [Wiki repository](https://github.com/lightbend/mima/wiki/_access) and perform your work in a Git branch.
    - In the Pull Request’s description, add a link to a branch containing the updated documentation so that it can be reviewed together with the code.
 5. Rebase your branch on the latest master if it can’t be cleanly merged.
 6. The Pull Request validator successfully builds. What the Pull Request validator does is make sure that the current master branch will still compile fine after the currently in-review Pull Request is merged.
@@ -126,10 +126,10 @@ Create a new issue with the following checklist and get going.
 
 - [ ] A milestone exists for the release you are about to perform. If it doesn't create one.
 - [ ] The milestone due date is the day of the release.
-- [ ] Travis passes against latest Scala versions (past example: https://github.com/lightbend/migration-manager/pull/164)
+- [ ] Travis passes against latest Scala versions (past example: https://github.com/lightbend/mima/pull/164)
 - [ ] All tickets fixed in the current development cycle are associated to the current milestone.
 - [ ] Bump the version in the `README.md` and `git commit`.
-- [ ] Run `clean`. (particularly if you've recently bumped `scalaVersion` - see [#191](https://github.com/lightbend/migration-manager/issues/191))
+- [ ] Run `clean`. (particularly if you've recently bumped `scalaVersion` - see [#191](https://github.com/lightbend/mima/issues/191))
 - [ ] Create an annotated, signed git tag (`git tag -a -s`) and push it. The name of the tag should follow the format of previous tags (not 'v' prefix). `reload` and verify that `show version` in sbt picks up the version number from the tag.
 - [ ] Run `^publishSigned`. You should start seeing "published mima-.. to https://oss.sonatype.org/service/local/staging/deploy/maven2/.."
 - [ ] Login on [Sonatype](https://oss.sonatype.org/) and follow [this guide](https://docs.sonatype.org/display/Repository/Sonatype+OSS+Maven+Repository+Usage+Guide#SonatypeOSSMavenRepositoryUsageGuide-8a.ReleaseIt) to release the staged MiMa artifacts.

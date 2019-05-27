@@ -1,11 +1,11 @@
-# Migration Manager for Scala
+# MiMa
 
-The Migration Manager for Scala (MiMa in short) is a tool for
+MiMa (previously "The Migration Manager for Scala") is a tool for
 diagnosing [binary incompatibilities](https://docs.scala-lang.org/overviews/core/binary-compatibility-for-library-authors.html) for Scala libraries.
 
-## What it is
+## What it is?
 
-The Migration Manager (MiMa in short) can report binary modifications that may
+MiMa can report binary modifications that may
 lead the JVM throwing a ``java.lang.LinkageError`` (or one of its subtypes,
 like ``AbstractMethodError``) at runtime. Linkage errors are usually the
 consequence of modifications in classes/members signature.
@@ -65,7 +65,7 @@ Run `mimaReportBinaryIssues`.  You should see something like the following:
 
 ## Advanced Usage (Filtering Binary Incompatibilities)
 
-Sometimes you may want to filter out some binary incompatibility. For instance, because you warn your users to never use a class or method marked with a particular annotation (e.g., [`@experimental`](https://github.com/lightbend/migration-manager/issues/160) - note, this annotation is **not** part of the Scala standard library), you may want to exclude all classes/methods that use such annotation. In MiMa you can do this by _explicitly list each binary incompatibility_ that you want to ignore (unfortunately, it doesn't yet support annotation-based filtering - PR is welcomed! :)). 
+Sometimes you may want to filter out some binary incompatibility. For instance, because you warn your users to never use a class or method marked with a particular annotation (e.g., [`@experimental`](https://github.com/lightbend/mima/issues/160) - note, this annotation is **not** part of the Scala standard library), you may want to exclude all classes/methods that use such annotation. In MiMa you can do this by _explicitly list each binary incompatibility_ that you want to ignore (unfortunately, it doesn't yet support annotation-based filtering - PR is welcomed! :)). 
 
 Open your `build.sbt` file, and
 
