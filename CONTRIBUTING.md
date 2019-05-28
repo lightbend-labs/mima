@@ -67,16 +67,11 @@ For a Pull Request to be considered at all it has to meet these requirements:
 1. Live up to the current code standard:
    - Not violate [DRY](http://programmer.97things.oreilly.com/wiki/index.php/Don%27t_Repeat_Yourself).
    - [Boy Scout Rule](http://programmer.97things.oreilly.com/wiki/index.php/The_Boy_Scout_Rule) needs to have been applied.
-2. Regardless of whether the code introduces new features or fixes bugs or regressions, it must have comprehensive tests. The only exception is UI code, because our infrastructure allows running tests only in a headless environment.
+2. Regardless of whether the code introduces new features or fixes bugs or regressions, it must have comprehensive tests.
 3. The code must be well documented.
-4. User documentation should be provided for all new features:
-   - Fork the [Wiki repository](https://github.com/lightbend/mima/wiki/_access) and perform your work in a Git branch.
-   - In the Pull Request’s description, add a link to a branch containing the updated documentation so that it can be reviewed together with the code.
+4. User documentation should be provided for all new features.
 5. Rebase your branch on the latest master if it can’t be cleanly merged.
-6. The Pull Request validator successfully builds. What the Pull Request validator does is make sure that the current master branch will still compile fine after the currently in-review Pull Request is merged.
-    - The Pull Request validator will start within 1 hour from the moment you opened the Pull Request.
-    - If you want to force the Pull Request validator to run again, you can do so by adding a new comment in the Pull Request with the following text: ``PLS REBUILD ALL``. Again, the Pull Request validator will kick-in within 1 hour.
-
+6. Pull Request validation passes. What Pull Request validation does is make sure that the current master branch will still compile fine after the currently in-review Pull Request is merged.
 
 If these requirements are not met then the code should **not** be merged into master, or even reviewed - regardless of how good or important it is.
 
