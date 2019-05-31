@@ -233,7 +233,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
 
   /** Does this class have an implementation (forwarder or accessor) of given method `m'? */
   private def hasInstanceImpl(m: MemberInfo) =
-    methods.get(m.bytecodeName) exists (_.sig == m.sig)
+    methods.get(m.bytecodeName) exists (_.descriptor == m.descriptor)
 
   /** Does this implementation class have a static implementation of given method `m'? */
   def hasStaticImpl(m: MemberInfo) = staticImpl(m).isDefined
@@ -244,7 +244,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
       implClass match {
         case impl: ConcreteClassInfo =>
           assert(impl.isImplClass, impl)
-          impl.methods.get(m.bytecodeName) find (im => hasImplSig(im.sig, m.sig))
+          impl.methods.get(m.bytecodeName) find (im => hasImplSig(im.descriptor, m.descriptor))
 
         case _ => None
       }

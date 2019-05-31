@@ -218,8 +218,8 @@ abstract class ClassfileParser(definitions: Definitions) {
 
   def parseMember(clazz: ClassInfo, jflags: Int): MemberInfo = {
     val name = pool.getName(in.nextChar)
-    val sig = pool.getExternalName(in.nextChar)
-    val result = new MemberInfo(clazz, name, jflags, sig)
+    val descriptor = pool.getExternalName(in.nextChar)
+    val result = new MemberInfo(clazz, name, jflags, descriptor)
     parseAttributes(result)
     result
   }
@@ -287,7 +287,6 @@ abstract class ClassfileParser(definitions: Definitions) {
      }
   }
 
-  /** Return true iff TraitSetter annotation found among attributes */
   def parseAttributes(m: MemberInfo): Unit = {
     val maybeTraitSetter = MemberInfo.maybeSetter(m.bytecodeName)
     val attrCount = in.nextChar
@@ -316,6 +315,8 @@ abstract class ClassfileParser(definitions: Definitions) {
         m.codeOpt = Some((in.bp, in.bp + codeLength))
       } else if (attrName == "Deprecated") {
         m.isDeprecated = true
+      } else if (attrName == "Signature") {
+        m.signature = pool.getName(in.nextChar)
       }
       in.bp = attrEnd
     }

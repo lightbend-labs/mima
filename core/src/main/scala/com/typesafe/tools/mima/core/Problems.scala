@@ -102,12 +102,24 @@ case class IncompatibleResultTypeProblem(oldmeth: MemberInfo, newmeth: MemberInf
   }
 }
 
+/**
+ * Produced when the basic types are the same, but the full signature is still different,
+ * for example when generic parameters don't match.
+ * This has a chance of false positives.
+ */
+case class IncompatibleSignatureProblem(oldmeth: MemberInfo, newmeth: MemberInfo) extends MemberProblem(oldmeth) {
+  def description = affectedVersion => {
+    oldmeth.methodString + " has a different signature in " + affectedVersion + " version, where it is " + newmeth.signature +
+       " rather than " + oldmeth.signature
+  }
+}
+
 // In some older code within Mima, the affectedVersion could be reversed. We split AbstractMethodProblem and MissingMethodProblem
 // into two, in case the affected version is the other one, rather than the current one. (reversed if forward check).
 abstract class AbstractMethodProblem(newmeth: MemberInfo) extends MemberProblem(newmeth)
 
 case class InheritedNewAbstractMethodProblem(clazz: ClassInfo, inheritedMethod: MemberInfo)
-    extends AbstractMethodProblem(new MemberInfo(clazz, inheritedMethod.bytecodeName, inheritedMethod.flags, inheritedMethod.sig)) {
+    extends AbstractMethodProblem(new MemberInfo(clazz, inheritedMethod.bytecodeName, inheritedMethod.flags, inheritedMethod.descriptor)) {
   def description = affectedVersion => "abstract " + inheritedMethod.methodString+ " is inherited by class " + clazz.bytecodeName + " in " + affectedVersion + " version."
 }
 

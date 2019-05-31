@@ -12,7 +12,7 @@ private[analyze] abstract class BaseFieldChecker extends Checker[MemberInfo, Cla
         val newfld = newflds.next
         if (!newfld.isPublic)
           Some(InaccessibleFieldProblem(newfld))
-        else if(field.sig != newfld.sig)
+        else if(field.descriptor != newfld.descriptor)
           Some(IncompatibleFieldTypeProblem(field, newfld))
         else if (field.isStatic && !newfld.isStatic)
           Some(StaticVirtualMemberProblem(field))
