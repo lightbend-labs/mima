@@ -1,4 +1,10 @@
-scalacOptions ++= Seq("-feature", "-deprecation", "-Xfatal-warnings")
+scalacOptions ++= Seq(
+  "-deprecation",
+  "-feature",
+  "-Xfatal-warnings",
+  "-Xlint",
+  "-Ywarn-unused:_,-imports",
+)
 
 addSbtPlugin("org.foundweekends" % "sbt-bintray"     % "0.5.5")
 addSbtPlugin("com.typesafe.sbt"  % "sbt-git"         % "1.0.0")
