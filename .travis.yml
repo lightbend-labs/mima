@@ -21,14 +21,14 @@ env:
     - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.12.8 mimaReportBinaryIssues test it:test"
     - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.12.8 -Dmima.testScalaVersion=2.11.12 testFunctional"
     - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.12.8 -Dmima.testScalaVersion=2.12.8 testFunctional"
-    - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.12.8 -Dmima.testScalaVersion=2.13.0-RC2 testFunctional"
+    - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.12.8 -Dmima.testScalaVersion=2.13.0 testFunctional"
     - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.12.8 \"scripted sbt-mima-plugin/*1of2\""
     - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.12.8 \"scripted sbt-mima-plugin/*2of2\""
 
-    - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.13.0-RC2 core/test functional-tests/test it:test"
-    - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.13.0-RC2 -Dmima.testScalaVersion=2.11.12 testFunctional"
-    - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.13.0-RC2 -Dmima.testScalaVersion=2.12.8 testFunctional"
-    - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.13.0-RC2 -Dmima.testScalaVersion=2.13.0-RC2 testFunctional"
+    - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.13.0 core/test functional-tests/test it:test"
+    - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.13.0 -Dmima.testScalaVersion=2.11.12 testFunctional"
+    - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.13.0 -Dmima.testScalaVersion=2.12.8 testFunctional"
+    - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.13.0 -Dmima.testScalaVersion=2.13.0 testFunctional"
 
 script: eval "$TEST_COMMAND"
 
