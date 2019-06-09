@@ -105,6 +105,7 @@ object TestsPlugin extends AutoPlugin {
   }
 
   val testProjectSettings = Def.settings(
+    resolvers += "scala-pr-validation-snapshots" at "https://scala-ci.typesafe.com/artifactory/scala-pr-validation-snapshots/",
     scalaVersion := testScalaVersion.value,
     inConfig(V1)(perConfig), // add compile/package for the V1 sources
     inConfig(V2)(perConfig), // add compile/package for the V2 sources
