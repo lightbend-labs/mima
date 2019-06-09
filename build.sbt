@@ -25,7 +25,7 @@ val core = project.disablePlugins(BintrayPlugin).settings(
   name := "mima-core",
   libraryDependencies += "com.typesafe" % "config" % "1.3.4",
   libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-  libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.0-SNAP11" % Test,
+  libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.0-SNAP12" % Test,
   MimaSettings.mimaSettings,
   publishTo := Some(
     if (isSnapshot.value) "snapshots" at "https://oss.sonatype.org/content/repositories/snapshots"
