@@ -1,37 +1,27 @@
-sudo: false
+language: scala
+jdk: oraclejdk8
+scala:
+  - 2.12.8
+  - 2.13.0
+
+script: sbt -Dmima.buildScalaVersion=$TRAVIS_SCALA_VERSION mimaReportBinaryIssues test it:test
+
+jobs:
+  include:
+  - { name: 2.12 testFunctional 2.11, script: sbt -Dmima.buildScalaVersion=2.12.8 -Dmima.testScalaVersion=2.11.12 testFunctional }
+  - { name: 2.12 testFunctional 2.12, script: sbt -Dmima.buildScalaVersion=2.12.8 -Dmima.testScalaVersion=2.12.8  testFunctional }
+  - { name: 2.12 testFunctional 2.13, script: sbt -Dmima.buildScalaVersion=2.12.8 -Dmima.testScalaVersion=2.13.0  testFunctional }
+  - { name: 2.13 testFunctional 2.11, script: sbt -Dmima.buildScalaVersion=2.13.0 -Dmima.testScalaVersion=2.11.12 testFunctional }
+  - { name: 2.13 testFunctional 2.12, script: sbt -Dmima.buildScalaVersion=2.13.0 -Dmima.testScalaVersion=2.12.8  testFunctional }
+  - { name: 2.13 testFunctional 2.13, script: sbt -Dmima.buildScalaVersion=2.13.0 -Dmima.testScalaVersion=2.13.0  testFunctional }
+  - { name: scripted 1/2, script: script: sbt "scripted sbt-mima-plugin/*1of2" }
+  - { name: scripted 2/2, script: script: sbt "scripted sbt-mima-plugin/*2of2" }
 
 cache:
   directories:
   - $HOME/.ivy2
-  - $HOME/.sbt/boot
-  - $HOME/.sbt/launchers
-
-language: scala
-
-scala: 2.12.8
-
-jdk:
-  - oraclejdk8
-
-matrix:
-  fast_finish: true
-
-env:
-  matrix:
-    - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.12.8 mimaReportBinaryIssues test it:test"
-    - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.12.8 -Dmima.testScalaVersion=2.11.12 testFunctional"
-    - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.12.8 -Dmima.testScalaVersion=2.12.8 testFunctional"
-    - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.12.8 -Dmima.testScalaVersion=2.13.0 testFunctional"
-    - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.12.8 \"scripted sbt-mima-plugin/*1of2\""
-    - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.12.8 \"scripted sbt-mima-plugin/*2of2\""
-
-    - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.13.0 core/test functional-tests/test it:test"
-    - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.13.0 -Dmima.testScalaVersion=2.11.12 testFunctional"
-    - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.13.0 -Dmima.testScalaVersion=2.12.8 testFunctional"
-    - TEST_COMMAND="sbt -Dmima.buildScalaVersion=2.13.0 -Dmima.testScalaVersion=2.13.0 testFunctional"
-
-script: eval "$TEST_COMMAND"
+  - $HOME/.sbt
 
 before_cache:
-  - find $HOME/.sbt -name "*.lock" | xargs rm
-  - find $HOME/.ivy2 -name "ivydata-*.properties" | xargs rm
+  - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
+  - find $HOME/.sbt  -name "*.lock"               -delete
