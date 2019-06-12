@@ -1,6 +1,7 @@
 package mimabuild
 
 import sbt._
+import sbt.librarymanagement.{ SemanticSelector, VersionNumber }
 import sbt.Defaults.sbtPluginExtra
 import sbt.Keys._
 import com.typesafe.tools.mima.core._
@@ -10,13 +11,15 @@ object MimaSettings {
   val mimaPreviousVersion = "0.1.15"
 
   val mimaSettings = Def.settings (
-    mimaPreviousArtifacts := Set({
-      val m = organization.value % moduleName.value % mimaPreviousVersion
-      if (sbtPlugin.value)
-        sbtPluginExtra(m, (sbtBinaryVersion in pluginCrossBuild).value, (scalaBinaryVersion in update).value)
-      else
-        m cross CrossVersion.binary
-    }),
+    mimaPreviousArtifacts := {
+      if (VersionNumber(scalaVersion.value).matchesSemVer(SemanticSelector(">=2.13"))) Set.empty else Set({
+        val m = organization.value % moduleName.value % mimaPreviousVersion
+        if (sbtPlugin.value)
+          sbtPluginExtra(m, (sbtBinaryVersion in pluginCrossBuild).value, (scalaBinaryVersion in update).value)
+        else
+          m cross CrossVersion.binary
+      })
+    },
     mimaBinaryIssueFilters ++= Seq(
       // Removed because unused
       ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.core.buildinfo.BuildInfo"),

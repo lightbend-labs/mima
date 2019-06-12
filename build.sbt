@@ -12,7 +12,8 @@ inThisBuild(Seq(
   git.gitTagToVersionNumber := (tag => if (tag matches "[0.9]+\\..*") Some(tag) else None),
   git.useGitDescribe := true,
   scalaVersion := sys.props.getOrElse("mima.buildScalaVersion", "2.12.8"),
-  scalacOptions := Seq("-feature", "-deprecation", "-Xlint", "-Xfuture")
+  scalacOptions := Seq("-feature", "-deprecation", "-Xlint", "-Xfuture"),
+  crossScalaVersions := Nil,
 ))
 
 val root = project.in(file(".")).disablePlugins(BintrayPlugin).enablePlugins(GitVersioning).settings(
@@ -23,6 +24,7 @@ aggregateProjects(core, sbtplugin, functionalTests)
 
 val core = project.disablePlugins(BintrayPlugin).settings(
   name := "mima-core",
+  crossScalaVersions := Seq("2.12.8", "2.13.0"),
   libraryDependencies += "com.typesafe" % "config" % "1.3.4",
   libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
   libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.0-SNAP13" % Test,
@@ -36,6 +38,7 @@ val core = project.disablePlugins(BintrayPlugin).settings(
 
 val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core).settings(
   name := "sbt-mima-plugin",
+  crossScalaVersions := Seq("2.12.8"),
   scriptedDependencies := scriptedDependencies.dependsOn(publishLocal in core).value,
   scriptedLaunchOpts += "-Dplugin.version=" + version.value,
   MimaSettings.mimaSettings,
@@ -47,3 +50,4 @@ val functionalTests = Project("functional-tests", file("functional-tests"))
   .dependsOn(core)
   .enablePlugins(TestsPlugin)
   .disablePlugins(BintrayPlugin)
+  .settings(crossScalaVersions := Seq("2.12.8", "2.13.0"))
