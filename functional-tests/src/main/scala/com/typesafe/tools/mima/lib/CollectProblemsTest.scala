@@ -36,7 +36,9 @@ class CollectProblemsTest {
     // load oracle
     val inputStream = new BufferedInputStream(new FileInputStream(oraclePath))
     val expectedProblems = try {
-      Source.fromInputStream(inputStream).getLines.toList
+      Source.fromInputStream(inputStream).getLines
+        .filter(!_.startsWith("#"))
+        .toList
     } finally inputStream.close()
 
     // diff between the oracle and the collected problems
