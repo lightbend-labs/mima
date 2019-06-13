@@ -8,6 +8,7 @@ script: sbt "++$TRAVIS_SCALA_VERSION mimaReportBinaryIssues" "++$TRAVIS_SCALA_VE
 
 jobs:
   include:
+  - { name: 2.12 testFunctional scala/scala#8127, script: sbt -Dmima.buildScalaVersion=2.12.8 -Dmima.testScalaVersion=2.12.9-bin-369c743-SNAPSHOT testFunctional }
   - { name: 2.12 testFunctional 2.11, script: sbt -Dmima.buildScalaVersion=2.12.8 -Dmima.testScalaVersion=2.11.12 testFunctional }
   - { name: 2.12 testFunctional 2.12, script: sbt -Dmima.buildScalaVersion=2.12.8 -Dmima.testScalaVersion=2.12.8  testFunctional }
   - { name: 2.12 testFunctional 2.13, script: sbt -Dmima.buildScalaVersion=2.12.8 -Dmima.testScalaVersion=2.13.0  testFunctional }
