@@ -109,8 +109,10 @@ case class IncompatibleResultTypeProblem(oldmeth: MemberInfo, newmeth: MemberInf
  */
 case class IncompatibleSignatureProblem(oldmeth: MemberInfo, newmeth: MemberInfo) extends MemberProblem(oldmeth) {
   def description = affectedVersion => {
-    oldmeth.methodString + " has a different signature in " + affectedVersion + " version, where it is " + newmeth.signature +
-       " rather than " + oldmeth.signature
+    // a method that takes no parameters and returns Object can have no signature
+    def orNA(s: String) = if (s.isEmpty) "[N/A]" else s
+    s"${oldmeth.methodString} has a different signature in $affectedVersion version, " +
+      s"where it is ${orNA(newmeth.signature)} rather than ${orNA(oldmeth.signature)}"
   }
 }
 
