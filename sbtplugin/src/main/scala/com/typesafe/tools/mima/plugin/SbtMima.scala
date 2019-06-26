@@ -5,42 +5,30 @@ import java.io.File
 
 import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.core.util.log.Logging
-import sbt.Keys.TaskStreams
 import sbt._
-import librarymanagement.{ UpdateLogging => _, _ }
-import ivy._
-import internal.librarymanagement._
+import sbt.Keys.{ Classpath, TaskStreams }
+import sbt.librarymanagement.{ UpdateLogging => _, _ }
+import sbt.librarymanagement.ivy._
+import sbt.internal.librarymanagement._
 
 import scala.io.Source
 import scala.util._
 import scala.util.control.NonFatal
 import scala.util.matching._
 
-/** Wrapper on SBT logging for MiMa */
-class SbtLogger(s: TaskStreams) extends Logging {
-  // Mima is prety chatty
-  def info(str: String): Unit = s.log.debug(str)
-  def debugLog(str: String): Unit = s.log.debug(str)
-  def warn(str: String): Unit = s.log.warn(str)
-  def error(str: String): Unit = s.log.error(str)
-}
-
 object SbtMima {
-  val x = sbt.Keys.fullClasspath
-
   /** Creates a new MiMaLib object to run analysis. */
-  private def makeMima(cp: sbt.Keys.Classpath, log: Logging): lib.MiMaLib = {
+  private def makeMima(cp: Classpath, log: Logging): lib.MiMaLib = {
     // TODO: Fix MiMa so we don't have to hack this bit in.
     core.Config.setup("sbt-mima-plugin", Array.empty)
-    val cpstring = cp map (_.data.getAbsolutePath()) mkString System.getProperty("path.separator")
+    val cpstring = cp.map(_.data.getAbsolutePath()).mkString(File.pathSeparator)
     val classpath = com.typesafe.tools.mima.core.reporterClassPath(cpstring)
     new lib.MiMaLib(classpath, log)
   }
 
   /** Runs MiMa and returns a two lists of potential binary incompatibilities,
       the first for backward compatibility checking, and the second for forward checking. */
-  def runMima(prev: File, curr: File, cp: sbt.Keys.Classpath,
-              dir: String, log: Logging): (List[Problem], List[Problem]) = {
+  def runMima(prev: File, curr: File, cp: Classpath, dir: String, log: Logging): (List[Problem], List[Problem]) = {
     // MiMaLib collects problems to a mutable buffer, therefore we need a new instance every time
     def checkBC = makeMima(cp, log).collectProblems(prev.getAbsolutePath, curr.getAbsolutePath)
     def checkFC = makeMima(cp, log).collectProblems(curr.getAbsolutePath, prev.getAbsolutePath)
@@ -52,45 +40,49 @@ object SbtMima {
     }
   }
 
-  /** Reports binary compatibility errors for a module.
-   *  @param failOnProblem if true, fails the build on binary compatibility errors.
-   */
-  def reportModuleErrors(module: ModuleID,
-                   backward: List[Problem],
-                   forward: List[Problem],
-                   failOnProblem: Boolean,
-                   filters: Seq[ProblemFilter],
-                   backwardFilters: Map[String, Seq[ProblemFilter]],
-                   forwardFilters: Map[String, Seq[ProblemFilter]],
-                         log: Logging, projectName: String): Unit = {
+  /** Reports binary compatibility errors for a module. */
+  def reportModuleErrors(
+      module: ModuleID,
+      backward: List[Problem],
+      forward: List[Problem],
+      failOnProblem: Boolean,
+      filters: Seq[ProblemFilter],
+      backwardFilters: Map[String, Seq[ProblemFilter]],
+      forwardFilters: Map[String, Seq[ProblemFilter]],
+      log: Logging,
+      projectName: String,
+  ): Unit = {
     // filters * found is n-squared, it's fixable in principle by special-casing known
     // filter types or something, not worth it most likely...
 
-    val version = module.revision
+    def isReported(map: Map[String, Seq[ProblemFilter]], classification: String) =
+      ProblemReporting.isReported(module.revision, filters, map)(log, projectName, classification) _
 
-    val backErrors = backward filter ProblemReporting.isReported(version, filters, backwardFilters)(log, projectName, "current")
-    val forwErrors = forward filter ProblemReporting.isReported(version, filters, forwardFilters)(log, projectName, "other")
-
-    val filteredCount = backward.size + forward.size - backErrors.size - forwErrors.size
-    val filteredNote = if (filteredCount > 0) " (filtered " + filteredCount + ")" else ""
-
-    // TODO - Line wrapping an other magikz
-    def prettyPrint(p: Problem, affected: String): String = {
-      " * " + p.description(affected) + p.howToFilter.map("\n   filter with: " + _).getOrElse("")
+    def pretty(affected: String)(p: Problem): String = {
+      val desc = p.description(affected)
+      val howToFilter = p.howToFilter.fold("")(s => s"\n   filter with: $s")
+      s" * $desc$howToFilter"
     }
 
-    log.info(s"$projectName: found ${backErrors.size+forwErrors.size} potential binary incompatibilities while checking against $module $filteredNote")
-    ((backErrors map {p: Problem => prettyPrint(p, "current")}) ++
-     (forwErrors map {p: Problem => prettyPrint(p, "other")})) foreach { p =>
+    val backErrors = backward.filter(isReported(backwardFilters, "current"))
+    val forwErrors = forward.filter(isReported(forwardFilters, "other"))
+
+    val count = backErrors.size + forwErrors.size
+    val filteredCount = backward.size + forward.size - backErrors.size - forwErrors.size
+    val filteredNote = if (filteredCount > 0) s" (filtered $filteredCount)" else ""
+    log.info(s"$projectName: found $count potential binary incompatibilities while checking against $module $filteredNote")
+
+    (backErrors.map(pretty("current")) ++ forwErrors.map(pretty("other"))).foreach { p =>
       if (failOnProblem) log.error(p)
       else log.warn(p)
     }
-    if (failOnProblem && (backErrors.nonEmpty || forwErrors.nonEmpty)) sys.error(projectName + ": Binary compatibility check failed!")
+
+    if (failOnProblem && (backErrors.nonEmpty || forwErrors.nonEmpty)) {
+      sys.error(s"$projectName: Binary compatibility check failed!")
+    }
   }
 
-  /** Resolves an artifact representing the previous abstract binary interface
-   *  for testing.
-   */
+  /** Resolves an artifact representing the previous abstract binary interface for testing. */
   def getPreviousArtifact(m: ModuleID, ivy: IvySbt, s: TaskStreams): File = {
     val depRes = IvyDependencyResolution(ivy.configuration)
     val module = depRes.wrapDependencyInModule(m)
@@ -108,7 +100,7 @@ object SbtMima {
       if artifact.name == m.name
       if artifact.classifier.isEmpty
     } yield file).headOption
-    optFile getOrElse sys.error("Could not resolve previous ABI: " + m)
+    optFile.getOrElse(sys.error(s"Could not resolve previous ABI: $m"))
   }
 
   def issueFiltersFromFiles(filtersDirectory: File, fileExtension: Regex, s: TaskStreams): Map[String, Seq[ProblemFilter]] = {
@@ -121,7 +113,7 @@ object SbtMima {
 
     def findFiles(): Seq[(File, String)] = directory.listFiles().flatMap(f => fileExtension.findFirstIn(f.getName).map((f, _)))
     def parseFile(fileOrDir: File, extension: String): Either[Seq[Throwable], (String, Seq[ProblemFilter])] = {
-      val version = fileOrDir.getName.dropRight(extension.size)
+      val version = fileOrDir.getName.dropRight(extension.length)
 
       def parseOneFile(file: File): Either[Seq[Throwable],Seq[ProblemFilter]] = {
         def parseLine(text: String, line: Int): Try[ProblemFilter] =
@@ -130,18 +122,16 @@ object SbtMima {
               case ExclusionPattern(className, target) => ProblemFilters.exclude(className, target)
               case x => throw new RuntimeException(s"Couldn't parse '$x'")
             }
-          }.transform(Success(_), ex => Failure(new ParsingException(file, line, ex)))
+          }.transform(Success(_), ex => Failure(ParsingException(file, line, ex)))
 
-        val lines = try {
-          Source.fromFile(file).getLines().toVector
-        } catch {
+        val lines = try Source.fromFile(file).getLines().toVector catch {
           case NonFatal(t) => throw new RuntimeException(s"Couldn't load '$file'", t)
         }
 
         val (excludes, failures) =
           lines
+            .filterNot { str => str.trim.isEmpty || str.trim.startsWith("#") }
             .zipWithIndex
-            .filterNot { case (str, line) => str.trim.isEmpty || str.trim.startsWith("#") }
             .map((parseLine _).tupled)
             .partition(_.isSuccess)
 
@@ -150,26 +140,16 @@ object SbtMima {
       }
 
       if (fileOrDir.isDirectory) {
-        val allResults =
-          fileOrDir.listFiles()
-            .toSeq
-            .map(parseOneFile)
+        val allResults = fileOrDir.listFiles().toSeq.map(parseOneFile)
         val (mappings, failures) = allResults.partition(_.isRight)
-        if (failures.nonEmpty) Left(failures.flatMap(_.left.get))
-        else {
-          val allMappings = mappings.flatMap(_.right.get)
-          Right(version -> allMappings)
-        }
-      } else
-        parseOneFile(fileOrDir).right.map(version -> _)
+        if (failures.isEmpty) Right(version -> mappings.flatMap(_.right.get))
+        else Left(failures.flatMap(_.left.get))
+      } else parseOneFile(fileOrDir).right.map(version -> _)
     }
 
     require(directory.exists(), s"Mima filter directory did not exist: ${directory.getAbsolutePath}")
 
-    val (mappings, failures) =
-      findFiles()
-        .map((parseFile _).tupled)
-        .partition(_.isRight)
+    val (mappings, failures) = findFiles().map((parseFile _).tupled).partition(_.isRight)
 
     if (failures.isEmpty)
       mappings
@@ -183,5 +163,6 @@ object SbtMima {
     }
   }
 
-  case class ParsingException(file: File, line: Int, ex: Throwable) extends RuntimeException(s"Error while parsing $file, line $line: ${ex.getMessage}", ex)
+  case class ParsingException(file: File, line: Int, ex: Throwable)
+    extends RuntimeException(s"Error while parsing $file, line $line: ${ex.getMessage}", ex)
 }

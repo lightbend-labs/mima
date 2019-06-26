@@ -42,5 +42,4 @@ private[method] object MethodRules {
       else None
     }
   }
-
 }

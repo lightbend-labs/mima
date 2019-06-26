@@ -18,11 +18,11 @@ class MemberInfo(val owner: ClassInfo, val bytecodeName: String, override val fl
 
   def fieldString = "field "+decodedName+" in "+owner.classString
   def shortMethodString =
-    (if(hasSyntheticName) (if(isExtensionMethod) "extension " else "synthetic ") else "") +
-    (if(isDeprecated) "deprecated " else "") + "method "+decodedName + tpe
+    (if (hasSyntheticName) (if (isExtensionMethod) "extension " else "synthetic ") else "") +
+    (if (isDeprecated) "deprecated " else "") + "method "+decodedName + tpe
   def methodString = shortMethodString + " in " + owner.classString
   def memberString = if (isMethod) methodString else fieldString
-  def defString = (if(isDeprecated) "@deprecated " else "") + "def " + decodedName + params.mkString("(", ",", ")") + ": " + tpe.resultType + " = "
+  def defString = (if (isDeprecated) "@deprecated " else "") + "def " + decodedName + params.mkString("(", ",", ")") + ": " + tpe.resultType + " = "
   def applyString = decodedName + params.mkString("(", ",", ")")
 
   lazy val params: List[String] = tpe match {

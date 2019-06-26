@@ -26,7 +26,7 @@ class CollectProblemsTest {
     // SUT
     val allProblems = mima.collectProblems(oldJarPath, newJarPath)
 
-    val problems = (if(filterPath ne null) {
+    val problems = (if (filterPath ne null) {
       val fallback = ConfigFactory.parseString("filter { problems = [] }")
       val config = ConfigFactory.parseFile(new File(filterPath)).withFallback(fallback).resolve()
       val filters = ProblemFiltersConfig.parseProblemFilters(config)

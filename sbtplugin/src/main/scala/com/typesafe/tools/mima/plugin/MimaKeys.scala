@@ -3,9 +3,9 @@ package plugin
 
 import sbt._
 
-object MimaKeys extends BaseMimaKeys
+object MimaKeys extends MimaKeys
 
-class BaseMimaKeys {
+class MimaKeys {
 
   final val mimaFailOnProblem      = settingKey[Boolean]("if true, fail the build on binary incompatibility detection.")
   final val mimaFailOnNoPrevious   = settingKey[Boolean]("if true, fail the build if no previous artifacts are set.")

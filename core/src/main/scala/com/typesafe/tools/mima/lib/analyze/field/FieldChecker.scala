@@ -4,7 +4,6 @@ import com.typesafe.tools.mima.lib.analyze.Checker
 import com.typesafe.tools.mima.core._
 
 private[analyze] abstract class BaseFieldChecker extends Checker[MemberInfo, ClassInfo] {
-
   def check(field: MemberInfo, in: ClassInfo): Option[Problem] = {
     if (field.isAccessible) {
       val newflds = in.lookupClassFields(field.bytecodeName)
@@ -12,7 +11,7 @@ private[analyze] abstract class BaseFieldChecker extends Checker[MemberInfo, Cla
         val newfld = newflds.next
         if (!newfld.isPublic)
           Some(InaccessibleFieldProblem(newfld))
-        else if(field.descriptor != newfld.descriptor)
+        else if (field.descriptor != newfld.descriptor)
           Some(IncompatibleFieldTypeProblem(field, newfld))
         else if (field.isStatic && !newfld.isStatic)
           Some(StaticVirtualMemberProblem(field))
