@@ -126,7 +126,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
     (Iterator.single(this) ++ superClasses.iterator) flatMap (_.fields.get(name))
 
   def lookupClassMethods(name: String): Iterator[MemberInfo] =
-    if(name == MemberInfo.ConstructorName) methods.get(name) // constructors are not inherited
+    if (name == MemberInfo.ConstructorName) methods.get(name) // constructors are not inherited
     else (Iterator.single(this) ++ superClasses.iterator) flatMap (_.methods.get(name))
 
   private def lookupInterfaceMethods(name: String): Iterator[MemberInfo] =
@@ -162,8 +162,8 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
 
   /** The concrete methods of this trait */
   lazy val concreteMethods: List[MemberInfo] = {
-    if(isTrait) methods.iterator.filter(m => hasStaticImpl(m) || !m.isDeferred).toList
-    else if(isClass || isInterface) methods.iterator.filter(!_.isDeferred).toList
+    if (isTrait) methods.iterator.filter(m => hasStaticImpl(m) || !m.isDeferred).toList
+    else if (isClass || isInterface) methods.iterator.filter(!_.isDeferred).toList
     else Nil
   }
 
@@ -175,14 +175,12 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
     concreteMethods.filter(_.isDeferred)
 
   /** The deferred methods of this trait */
-  lazy val deferredMethods: List[MemberInfo] = {
-    val concreteSet = concreteMethods.toSet
-    methods.iterator.toList.filterNot(concreteSet)
-  }
+  lazy val deferredMethods: List[MemberInfo] =
+    methods.iterator.toList.filterNot(concreteMethods.toSet)
 
   /** All deferred methods of this type as seen in the bytecode. */
   def deferredMethodsInBytecode: List[MemberInfo] =
-    if(isTrait) methods.iterator.toList
+    if (isTrait) methods.iterator.toList
     else deferredMethods
 
   /** The inherited traits in the linearization of this class or trait,
@@ -240,7 +238,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
 
   /** Optionally, the static implementation method corresponding to trait member `m' */
   def staticImpl(m: MemberInfo): Option[MemberInfo] = {
-    if(isTrait) {
+    if (isTrait) {
       implClass match {
         case impl: ConcreteClassInfo =>
           assert(impl.isImplClass, impl)

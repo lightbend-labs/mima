@@ -9,7 +9,7 @@ object MimaPlugin extends AutoPlugin {
   override def requires = plugins.JvmPlugin
   override def trigger = allRequirements
 
-  object autoImport extends BaseMimaKeys
+  object autoImport extends MimaKeys
   import autoImport._
 
   override def globalSettings: Seq[Def.Setting[_]] = Seq(

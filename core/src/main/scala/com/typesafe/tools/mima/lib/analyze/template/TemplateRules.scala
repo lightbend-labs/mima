@@ -44,31 +44,20 @@ import com.typesafe.tools.mima.lib.analyze.Rule
   object Superclasses extends TemplateRule {
     def apply(thisClass: ClassInfo, thatClass: ClassInfo) = {
       val missing = thisClass.superClasses.diff(thatClass.superClasses)
-
-      if(missing.isEmpty)
-        None
-      else
-        Some(MissingTypesProblem(thatClass, missing))
+      if (missing.isEmpty) None else Some(MissingTypesProblem(thatClass, missing))
     }
   }
 
   object Superinterfaces extends TemplateRule {
     def apply(thisClass: ClassInfo, thatClass: ClassInfo) = {
       val missing = thisClass.allInterfaces.diff(thatClass.allInterfaces)
-
-      if(missing.isEmpty)
-        None
-      else
-        Some(MissingTypesProblem(thatClass, missing))
+      if (missing.isEmpty) None else Some(MissingTypesProblem(thatClass, missing))
     }
   }
 
   object CyclicTypeReference extends TemplateRule {
     def apply(clz: ClassInfo) = {
-      if(clz.superClasses.contains(clz))
-        Some(CyclicTypeReferenceProblem(clz))
-      else
-        None
+      if (clz.superClasses.contains(clz)) Some(CyclicTypeReferenceProblem(clz)) else None
     }
 
     def apply(oldclz: ClassInfo, newclz: ClassInfo) = this(newclz)

@@ -24,8 +24,8 @@ trait WithAccessModifier extends HasAccessFlags {
   protected def ensureLoaded(): Unit = {}
 
   def accessModifier = {
-    if(isProtected) "protected"
-    else if(isPrivate) "private"
+    if (isProtected) "protected"
+    else if (isPrivate) "private"
     else ""
   }
 }

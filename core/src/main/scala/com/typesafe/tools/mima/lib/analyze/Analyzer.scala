@@ -2,7 +2,10 @@ package com.typesafe.tools.mima.lib.analyze
 
 import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.lib.analyze.field.BaseFieldChecker
+import com.typesafe.tools.mima.lib.analyze.field.ClassFieldChecker
 import com.typesafe.tools.mima.lib.analyze.method.BaseMethodChecker
+import com.typesafe.tools.mima.lib.analyze.method.ClassMethodChecker
+import com.typesafe.tools.mima.lib.analyze.method.TraitMethodChecker
 import com.typesafe.tools.mima.lib.analyze.template.TemplateChecker
 
 object Analyzer {
@@ -12,20 +15,9 @@ object Analyzer {
   }
 }
 
-private[analyze] trait Analyzer extends Function2[ClassInfo, ClassInfo, List[Problem]] {
-
-  import scala.language.implicitConversions
-
-  implicit def option2list(v: Option[Problem]): List[Problem] = v match {
-    case None    => Nil
-    case Some(p) => List(p)
-  }
-
-  implicit def listOfOption2list(xs: List[Option[Problem]]): List[Problem] =
-    xs collect { case Some(p) => p }
-
-  protected val fieldChecker: BaseFieldChecker
-  protected val methodChecker: BaseMethodChecker
+private[analyze] trait Analyzer extends ((ClassInfo, ClassInfo) => List[Problem]) {
+  protected def fieldChecker: BaseFieldChecker
+  protected def methodChecker: BaseMethodChecker
 
   def apply(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] =
     analyze(oldclazz, newclazz)
@@ -42,7 +34,7 @@ private[analyze] trait Analyzer extends Function2[ClassInfo, ClassInfo, List[Pro
   }
 
   def analyzeTemplateDecl(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] =
-    TemplateChecker(oldclazz, newclazz)
+    TemplateChecker(oldclazz, newclazz).toList
 
   def analyzeMembers(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] =
     analyzeFields(oldclazz, newclazz) ::: analyzeMethods(oldclazz, newclazz)
@@ -72,7 +64,10 @@ private[analyze] trait Analyzer extends Function2[ClassInfo, ClassInfo, List[Pro
     val oldInheritedTypes = allInheritedTypes(oldclazz)
     val newInheritedTypes = allInheritedTypes(newclazz)
     val diff = newInheritedTypes.diff(oldInheritedTypes)
-    def noInheritedMatchingMethod(clazz: ClassInfo, deferredMethod: MemberInfo)(extraMethodMatchingCond: MemberInfo => Boolean): Boolean = {
+
+    def noInheritedMatchingMethod(clazz: ClassInfo, deferredMethod: MemberInfo)(
+        extraMethodMatchingCond: MemberInfo => Boolean
+    ): Boolean = {
       val methods = clazz.lookupMethods(deferredMethod.bytecodeName)
       val matchingMethods = methods.filter(_.matchesType(deferredMethod))
 
@@ -80,7 +75,8 @@ private[analyze] trait Analyzer extends Function2[ClassInfo, ClassInfo, List[Pro
         method.owner != deferredMethod.owner &&
         extraMethodMatchingCond(method)
       }
-    } 
+    }
+
     (for {
       tpe <- diff.iterator
       // if `tpe` is a trait, then the trait's concrete methods should be counted as deferred methods
@@ -91,14 +87,12 @@ private[analyze] trait Analyzer extends Function2[ClassInfo, ClassInfo, List[Pro
          noInheritedMatchingMethod(newclazz, newDeferredMethod)(_.isConcrete)
     } yield
        // report a binary incompatibility as there is a new inherited abstract method, which can lead to a AbstractErrorMethod at runtime
-       InheritedNewAbstractMethodProblem(newclazz, newDeferredMethod)).toList
+       InheritedNewAbstractMethodProblem(newclazz, newDeferredMethod)
+    ).toList
   }
 }
 
 private[analyze] class ClassAnalyzer extends Analyzer {
-  import com.typesafe.tools.mima.lib.analyze.field.ClassFieldChecker
-  import com.typesafe.tools.mima.lib.analyze.method.ClassMethodChecker
-
   protected val fieldChecker = new ClassFieldChecker
   protected val methodChecker = new ClassMethodChecker
 
@@ -109,39 +103,30 @@ private[analyze] class ClassAnalyzer extends Analyzer {
       super.analyze(oldclazz, newclazz)
   }
 
-  /** Analyze incompatibilities that may derive from methods in the `newclazz` */
+  /** Analyze incompatibilities that may derive from methods in the `newclazz`. */
   override def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
-    (for (newAbstrMeth <- newclazz.deferredMethods) yield {
-      oldclazz.lookupMethods(newAbstrMeth.bytecodeName).find(_.descriptor == newAbstrMeth.descriptor) match {
-        case None =>
-          Some(ReversedMissingMethodProblem(newAbstrMeth))
-        case Some(found) =>
-          if(found.isConcrete) {
-        	Some(ReversedAbstractMethodProblem(newAbstrMeth))
-          }
-          else
-        	None
+    (for {
+      newAbstrMeth <- newclazz.deferredMethods
+      problem <- oldclazz.lookupMethods(newAbstrMeth.bytecodeName).find(_.descriptor == newAbstrMeth.descriptor) match {
+        case None        => Some(ReversedMissingMethodProblem(newAbstrMeth))
+        case Some(found) => if (found.isConcrete) Some(ReversedAbstractMethodProblem(newAbstrMeth)) else None
       }
-    }) ::: collectNewAbstractMethodsInNewInheritedTypes(oldclazz, newclazz)
+    } yield problem) ::: collectNewAbstractMethodsInNewInheritedTypes(oldclazz, newclazz)
   }
 }
 
 private[analyze] class TraitAnalyzer extends Analyzer {
-  import com.typesafe.tools.mima.lib.analyze.field.ClassFieldChecker
-  import com.typesafe.tools.mima.lib.analyze.method.TraitMethodChecker
-
   protected val fieldChecker = new ClassFieldChecker
   protected val methodChecker = new TraitMethodChecker
 
   override def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
-    val res = collection.mutable.ListBuffer.empty[Problem]
+    val res = scala.collection.mutable.ListBuffer.empty[Problem]
 
     for (newmeth <- newclazz.emulatedConcreteMethods if !oldclazz.hasStaticImpl(newmeth)) {
       if (!oldclazz.lookupMethods(newmeth.bytecodeName).exists(_.descriptor == newmeth.descriptor)) {
         // this means that the method is brand new and therefore the implementation
         // has to be injected
-        val problem = ReversedMissingMethodProblem(newmeth)
-        res += problem
+        res += ReversedMissingMethodProblem(newmeth)
       }
       // else a static implementation for the same method existed already, therefore
       // class that mixed-in the trait already have a forwarder to the implementation
@@ -151,15 +136,12 @@ private[analyze] class TraitAnalyzer extends Analyzer {
 
     for (newmeth <- newclazz.deferredMethods) {
       val oldmeths = oldclazz.lookupMethods(newmeth.bytecodeName)
-      oldmeths find (_.descriptor == newmeth.descriptor) match {
-        case Some(oldmeth) => ()
-        case _ =>
-          val problem = ReversedMissingMethodProblem(newmeth)
-          res += problem
+      oldmeths.find(_.descriptor == newmeth.descriptor) match {
+        case Some(_) => ()
+        case None    => res += ReversedMissingMethodProblem(newmeth)
       }
     }
 
-    
     res ++= collectNewAbstractMethodsInNewInheritedTypes(oldclazz, newclazz)
     res.toList
   }
