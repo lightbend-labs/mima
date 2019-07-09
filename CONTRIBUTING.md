@@ -132,20 +132,23 @@ Make sure that you have:
 
 Create a new issue with the following checklist and get going.
 
-- [ ] A milestone exists for the release you are about to perform. If it doesn't create one.
+- [ ] Check that a milestone exists for the release you are about to perform. If it doesn't create one.
+- [ ] Create a milestone for the next version
 - [ ] Travis passes against latest Scala versions (past example: https://github.com/lightbend/mima/pull/164)
 - [ ] All tickets fixed in the current development cycle are associated to the current milestone.
 - [ ] Bump the version in the `README.md` and `git commit`.
 - [ ] Run `clean`. (particularly if you've recently bumped `scalaVersion` - see [#191](https://github.com/lightbend/mima/issues/191))
 - [ ] Create an annotated, signed git tag (`git tag -a -s`) and push it. The name of the tag should follow the format of previous tags (not 'v' prefix). `reload` and verify that `show version` in sbt picks up the version number from the tag.
 - [ ] Run `^publishSigned`. You should start seeing "published mima-.. to https://oss.sonatype.org/service/local/staging/deploy/maven2/.."
+- [ ] Login on [Sonatype](https://oss.sonatype.org/) and close the staging repository
+- [ ] Test by adding `resolvers += "Sonatype OSS Staging" at "https://oss.sonatype.org/content/repositories/staging"` and `resolvers += Resolver.url("vr", url("https://dl.bintray.com/typesafe/sbt-plugins"))(Resolver.ivyStylePatterns)` to a project
 - [ ] Login on [Sonatype](https://oss.sonatype.org/) and follow [this guide](https://docs.sonatype.org/display/Repository/Sonatype+OSS+Maven+Repository+Usage+Guide#SonatypeOSSMavenRepositoryUsageGuide-8a.ReleaseIt) to release the staged MiMa artifacts.
 - [ ] Login to [Bintray](https://bintray.com/typesafe/sbt-plugins/sbt-mima-plugin/view) and publish sbt plugin artifacts. (or use `sbtplugin/bintrayRelease`)
+- [ ] Close milestone
+- [ ] Add draft release notes to tag
 - [ ] Wait for artifacts to show up on Maven Central
   - [ ] sbt plugin jar and dependent jars resolvable by sbt
   - [ ] virtual directory appears: https://repo1.maven.org/maven2/com/typesafe/mima-core_2.12/0.3.0/
-- [ ] Close milestone
-- [ ] Add release notes to tag
 - [ ] Hit "Publish Release" on GitHub
 - [ ] Announce the release in the [Announce category of Scala Users](https://users.scala-lang.org/c/announce)
     (e.g https://users.scala-lang.org/t/announcing-mima-migration-manager-0-3-0/2782)
