@@ -133,7 +133,6 @@ Make sure that you have:
 Create a new issue with the following checklist and get going.
 
 - [ ] A milestone exists for the release you are about to perform. If it doesn't create one.
-- [ ] The milestone due date is the day of the release.
 - [ ] Travis passes against latest Scala versions (past example: https://github.com/lightbend/mima/pull/164)
 - [ ] All tickets fixed in the current development cycle are associated to the current milestone.
 - [ ] Bump the version in the `README.md` and `git commit`.
