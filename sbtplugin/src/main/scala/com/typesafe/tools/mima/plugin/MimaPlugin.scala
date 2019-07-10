@@ -60,8 +60,10 @@ object MimaPlugin extends AutoPlugin {
       val taskStreams = streams.value
 
       mimaPreviousArtifacts.value.iterator.map { m =>
-        val nameMod = CrossVersion(m, scalaModuleInfoV).getOrElse(idFun)
-        val id = m.withName(nameMod(Project.normalizeModuleID(m.name)))
+        val id = CrossVersion(m, scalaModuleInfoV) match {
+          case Some(f) => m.withName(f(Project.normalizeModuleID(m.name)))
+          case None    => m // no module id normalization if it's fully declaring it (using "%")
+        }
         id -> SbtMima.getPreviousArtifact(id, ivy, taskStreams)
       }.toMap
     },

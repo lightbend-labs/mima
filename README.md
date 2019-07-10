@@ -48,7 +48,7 @@ addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.4.0")
 Add the following to your `build.sbt` file:
 
 ```
-mimaPreviousArtifacts := Set("com.jsuereth" % "scala-arm_2.9.1" % "1.2") // replace with your old artifact id
+mimaPreviousArtifacts := Set("com.example" %% "my-library" % "1.2.3")
 ```
 
 Run `mimaReportBinaryIssues`.  You should see something like the following:
