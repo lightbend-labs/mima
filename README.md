@@ -1,7 +1,9 @@
 # MiMa
 
 MiMa (previously "The Migration Manager for Scala") is a tool for
-diagnosing [binary incompatibilities](https://docs.scala-lang.org/overviews/core/binary-compatibility-for-library-authors.html) for Scala libraries.
+diagnosing [binary incompatibilities][] for Scala libraries.
+
+[binary incompatibilities]: https://docs.scala-lang.org/overviews/core/binary-compatibility-for-library-authors.html
 
 ## What it is?
 
@@ -32,14 +34,11 @@ Java language binary compatibility does not imply source compatibility as well.
 MiMa focuses on binary compatibility and currently provides no insight into
 source compatibility.
 
-The current version of MiMa provides an aggressive reporting module for finding
-all potential binary incompatibilties.
-
 ## Usage
 
-The sbt plugin is released for sbt 1.x only (use 0.3.0 for sbt 0.13).  To try it, do the following:
+MiMa's sbt plugin is released for sbt 1.x only (use 0.3.0 for sbt 0.13).
 
-Add the following to your `project/plugins.sbt` file:
+To use it add the following to your `project/plugins.sbt` file:
 
 ```
 addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.4.0")
@@ -51,7 +50,7 @@ Add the following to your `build.sbt` file:
 mimaPreviousArtifacts := Set("com.example" %% "my-library" % "1.2.3")
 ```
 
-Run `mimaReportBinaryIssues`.  You should see something like the following:
+and run `mimaReportBinaryIssues` to see something like the following:
 
 ```
 [info] Found 4 potential binary incompatibilities
@@ -63,32 +62,54 @@ Run `mimaReportBinaryIssues`.  You should see something like the following:
 [error] Total time: 15 s, completed May 18, 2012 11:32:29 AM
 ```
 
-## Advanced Usage (Filtering Binary Incompatibilities)
+## Filtering binary incompatibilities
 
-Sometimes you may want to filter out some binary incompatibility. For instance, because you warn your users to never use a class or method marked with a particular annotation (e.g., [`@experimental`](https://github.com/lightbend/mima/issues/160) - note, this annotation is **not** part of the Scala standard library), you may want to exclude all classes/methods that use such annotation. In MiMa you can do this by _explicitly list each binary incompatibility_ that you want to ignore (unfortunately, it doesn't yet support annotation-based filtering - PR is welcomed! :)). 
+When MiMa reports a binary incompatibility that you consider acceptable, such as a change in an internal package,
+you need to use the `mimaBinaryIssueFilters` setting to filter it out and get `mimaReportBinaryIssues` to
+pass, like so:
 
-Open your `build.sbt` file, and
+```scala
+import com.typesafe.tools.mima.core._
 
-1. List the binary incompatibilities you would like to ignore
+mimaBinaryIssueFilters ++= Seq(
+  ProblemFilters.exclude[MissingClassProblem]("com.example.mylibrary.internal.Foo"),
+)
+```
 
-  ```
-  val ignoredABIProblems = {
-    import com.typesafe.tools.mima.core._
-    import com.typesafe.tools.mima.core.ProblemFilters._
-    Seq(
-      exclude[MissingClassProblem]("akka.dispatch.SharingMailbox"),
-      exclude[IncompatibleMethTypeProblem]("akka.dispatch.DefaultPromise.<<")
-    )
-  }
-  ```
+You may also use wildcards in the package and/or the top `Problem` parent type for such situations:
 
-2. Configure MiMa to include the defined binary incompatibility ignores
+```scala
+mimaBinaryIssueFilters ++= Seq(
+  ProblemFilters.exclude[Problem]("com.example.mylibrary.internal.*"),
+)
+```
 
-  ```
-  mimaPreviousArtifacts := Set("com.jsuereth" % "scala-arm_2.9.1" % "1.2") // replace with your old artifact id
-  mimaBinaryIssueFilters ++= ignoredABIProblems
-  ```
+## Make mimaReportBinaryIssues not fail
 
-## FAQ
+The setting `mimaFailOnNoPrevious` (introduced in v0.4.0) defaults to `true` and will make
+`mimaReportBinaryIssues` fail if `mimaPreviousArtifacts` is empty.
 
-`java.lang.OutOfMemoryError - Java heap space:` If you are experiencing out of memory exception you may need to increase the VM arguments for the initial heap size and the maximum heap size. The default values are `-Xms64m` for for the initial heap size and `-Xmx256m` for the maximum heap size.
+To make `mimaReportBinaryIssues` not fail you may want to do one of the following:
+
+* set `mimaPreviousArtifacts` on all the projects that should be checking their binary compatibility
+* set `mimaFailOnNoPrevious := false` on specific projects that want to opt-out (alternatively `disablePlugins(MimaPlugin)`)
+* set `mimaFailOnNoPrevious in ThisBuild := false`, which disables it build-wide, effectively reverting back to the previous behaviour
+
+You may want to redefine `mimaFailOnNoPrevious` in your build to be conditional on something else.  For
+instance, if you have already ported your project to Scala 2.13 and set it up for cross-building to Scala 2.13,
+but still haven't cut a release, you may want to redefine `mimaFailOnNoPrevious` according to the Scala version,
+with something like:
+
+```scala
+// fail MiMa if no mimaPreviousArtifacts is set and NOT on Scala 2.13
+mimaFailOnNoPrevious in ThisBuild := CrossVersion.partialVersion(scalaVersion.scala) != Some((2, 13))
+```
+
+or perhaps using some of sbt 1.2's new API:
+
+```scala
+import sbt.librarymanagement.{ SemanticSelector, VersionNumber }
+
+// fail MiMa if no mimaPreviousArtifacts is set and on Scala <2.13
+mimaFailOnNoPrevious in ThisBuild := VersionNumber(scalaVersion.value).matchesSemVer(SemanticSelector("<2.13"))
+```
