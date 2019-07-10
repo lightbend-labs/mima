@@ -64,8 +64,8 @@ and run `mimaReportBinaryIssues` to see something like the following:
 
 ## Filtering binary incompatibilities
 
-When MiMa reports a binary incompatibility that you consider accetable, such as a change in an internal package,
-you need to use the `mimaBinaryIssueFilters` setting to filter it out and get get `mimaReportBinaryIssues` to
+When MiMa reports a binary incompatibility that you consider acceptable, such as a change in an internal package,
+you need to use the `mimaBinaryIssueFilters` setting to filter it out and get `mimaReportBinaryIssues` to
 pass, like so:
 
 ```scala
@@ -89,7 +89,7 @@ mimaBinaryIssueFilters ++= Seq(
 The setting `mimaFailOnNoPrevious` (introduced in v0.4.0) defaults to `true` and will make
 `mimaReportBinaryIssues` fail if `mimaPreviousArtifacts` is empty.
 
-To make `mimaReportBinaryIssues` not fail you may what to do one of the following:
+To make `mimaReportBinaryIssues` not fail you may want to do one of the following:
 
 * set `mimaPreviousArtifacts` on all the projects that should be checking their binary compatibility
 * set `mimaFailOnNoPrevious := false` on specific projects that want to opt-out (alternatively `disablePlugins(MimaPlugin)`)
