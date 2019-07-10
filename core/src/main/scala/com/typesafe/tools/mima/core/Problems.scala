@@ -10,9 +10,8 @@ trait ProblemRef {
   def matchName: Option[String] = None
 
   // description of how to make a filter rule
-  def howToFilter: Option[String] = matchName.map{ name =>
-    """ProblemFilters.exclude[%s]("%s")""".format(this.getClass.getSimpleName, name)
-  }
+  def howToFilter: Option[String] =
+    matchName.map(name => s"""ProblemFilters.exclude[${getClass.getSimpleName}]("$name")""")
 }
 
 trait TemplateRef extends ProblemRef {
