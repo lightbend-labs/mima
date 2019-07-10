@@ -38,6 +38,8 @@ object MimaSettings {
       // * com.typesafe.tools.mima.core.Config.setup
       // * com.typesafe.tools.mima.core.reporterClassPath
       // * com.typesafe.tools.mima.lib.MiMaLib.collectProblems
+      exclude[IncompatibleMethTypeProblem]("*mima.lib.analyze.method.BaseMethodChecker.check"), // avoid TraversableOnce for 2.13
+      exclude[IncompatibleMethTypeProblem]("*mima.core.Members.this"),                          // avoid TraversableOnce for 2.13
     ),
   )
 }

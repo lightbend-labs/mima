@@ -18,7 +18,7 @@ class CollectProblemsTest {
     // load test setup
     Config.setup("scala com.typesafe.tools.mima.MiMaLibUI <old-dir> <new-dir>", Array(oldJarPath, newJarPath))
     val cp = testClasspath ++ ClassPath.split(asClassPathString(Config.baseClassPath))
-    val cpString = ClassPath.join(cp: _*)
+    val cpString = ClassPath.join(cp.toIndexedSeq: _*)
     Config.baseClassPath = baseClassPath(cpString)
 
     val mima = new MiMaLib(Config.baseClassPath)

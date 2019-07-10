@@ -28,7 +28,7 @@ object Config {
   lazy val outDir: Directory = {
     assert(!inPlace)
     val f = Path(settings.mimaOutDir.value).toDirectory
-    if (!(f.isDirectory && f.canWrite)) fatal(f + " is not a writable directory")
+    if (!(f.isDirectory && f.canWrite)) fatal(s"$f is not a writable directory")
     f
   }
 

@@ -12,7 +12,7 @@ inThisBuild(Seq(
   git.gitTagToVersionNumber := (tag => if (tag matches "[0.9]+\\..*") Some(tag) else None),
   git.useGitDescribe := true,
   scalaVersion := sys.props.getOrElse("mima.buildScalaVersion", "2.12.8"),
-  scalacOptions := Seq("-feature", "-deprecation", "-Xlint", "-Xfuture"),
+  scalacOptions := Seq("-feature", "-deprecation", "-Xlint"),
   crossScalaVersions := Nil,
 ))
 
@@ -49,6 +49,7 @@ val functionalTests = Project("functional-tests", file("functional-tests"))
   .disablePlugins(BintrayPlugin)
   .settings(
     crossScalaVersions := Seq("2.12.8", "2.13.0"),
+    libraryDependencies += "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.1",
     mimaFailOnNoPrevious := false,
     skip in publish := true,
   )

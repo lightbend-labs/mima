@@ -1,12 +1,9 @@
 package com.typesafe.tools.mima.core
 
 import scala.collection.mutable
-import scala.collection.TraversableOnce
 
-class Members(members: TraversableOnce[MemberInfo]) {
-  private val bindings = new mutable.HashMap[String, List[MemberInfo]] {
-    override def default(key: String) = Nil
-  }
+class Members(members: Iterable[MemberInfo]) {
+  private val bindings = new mutable.HashMap[String, List[MemberInfo]]().withDefaultValue(Nil)
 
   locally {
     for (m <- members)
@@ -17,7 +14,7 @@ class Members(members: TraversableOnce[MemberInfo]) {
 
   def get(name: String): Iterator[MemberInfo] = bindings(name).iterator
 
-  def withoutStatic: Members = new Members(iterator.filterNot(_.isStatic))
+  def withoutStatic: Members = new Members(iterator.filterNot(_.isStatic).toIndexedSeq)
 }
 
 object NoMembers extends Members(Nil)
