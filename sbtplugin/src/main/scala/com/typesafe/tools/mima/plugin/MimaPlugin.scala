@@ -81,7 +81,7 @@ object MimaPlugin extends AutoPlugin {
     val cp = (fullClasspath in mimaFindBinaryIssues).value
     val checkDirection = mimaCheckDirection.value
     if (previousClassfiles.isEmpty) {
-      val msg = s"$projectName: mimaPreviousArtifacts not set, not analyzing binary compatibility"
+      val msg = s"$projectName: mimaPreviousArtifacts not set, not analyzing binary compatibility. See https://github.com/lightbend/mima#make-mimareportbinaryissues-not-fail"
       if (failOnNoPrevious) sys.error(msg)
       log.info(msg)
       Iterator.empty
