@@ -49,5 +49,6 @@ val functionalTests = Project("functional-tests", file("functional-tests"))
   .disablePlugins(BintrayPlugin)
   .settings(
     crossScalaVersions := Seq("2.12.8", "2.13.0"),
+    mimaFailOnNoPrevious := false,
     skip in publish := true,
   )

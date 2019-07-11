@@ -9,11 +9,14 @@ import com.typesafe.tools.mima.core.ProblemFilters.exclude
 import com.typesafe.tools.mima.plugin.MimaPlugin.autoImport._
 
 object MimaSettings {
-  val mimaPreviousVersion = "0.3.0"
+  // clear out mimaBinaryIssueFilters when changing this
+  val mimaPreviousVersion = "0.4.0"
+
+  private val isScala213OrLater =
+    Def.setting(VersionNumber(scalaVersion.value).matchesSemVer(SemanticSelector(">=2.13")))
 
   val mimaSettings = Def.settings (
     mimaPreviousArtifacts := {
-      val scalaVersion       = VersionNumber(Keys.scalaVersion.value)
       val sbtBinaryVersion   = (Keys.sbtBinaryVersion in pluginCrossBuild).value
       val scalaBinaryVersion = (Keys.scalaBinaryVersion in pluginCrossBuild).value
       val moduleId0          = organization.value % moduleName.value % mimaPreviousVersion
@@ -22,8 +25,9 @@ object MimaSettings {
           sbtPluginExtra(moduleId0, sbtBinaryVersion, scalaBinaryVersion)
         else
           moduleId0.cross(CrossVersion.binary)
-      if (scalaVersion.matchesSemVer(SemanticSelector(">=2.13"))) Set.empty else Set(moduleId)
+      if (isScala213OrLater.value) Set.empty else Set(moduleId)
     },
+    ThisBuild / mimaFailOnNoPrevious := !isScala213OrLater.value,
     mimaBinaryIssueFilters ++= Seq(
       // The main public API is:
       // * com.typesafe.tools.mima.plugin.MimaPlugin
@@ -34,11 +38,6 @@ object MimaSettings {
       // * com.typesafe.tools.mima.core.Config.setup
       // * com.typesafe.tools.mima.core.reporterClassPath
       // * com.typesafe.tools.mima.lib.MiMaLib.collectProblems
-      exclude[MissingClassProblem]("*mima.plugin.BaseMimaKeys"),              // dropped (renamed to MimaKeys)
-      exclude[MissingTypesProblem]("*mima.plugin.MimaKeys$"),                 // -> parent class rename
-      exclude[MissingTypesProblem]("*mima.plugin.MimaPlugin$autoImport$"),    // -> parent class rename
-      exclude[DirectMissingMethodProblem]("*mima.plugin.SbtMima.x"),          // a mistake
-      exclude[DirectMissingMethodProblem]("*mima.plugin.SbtMima.isReported"), // dropped (package private)
     ),
   )
 }
