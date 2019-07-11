@@ -8,8 +8,8 @@ private[analyze] abstract class BaseMethodChecker extends Checker[MemberInfo, Cl
 
   protected val rules = Seq(AccessModifier, FinalModifier, AbstractModifier, JavaStatic)
 
-  protected def check(method: MemberInfo, in: TraversableOnce[MemberInfo]): Option[Problem] = {
-    val meths = (in.toIterator filter (method.params.size == _.params.size)).toList
+  protected def check(method: MemberInfo, in: Iterator[MemberInfo]): Option[Problem] = {
+    val meths = in.filter(_.params.lengthCompare(method.params.size) == 0).toList
     if (meths.isEmpty)
       Some(DirectMissingMethodProblem(method))
     else {

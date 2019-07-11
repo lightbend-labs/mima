@@ -14,7 +14,7 @@ class Settings(specificOptions: String*) extends nsc.Settings(Console.println) {
   val mimaOutDir = StringSetting("-d", "directory", "Specify where to place generated class files", "(change existing)")
   val fixall = BooleanSetting("-fixall", "Fix without asking")
 
-  allSettings += (interactive, mimaOutDir)
+  allSettings ++= Seq(interactive, mimaOutDir)
 
   def visibleNames =
     List(
