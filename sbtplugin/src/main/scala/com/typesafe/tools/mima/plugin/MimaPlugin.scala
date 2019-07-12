@@ -79,12 +79,16 @@ object MimaPlugin extends AutoPlugin {
     val s = streams.value
     val log = new SbtLogger(s)
     val projectName = name.value
+    val failOnNoPrevious = mimaFailOnNoPrevious.value
     val currentClassfiles = mimaCurrentClassfiles.value
     val cp = (fullClasspath in mimaFindBinaryIssues).value
     val checkDirection = mimaCheckDirection.value
     mimaPreviousClassfiles.value match {
       case _: NoPreviousClassfiles.type =>
-        sys.error(s"$projectName: mimaPreviousArtifacts not set, not analyzing binary compatibility.")
+        val msg = s"$projectName: mimaPreviousArtifacts not set, not analyzing binary compatibility."
+        if (failOnNoPrevious) sys.error(msg)
+        else s.log.info(msg)
+        Iterator.empty
       case previousClassfiles if previousClassfiles.isEmpty =>
         s.log.info(s"$projectName: mimaPreviousArtifacts is empty, not analyzing binary compatibility.")
         Iterator.empty
@@ -125,9 +129,5 @@ object MimaPlugin extends AutoPlugin {
 
     override def apply(key: K) = throw new NoSuchElementException(s"key not found: $key")
   }
-
-  // internal un-deprecated version
-  private[mima] final val mimaFailOnNoPrevious =
-    settingKey[Boolean]("if true, fail the build if no previous artifacts are set.")
 
 }
