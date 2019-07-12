@@ -83,3 +83,42 @@ mimaBinaryIssueFilters ++= Seq(
   ProblemFilters.exclude[Problem]("com.example.mylibrary.internal.*"),
 )
 ```
+
+## Setting different mimaPreviousArtifacts
+
+From time to time you may need to set `mimaPreviousArtifacts` according to some conditions.  For
+instance, if you have already ported your project to Scala 2.13 and set it up for cross-building to Scala 2.13,
+but still haven't cut a release, you may want to define `mimaPreviousArtifacts` according to the Scala version,
+with something like:
+
+```scala
+mimaPreviousArtifacts := {
+  if (CrossVersion.partialVersion(scalaVersion.scala) == Some((2, 13))) Set.empty else {
+    Set("com.example" %% "my-library" % "1.2.3")
+  }
+}
+```
+
+or perhaps using some of sbt 1.2's new API:
+
+```scala
+import sbt.librarymanagement.{ SemanticSelector, VersionNumber }
+
+mimaPreviousArtifacts := {
+  if (VersionNumber(scalaVersion.value).matchesSemVer(SemanticSelector(">=2.13"))) Set.empty else {
+    Set("com.example" %% "my-library" % "1.2.3")
+  }
+}
+```
+
+## Make mimaReportBinaryIssues not fail
+
+The setting `mimaFailOnNoPrevious` (introduced in v0.4.0) defaults to `true` and will make
+`mimaReportBinaryIssues` fail if `mimaPreviousArtifacts` hasn't been set.
+
+To make `mimaReportBinaryIssues` not fail you may want to do one of the following:
+
+* set `mimaPreviousArtifacts` on all the projects that should be checking their binary compatibility
+* avoid calling `mimaPreviousArtifacts` when binary compatibility checking isn't needed
+* set `mimaFailOnNoPrevious := false` on specific projects that want to opt-out (alternatively `disablePlugins(MimaPlugin)`)
+* set `mimaFailOnNoPrevious in ThisBuild := false`, which disables it build-wide, effectively reverting back to the previous behaviour
