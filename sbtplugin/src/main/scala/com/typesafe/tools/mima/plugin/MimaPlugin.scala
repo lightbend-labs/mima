@@ -13,19 +13,14 @@ object MimaPlugin extends AutoPlugin {
   import autoImport._
 
   override def globalSettings: Seq[Def.Setting[_]] = Seq(
+    mimaPreviousArtifacts := NoPreviousArtifacts,
+    mimaBinaryIssueFilters := Nil,
+    mimaFailOnProblem := true,
     mimaFailOnNoPrevious := true,
+    mimaCheckDirection := "backward",
   )
 
-  override def projectSettings: Seq[Def.Setting[_]] = mimaDefaultSettings
-
-  /** Just configures MiMa to compare previous/current classfiles.*/
-  def mimaReportSettings: Seq[Setting[_]] = Seq(
-    mimaCheckDirection := "backward",
-    mimaFiltersDirectory := (sourceDirectory in Compile).value / "mima-filters",
-    mimaBinaryIssueFilters := Nil,
-    mimaBackwardIssueFilters := SbtMima.issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:backward[s]?|both)\\.excludes".r, streams.value),
-    mimaForwardIssueFilters := SbtMima.issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:forward[s]?|both)\\.excludes".r, streams.value),
-    mimaFindBinaryIssues := binaryIssuesIterator.value.toMap,
+  override def projectSettings: Seq[Def.Setting[_]] = Seq(
     mimaReportBinaryIssues := {
       val log = new SbtLogger(streams.value)
       binaryIssuesIterator.value.foreach { case (moduleId, problems) =>
@@ -41,14 +36,7 @@ object MimaPlugin extends AutoPlugin {
           name.value,
         )
       }
-    }
-  )
-
-  /** Setup mima with default settings, applicable for most projects. */
-  def mimaDefaultSettings: Seq[Setting[_]] = Seq(
-    mimaFailOnProblem := true,
-    mimaPreviousArtifacts := NoPreviousArtifacts,
-    mimaCurrentClassfiles := (classDirectory in Compile).value,
+    },
     mimaPreviousClassfiles := {
       val ivy = ivySbt.value
       val taskStreams = streams.value
@@ -64,8 +52,16 @@ object MimaPlugin extends AutoPlugin {
           }.toMap
       }
     },
-    fullClasspath in mimaFindBinaryIssues := (fullClasspath in Compile).value
-  ) ++ mimaReportSettings
+    mimaCurrentClassfiles := (classDirectory in Compile).value,
+    mimaFindBinaryIssues := binaryIssuesIterator.value.toMap,
+    fullClasspath in mimaFindBinaryIssues := (fullClasspath in Compile).value,
+    mimaBackwardIssueFilters := SbtMima.issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:backward[s]?|both)\\.excludes".r, streams.value),
+    mimaForwardIssueFilters := SbtMima.issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:forward[s]?|both)\\.excludes".r, streams.value),
+    mimaFiltersDirectory := (sourceDirectory in Compile).value / "mima-filters",
+  )
+
+  /** Setup mima with default settings, applicable for most projects. */
+  def mimaDefaultSettings: Seq[Setting[_]] = globalSettings ++ buildSettings ++ projectSettings
 
   // Allows reuse between mimaFindBinaryIssues and mimaReportBinaryIssues
   // without blowing up the Akka build's heap

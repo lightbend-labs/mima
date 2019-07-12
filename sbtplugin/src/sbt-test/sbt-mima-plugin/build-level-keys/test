@@ -1,0 +1,17 @@
+# Tests that MiM's major keys are build-level definable.
+# Particularly mimaPreviousArtifacts & mimaBinaryIssueFilters.
+
+# Setup: v2 has a breaking change from v1
+> set scalaSource in Compile := baseDirectory.value /"v1"
+> set version := s"0.0.1-SNAPSHOT"
+> publishLocal
+> set scalaSource in Compile := baseDirectory.value /"v2"
+> set version := s"0.0.2-SNAPSHOT"
+
+# fail, due to unset mimaPreviousArtifacts and empty mimaBinaryIssueFilters
+-> mimaReportBinaryIssues
+
+# pass, because mimaPreviousArtifacts and mimaBinaryIssueFilters have been set, at build-level
+> set ThisBuild / mimaPreviousArtifacts := Set(organization.value %% name.value % s"0.0.1-SNAPSHOT")
+> set ThisBuild / mimaBinaryIssueFilters := Seq(com.typesafe.tools.mima.core.ProblemFilters.exclude(s"MissingMethodProblem", s"A.bar"))
+> mimaReportBinaryIssues
