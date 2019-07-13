@@ -8,19 +8,20 @@ See the [prerequisites](#prerequisites) if this is your first release.
 * [ ] [Create a new milestone][milestones/new] for the release you are about to perform, if one [doesn't exist][milestones/list].
 * [ ] [Create a new milestone][milestones/new] for the release after this one.
 * [ ] [Draft a new release][releases/new] for the release, by [comparing changes][compare/view].
-* [ ] Bump the version in the `README.md` and `git commit -am 'Release 0.x.y`
+* [ ] Bump the version in the `README.md` and `git commit -am 'Release 0.x.y`.
 * [ ] Run `clean` in sbt, particularly if you've recently bumped `scalaVersion`.
 * [ ] Run `git tag -a -s 0.x.y -m 'Version 0.x.y` and `git push --follow-tags`. The name of the tag should NOT have a 'v' prefix. Run `reload` and `show version` in sbt to verify the version.
-* [ ] Run `publishSigned` in sbt. (You might need to `set useGpg := true`.) You should start seeing "published mima-.. to https://oss.sonatype.org/service/local/staging/deploy/maven2/.."
+* [ ] Run `publishSigned` in sbt. (You might need to `set useGpg := true`.) You should start seeing "published mima-.. to https://oss.sonatype.org/service/local/staging/deploy/maven2/..".
 * [ ] [Find and close][sonatype/staging-repos] your stating repository.  (See Sonatype's [Releasing the Deployment][sonatype/guide] guide.)
-* [ ] Dogfood the release to test it, uncomment `stagingResolvers` in `plugins.sbt`.
+* [ ] Update `mimaPreviousArtifacts` for the new release, and clear out `mimaBinaryIssueFilters`.
+* [ ] Update the MiMa version in `plugins.sbt`.
+* [ ] Test the staged artifacts by uncommenting `stagingResolvers` in `plugins.sbt` and `reload`ing in sbt.
+* [ ] Recomment `stagingResolvers`, `git commit -am 'Update sbt-mima-plugin to 0.x.y`, and PR it (`hub pull-request`).
 * [ ] [Find and release][sonatype/staging-repos] your stating repository.
 * [ ] Release the sbt plugin artifact in [Bintray's Web UI][sbt-mima/view] (or run `sbtplugin/bintrayRelease` in sbt.)
-* [ ] [Close][milestones/list] the milestone
-* [ ] Wait for the artifacts to show up on Maven Central, either by:
-  * successfully resolving the sbt plugin jar and dependent jars with sbt
-  * successfully resolving the [virtual directory][repo1/list] (note the trailing slash in the URL)
-* [ ] [Hit "Publish Release"][releases/list] on GitHub.
+* [ ] [Close][milestones/list] the milestone.
+* [ ] [Find and merge][prs/list] your update PR. You may poll [repo1 directly][repo1/list] (note the trailing slash in the URL).
+* [ ] [Find and hit "Publish Release"][releases/list] on the draft GitHub release.
 
 You are done!
 
@@ -40,6 +41,7 @@ You are done!
 [issues/new]:      https://github.com/lightbend/mima/issues/new
 [milestones/list]: https://github.com/lightbend/mima/milestones?direction=asc
 [milestones/new]:  https://github.com/lightbend/mima/milestones/new
+[prs/list]:        https://github.com/lightbend/mima/pulls
 [releases/list]:   https://github.com/lightbend/mima/releases
 [releases/new]:    https://github.com/lightbend/mima/releases/new
 
