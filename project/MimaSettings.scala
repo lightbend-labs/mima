@@ -42,6 +42,8 @@ object MimaSettings {
       // Through GitHub search this looks totally unused
       // Dropped to split the settings into global/build/projectSettings
       ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.plugin.MimaPlugin.mimaReportSettings"),
+      // non-public API
+      ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.core.UTF8Codec*"),
     ),
   )
 }
