@@ -25,7 +25,7 @@ object TestsPlugin extends AutoPlugin {
   )
 
   override def projectSettings = Seq(
-            testFunctional := dependOnAll(_ /                   test).value,
+            testFunctional := dependOnAll(_ /            Test / test).value,
     IntegrationTest / test := dependOnAll(_ / IntegrationTest / test).value,
   )
 
@@ -106,7 +106,7 @@ object TestsPlugin extends AutoPlugin {
     crossScalaVersions := Seq("2.12.8", "2.13.0"),
     inConfig(V1)(testPerConfigSettings),
     inConfig(V2)(testPerConfigSettings),
-    test := runFunctionalTest.value,
+    Test / test := runFunctionalTest.value,
   )
 
   private def runCollectProblemsTest(
