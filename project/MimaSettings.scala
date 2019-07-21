@@ -42,8 +42,34 @@ object MimaSettings {
       // Through GitHub search this looks totally unused
       // Dropped to split the settings into global/build/projectSettings
       ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.plugin.MimaPlugin.mimaReportSettings"),
-      // non-public API
-      ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.core.UTF8Codec*"),
+
+      // Dropped deprecated method
+      ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.ProblemFilters.excludePackage"),
+      // Dropped unused methods on classes in the hierarchy of the *Problem classes
+      ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.ProblemRef.*"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.TemplateRef.*"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.MemberRef.*"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.TemplateProblem.*"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.MemberProblem.*"),
+      // Dropped dead code internal to parsing
+      ProblemFilters.exclude[Problem]("*mima.core.BufferReader*"),
+      ProblemFilters.exclude[Problem]("*mima.core.ClassfileParser*"),
+      ProblemFilters.exclude[Problem]("*mima.core.ClientClassfileParser"),
+      ProblemFilters.exclude[Problem]("*mima.core.LibClassfileParser"),
+      ProblemFilters.exclude[Problem]("*mima.core.UTF8Codec*"),
+      // Dropped dead code internal to types
+      ProblemFilters.exclude[Problem]("*mima.core.Type*"),
+      ProblemFilters.exclude[Problem]("*mima.core.ClassType*"),
+      ProblemFilters.exclude[Problem]("*mima.core.ArrayType*"),
+      ProblemFilters.exclude[Problem]("*mima.core.ValueType*"),
+      // Dropped dead code internal to the info classes
+      ProblemFilters.exclude[Problem]("*mima.core.Definitions*"),
+      ProblemFilters.exclude[Problem]("*mima.core.ClassInfo*"),
+      ProblemFilters.exclude[Problem]("*mima.core.MemberInfo*"),
+      ProblemFilters.exclude[Problem]("*mima.core.NoClass*"),
+      ProblemFilters.exclude[Problem]("*mima.core.Members*"),
+      ProblemFilters.exclude[Problem]("*mima.core.NoMembers*"),
+      ProblemFilters.exclude[Problem]("*mima.core.WithLocalModifier*"),
     ),
   )
 }

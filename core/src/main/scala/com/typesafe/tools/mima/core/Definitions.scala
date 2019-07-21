@@ -27,7 +27,7 @@ class Definitions(val lib: Option[ClassPath], val classPath: ClassPath) {
   lazy val ObjectClass = fromName("java.lang.Object")
   lazy val AnnotationClass = fromName("java.lang.annotation.Annotation")
 
-  lazy val ClassfileParser = new LibClassfileParser(this)
+  lazy val ClassfileParser = new ClassfileParser(this)
 
   /** Return the class corresponding to the fully qualified name.
    *  If there is no such class in the current classpath, a SyntheticClassInfo
@@ -90,8 +90,6 @@ class Definitions(val lib: Option[ClassPath], val classPath: ClassPath) {
 
     getType()
   }
-  @deprecated("Replaced by fromDescriptor", "0.3.1")
-  def fromSig(sig: String): Type = fromDescriptor(sig)
 
   override def toString = {
     "definitions:\n\tlib: %s\n%s".format(lib, asClassPathString(classPath))

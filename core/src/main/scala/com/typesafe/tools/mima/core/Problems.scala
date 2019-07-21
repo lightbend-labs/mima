@@ -1,11 +1,6 @@
 package com.typesafe.tools.mima.core
 
 trait ProblemRef {
-  type Ref
-  def ref: Ref
-  def fileName: String
-  def referredMember: String
-
   // name that can be used to write a matching filter
   def matchName: Option[String] = None
 
@@ -14,17 +9,9 @@ trait ProblemRef {
     matchName.map(name => s"""ProblemFilters.exclude[${getClass.getSimpleName}]("$name")""")
 }
 
-trait TemplateRef extends ProblemRef {
-  type Ref = ClassInfo
-  def fileName: String = ref.sourceFileName
-  def referredMember: String = ref.shortDescription
-}
+trait TemplateRef extends ProblemRef
 
-trait MemberRef extends ProblemRef {
-  type Ref = MemberInfo
-  def fileName: String = ref.owner.sourceFileName
-  def referredMember: String = ref.fullName
-}
+trait MemberRef extends ProblemRef
 
 sealed abstract class Problem extends ProblemRef {
   // each description accepts a name for the affected files,
@@ -35,12 +22,12 @@ sealed abstract class Problem extends ProblemRef {
   def description: String => String
 }
 
-abstract class TemplateProblem(override val ref: ClassInfo) extends Problem with TemplateRef {
+abstract class TemplateProblem(val ref: ClassInfo) extends Problem with TemplateRef {
   override def matchName = Some(ref.fullName)
 }
 
-abstract class MemberProblem(override val ref: MemberInfo) extends Problem with MemberRef {
-  override def matchName = Some(referredMember)
+abstract class MemberProblem(val ref: MemberInfo) extends Problem with MemberRef {
+  override def matchName = Some(ref.fullName)
 }
 
 case class MissingFieldProblem(oldfld: MemberInfo) extends MemberProblem(oldfld) {
