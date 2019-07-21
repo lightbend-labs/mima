@@ -25,8 +25,8 @@ object TestsPlugin extends AutoPlugin {
   )
 
   override def projectSettings = Seq(
-            testFunctional := dependOnAll(_ /            Test / test).value,
-    IntegrationTest / test := dependOnAll(_ / IntegrationTest / test).value,
+            testFunctional := dependOnAll(           tests, _ /            Test / test).value,
+    IntegrationTest / test := dependOnAll(integrationTests, _ / IntegrationTest / test).value,
   )
 
   private val functionalTests = LocalProject("functional-tests")
@@ -175,13 +175,12 @@ object TestsPlugin extends AutoPlugin {
     }
   }
 
-  private def dependOnAll(f: ProjectRef => TaskKey[Unit]): Def.Initialize[Task[Unit]] = Def.taskDyn {
-    val proj = thisProjectRef.value
-    val structure = Project.structure(state.value)
-    val allProjects = structure.allProjectRefs(proj.build).filter(_ != proj) // exclude self
-    val allTasks = allProjects.flatMap(p => f(p).get(structure.data))
-    Def.task(allTasks.join.map(_ => ()).value)
-  }
+  private def dependOnAll(projects: Seq[Project], f: Project => TaskKey[Unit]): Def.Initialize[Task[Unit]] =
+    Def.taskDyn {
+      val structure = Project.structure(state.value)
+      val allTasks = projects.flatMap(p => f(p).get(structure.data))
+      Def.task(allTasks.join.map(_ => ()).value)
+    }
 
   private def dirContaining(oracleFilename: String): FileFilter = {
     DirectoryFilter && new SimpleFileFilter(_.list.contains(oracleFilename))
