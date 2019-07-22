@@ -6,6 +6,8 @@
 package com.typesafe.tools.mima.core
 
 import java.io.IOException
+import java.nio.charset.StandardCharsets
+
 import scala.collection.mutable.ArrayBuffer
 import scala.tools.nsc.symtab.classfile.ClassfileConstants._
 import scala.annotation.switch
@@ -104,7 +106,7 @@ abstract class ClassfileParser(definitions: Definitions) {
       if (name eq null) {
         val start = starts(index)
         if (in.buf(start).toInt != CONSTANT_UTF8) errorBadTag(start)
-        name = UTF8Codec.decode(in.buf, start + 3, in.getChar(start + 1))
+        name = new String(in.buf, start + 3, in.getChar(start + 1), StandardCharsets.UTF_8)
         values(index) = name
       }
       name
