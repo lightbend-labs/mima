@@ -45,15 +45,16 @@ object MimaSettings {
 
       // Dropped deprecated method
       ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.ProblemFilters.excludePackage"),
+      // Changes to the members of the *Problems classes
+      ProblemFilters.exclude[MemberProblem]("*mima.core.*Problem.*"),
       // Dropped unused methods on classes in the hierarchy of the *Problem classes
       ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.ProblemRef.*"),
       ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.TemplateRef.*"),
       ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.MemberRef.*"),
       ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.TemplateProblem.*"),
       ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.MemberProblem.*"),
-      // Changes to the members of the *Problems classes
-      ProblemFilters.exclude[MemberProblem]("*mima.core.*Problem.*"),
-      // Dropped dead code internal to parsing
+      // Changes within the internal parsing code
+      ProblemFilters.exclude[Problem]("*mima.core.BytesReader*"),
       ProblemFilters.exclude[Problem]("*mima.core.BufferReader*"),
       ProblemFilters.exclude[Problem]("*mima.core.ClassfileParser*"),
       ProblemFilters.exclude[Problem]("*mima.core.ClientClassfileParser"),

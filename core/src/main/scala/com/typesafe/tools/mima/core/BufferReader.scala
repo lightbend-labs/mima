@@ -1,77 +1,33 @@
-/* NSC -- new Scala compiler
- * Copyright 2005-2010 LAMP/EPFL
- * @author  Martin Odersky
- */
-
-
 package com.typesafe.tools.mima.core
 
 import java.lang.Float.intBitsToFloat
 import java.lang.Double.longBitsToDouble
+import java.nio.charset.StandardCharsets
 
-/**
- * This class reads files byte per byte. Only used by ClassFileParser
- *
- * @author Philippe Altherr
- * @version 1.0, 23/03/2004
- */
-class BufferReader(val buf: Array[Byte]) {
+/** Reads and interprets the bytes in a class file byte-buffer. */
+private[core] sealed class BytesReader(buf: Array[Byte]) {
+  final def getByte(idx: Int): Byte = buf(idx)
+  final def getChar(idx: Int): Char = (((buf(idx) & 0xff) << 8) + (buf(idx + 1) & 0xff)).toChar
 
-  /** the current input pointer
-   */
+  final def getInt(idx: Int): Int =
+    ((buf(idx    ) & 0xff) << 24) + ((buf(idx + 1) & 0xff) << 16) +
+    ((buf(idx + 2) & 0xff) << 8)  +  (buf(idx + 3) & 0xff)
+
+  final def getLong(idx: Int): Long     = (getInt(idx).toLong << 32) + (getInt(idx + 4) & 0xffffffffL)
+  final def getFloat(idx: Int): Float   = intBitsToFloat(getInt(idx))
+  final def getDouble(idx: Int): Double = longBitsToDouble(getLong(idx))
+
+  final def getString(idx: Int, len: Int): String = new String(buf, idx, len, StandardCharsets.UTF_8)
+}
+
+/** A BytesReader which also holds a mutable pointer to where it will read next. */
+private[core] final class BufferReader(buf: Array[Byte]) extends BytesReader(buf) {
+  /** the buffer pointer */
   var bp: Int = 0
 
-  /** return byte at offset 'pos'
-   */
-  @throws(classOf[IndexOutOfBoundsException])
-  def byteAt(pos: Int): Byte = buf(pos)
+  def nextByte: Byte = { val b = getByte(bp); bp += 1; b }
+  def nextChar: Char = { val c = getChar(bp); bp += 2; c } // Char = unsigned 2-bytes, aka u16
+  def nextInt: Int   = { val i = getInt(bp);  bp += 4; i }
 
-  /** read a byte
-   */
-  @throws(classOf[IndexOutOfBoundsException])
-  def nextByte: Byte = {
-    val b = buf(bp)
-    bp += 1
-    b
-  }
-
-  /** read a character
-   */
-  def nextChar: Char =
-    (((nextByte & 0xff) << 8) + (nextByte & 0xff)).toChar
-
-  /** read an integer
-   */
-  def nextInt: Int =
-    ((nextByte & 0xff) << 24) + ((nextByte & 0xff) << 16) +
-    ((nextByte & 0xff) <<  8) +  (nextByte & 0xff)
-
-
-  /** extract a character at position bp from buf
-   */
-  def getChar(mybp: Int): Char =
-    (((buf(mybp) & 0xff) << 8) + (buf(mybp+1) & 0xff)).toChar
-
-  /** extract an integer at position bp from buf
-   */
-  def getInt(mybp: Int): Int =
-    ((buf(mybp  ) & 0xff) << 24) + ((buf(mybp+1) & 0xff) << 16) +
-    ((buf(mybp+2) & 0xff) << 8) + (buf(mybp+3) & 0xff)
-
-  /** extract a long integer at position bp from buf
-   */
-  def getLong(mybp: Int): Long =
-    (getInt(mybp).toLong << 32) + (getInt(mybp + 4) & 0xffffffffL)
-
-  /** extract a float at position bp from buf
-   */
-  def getFloat(mybp: Int): Float = intBitsToFloat(getInt(mybp))
-
-  /** extract a double at position bp from buf
-   */
-  def getDouble(mybp: Int): Double = longBitsToDouble(getLong(mybp))
-
-  /** skip next 'n' bytes
-   */
-  def skip(n: Int): Unit = { bp += n }
+  def skip(n: Int): Unit = bp += n
 }
