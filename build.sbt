@@ -27,9 +27,10 @@ aggregateProjects(core, sbtplugin, functionalTests)
 
 val core = project.disablePlugins(BintrayPlugin).settings(
   name := "mima-core",
-  libraryDependencies += "com.typesafe" % "config" % "1.3.4",
-  libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-  libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.0-SNAP13" % Test,
+  libraryDependencies ++= Seq(
+    "org.scala-lang" %  "scala-compiler" % scalaVersion.value,
+    "org.scalatest"  %% "scalatest"      % "3.1.0-SNAP13" % Test,
+  ),
   MimaSettings.mimaSettings,
 )
 
@@ -48,7 +49,10 @@ val functionalTests = Project("functional-tests", file("functional-tests"))
   .enablePlugins(TestsPlugin)
   .disablePlugins(BintrayPlugin)
   .settings(
-    libraryDependencies += "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.1",
+    libraryDependencies ++= Seq(
+      "com.typesafe"           %  "config"                  % "1.3.4",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.1",
+    ),
     mimaFailOnNoPrevious := false,
     skip in publish := true,
   )
