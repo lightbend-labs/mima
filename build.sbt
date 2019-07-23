@@ -7,6 +7,7 @@ inThisBuild(Seq(
   developers := List(
     Developer("mdotta", "Mirco Dotta", "@dotta", url("https://github.com/dotta")),
     Developer("jsuereth", "Josh Suereth", "@jsuereth", url("https://github.com/jsuereth")),
+    Developer("dwijnand", "Dale Wijnand", "@dwijnand", url("https://github.com/dwijnand")),
   ),
   scmInfo := Some(ScmInfo(url("https://github.com/lightbend/mima"), "scm:git:git@github.com:lightbend/mima.git")),
   git.gitTagToVersionNumber := (tag => if (tag matches "[0.9]+\\..*") Some(tag) else None),
