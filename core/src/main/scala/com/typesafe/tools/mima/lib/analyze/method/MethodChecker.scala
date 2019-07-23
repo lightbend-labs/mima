@@ -13,22 +13,15 @@ private[analyze] abstract class BaseMethodChecker extends Checker[MemberInfo, Cl
     if (meths.isEmpty)
       Some(DirectMissingMethodProblem(method))
     else {
-      meths find (m => m.descriptor == method.descriptor && m.signature == method.signature) match {
-        case None =>
-          meths find (method matchesType _) match {
-            case None =>
-              Some(IncompatibleMethTypeProblem(method, uniques(meths)))
-            case Some(found) =>
-              if (found.tpe.resultType == method.tpe.resultType)
-                Some(IncompatibleSignatureProblem(method, found))
-              else
-                Some(IncompatibleResultTypeProblem(method, found))
+      meths.find(m => m.descriptor == method.descriptor && m.signature == method.signature) match {
+        case Some(found) => checkRules(rules)(method, found)
+        case None        => meths.filter(method.matchesType(_)) match {
+          case Nil                   => Some(IncompatibleMethTypeProblem(method, uniques(meths)))
+          case filtered @ first :: _ => filtered.find(_.tpe.resultType == method.tpe.resultType) match {
+            case None        => Some(IncompatibleResultTypeProblem(method, first))
+            case Some(found) => Some(IncompatibleSignatureProblem(method, found))
           }
-
-        case Some(found) =>
-          checkRules(rules)(method, found)
-
-        case _ => None
+        }
       }
     }
   }
