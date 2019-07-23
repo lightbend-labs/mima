@@ -36,4 +36,7 @@ package object core {
 
   def dirClassPath(dir: AbstractFile): ClassPath =
     ClassPathFactory.newClassPath(dir, Config.settings)
+
+  private[core] type Fields  = Members[FieldInfo]
+  private[core] type Methods = Members[MethodInfo]
 }

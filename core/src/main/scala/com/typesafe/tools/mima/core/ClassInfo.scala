@@ -90,44 +90,44 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
 
   private var _superClass: ClassInfo = NoClass
   private var _interfaces: List[ClassInfo] = Nil
-  private var _fields: Members = NoMembers
-  private var _methods: Members = NoMembers
+  private var _fields: Fields = NoMembers
+  private var _methods: Methods = NoMembers
   private var _flags: Int = 0
 
   def superClass: ClassInfo = { ensureLoaded(); _superClass }
   def interfaces: List[ClassInfo] = { ensureLoaded(); _interfaces }
-  def fields: Members = { ensureLoaded(); _fields }
-  def methods: Members = { ensureLoaded(); _methods }
+  def fields: Fields = { ensureLoaded(); _fields }
+  def methods: Methods = { ensureLoaded(); _methods }
   override def flags: Int = _flags
 
   def superClass_=(x: ClassInfo) = _superClass = x
   def interfaces_=(x: List[ClassInfo]) = _interfaces = x
-  def fields_=(x: Members) = _fields = x
-  def methods_=(x: Members) = _methods = x
+  def fields_=(x: Fields) = _fields = x
+  def methods_=(x: Methods) = _methods = x
   def flags_=(x: Int) = _flags = x
 
   lazy val superClasses: Set[ClassInfo] =
     if (this == ClassInfo.ObjectClass) Set.empty
     else superClass.superClasses + superClass
 
-  def lookupClassFields(name: String): Iterator[MemberInfo] =
+  def lookupClassFields(name: String): Iterator[FieldInfo] =
     (Iterator.single(this) ++ superClasses.iterator) flatMap (_.fields.get(name))
 
-  def lookupClassMethods(name: String): Iterator[MemberInfo] =
+  def lookupClassMethods(name: String): Iterator[MethodInfo] =
     if (name == MemberInfo.ConstructorName) methods.get(name) // constructors are not inherited
     else (Iterator.single(this) ++ superClasses.iterator) flatMap (_.methods.get(name))
 
-  private def lookupInterfaceMethods(name: String): Iterator[MemberInfo] =
+  private def lookupInterfaceMethods(name: String): Iterator[MethodInfo] =
     allInterfaces.iterator flatMap (_.methods.get(name))
 
-  def lookupMethods(name: String): Iterator[MemberInfo] =
+  def lookupMethods(name: String): Iterator[MethodInfo] =
     lookupClassMethods(name) ++ lookupInterfaceMethods(name)
 
-  def lookupConcreteTraitMethods(name: String): Iterator[MemberInfo] =
+  def lookupConcreteTraitMethods(name: String): Iterator[MethodInfo] =
     allTraits.toList.flatten(_.concreteMethods).filter(_.bytecodeName == bytecodeName).iterator
 
   /** The concrete methods of this trait */
-  lazy val concreteMethods: List[MemberInfo] = {
+  lazy val concreteMethods: List[MethodInfo] = {
     if (isTrait) methods.iterator.filter(m => hasStaticImpl(m) || !m.isDeferred).toList
     else if (isClass || isInterface) methods.iterator.filter(!_.isDeferred).toList
     else Nil
@@ -137,15 +137,15 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
     * This corresponds to the pre-Scala-2.12 trait encoding where all `concreteMethods`
     * are `emulatedConcreteMethods`. In 2.12 most concrete trait methods are translated
     * to concrete interface methods. */
-  lazy val emulatedConcreteMethods: List[MemberInfo] =
+  lazy val emulatedConcreteMethods: List[MethodInfo] =
     concreteMethods.filter(_.isDeferred)
 
   /** The deferred methods of this trait */
-  lazy val deferredMethods: List[MemberInfo] =
+  lazy val deferredMethods: List[MethodInfo] =
     methods.iterator.toList.filterNot(concreteMethods.toSet)
 
   /** All deferred methods of this type as seen in the bytecode. */
-  def deferredMethodsInBytecode: List[MemberInfo] =
+  def deferredMethodsInBytecode: List[MethodInfo] =
     if (isTrait) methods.iterator.toList
     else deferredMethods
 

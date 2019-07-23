@@ -3,13 +3,13 @@ package com.typesafe.tools.mima.lib.analyze.method
 import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.lib.analyze.Checker
 
-private[analyze] abstract class BaseMethodChecker extends Checker[MemberInfo, ClassInfo] {
+private[analyze] abstract class BaseMethodChecker extends Checker[MethodInfo, ClassInfo] {
   import MethodRules._
 
   protected val rules = Seq(AccessModifier, FinalModifier, AbstractModifier, JavaStatic)
 
-  protected def check(method: MemberInfo, in: Iterator[MemberInfo]): Option[Problem] = {
-    val meths = in.filter(_.params.lengthCompare(method.params.size) == 0).toList
+  protected def check(method: MethodInfo, in: Iterator[MethodInfo]): Option[Problem] = {
+    val meths = in.filter(method.paramsCount == _.paramsCount).toList
     if (meths.isEmpty)
       Some(DirectMissingMethodProblem(method))
     else {
@@ -26,12 +26,12 @@ private[analyze] abstract class BaseMethodChecker extends Checker[MemberInfo, Cl
     }
   }
 
-  private def uniques(methods: List[MemberInfo]): List[MemberInfo] =
+  private def uniques(methods: List[MethodInfo]): List[MethodInfo] =
     methods.groupBy(_.parametersDesc).values.map(_.head).toList
 }
 
 private[analyze] class ClassMethodChecker extends BaseMethodChecker {
-  def check(method: MemberInfo, inclazz: ClassInfo): Option[Problem] = {
+  def check(method: MethodInfo, inclazz: ClassInfo): Option[Problem] = {
     if (method.nonAccessible)
       None
     else if (method.isDeferred)
@@ -42,7 +42,7 @@ private[analyze] class ClassMethodChecker extends BaseMethodChecker {
 }
 
 private[analyze] class TraitMethodChecker extends BaseMethodChecker {
-  def check(method: MemberInfo, inclazz: ClassInfo): Option[Problem] = {
+  def check(method: MethodInfo, inclazz: ClassInfo): Option[Problem] = {
     if (method.nonAccessible)
       None
     else if (method.owner.hasStaticImpl(method))
@@ -51,7 +51,7 @@ private[analyze] class TraitMethodChecker extends BaseMethodChecker {
       super.check(method, inclazz.lookupMethods(method.bytecodeName))
   }
 
-  private def checkStaticImplMethod(method: MemberInfo, inclazz: ClassInfo) = {
+  private def checkStaticImplMethod(method: MethodInfo, inclazz: ClassInfo) = {
     assert(method.owner.hasStaticImpl(method))
     if (inclazz.hasStaticImpl(method)) {
       // then it's ok, the method it is still there

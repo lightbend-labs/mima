@@ -65,7 +65,7 @@ private[analyze] trait Analyzer extends ((ClassInfo, ClassInfo) => List[Problem]
     val newInheritedTypes = allInheritedTypes(newclazz)
     val diff = newInheritedTypes.diff(oldInheritedTypes)
 
-    def noInheritedMatchingMethod(clazz: ClassInfo, deferredMethod: MemberInfo)(
+    def noInheritedMatchingMethod(clazz: ClassInfo, deferredMethod: MethodInfo)(
         extraMethodMatchingCond: MemberInfo => Boolean
     ): Boolean = {
       val methods = clazz.lookupMethods(deferredMethod.bytecodeName)

@@ -7,8 +7,6 @@ package com.typesafe.tools.mima.core
 
 import java.io.IOException
 
-import scala.collection.mutable.ArrayBuffer
-
 import scala.tools.nsc.symtab.classfile.ClassfileConstants._
 
 final class ClassfileParser(definitions: Definitions) {
@@ -40,25 +38,28 @@ final class ClassfileParser(definitions: Definitions) {
     in.nextChar.toInt // majorVersion
   }
 
-  def parseMembers(clazz: ClassInfo): Members = {
-    val memberCount = in.nextChar
-    val members = new ArrayBuffer[MemberInfo]
-    for (_ <- 0 until memberCount) {
-      val jflags = in.nextChar.toInt
-      if (isPrivate(jflags)) {
-        in.skip(4)
-        skipAttributes()
-      } else {
-        members += parseMember(clazz, jflags)
-      }
-    }
-    new Members(members)
+  private def parseMembers[A <: MemberInfo : MkMember](clazz: ClassInfo): Members[A] = {
+    val members = {
+      for {
+        _ <- 0.until(in.nextChar).iterator
+        flags = in.nextChar
+        if !isPrivate(flags) || {
+          in.skip(4)
+          for (_ <- 0 until in.nextChar) {
+            in.skip(2)
+            in.skip(in.nextInt)
+          }
+          false
+        }
+      } yield parseMember[A](clazz, flags)
+    }.toList
+    new Members[A](members)
   }
 
-  def parseMember(clazz: ClassInfo, jflags: Int): MemberInfo = {
+  private def parseMember[A <: MemberInfo : MkMember](clazz: ClassInfo, flags: Int): A = {
     val name = pool.getName(in.nextChar)
     val descriptor = pool.getExternalName(in.nextChar)
-    val result = new MemberInfo(clazz, name, jflags, descriptor)
+    val result = implicitly[MkMember[A]].make(clazz, name, flags, descriptor)
     parseAttributes(result)
     result
   }
@@ -80,8 +81,8 @@ final class ClassfileParser(definitions: Definitions) {
 
     clazz.superClass = parseSuperClass()
     clazz.interfaces = parseInterfaces()
-    clazz.fields = parseMembers(clazz)
-    clazz.methods = parseMembers(clazz)
+    clazz.fields     = parseMembers[FieldInfo](clazz)
+    clazz.methods    = parseMembers[MethodInfo](clazz)
     parseAttributes(clazz)
   }
 
@@ -157,4 +158,11 @@ object ClassfileParser {
   // 2 new tags in Java 9: https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-4.html#jvms-4.4
   private[core] final val CONSTANT_MODULE  = 19
   private[core] final val CONSTANT_PACKAGE = 20
+
+  private trait MkMember[A] {
+    def make(owner: ClassInfo, bytecodeName: String, flags: Int, descriptor: String): A
+  }
+
+  private implicit def mkFieldInfo: MkMember[FieldInfo]   = new FieldInfo(_, _, _, _)
+  private implicit def mkMethodInfo: MkMember[MethodInfo] = new MethodInfo(_, _, _, _)
 }

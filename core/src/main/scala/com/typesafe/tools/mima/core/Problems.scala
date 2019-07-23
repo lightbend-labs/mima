@@ -30,21 +30,21 @@ abstract class MemberProblem(val ref: MemberInfo) extends Problem with MemberRef
   override def matchName = Some(ref.fullName)
 }
 
-case class MissingFieldProblem(oldfld: MemberInfo) extends MemberProblem(oldfld) {
+case class MissingFieldProblem(oldfld: FieldInfo) extends MemberProblem(oldfld) {
   def description = affectedVersion => oldfld.fieldString + " does not have a correspondent in " + affectedVersion + " version"
 }
 
-abstract class MissingMethodProblem(meth: MemberInfo) extends MemberProblem(meth)
+abstract class MissingMethodProblem(meth: MethodInfo) extends MemberProblem(meth)
 
-case class DirectMissingMethodProblem(meth: MemberInfo) extends MissingMethodProblem(meth) {
+case class DirectMissingMethodProblem(meth: MethodInfo) extends MissingMethodProblem(meth) {
   def description = affectedVersion => (if (meth.isDeferred && !meth.owner.isTrait) "abstract " else "") + meth.methodString + " does not have a correspondent in " + affectedVersion + " version"
 }
 
-case class ReversedMissingMethodProblem(meth: MemberInfo) extends MissingMethodProblem(meth) {
+case class ReversedMissingMethodProblem(meth: MethodInfo) extends MissingMethodProblem(meth) {
   def description = affectedVersion => (if (meth.isDeferred && !meth.owner.isTrait) "abstract " else "") + meth.methodString + " is present only in " + affectedVersion + " version"
 }
 
-case class UpdateForwarderBodyProblem(meth: MemberInfo) extends MemberProblem(meth) {
+case class UpdateForwarderBodyProblem(meth: MethodInfo) extends MemberProblem(meth) {
   assert(meth.owner.isTrait)
   assert(meth.owner.hasStaticImpl(meth))
 
@@ -63,15 +63,15 @@ case class FinalClassProblem(oldclazz: ClassInfo) extends TemplateProblem(oldcla
   def description = affectedVersion => oldclazz.classString + " is declared final in " + affectedVersion + " version"
 }
 
-case class FinalMethodProblem(newmemb: MemberInfo) extends MemberProblem(newmemb) {
+case class FinalMethodProblem(newmemb: MethodInfo) extends MemberProblem(newmemb) {
   def description = affectedVersion => newmemb.methodString + " is declared final in " + affectedVersion + " version"
 }
 
-case class IncompatibleFieldTypeProblem(oldfld: MemberInfo, newfld: MemberInfo) extends MemberProblem(oldfld) {
+case class IncompatibleFieldTypeProblem(oldfld: FieldInfo, newfld: FieldInfo) extends MemberProblem(oldfld) {
   def description = affectedVersion => newfld.fieldString + "'s type is different in " + affectedVersion + " version, where it is: " + newfld.tpe + " rather than: " + oldfld.tpe
 }
 
-case class IncompatibleMethTypeProblem(oldmeth: MemberInfo, newmeths: List[MemberInfo]) extends MemberProblem(oldmeth) {
+case class IncompatibleMethTypeProblem(oldmeth: MethodInfo, newmeths: List[MethodInfo]) extends MemberProblem(oldmeth) {
   def description = affectedVersion => {
     oldmeth.methodString + (if (newmeths.tail.isEmpty)
       "'s type is different in " + affectedVersion + " version, where it is " + newmeths.head.tpe + " instead of " + oldmeth.tpe
@@ -81,7 +81,7 @@ case class IncompatibleMethTypeProblem(oldmeth: MemberInfo, newmeths: List[Membe
   }
 }
 
-case class IncompatibleResultTypeProblem(oldmeth: MemberInfo, newmeth: MemberInfo) extends MemberProblem(oldmeth) {
+case class IncompatibleResultTypeProblem(oldmeth: MethodInfo, newmeth: MethodInfo) extends MemberProblem(oldmeth) {
   def description = affectedVersion => {
     oldmeth.methodString + " has a different result type in " + affectedVersion + " version, where it is " + newmeth.tpe.resultType +
        " rather than " + oldmeth.tpe.resultType
@@ -93,7 +93,7 @@ case class IncompatibleResultTypeProblem(oldmeth: MemberInfo, newmeth: MemberInf
  * for example when generic parameters don't match.
  * This has a chance of false positives.
  */
-case class IncompatibleSignatureProblem(oldmeth: MemberInfo, newmeth: MemberInfo) extends MemberProblem(oldmeth) {
+case class IncompatibleSignatureProblem(oldmeth: MethodInfo, newmeth: MethodInfo) extends MemberProblem(oldmeth) {
   def description = affectedVersion => {
     // a method that takes no parameters and returns Object can have no signature
     def orNA(s: String) = if (s.isEmpty) "[N/A]" else s
@@ -104,25 +104,25 @@ case class IncompatibleSignatureProblem(oldmeth: MemberInfo, newmeth: MemberInfo
 
 // In some older code within Mima, the affectedVersion could be reversed. We split AbstractMethodProblem and MissingMethodProblem
 // into two, in case the affected version is the other one, rather than the current one. (reversed if forward check).
-abstract class AbstractMethodProblem(newmeth: MemberInfo) extends MemberProblem(newmeth)
+abstract class AbstractMethodProblem(newmemb: MemberInfo) extends MemberProblem(newmemb)
 
-case class InheritedNewAbstractMethodProblem(clazz: ClassInfo, inheritedMethod: MemberInfo)
-    extends AbstractMethodProblem(new MemberInfo(clazz, inheritedMethod.bytecodeName, inheritedMethod.flags, inheritedMethod.descriptor)) {
+case class InheritedNewAbstractMethodProblem(clazz: ClassInfo, inheritedMethod: MethodInfo)
+    extends AbstractMethodProblem(new MethodInfo(clazz, inheritedMethod.bytecodeName, inheritedMethod.flags, inheritedMethod.descriptor)) {
   def description = affectedVersion => "abstract " + inheritedMethod.methodString+ " is inherited by class " + clazz.bytecodeName + " in " + affectedVersion + " version."
 }
 
-case class DirectAbstractMethodProblem(newmeth: MemberInfo) extends AbstractMethodProblem(newmeth) {
+case class DirectAbstractMethodProblem(newmeth: MethodInfo) extends AbstractMethodProblem(newmeth) {
   def description = affectedVersion => "abstract " + newmeth.methodString + " does not have a correspondent in " + affectedVersion + " version"
 }
 
-case class StaticVirtualMemberProblem(newmeth: MemberInfo) extends AbstractMethodProblem(newmeth) {
-  def description = affectedVersion => "non-static " + newmeth.memberString + " is static in " + affectedVersion + " version"
+case class StaticVirtualMemberProblem(newmemb: MemberInfo) extends AbstractMethodProblem(newmemb) {
+  def description = affectedVersion => "non-static " + newmemb.memberString + " is static in " + affectedVersion + " version"
 }
-case class VirtualStaticMemberProblem(newmeth: MemberInfo) extends AbstractMethodProblem(newmeth) {
-  def description = affectedVersion => "static " + newmeth.memberString + " is non-static in " + affectedVersion + " version"
+case class VirtualStaticMemberProblem(newmemb: MemberInfo) extends AbstractMethodProblem(newmemb) {
+  def description = affectedVersion => "static " + newmemb.memberString + " is non-static in " + affectedVersion + " version"
 }
 
-case class ReversedAbstractMethodProblem(newmeth: MemberInfo) extends MemberProblem(newmeth) {
+case class ReversedAbstractMethodProblem(newmeth: MethodInfo) extends MemberProblem(newmeth) {
   def description = affectedVersion => "in " + affectedVersion + " version there is abstract " + newmeth.methodString + ", which does not have a correspondent"
 }
 
@@ -144,11 +144,11 @@ case class CyclicTypeReferenceProblem(clz: ClassInfo) extends TemplateProblem(cl
   }
 }
 
-case class InaccessibleFieldProblem(newfld: MemberInfo) extends MemberProblem(newfld) {
+case class InaccessibleFieldProblem(newfld: FieldInfo) extends MemberProblem(newfld) {
   def description = affectedVersion => newfld.fieldString + " is inaccessible in " + affectedVersion + " version, it must be public."
 }
 
-case class InaccessibleMethodProblem(newmeth: MemberInfo) extends MemberProblem(newmeth) {
+case class InaccessibleMethodProblem(newmeth: MethodInfo) extends MemberProblem(newmeth) {
   def description = affectedVersion => newmeth.methodString + " is inaccessible in " + affectedVersion + " version, it must be public."
 }
 
