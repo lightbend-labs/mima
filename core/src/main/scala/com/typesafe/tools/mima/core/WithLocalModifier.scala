@@ -1,6 +1,8 @@
 package com.typesafe.tools.mima.core
 
 trait WithLocalModifier extends HasAccessFlags {
+  final def isStatic: Boolean = ClassfileParser.isStatic(flags)
+
   def isConcrete: Boolean = !isDeferred
 
   def isDeferred: Boolean = ClassfileParser.isDeferred(flags)

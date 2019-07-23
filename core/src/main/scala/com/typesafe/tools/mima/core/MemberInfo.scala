@@ -4,57 +4,61 @@ object MemberInfo {
   val ConstructorName = "<init>"
 }
 
-class MemberInfo(val owner: ClassInfo, val bytecodeName: String, override val flags: Int, val descriptor: String) extends HasDeclarationName with WithAccessFlags {
-  override def toString = "def " + bytecodeName + ": "+ descriptor
-
-  def fieldString = "field "+decodedName+" in "+owner.classString
-  def shortMethodString =
-    (if (hasSyntheticName) (if (isExtensionMethod) "extension " else "synthetic ") else "") +
-    (if (isDeprecated) "deprecated " else "") + "method "+decodedName + tpe
-  def methodString = shortMethodString + " in " + owner.classString
-  def memberString = if (isMethod) methodString else fieldString
-
-  lazy val params: List[String] = tpe match {
-    case MethodType(paramTypes, _) =>
-      for ((ptype, index) <- paramTypes.zipWithIndex) yield "par" + index + ": " + ptype
-  }
-
-  def fullName = owner.formattedFullName + "." + decodedName
-
-  def tpe: Type = owner.owner.definitions.fromDescriptor(descriptor)
-
-  def isMethod: Boolean = descriptor(0) == '('
-
-  def parametersDesc = {
-    assert(isMethod)
-    descriptor substring (1, descriptor indexOf ")")
-  }
-
-  def matchesType(other: MemberInfo): Boolean =
-    if (isMethod) other.isMethod && parametersDesc == other.parametersDesc
-    else !other.isMethod && descriptor == other.descriptor
-
+sealed abstract class MemberInfo(val owner: ClassInfo, val bytecodeName: String, val flags: Int, val descriptor: String)
+    extends HasDeclarationName with WithAccessFlags
+{
   var isDeprecated = false
+  var signature    = "" // Includes generics. 'descriptor' is the erased version.
 
-  // The full 'Signature' attribute, which includes generics.
-  // For type without generics, see the 'descriptor'
-  var signature = ""
+  def nonAccessible: Boolean
 
-  def hasSyntheticName: Boolean = decodedName contains '$'
+  def fullName: String          = s"${owner.formattedFullName}.$decodedName"
+  def tpe: Type                 = owner.owner.definitions.fromDescriptor(descriptor)
+  def hasSyntheticName: Boolean = decodedName.contains('$')
 
-  def isExtensionMethod: Boolean = {
-    var i = decodedName.length-1
-    while(i >= 0 && Character.isDigit(decodedName.charAt(i))) i -= 1
-    decodedName.substring(0, i+1).endsWith("$extension")
+  def memberString: String = this match {
+    case info: FieldInfo  => info.fieldString
+    case info: MethodInfo => info.methodString
+  }
+}
+
+private[mima] final class FieldInfo(owner: ClassInfo, bytecodeName: String, flags: Int, descriptor: String)
+    extends MemberInfo(owner, bytecodeName, flags, descriptor)
+{
+  def nonAccessible: Boolean = !isPublic || isSynthetic || hasSyntheticName
+  def fieldString: String    = s"field $decodedName in ${owner.classString}"
+  override def toString      = s"field $bytecodeName: $descriptor"
+}
+
+private[mima] final class MethodInfo(owner: ClassInfo, bytecodeName: String, flags: Int, descriptor: String)
+    extends MemberInfo(owner, bytecodeName, flags, descriptor)
+{
+  def methodString: String      = s"$shortMethodString in ${owner.classString}"
+  def shortMethodString: String = {
+    val prefix = if (hasSyntheticName) if (isExtensionMethod) "extension " else "synthetic " else ""
+    val deprecated = if (isDeprecated) "deprecated " else ""
+    s"$prefix${deprecated}method $decodedName$tpe"
   }
 
-  def isDefaultGetter: Boolean = decodedName.contains("$default$")
+  lazy val paramsCount: Int = {
+    tpe match {
+      case MethodType(paramTypes, _) => paramTypes.length
+      case _ => throw new MatchError(s"Failed to get method params, member had type $tpe, not MethodType.")
+    }
+  }
 
-  def isAccessible: Boolean = isPublic && !isSynthetic && (!hasSyntheticName || isExtensionMethod || isDefaultGetter)
+  assert(descriptor.charAt(0) == '(')
+  def parametersDesc: String                  = descriptor.substring(1, descriptor.indexOf(")"))
+  def matchesType(other: MethodInfo): Boolean = parametersDesc == other.parametersDesc
 
-  def nonAccessible: Boolean = !isAccessible
+  private def isDefaultGetter: Boolean   = decodedName.contains("$default$")
+  private def isExtensionMethod: Boolean = {
+    var i = decodedName.length - 1
+    while (i >= 0 && Character.isDigit(decodedName.charAt(i)))
+      i -= 1
+    decodedName.substring(0, i + 1).endsWith("$extension")
+  }
+  def nonAccessible: Boolean = !isPublic || isSynthetic || (hasSyntheticName && !isExtensionMethod && !isDefaultGetter)
 
-  def isStatic: Boolean = ClassfileParser.isStatic(flags)
-
-  def description: String = bytecodeName + ": " + descriptor + " from " + owner.description
+  override def toString = s"def $bytecodeName: $descriptor"
 }

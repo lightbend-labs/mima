@@ -51,6 +51,8 @@ object MimaSettings {
       ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.MemberRef.*"),
       ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.TemplateProblem.*"),
       ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.MemberProblem.*"),
+      // Changes to the members of the *Problems classes
+      ProblemFilters.exclude[MemberProblem]("*mima.core.*Problem.*"),
       // Dropped dead code internal to parsing
       ProblemFilters.exclude[Problem]("*mima.core.BufferReader*"),
       ProblemFilters.exclude[Problem]("*mima.core.ClassfileParser*"),
@@ -70,6 +72,8 @@ object MimaSettings {
       ProblemFilters.exclude[Problem]("*mima.core.Members*"),
       ProblemFilters.exclude[Problem]("*mima.core.NoMembers*"),
       ProblemFilters.exclude[Problem]("*mima.core.WithLocalModifier*"),
+      // Changes in internal, analyze code
+      ProblemFilters.exclude[Problem]("*mima.lib.analyze*"),
     ),
   )
 }

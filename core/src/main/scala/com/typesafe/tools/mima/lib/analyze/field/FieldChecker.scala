@@ -3,9 +3,9 @@ package com.typesafe.tools.mima.lib.analyze.field
 import com.typesafe.tools.mima.lib.analyze.Checker
 import com.typesafe.tools.mima.core._
 
-private[analyze] abstract class BaseFieldChecker extends Checker[MemberInfo, ClassInfo] {
-  def check(field: MemberInfo, in: ClassInfo): Option[Problem] = {
-    if (field.isAccessible) {
+private[analyze] abstract class BaseFieldChecker extends Checker[FieldInfo, ClassInfo] {
+  def check(field: FieldInfo, in: ClassInfo): Option[Problem] = {
+    if (field.nonAccessible) None else {
       val newflds = in.lookupClassFields(field.bytecodeName)
       if (newflds.hasNext) {
         val newfld = newflds.next
@@ -22,7 +22,6 @@ private[analyze] abstract class BaseFieldChecker extends Checker[MemberInfo, Cla
       }
       else Some(MissingFieldProblem(field))
     }
-    else None
   }
 }
 
