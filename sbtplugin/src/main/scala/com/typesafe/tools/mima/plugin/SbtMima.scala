@@ -54,8 +54,9 @@ object SbtMima {
     // filters * found is n-squared, it's fixable in principle by special-casing known
     // filter types or something, not worth it most likely...
 
-    def isReported(map: Map[String, Seq[ProblemFilter]], classification: String) =
-      ProblemReporting.isReported(module.revision, filters, map)(log, projectName, classification) _
+    def isReported(versionedFilters: Map[String, Seq[ProblemFilter]])(problem: Problem) = {
+      ProblemReporting.isReported(module.revision, filters, versionedFilters)(problem)
+    }
 
     def pretty(affected: String)(p: Problem): String = {
       val desc = p.description(affected)
@@ -63,20 +64,20 @@ object SbtMima {
       s" * $desc$howToFilter"
     }
 
-    val backErrors = backward.filter(isReported(backwardFilters, "current"))
-    val forwErrors = forward.filter(isReported(forwardFilters, "other"))
+    val backErrors = backward.filter(isReported(backwardFilters))
+    val forwErrors = forward.filter(isReported(forwardFilters))
 
     val count = backErrors.size + forwErrors.size
-    val filteredCount = backward.size + forward.size - backErrors.size - forwErrors.size
+    val filteredCount = backward.size + forward.size - count
     val filteredNote = if (filteredCount > 0) s" (filtered $filteredCount)" else ""
-    log.info(s"$projectName: found $count potential binary incompatibilities while checking against $module $filteredNote")
+    log.info(s"$projectName: found $count potential binary incompatibilities while checking against $module$filteredNote")
 
-    (backErrors.map(pretty("current")) ++ forwErrors.map(pretty("other"))).foreach { p =>
-      if (failOnProblem) log.error(p)
-      else log.warn(p)
+    (backErrors.iterator.map(pretty("current")) ++ forwErrors.iterator.map(pretty("other"))).foreach { msg =>
+      if (failOnProblem) log.error(msg)
+      else log.warn(msg)
     }
 
-    if (failOnProblem && (backErrors.nonEmpty || forwErrors.nonEmpty)) {
+    if (failOnProblem && count > 0) {
       sys.error(s"$projectName: Binary compatibility check failed!")
     }
   }
