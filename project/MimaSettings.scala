@@ -67,12 +67,11 @@ object MimaSettings {
       ProblemFilters.exclude[Problem]("*mima.core.ValueType*"),
       // Dropped dead code internal to the info classes
       ProblemFilters.exclude[Problem]("*mima.core.Definitions*"),
-      ProblemFilters.exclude[Problem]("*mima.core.ClassInfo*"),
-      ProblemFilters.exclude[Problem]("*mima.core.MemberInfo*"),
-      ProblemFilters.exclude[Problem]("*mima.core.NoClass*"),
-      ProblemFilters.exclude[Problem]("*mima.core.Members*"),
-      ProblemFilters.exclude[Problem]("*mima.core.NoMembers*"),
-      ProblemFilters.exclude[Problem]("*mima.core.WithLocalModifier*"),
+      ProblemFilters.exclude[Problem]("*mima.core.*Info*"),
+      ProblemFilters.exclude[Problem]("*mima.core.*Members*"),
+      ProblemFilters.exclude[Problem]("*mima.core.No*"),
+      ProblemFilters.exclude[Problem]("*mima.core.Has*"),
+      ProblemFilters.exclude[Problem]("*mima.core.With*"),
       // Changes in internal, analyze code
       ProblemFilters.exclude[Problem]("*mima.lib.analyze*"),
     ),
