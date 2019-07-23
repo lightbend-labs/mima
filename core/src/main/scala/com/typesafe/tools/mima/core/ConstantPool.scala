@@ -1,7 +1,5 @@
 package com.typesafe.tools.mima.core
 
-import java.nio.charset.StandardCharsets
-
 import scala.annotation.switch
 
 import scala.tools.nsc.symtab.classfile.ClassfileConstants._
@@ -45,8 +43,8 @@ private[core] final class ConstantPool(definitions: Definitions, in: BufferReade
     var name = values(index).asInstanceOf[String]
     if (name eq null) {
       val start = starts(index)
-      if (in.buf(start).toInt != CONSTANT_UTF8) errorBadTag(start)
-      name = new String(in.buf, start + 3, in.getChar(start + 1), StandardCharsets.UTF_8)
+      if (in.getByte(start).toInt != CONSTANT_UTF8) errorBadTag(start)
+      name = in.getString(start + 3, in.getChar(start + 1))
       values(index) = name
     }
     name
@@ -66,7 +64,7 @@ private[core] final class ConstantPool(definitions: Definitions, in: BufferReade
     var c = values(index).asInstanceOf[ClassInfo]
     if (c eq null) {
       val start = starts(index)
-      if (in.buf(start).toInt != CONSTANT_CLASS) errorBadTag(start)
+      if (in.getByte(start).toInt != CONSTANT_CLASS) errorBadTag(start)
       val name = getExternalName(in.getChar(start + 1))
       c = definitions.fromName(name)
       values(index) = c
@@ -79,7 +77,7 @@ private[core] final class ConstantPool(definitions: Definitions, in: BufferReade
    */
   def getClassName(index: Int): String = {
     val start = starts(index)
-    if (in.buf(start).toInt != CONSTANT_CLASS) errorBadTag(start)
+    if (in.getByte(start).toInt != CONSTANT_CLASS) errorBadTag(start)
     getExternalName(in.getChar(start + 1))
   }
 
@@ -92,5 +90,5 @@ private[core] final class ConstantPool(definitions: Definitions, in: BufferReade
 
   /** Throws an exception signaling a bad tag at given address. */
   private def errorBadTag(start: Int) =
-    throw new RuntimeException("bad constant pool tag " + in.buf(start) + " at byte " + start)
+    throw new RuntimeException("bad constant pool tag " + in.getByte(start) + " at byte " + start)
 }
