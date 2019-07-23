@@ -41,13 +41,6 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
 
   def file: AbstractFile
 
-  private var _sourceFileName = ""
-  def sourceFileName_=(fileName: String) = _sourceFileName = fileName
-  def sourceFileName = this match {
-    case c: ConcreteClassInfo => _sourceFileName
-    case _                    => "compiler generated"
-  }
-
   lazy val fullName: String = {
     assert(bytecodeName != null)
     if (owner.isRoot) bytecodeName
@@ -100,7 +93,6 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
   private var _fields: Members = NoMembers
   private var _methods: Members = NoMembers
   private var _flags: Int = 0
-  private var _isScala: Boolean = false
 
   def superClass: ClassInfo = { ensureLoaded(); _superClass }
   def interfaces: List[ClassInfo] = { ensureLoaded(); _interfaces }
@@ -108,15 +100,11 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
   def methods: Members = { ensureLoaded(); _methods }
   override def flags: Int = _flags
 
-  def isScala: Boolean = { ensureLoaded(); _isScala }
-  def isScalaUnsafe: Boolean = { _isScala }
-
   def superClass_=(x: ClassInfo) = _superClass = x
   def interfaces_=(x: List[ClassInfo]) = _interfaces = x
   def fields_=(x: Members) = _fields = x
   def methods_=(x: Members) = _methods = x
   def flags_=(x: Int) = _flags = x
-  def isScala_=(x: Boolean) = _isScala = x
 
   lazy val superClasses: Set[ClassInfo] =
     if (this == ClassInfo.ObjectClass) Set.empty
@@ -137,28 +125,6 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
 
   def lookupConcreteTraitMethods(name: String): Iterator[MemberInfo] =
     allTraits.toList.flatten(_.concreteMethods).filter(_.bytecodeName == bytecodeName).iterator
-
-  /** Is this class a non-trait that inherits !from a trait */
-  lazy val isClassInheritsTrait = !isInterface && _interfaces.exists(_.isTrait)
-
-  /** Should methods be parsed from classfile? */
-  def methodsAreRelevant = isTrait || isImplClass || _interfaces.exists(_.isTrait)
-
-  /** The constructors of this class
-   *  pre: methodsAreRelevant
-   */
-  def constructors: List[MemberInfo] =
-    if (methods == null) null
-    else methods.iterator.filter(_.isClassConstructor).toList
-
-  /** The setter methods defined of this trait that correspond to
-   *  a concrete field. TODO: define and check annotation for a mutable
-   *  setter.
-   */
-  lazy val traitSetters: List[MemberInfo] = {
-    assert(isTrait)
-    methods.iterator.filter(_.isTraitSetter).toList
-  }
 
   /** The concrete methods of this trait */
   lazy val concreteMethods: List[MemberInfo] = {
@@ -212,32 +178,11 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
     if (this == ClassInfo.ObjectClass) Set.empty
     else superClass.allInterfaces ++ interfaces ++ (interfaces flatMap (_.allInterfaces))
 
-  private def unimplemented(sel: ClassInfo => Iterable[MemberInfo]): List[MemberInfo] = {
-    ensureLoaded()
-    if (isClassInheritsTrait) {
-      for {
-        t <- directTraits
-        m <- sel(t)
-        if !hasInstanceImpl(m)
-      } yield m
-    } else Nil
-  }
-
-  /** The methods that should be implemented by this class but aren't */
-  lazy val unimplementedMethods = unimplemented(_.concreteMethods)
-
-  /** The fields that should be implemented by this class but aren't */
-  lazy val unimplementedSetters = unimplemented(_.traitSetters)
-
-  /** Does this class have an implementation (forwarder or accessor) of given method `m'? */
-  private def hasInstanceImpl(m: MemberInfo) =
-    methods.get(m.bytecodeName) exists (_.descriptor == m.descriptor)
-
-  /** Does this implementation class have a static implementation of given method `m'? */
+  /** Does this implementation class have a static implementation of given method `m`? */
   def hasStaticImpl(m: MemberInfo) = staticImpl(m).isDefined
 
-  /** Optionally, the static implementation method corresponding to trait member `m' */
-  def staticImpl(m: MemberInfo): Option[MemberInfo] = {
+  /** Optionally, the static implementation method corresponding to trait member `m`. */
+  private def staticImpl(m: MemberInfo): Option[MemberInfo] = {
     if (isTrait) {
       implClass match {
         case impl: ConcreteClassInfo =>
@@ -250,8 +195,8 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
     else None
   }
 
-  /** Does `isig' correspond to `tsig' if seen as the signature of the static
-   *  implementation method of a trait method with signature `tsig'?
+  /** Does `isig` correspond to `tsig` if seen as the signature of the static
+   *  implementation method of a trait method with signature `tsig`?
    */
   private def hasImplSig(isig: String, tsig: String) = {
     assert(isig(0) == '(' && isig(1) == 'L' && tsig(0) == '(')
@@ -297,22 +242,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
 
   def isModule: Boolean = bytecodeName.endsWith("$")
 
-  /** Is this class public? */
-  /*
-  def isPackageVisible: Boolean = {
-    ensureLoaded()
-    !ClassfileParser.isPrivate(flags)
-  }*/
-
   override def toString = "class " + bytecodeName
-
-  def shortDescription = {
-    // using 'description' because elsewhere objects' name are not correctly translated.
-    // In fact, formatClassName(name) would have a suffixed '#' for an object name, which is annoying.
-    val descr = description
-    val index = descr.lastIndexOf(descr)
-    if (index < 0) descr else descr.substring(index)
-  }
 
   def description: String = declarationPrefix + " " + formattedFullName
 }

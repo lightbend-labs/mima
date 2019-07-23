@@ -18,6 +18,7 @@ inThisBuild(Seq(
 
 val root = project.in(file(".")).disablePlugins(BintrayPlugin).enablePlugins(GitVersioning).settings(
   name := "mima",
+  mimaFailOnNoPrevious := false,
   skip in publish := true,
 )
 aggregateProjects(core, sbtplugin, functionalTests)

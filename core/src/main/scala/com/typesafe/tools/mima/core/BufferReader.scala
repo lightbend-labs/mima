@@ -35,13 +35,6 @@ class BufferReader(val buf: Array[Byte]) {
     b
   }
 
-  /** read some bytes
-   */
-  def nextBytes(len: Int): Array[Byte] = {
-    bp += len
-    buf.slice(bp - len, bp)
-  }
-
   /** read a character
    */
   def nextChar: Char =
@@ -81,16 +74,4 @@ class BufferReader(val buf: Array[Byte]) {
   /** skip next 'n' bytes
    */
   def skip(n: Int): Unit = { bp += n }
-
-  /** Do read operattion `op` at position `n`
-   */
-  def at[T](n: Int)(op: => T): T = {
-    val oldbp = bp
-    bp = n
-    try {
-      op
-    } finally {
-      bp = oldbp
-    }
-  }
 }

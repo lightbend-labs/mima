@@ -10,8 +10,4 @@ trait WithLocalModifier extends HasAccessFlags {
   def nonFinal: Boolean = !isFinal
 
   def isSynthetic: Boolean = ClassfileParser.isSynthetic(flags)
-
-  def isBridge: Boolean = ClassfileParser.isBridge(flags)
-
-  def nonBridge: Boolean = !isBridge
 }

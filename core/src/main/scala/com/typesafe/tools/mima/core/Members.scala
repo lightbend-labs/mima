@@ -13,8 +13,6 @@ class Members(members: Iterable[MemberInfo]) {
   def iterator: Iterator[MemberInfo] = for (ms <- bindings.valuesIterator; m <- ms.iterator) yield m
 
   def get(name: String): Iterator[MemberInfo] = bindings(name).iterator
-
-  def withoutStatic: Members = new Members(iterator.filterNot(_.isStatic).toIndexedSeq)
 }
 
 object NoMembers extends Members(Nil)

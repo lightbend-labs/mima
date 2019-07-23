@@ -8,60 +8,34 @@ package com.typesafe.tools.mima.core
 import java.io.IOException
 import java.nio.charset.StandardCharsets
 
-import scala.collection.mutable.ArrayBuffer
-import scala.tools.nsc.symtab.classfile.ClassfileConstants._
 import scala.annotation.switch
+import scala.collection.mutable.ArrayBuffer
 
-class ClientClassfileParser(definitions: Definitions) extends ClassfileParser(definitions) {
-  var readFields = (clazz: ClassInfo) => false
-  var readMethods = (clazz: ClassInfo) => clazz.methodsAreRelevant
-  var readCode = (meth: MemberInfo) => meth.needCode
-}
+import scala.tools.nsc.symtab.classfile.ClassfileConstants._
 
-class LibClassfileParser(definitions: Definitions) extends ClassfileParser(definitions) {
-  var readFields = (clazz: ClassInfo) => true
-  var readMethods = (clazz: ClassInfo) => true
-  var readCode = (meth: MemberInfo) => false
-}
-
-
-/** This abstract class implements a class file parser.
- *
- *  @author Martin Odersky
- *  @version 1.0
- */
-abstract class ClassfileParser(definitions: Definitions) {
+final class ClassfileParser(definitions: Definitions) {
   import ClassfileParser._
 
-  /** Configuration:
-   */
-  def readFields: ClassInfo => Boolean
-  def readMethods: ClassInfo => Boolean
-  def readCode: MemberInfo => Boolean
-
-  var in: BufferReader = _  // the class file reader
+  private var in: BufferReader = _  // the class file reader
   private var thepool: ConstantPool = _
-  protected var parsedClass: ClassInfo = _
 
   def pool: ConstantPool = thepool
 
   def parse(clazz: ClassInfo) = synchronized {
-    parsed += 1
-    parsedClass = clazz
     in = new BufferReader(clazz.file.toByteArray)
     parseAll(clazz)
   }
 
   protected def parseAll(clazz: ClassInfo): Unit = {
-    parseHeader()
+    parseHeader(clazz)
     thepool = new ConstantPool
     parseClass(clazz)
   }
 
-  protected def parseHeader(): Unit = {
+  protected def parseHeader(clazz: ClassInfo): Unit = {
     val magic = in.nextInt
     if (magic != JAVA_MAGIC)
-      throw new IOException("class file '" + parsedClass.file + "' "
+      throw new IOException("class file '" + clazz.file + "' "
                             + "has wrong magic number 0x" + magic.toHexString
                             + ", should be 0x" + JAVA_MAGIC.toHexString)
     in.nextChar.toInt // minorVersion
@@ -129,7 +103,6 @@ abstract class ClassfileParser(definitions: Definitions) {
         if (in.buf(start).toInt != CONSTANT_CLASS) errorBadTag(start)
         val name = getExternalName(in.getChar(start + 1))
         c = definitions.fromName(name)
-        //if (c == ClassInfo.NoClass) println("warning: missing class "+name+" referenced from "+parsedClass.file)
         values(index) = c
       }
       c
@@ -146,45 +119,6 @@ abstract class ClassfileParser(definitions: Definitions) {
 
     def getSuperClass(index: Int): ClassInfo =
       if (index == 0) ClassInfo.ObjectClass else getClassInfo(index)
-
-    /** Return a name string and a type string at the given index. If the type is a method
-     *  type, a dummy symbol is created in 'ownerTpe', which is used as the
-     *  owner of its value parameters. This might lead to inconsistencies,
-     *  if a symbol of the given name already exists, and has a different
-     *  type.
-     */
-    def getNameAndType(index: Int): (String, String) = {
-      if (index <= 0 || length <= index) errorBadIndex(index)
-      var p = values(index).asInstanceOf[(String, String)]
-      if (p eq null) {
-        val start = starts(index)
-        if (in.buf(start).toInt != CONSTANT_NAMEANDTYPE) errorBadTag(start)
-        val name = getName(in.getChar(start + 1).toInt)
-        val tpe  = getName(in.getChar(start + 3).toInt)
-        p = (name, tpe)
-      }
-      p
-    }
-
-    /** Return a triple consisting of class info, name string, and type string
-     *  at the given index. If the class is an array or is not found on the classpath
-     *  NoClass is returned.
-     */
-    def getReference(index: Int): Reference = {
-      if (index <= 0 || length <= index) errorBadIndex(index)
-      var r = values(index).asInstanceOf[Reference]
-      if (r eq null) {
-        val start = starts(index)
-        val first = in.buf(start).toInt
-        if (first != CONSTANT_FIELDREF &&
-            first != CONSTANT_METHODREF &&
-            first != CONSTANT_INTFMETHODREF) errorBadTag(start)
-        val clazz = getClassInfo(in.getChar(start + 1))
-        val (name, tpe) = getNameAndType(in.getChar(start + 3))
-        r = Reference(clazz, name, tpe)
-      }
-      r
-    }
 
     /** Throws an exception signaling a bad constant index. */
     private def errorBadIndex(index: Int) =
@@ -208,14 +142,6 @@ abstract class ClassfileParser(definitions: Definitions) {
       }
     }
     new Members(members)
-  }
-
-  def skipMembers(): Members = {
-    val memberCount = in.nextChar
-    for (_ <- 0 until memberCount) {
-      in.skip(6); skipAttributes()
-    }
-    NoMembers
   }
 
   def parseMember(clazz: ClassInfo, jflags: Int): MemberInfo = {
@@ -243,11 +169,9 @@ abstract class ClassfileParser(definitions: Definitions) {
 
     clazz.superClass = parseSuperClass()
     clazz.interfaces = parseInterfaces()
-    if (readFields(clazz)) clazz.fields = parseMembers(clazz) else skipMembers()
-    val methods =
-      if (readMethods(clazz)) parseMembers(clazz) else skipMembers()
+    clazz.fields = parseMembers(clazz)
+    clazz.methods = parseMembers(clazz)
     parseAttributes(clazz)
-    clazz.methods = methods
   }
 
   def skipAttributes(): Unit = {
@@ -261,109 +185,43 @@ abstract class ClassfileParser(definitions: Definitions) {
     val attrCount = in.nextChar
      for (_ <- 0 until attrCount) {
        val attrIndex = in.nextChar
-       val attrName = pool.getName(attrIndex)
        val attrLen = in.nextInt
        val attrEnd = in.bp + attrLen
-       if (attrName == "SourceFile") {
-         if (in.bp + 1 <= attrEnd) {
-           val attrNameIndex = in.nextChar
-           c.sourceFileName = pool.getName(attrNameIndex)
-         }
-       } else if (attrName == "InnerClasses") {
-         val entries = in.nextChar.toInt
-         c._innerClasses = (0 until entries).map { _ =>
-           val innerIndex, outerIndex, innerNameIndex = in.nextChar.toInt
-           in.skip(2)
-           if (innerIndex != 0 && outerIndex != 0 && innerNameIndex != 0) {
-             val n = pool.getClassName(innerIndex)
-             if (n == c.bytecodeName) c._isTopLevel = false // an inner class lists itself in InnerClasses
-             if (pool.getClassName(outerIndex) == c.bytecodeName) n else ""
-           } else ""
-         }.filterNot(_.isEmpty)
-       } else if (attrName == "EnclosingMethod") {
-         c._isLocalClass = true
-       } else if (attrName == "Scala" || attrName == "ScalaSig") {
-         this.parsedClass.isScala = true
+       pool.getName(attrIndex) match {
+         case "EnclosingMethod" => c._isLocalClass = true
+         case "InnerClasses"    =>
+           c._innerClasses = (0 until in.nextChar).map { _ =>
+             val innerIndex, outerIndex, innerNameIndex = in.nextChar.toInt
+             in.skip(2)
+             if (innerIndex != 0 && outerIndex != 0 && innerNameIndex != 0) {
+               val n = pool.getClassName(innerIndex)
+               if (n == c.bytecodeName) c._isTopLevel = false // an inner class lists itself in InnerClasses
+               if (pool.getClassName(outerIndex) == c.bytecodeName) n else ""
+             } else ""
+           }.filterNot(_.isEmpty)
+         case _                 => ()
        }
        in.bp = attrEnd
      }
   }
 
   def parseAttributes(m: MemberInfo): Unit = {
-    val maybeTraitSetter = MemberInfo.maybeSetter(m.bytecodeName)
     val attrCount = in.nextChar
     for (_ <- 0 until attrCount) {
       val attrIndex = in.nextChar
-      val attrName = pool.getName(attrIndex)
       val attrLen = in.nextInt
       val attrEnd = in.bp + attrLen
-      if (maybeTraitSetter && attrName == "RuntimeVisibleAnnotations") {
-        val annotCount = in.nextChar
-        var j = 0
-        while (j < annotCount && !m.isTraitSetter) {
-          if (in.bp + 2 <= attrEnd) {
-            val annotIndex = in.nextChar
-            if (pool.getName(annotIndex) == "Lscala/runtime/TraitSetter;")
-              m.isTraitSetter = true
-            else
-              skipAnnotation(annotIndex, attrEnd)
-          }
-          j += 1
-        }
-      } else if (attrName == "Code" && readCode(m)) {
-        in.nextChar // maxStack
-        in.nextChar // maxLocals
-        val codeLength = in.nextInt
-        m.codeOpt = Some((in.bp, in.bp + codeLength))
-      } else if (attrName == "Deprecated") {
-        m.isDeprecated = true
-      } else if (attrName == "Signature") {
-        m.signature = pool.getName(in.nextChar)
+      pool.getName(attrIndex) match {
+        case "Deprecated" => m.isDeprecated = true
+        case "Signature"  => m.signature = pool.getName(in.nextChar)
+        case _            => ()
       }
       in.bp = attrEnd
-    }
-  }
-
-  /** Skip a single annotation
-   */
-  def skipAnnotation(annotIndex: Int, attrEnd: Int): Unit = {
-    try {
-      if (in.bp + 2 <= attrEnd) {
-        val nargs = in.nextChar
-        for (_ <- 0 until nargs)
-          if (in.bp + 2 <= attrEnd) {
-            in.nextChar // argname
-            skipAnnotArg(attrEnd)
-          }
-      }
-    } catch {
-      case _: Exception =>
-    }
-  }
-
-  /** Skip a single annotation argument
-   */
-  def skipAnnotArg(attrEnd: Int): Unit = {
-    if (in.bp + 3 <= attrEnd) {
-      val tag = in.nextByte.toChar
-      val index = in.nextChar
-      tag match {
-        case ENUM_TAG   =>
-          if (in.bp + 2 <= attrEnd) in.nextChar
-        case ARRAY_TAG  =>
-          for (_ <- 0 until index)
-            skipAnnotArg(attrEnd)
-        case ANNOTATION_TAG =>
-          skipAnnotation(index, attrEnd)
-        case _ =>
-      }
     }
   }
 }
 
 object ClassfileParser {
-  var parsed: Int = 0
-
   @inline final def isPublic(flags: Int) =
     (flags & JAVA_ACC_PUBLIC) != 0
   @inline final def isProtected(flags: Int) =

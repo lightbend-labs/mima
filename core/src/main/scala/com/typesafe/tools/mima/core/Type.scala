@@ -25,28 +25,17 @@ object Type {
 }
 
 abstract class Type {
-  def elemType: Type = throw new UnsupportedOperationException
   def resultType: Type = throw new UnsupportedOperationException
-  def isSubtypeOf(that: Type): Boolean = throw new UnsupportedOperationException
 }
 
 case class ValueType(name: String) extends Type {
   override def toString = name
-  override def isSubtypeOf(that: Type) = this == that
 }
 case class ClassType(private val clazz: ClassInfo) extends Type {
   override def toString = ClassInfo.formatClassName(clazz.fullName)
-
-  override def isSubtypeOf(that: Type) = that match {
-    case ClassType(thatClazz) =>
-      if (thatClazz.isTrait) clazz.allTraits.exists(_.fullName == thatClazz.fullName)
-      else clazz.superClasses.exists(_.fullName == thatClazz.fullName)
-    case _ => false
-  }
 }
-case class ArrayType(override val elemType: Type) extends Type {
+case class ArrayType(elemType: Type) extends Type {
   override def toString = "Array["+elemType+"]"
-  override def isSubtypeOf(that: Type) = this == that
 }
 case class MethodType(paramTypes: List[Type], override val resultType: Type) extends Type {
   override def toString = paramTypes.mkString("(", ",", ")"+resultType)

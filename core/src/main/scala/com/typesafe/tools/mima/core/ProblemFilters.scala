@@ -31,7 +31,4 @@ object ProblemFilters {
     exclude(name)(ClassTag(problemClass))
   }
 
-  @deprecated("Replace with ProblemFilters.exclude[Problem](\"my.package.*\")", "0.1.15")
-  def excludePackage(packageName: String): ProblemFilter = exclude[Problem](s"$packageName.*")
-
 }
