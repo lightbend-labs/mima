@@ -4,8 +4,6 @@ import org.scalatest._
 import org.scalatest.prop.TableDrivenPropertyChecks
 
 class ProblemFiltersSpec extends WordSpec with TableDrivenPropertyChecks with Matchers {
-  import ProblemFiltersSpec._
-
   val filters = Table(
     ("filter", "problem", "realProblem"),
     (ProblemFilters.exclude[Problem]("impl.Http"), problem("impl.Http"),  false),
@@ -24,11 +22,5 @@ class ProblemFiltersSpec extends WordSpec with TableDrivenPropertyChecks with Ma
     }
   }
 
-}
-
-object ProblemFiltersSpec {
-  def problem(name: String) = new TemplateProblem(NoClass) {
-    override def description: (String) => String = ???
-    override def matchName: Some[String] = Some(name)
-  }
+  private def problem(name: String) = FinalClassProblem(new SyntheticClassInfo(NoPackageInfo, name))
 }
