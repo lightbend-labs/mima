@@ -2,7 +2,6 @@ package com.typesafe.tools.mima.lib
 
 import com.typesafe.tools.mima.core.Config._
 import com.typesafe.tools.mima.core._
-import com.typesafe.tools.mima.core.util.IndentedOutput._
 import com.typesafe.tools.mima.core.util.log.{ConsoleLogging, Logging}
 import com.typesafe.tools.mima.lib.analyze.Analyzer
 
@@ -59,14 +58,12 @@ class MiMaLib(classpath: ClassPath, val log: Logging = ConsoleLogging) {
   private def traversePackages(oldpkg: PackageInfo, newpkg: PackageInfo): Unit = {
     log.info("Traversing package " + oldpkg.fullName)
     comparePackages(oldpkg, newpkg)
-    indented {
-      for (p <- oldpkg.packages.valuesIterator) {
-        newpkg.packages get p.name match {
-          case None =>
-            traversePackages(p, NoPackageInfo)
-          case Some(q) =>
-            traversePackages(p, q)
-        }
+    for (p <- oldpkg.packages.valuesIterator) {
+      newpkg.packages get p.name match {
+        case None =>
+          traversePackages(p, NoPackageInfo)
+        case Some(q) =>
+          traversePackages(p, q)
       }
     }
   }

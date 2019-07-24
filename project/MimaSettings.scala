@@ -75,6 +75,9 @@ object MimaSettings {
       ProblemFilters.exclude[Problem]("*mima.core.WithLocalModifier*"),
       // Changes in internal, analyze code
       ProblemFilters.exclude[Problem]("*mima.lib.analyze*"),
+      // Changes in internal code
+      ProblemFilters.exclude[Problem]("*mima.core.Reference*"),
+      ProblemFilters.exclude[Problem]("*mima.core.util.*"),
     ),
   )
 }
