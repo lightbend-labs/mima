@@ -68,7 +68,6 @@ object TestsPlugin extends AutoPlugin {
 
   private val integrationTestProjectSettings = Def.settings(
     scalaVersion := testScalaVersion.value,
-    crossScalaVersions := Seq("2.12.8", "2.13.0"),
     IntegrationTest / test := runIntegrationTest.value,
   )
 
@@ -103,7 +102,6 @@ object TestsPlugin extends AutoPlugin {
   private val testProjectSettings = Def.settings(
     resolvers += "scala-pr-validation-snapshots" at "https://scala-ci.typesafe.com/artifactory/scala-pr-validation-snapshots/",
     scalaVersion := testScalaVersion.value,
-    crossScalaVersions := Seq("2.12.8", "2.13.0"),
     inConfig(V1)(testPerConfigSettings),
     inConfig(V2)(testPerConfigSettings),
     Test / test := runFunctionalTest.value,
