@@ -36,7 +36,7 @@ class ConcreteClassInfo(owner: PackageInfo, val file: AbstractFile) extends Clas
   override def canEqual(other: Any) = other.isInstanceOf[ConcreteClassInfo]
 }
 
-abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with WithAccessFlags with Equals {
+abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Equals {
   import ClassInfo._
 
   def file: AbstractFile
@@ -74,7 +74,8 @@ abstract class ClassInfo(val owner: PackageInfo) extends HasDeclarationName with
     else "class"
   }
 
-  def classString = (accessModifier + " " + declarationPrefix + " " + formattedFullName).trim
+  def classString: String    = s"$accessModifier $declarationPrefix $formattedFullName".trim
+  def accessModifier: String = if (isProtected) "protected" else if (isPrivate) "private" else ""
 
   protected var loaded = false
 

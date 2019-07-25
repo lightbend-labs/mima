@@ -5,7 +5,7 @@ object MemberInfo {
 }
 
 sealed abstract class MemberInfo(val owner: ClassInfo, val bytecodeName: String, val flags: Int, val descriptor: String)
-    extends HasDeclarationName with WithAccessFlags
+    extends InfoLike
 {
   var isDeprecated = false
   var signature    = "" // Includes generics. 'descriptor' is the erased version.
