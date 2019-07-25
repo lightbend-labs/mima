@@ -45,8 +45,10 @@ object MimaSettings {
 
       // Dropped deprecated method
       ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.ProblemFilters.excludePackage"),
-      // Changes to the members of the *Problems classes
+      // Changes to the members of the *Problem classes
       ProblemFilters.exclude[MemberProblem]("*mima.core.*Problem.*"),
+      // *Problem classes made final
+      ProblemFilters.exclude[FinalClassProblem]("*mima.core.*Problem"),
       // Dropped unused methods on classes in the hierarchy of the *Problem classes
       ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.ProblemRef.*"),
       ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.TemplateRef.*"),
