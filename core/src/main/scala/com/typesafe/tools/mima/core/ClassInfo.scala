@@ -3,6 +3,8 @@ package com.typesafe.tools.mima.core
 import scala.tools.nsc.io.AbstractFile
 import scala.reflect.NameTransformer
 
+import com.typesafe.tools.mima.core.util.log.ConsoleLogging
+
 object ClassInfo {
   def formatClassName(str: String) = NameTransformer.decode(str).replace('$', '#')
 
@@ -79,12 +81,11 @@ abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Equals {
 
   protected var loaded = false
 
-  import com.typesafe.tools.mima.core.util.log.ConsoleLogging._
   override protected def ensureLoaded() =
     if (!loaded)
       try {
-        info("parsing " + file)
-        owner.definitions.ClassfileParser.parse(this)
+        ConsoleLogging.info(s"parsing $file")
+        ClassfileParser.parseInPlace(this, file)
       } finally {
         loaded = true
       }

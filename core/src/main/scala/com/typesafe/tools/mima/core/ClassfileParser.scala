@@ -1,42 +1,12 @@
-/* NSC -- new Scala compiler
- * Copyright 2005-2010 LAMP/EPFL
- * @author  Martin Odersky
- */
-
 package com.typesafe.tools.mima.core
 
 import java.io.IOException
 
+import scala.tools.nsc.io.AbstractFile
 import scala.tools.nsc.symtab.classfile.ClassfileConstants._
 
-final class ClassfileParser(definitions: Definitions) {
+final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
   import ClassfileParser._
-
-  private var in: BufferReader = _  // the class file reader
-  private var thepool: ConstantPool = _
-
-  def pool: ConstantPool = thepool
-
-  def parse(clazz: ClassInfo) = synchronized {
-    in = new BufferReader(clazz.file.toByteArray)
-    parseAll(clazz)
-  }
-
-  protected def parseAll(clazz: ClassInfo): Unit = {
-    parseHeader(clazz)
-    thepool = ConstantPool.parseNew(definitions, in)
-    parseClass(clazz)
-  }
-
-  protected def parseHeader(clazz: ClassInfo): Unit = {
-    val magic = in.nextInt
-    if (magic != JAVA_MAGIC)
-      throw new IOException("class file '" + clazz.file + "' "
-                            + "has wrong magic number 0x" + magic.toHexString
-                            + ", should be 0x" + JAVA_MAGIC.toHexString)
-    in.nextChar.toInt // minorVersion
-    in.nextChar.toInt // majorVersion
-  }
 
   private def parseMembers[A <: MemberInfo : MkMember](clazz: ClassInfo): Members[A] = {
     val members = {
@@ -59,24 +29,24 @@ final class ClassfileParser(definitions: Definitions) {
   private def parseMember[A <: MemberInfo : MkMember](clazz: ClassInfo, flags: Int): A = {
     val name = pool.getName(in.nextChar)
     val descriptor = pool.getExternalName(in.nextChar)
-    val result = implicitly[MkMember[A]].make(clazz, name, flags, descriptor)
-    parseAttributes(result)
-    result
+    val memberInfo = implicitly[MkMember[A]].make(clazz, name, flags, descriptor)
+    parseAttributes(memberInfo)
+    memberInfo
   }
 
-  def parseClass(clazz: ClassInfo): Unit = {
+  private def parseClass(clazz: ClassInfo): Unit = {
     clazz.flags = in.nextChar
-    val nameIdx = in.nextChar
-    pool.getClassName(nameIdx) // externalName
+    in.skip(2) // external name index
 
-    def parseSuperClass(): ClassInfo =
-      if (hasAnnotation(clazz.flags)) { in.nextChar; definitions.AnnotationClass }
-      else pool.getSuperClass(in.nextChar)
+    def parseSuperClass(): ClassInfo = {
+      if (isAnnotation(flags)) {
+        in.skip(2)
+        clazz.owner.definitions.AnnotationClass
+      } else pool.getSuperClass(in.nextChar)
+    }
 
     def parseInterfaces(): List[ClassInfo] = {
-      val rawInterfaces =
-        for (_ <- List.range(0, in.nextChar)) yield pool.getSuperClass(in.nextChar)
-      rawInterfaces filter (_ != NoClass)
+      List.fill(in.nextChar)(pool.getSuperClass(in.nextChar))
     }
 
     clazz.superClass = parseSuperClass()
@@ -86,40 +56,31 @@ final class ClassfileParser(definitions: Definitions) {
     parseAttributes(clazz)
   }
 
-  def skipAttributes(): Unit = {
-    val attrCount = in.nextChar
-    for (_ <- 0 until attrCount) {
-      in.skip(2); in.skip(in.nextInt)
+  private def parseAttributes(c: ClassInfo): Unit = {
+    for (_ <- 0 until in.nextChar) {
+      val attrIndex = in.nextChar
+      val attrLen = in.nextInt
+      val attrEnd = in.bp + attrLen
+      pool.getName(attrIndex) match {
+        case "EnclosingMethod" => c._isLocalClass = true
+        case "InnerClasses"    => c._innerClasses = for {
+          _ <- 0 until in.nextChar
+          (innerIndex, outerIndex, innerNameIndex) = (in.nextChar, in.nextChar, in.nextChar)
+          _ = in.skip(2)
+          if innerIndex != 0 && outerIndex != 0 && innerNameIndex != 0
+          className = pool.getClassName(innerIndex)
+          // an inner class lists itself in InnerClasses
+          _ = if (className == c.bytecodeName) c._isTopLevel = false
+          if pool.getClassName(outerIndex) == c.bytecodeName
+        } yield className
+        case _                 => ()
+      }
+      in.bp = attrEnd
     }
   }
 
-  def parseAttributes(c: ClassInfo): Unit = {
-    val attrCount = in.nextChar
-     for (_ <- 0 until attrCount) {
-       val attrIndex = in.nextChar
-       val attrLen = in.nextInt
-       val attrEnd = in.bp + attrLen
-       pool.getName(attrIndex) match {
-         case "EnclosingMethod" => c._isLocalClass = true
-         case "InnerClasses"    =>
-           c._innerClasses = (0 until in.nextChar).map { _ =>
-             val innerIndex, outerIndex, innerNameIndex = in.nextChar.toInt
-             in.skip(2)
-             if (innerIndex != 0 && outerIndex != 0 && innerNameIndex != 0) {
-               val n = pool.getClassName(innerIndex)
-               if (n == c.bytecodeName) c._isTopLevel = false // an inner class lists itself in InnerClasses
-               if (pool.getClassName(outerIndex) == c.bytecodeName) n else ""
-             } else ""
-           }.filterNot(_.isEmpty)
-         case _                 => ()
-       }
-       in.bp = attrEnd
-     }
-  }
-
-  def parseAttributes(m: MemberInfo): Unit = {
-    val attrCount = in.nextChar
-    for (_ <- 0 until attrCount) {
+  private def parseAttributes(m: MemberInfo): Unit = {
+    for (_ <- 0 until in.nextChar) {
       val attrIndex = in.nextChar
       val attrLen = in.nextInt
       val attrEnd = in.bp + attrLen
@@ -134,26 +95,33 @@ final class ClassfileParser(definitions: Definitions) {
 }
 
 object ClassfileParser {
-  @inline final def isPublic(flags: Int) =
-    (flags & JAVA_ACC_PUBLIC) != 0
-  @inline final def isProtected(flags: Int) =
-    (flags & JAVA_ACC_PROTECTED) != 0
-  @inline final def isPrivate(flags: Int) =
-    (flags & JAVA_ACC_PRIVATE) != 0
-  @inline final def isStatic(flags: Int) =
-    (flags & JAVA_ACC_STATIC) != 0
-  @inline final private def hasAnnotation(flags: Int) =
-    (flags & JAVA_ACC_ANNOTATION) != 0
-  @inline final def isInterface(flags: Int) =
-    (flags & JAVA_ACC_INTERFACE) != 0
-  @inline final def isDeferred(flags: Int) =
-    (flags & JAVA_ACC_ABSTRACT) != 0
-  @inline final def isFinal(flags: Int) =
-    (flags & JAVA_ACC_FINAL) != 0
-  @inline final def isSynthetic(flags: Int) =
-    (flags & JAVA_ACC_SYNTHETIC) != 0
-  @inline final def isBridge(flags: Int) =
-    (flags & JAVA_ACC_BRIDGE) != 0
+  def parseInPlace(clazz: ClassInfo, file: AbstractFile): Unit = {
+    val in = new BufferReader(file.toByteArray)
+    parseHeader(in, file.toString())
+    val pool = ConstantPool.parseNew(clazz.owner.definitions, in)
+    val parser = new ClassfileParser(in, pool)
+    parser.parseClass(clazz)
+  }
+
+  @inline def isPublic(flags: Int)     = 0 != (flags & JAVA_ACC_PUBLIC)
+  @inline def isPrivate(flags: Int)    = 0 != (flags & JAVA_ACC_PRIVATE)
+  @inline def isProtected(flags: Int)  = 0 != (flags & JAVA_ACC_PROTECTED)
+  @inline def isStatic(flags: Int)     = 0 != (flags & JAVA_ACC_STATIC)
+  @inline def isFinal(flags: Int)      = 0 != (flags & JAVA_ACC_FINAL)
+  @inline def isInterface(flags: Int)  = 0 != (flags & JAVA_ACC_INTERFACE)
+  @inline def isDeferred(flags: Int)   = 0 != (flags & JAVA_ACC_ABSTRACT)
+  @inline def isSynthetic(flags: Int)  = 0 != (flags & JAVA_ACC_SYNTHETIC)
+  @inline def isAnnotation(flags: Int) = 0 != (flags & JAVA_ACC_ANNOTATION)
+
+  private def parseHeader(in: BufferReader, file: String) = {
+    val magic = in.nextInt
+    if (magic != JAVA_MAGIC)
+      throw new IOException(
+        s"class file '$file' has wrong magic number 0x${magic.toHexString}, " +
+            s"should be 0x${JAVA_MAGIC.toHexString}")
+    in.skip(2) // minorVersion
+    in.skip(2) // majorVersion
+  }
 
   private trait MkMember[A] {
     def make(owner: ClassInfo, bytecodeName: String, flags: Int, descriptor: String): A
