@@ -55,6 +55,8 @@ object MimaSettings {
       ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.MemberRef.*"),
       ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.TemplateProblem.*"),
       ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.MemberProblem.*"),
+      // Changed code in non-public API code
+      ProblemFilters.exclude[DirectMissingMethodProblem]("*mima.core.Config.baseDefinitions"),
       // Changes within the internal parsing code
       ProblemFilters.exclude[Problem]("*mima.core.BytesReader*"),
       ProblemFilters.exclude[Problem]("*mima.core.BufferReader*"),

@@ -82,7 +82,7 @@ private[core] final class ConstantPool(definitions: Definitions, in: BufferReade
   }
 
   def getSuperClass(index: Int): ClassInfo =
-    if (index == 0) ClassInfo.ObjectClass else getClassInfo(index)
+    if (index == 0) definitions.ObjectClass else getClassInfo(index)
 
   /** Throws an exception signaling a bad constant index. */
   private def errorBadIndex(index: Int) =
