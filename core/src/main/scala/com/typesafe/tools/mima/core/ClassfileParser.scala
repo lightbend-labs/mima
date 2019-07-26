@@ -24,7 +24,7 @@ final class ClassfileParser(definitions: Definitions) {
 
   protected def parseAll(clazz: ClassInfo): Unit = {
     parseHeader(clazz)
-    thepool = new ConstantPool(definitions, in)
+    thepool = ConstantPool.parseNew(definitions, in)
     parseClass(clazz)
   }
 
@@ -154,10 +154,6 @@ object ClassfileParser {
     (flags & JAVA_ACC_SYNTHETIC) != 0
   @inline final def isBridge(flags: Int) =
     (flags & JAVA_ACC_BRIDGE) != 0
-
-  // 2 new tags in Java 9: https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-4.html#jvms-4.4
-  private[core] final val CONSTANT_MODULE  = 19
-  private[core] final val CONSTANT_PACKAGE = 20
 
   private trait MkMember[A] {
     def make(owner: ClassInfo, bytecodeName: String, flags: Int, descriptor: String): A
