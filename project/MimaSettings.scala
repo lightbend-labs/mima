@@ -64,8 +64,9 @@ object MimaSettings {
       ProblemFilters.exclude[Problem]("*mima.core.UTF8Codec*"),
       // Dropped dead code internal to types
       ProblemFilters.exclude[Problem]("*mima.core.Type*"),
-      ProblemFilters.exclude[Problem]("*mima.core.ClassType*"),
       ProblemFilters.exclude[Problem]("*mima.core.ArrayType*"),
+      ProblemFilters.exclude[Problem]("*mima.core.ClassType*"),
+      ProblemFilters.exclude[Problem]("*mima.core.MethodType*"),
       ProblemFilters.exclude[Problem]("*mima.core.ValueType*"),
       // Dropped dead code internal to the info classes
       ProblemFilters.exclude[Problem]("*mima.core.Definitions*"),

@@ -2,6 +2,7 @@ package com.typesafe.tools.mima.core
 
 import scala.tools.nsc.classpath.AggregateClassPath
 import scala.tools.nsc.util.ClassPath
+import scala.tools.nsc.symtab.classfile.ClassfileConstants._
 
 /** This class holds together a root package and a classpath. It
  *  also offers definitions of commonly used classes, including
@@ -50,10 +51,8 @@ class Definitions(val lib: Option[ClassPath], val classPath: ClassPath) {
     pkg.classes getOrElse (part, new SyntheticClassInfo(pkg, part))
   }
 
-  import Type._
-
-  /** Return the type corresponding to this descriptor. Class names are resolved
-   *  relative to the current classpath.
+  /** Return the type corresponding to this descriptor.
+   *  Class names are resolved relative to the current classpath.
    */
   def fromDescriptor(descriptor: String): Type = {
     var in = 0
@@ -61,30 +60,39 @@ class Definitions(val lib: Option[ClassPath], val classPath: ClassPath) {
     def getType(): Type = {
       val ch = descriptor(in)
       in += 1
-      abbrevToValueType get ch match {
-        case Some(tp) =>
-          tp
-        case None =>
-          if (ch == '[') {
-            ArrayType(getType())
-          } else if (ch == 'L') {
-            val end = descriptor indexOf (';', in)
-            val fullname = descriptor.substring(in, end) replace ('/', '.')
-            in = end + 1
-            ClassType(fromName(fullname))
-          } else if (ch == '(') {
-            val params = getParamTypes()
-            in += 1
-            MethodType(params, getType())
-          } else {
-            throw new MatchError("unknown signature: "+descriptor.substring(in))
-          }
+      ch match {
+        case VOID_TAG   => Type.unitType
+        case BOOL_TAG   => Type.booleanType
+        case BYTE_TAG   => Type.byteType
+        case SHORT_TAG  => Type.shortType
+        case CHAR_TAG   => Type.charType
+        case INT_TAG    => Type.intType
+        case LONG_TAG   => Type.longType
+        case FLOAT_TAG  => Type.floatType
+        case DOUBLE_TAG => Type.doubleType
+        case OBJECT_TAG => newClassType
+        case ARRAY_TAG  => ArrayType(getType())
+        case '('        => newMethodType
+        case _          => throw new MatchError(s"unknown signature: ${descriptor.substring(in)}")
       }
     }
 
-    def getParamTypes(): List[Type] =
-      if (descriptor(in) == ')') List()
-      else getType() :: getParamTypes()
+    def newClassType: ClassType = {
+      val end = descriptor.indexOf(';', in)
+      val fullName = descriptor.substring(in, end).replace('/', '.')
+      in = end + 1
+      ClassType(fromName(fullName))
+    }
+
+    def newMethodType: MethodType = {
+      def getParamTypes(): List[Type] = {
+        if (descriptor(in) == ')') Nil
+        else getType() :: getParamTypes()
+      }
+      val params = getParamTypes()
+      in += 1
+      MethodType(params, getType())
+    }
 
     getType()
   }
