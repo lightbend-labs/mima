@@ -27,8 +27,6 @@ class Definitions(val lib: Option[ClassPath], val classPath: ClassPath) {
   lazy val ObjectClass = fromName("java.lang.Object")
   lazy val AnnotationClass = fromName("java.lang.annotation.Annotation")
 
-  lazy val ClassfileParser = new ClassfileParser(this)
-
   /** Return the class corresponding to the fully qualified name.
    *  If there is no such class in the current classpath, a SyntheticClassInfo
    *  and all necessary SyntheticPackageInfo are created along the way.
