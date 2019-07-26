@@ -11,6 +11,7 @@ inThisBuild(Seq(
   scmInfo := Some(ScmInfo(url("https://github.com/lightbend/mima"), "scm:git:git@github.com:lightbend/mima.git")),
   git.gitTagToVersionNumber := (tag => if (tag matches "[0.9]+\\..*") Some(tag) else None),
   git.useGitDescribe := true,
+  scalaVersion := scala212.value,
   scalaVersion := sys.props.getOrElse("mima.buildScalaVersion", scalaVersion.value),
   scalacOptions := Seq("-feature", "-deprecation", "-Xlint"),
 ))
