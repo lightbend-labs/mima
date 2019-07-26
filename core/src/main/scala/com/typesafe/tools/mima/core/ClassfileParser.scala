@@ -8,6 +8,29 @@ import scala.tools.nsc.symtab.classfile.ClassfileConstants._
 final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
   import ClassfileParser._
 
+  private def parseClass(clazz: ClassInfo): Unit = {
+    val flags = in.nextChar
+    clazz.flags = flags
+    in.skip(2) // external name index
+
+    clazz.superClass = parseSuperClass(clazz, flags)
+    clazz.interfaces = parseInterfaces()
+    clazz.fields     = parseMembers[FieldInfo](clazz)
+    clazz.methods    = parseMembers[MethodInfo](clazz)
+    parseAttributes(clazz)
+  }
+
+  def parseSuperClass(clazz: ClassInfo, flags: Int): ClassInfo = {
+    if (isAnnotation(flags)) {
+      in.skip(2)
+      clazz.owner.definitions.AnnotationClass
+    } else pool.getSuperClass(in.nextChar)
+  }
+
+  def parseInterfaces(): List[ClassInfo] = {
+    List.fill(in.nextChar)(pool.getSuperClass(in.nextChar))
+  }
+
   private def parseMembers[A <: MemberInfo : MkMember](clazz: ClassInfo): Members[A] = {
     val members = {
       for {
@@ -32,28 +55,6 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
     val memberInfo = implicitly[MkMember[A]].make(clazz, name, flags, descriptor)
     parseAttributes(memberInfo)
     memberInfo
-  }
-
-  private def parseClass(clazz: ClassInfo): Unit = {
-    clazz.flags = in.nextChar
-    in.skip(2) // external name index
-
-    def parseSuperClass(): ClassInfo = {
-      if (isAnnotation(flags)) {
-        in.skip(2)
-        clazz.owner.definitions.AnnotationClass
-      } else pool.getSuperClass(in.nextChar)
-    }
-
-    def parseInterfaces(): List[ClassInfo] = {
-      List.fill(in.nextChar)(pool.getSuperClass(in.nextChar))
-    }
-
-    clazz.superClass = parseSuperClass()
-    clazz.interfaces = parseInterfaces()
-    clazz.fields     = parseMembers[FieldInfo](clazz)
-    clazz.methods    = parseMembers[MethodInfo](clazz)
-    parseAttributes(clazz)
   }
 
   private def parseAttributes(c: ClassInfo): Unit = {
