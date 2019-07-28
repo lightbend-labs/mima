@@ -7,19 +7,22 @@ object ProblemFilters {
 
   private case class ExcludeByName[P <: ProblemRef: ClassTag](name: String) extends ProblemFilter {
     private[this] val pattern = Pattern.compile(name.split("\\*", -1).map(Pattern.quote).mkString(".*"))
+    private[this] val cls     = classTag[P].runtimeClass
 
     override def apply(problem: Problem): Boolean = {
-      !(classTag[P].runtimeClass.isAssignableFrom(problem.getClass) &&
-        pattern.matcher(problem.matchName.getOrElse("")).matches)
+      !(cls.isAssignableFrom(problem.getClass) && pattern.matcher(problem.matchName.getOrElse("")).matches)
     }
 
-    override def toString() = s"""ExcludeByName[${classTag[P].runtimeClass.getSimpleName}]("$name")"""
+    override def toString() = s"""ExcludeByName[${cls.getSimpleName}]("$name")"""
   }
 
+  /** Creates an exclude filter by taking the type of the problem and the name of a match
+   *  (such as the class or method name).
+   */
   def exclude[P <: ProblemRef: ClassTag](name: String): ProblemFilter = ExcludeByName[P](name)
 
-  /**
-   *  Creates exclude filter by taking name of a problem and name of a match (e.g. class/method name).
+  /** Creates an exclude filter by taking the name of the problem and the name of a match
+   *  (such as the class or method name).
    *
    *  The problemName is name of a class corresponding to a problem like `AbstractMethodProblem`.
    *

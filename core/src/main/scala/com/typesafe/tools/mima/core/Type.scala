@@ -1,43 +1,29 @@
 package com.typesafe.tools.mima.core
 
 object Type {
-
-  val byteType = ValueType("Byte")
-  val shortType = ValueType("Short")
-  val charType = ValueType("Char")
-  val intType = ValueType("Int")
-  val longType = ValueType("Long")
-  val floatType = ValueType("Float")
-  val doubleType = ValueType("Double")
+  val byteType    = ValueType("Byte")
+  val shortType   = ValueType("Short")
+  val charType    = ValueType("Char")
+  val intType     = ValueType("Int")
+  val longType    = ValueType("Long")
+  val floatType   = ValueType("Float")
+  val doubleType  = ValueType("Double")
   val booleanType = ValueType("Boolean")
-  val unitType = ValueType("Unit")
-
-  val abbrevToValueType = Map(
-    'B' -> byteType,
-    'S' -> shortType,
-    'C' -> charType,
-    'I' -> intType,
-    'J' -> longType,
-    'F' -> floatType,
-    'D' -> doubleType,
-    'Z' -> booleanType,
-    'V' -> unitType)
+  val unitType    = ValueType("Unit")
 }
 
-abstract class Type {
+sealed abstract class Type {
   def resultType: Type = throw new UnsupportedOperationException
+
+  override def toString = this match {
+    case ValueType(name)                => name
+    case ClassType(clazz)               => ClassInfo.formatClassName(clazz.fullName) // formattedFullName?
+    case ArrayType(elemType)            => s"Array[$elemType]"
+    case MethodType(paramTypes, resTpe) => paramTypes.mkString("(", ",", s")$resTpe")
+  }
 }
 
-case class ValueType(name: String) extends Type {
-  override def toString = name
-}
-case class ClassType(private val clazz: ClassInfo) extends Type {
-  override def toString = ClassInfo.formatClassName(clazz.fullName)
-}
-case class ArrayType(elemType: Type) extends Type {
-  override def toString = "Array["+elemType+"]"
-}
-case class MethodType(paramTypes: List[Type], override val resultType: Type) extends Type {
-  override def toString = paramTypes.mkString("(", ",", ")"+resultType)
-}
-
+final case class ValueType(name: String)                                           extends Type
+final case class ClassType(private val clazz: ClassInfo)                           extends Type
+final case class ArrayType(elemType: Type)                                         extends Type
+final case class MethodType(paramTypes: List[Type], override val resultType: Type) extends Type

@@ -60,32 +60,32 @@ object MimaPlugin extends AutoPlugin {
     mimaFiltersDirectory := (sourceDirectory in Compile).value / "mima-filters",
   )
 
-  /** Setup mima with default settings, applicable for most projects. */
+  /** Setup MiMa with default settings, applicable for most projects. */
   def mimaDefaultSettings: Seq[Setting[_]] = globalSettings ++ buildSettings ++ projectSettings
 
   // Allows reuse between mimaFindBinaryIssues and mimaReportBinaryIssues
   // without blowing up the Akka build's heap
   private def binaryIssuesIterator = Def.task {
     val s = streams.value
-    val projectName = name.value
-    mimaPreviousClassfiles.value match {
-      case _: NoPreviousClassfiles.type =>
-        val msg = s"$projectName: mimaPreviousArtifacts not set, not analyzing binary compatibility."
-        if (mimaFailOnNoPrevious.value) sys.error(msg)
-        else s.log.info(msg)
-        Iterator.empty
-      case previousClassfiles if previousClassfiles.isEmpty =>
-        s.log.info(s"$projectName: mimaPreviousArtifacts is empty, not analyzing binary compatibility.")
-        Iterator.empty
-      case previousClassfiles =>
-        val currentClassfiles = mimaCurrentClassfiles.value
-        val cp = (fullClasspath in mimaFindBinaryIssues).value
-        val checkDirection = mimaCheckDirection.value
-        val log = new SbtLogger(s)
-        previousClassfiles.iterator.map { case (moduleId, file) =>
-          val problems = SbtMima.runMima(file, currentClassfiles, cp, checkDirection, log)
-          (moduleId, (problems._1, problems._2))
-        }
+    val previousClassfiles = mimaPreviousClassfiles.value
+
+    if (previousClassfiles.isEmpty) {
+      val projectName = name.value
+      var msg = s"$projectName: mimaPreviousArtifacts is empty, not analyzing binary compatibility."
+      if (previousClassfiles eq NoPreviousClassfiles) {
+        msg = s"$projectName: mimaPreviousArtifacts not set, not analyzing binary compatibility."
+        if (mimaFailOnNoPrevious.value)
+          sys.error(msg)
+      }
+      s.log.info(msg)
+    }
+
+    val currentClassfiles = mimaCurrentClassfiles.value
+    val cp = (fullClasspath in mimaFindBinaryIssues).value
+    val log = new SbtLogger(s)
+
+    previousClassfiles.iterator.map { case (moduleId, prevClassfiles) =>
+      moduleId -> SbtMima.runMima(prevClassfiles, currentClassfiles, cp, mimaCheckDirection.value, log)
     }
   }
 
@@ -109,7 +109,6 @@ object MimaPlugin extends AutoPlugin {
     def iterator                 = Iterator.empty
     def + [V1 >: V](kv: (K, V1)) = updated(kv._1, kv._2)
     def - (key: K)               = this
-
 
     override def size                                       = 0
     override def contains(key: K)                           = false

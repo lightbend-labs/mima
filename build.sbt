@@ -7,6 +7,7 @@ inThisBuild(Seq(
   developers := List(
     Developer("mdotta", "Mirco Dotta", "@dotta", url("https://github.com/dotta")),
     Developer("jsuereth", "Josh Suereth", "@jsuereth", url("https://github.com/jsuereth")),
+    Developer("dwijnand", "Dale Wijnand", "@dwijnand", url("https://github.com/dwijnand")),
   ),
   scmInfo := Some(ScmInfo(url("https://github.com/lightbend/mima"), "scm:git:git@github.com:lightbend/mima.git")),
   git.gitTagToVersionNumber := (tag => if (tag matches "[0.9]+\\..*") Some(tag) else None),
@@ -26,9 +27,10 @@ aggregateProjects(core, sbtplugin, functionalTests)
 
 val core = project.disablePlugins(BintrayPlugin).settings(
   name := "mima-core",
-  libraryDependencies += "com.typesafe" % "config" % "1.3.4",
-  libraryDependencies += "org.scala-lang" % "scala-compiler" % scalaVersion.value,
-  libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.0-SNAP13" % Test,
+  libraryDependencies ++= Seq(
+    "org.scala-lang" %  "scala-compiler" % scalaVersion.value,
+    "org.scalatest"  %% "scalatest"      % "3.1.0-SNAP13" % Test,
+  ),
   MimaSettings.mimaSettings,
 )
 
@@ -47,7 +49,10 @@ val functionalTests = Project("functional-tests", file("functional-tests"))
   .enablePlugins(TestsPlugin)
   .disablePlugins(BintrayPlugin)
   .settings(
-    libraryDependencies += "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.1",
+    libraryDependencies ++= Seq(
+      "com.typesafe"           %  "config"                  % "1.3.4",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.1",
+    ),
     mimaFailOnNoPrevious := false,
     skip in publish := true,
   )
