@@ -1,1 +1,1 @@
-method foo(java.lang.Object)java.lang.String in class A's type is different in new version, where it is (java.lang.String)java.lang.String instead of (java.lang.Object)java.lang.String
+method foo(java.lang.Object)java.lang.String in class A does not have a correspondent in new version
