@@ -6,7 +6,7 @@ method cov2()java.lang.Object in class Api has a different signature in new vers
 method con1(java.lang.Object)Unit in class Api has a different signature in new version, where it is <A:Ljava/lang/Object;>(TA;)V rather than <missing>
 method con2(java.lang.Object)Unit in class Api has a different signature in new version, where it is <missing> rather than <T:Ljava/lang/Object;>(TT;)V
 #
-method cov1()java.lang.Object in class Abi has a different signature in new version, where it is <A:Ljava/lang/Object;>()TA; rather than <missing>
-method cov2()java.lang.Object in class Abi has a different signature in new version, where it is <missing> rather than <T:Ljava/lang/Object;>()TT;
-method con1(java.lang.Object)Unit in class Abi has a different signature in new version, where it is <A:Ljava/lang/Object;>(TA;)V rather than <missing>
-method con2(java.lang.Object)Unit in class Abi has a different signature in new version, where it is <missing> rather than <T:Ljava/lang/Object;>(TT;)V
+abstract method cov1()java.lang.Object in class Abi has a different signature in new version, where it is <A:Ljava/lang/Object;>()TA; rather than <missing>
+abstract method cov2()java.lang.Object in class Abi has a different signature in new version, where it is <missing> rather than <T:Ljava/lang/Object;>()TT;
+abstract method con1(java.lang.Object)Unit in class Abi has a different signature in new version, where it is <A:Ljava/lang/Object;>(TA;)V rather than <missing>
+abstract method con2(java.lang.Object)Unit in class Abi has a different signature in new version, where it is <missing> rather than <T:Ljava/lang/Object;>(TT;)V

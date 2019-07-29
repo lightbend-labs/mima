@@ -29,23 +29,23 @@ sealed abstract class Problem extends ProblemRef {
     case CyclicTypeReferenceProblem(ref)               => s"the type hierarchy of ${ref.description} is different in $affectedVersion version. Type ${ref.bytecodeName} appears to be a subtype of itself"
     case MissingTypesProblem(ref, missing)             => s"the type hierarchy of ${ref.description} is different in $affectedVersion version. Missing types ${missing.map(_.fullName).mkString("{", ",", "}")}"
 
-    case MissingFieldProblem(ref)                                => s"${ref.memberString} does not have a correspondent in $affectedVersion version"
-    case InaccessibleFieldProblem(ref)                           => s"${ref.memberString} is inaccessible in $affectedVersion version, it must be public."
-    case InaccessibleMethodProblem(ref)                          => s"${ref.memberString} is inaccessible in $affectedVersion version, it must be public."
-    case IncompatibleFieldTypeProblem(ref, newfld)               => s"${ref.memberString}'s type is different in $affectedVersion version, where it is: ${newfld.tpe} rather than: ${ref.tpe}"
-    case IncompatibleMethTypeProblem(ref, newmeth :: Nil)        => s"${ref.memberString}'s type is different in $affectedVersion version, where it is ${newmeth.tpe} instead of ${ref.tpe}"
-    case IncompatibleMethTypeProblem(ref, newmeths)              => s"${ref.memberString} in $affectedVersion version does not have a correspondent with same parameter signature among ${newmeths.map(_.tpe).mkString(", ")}"
-    case StaticVirtualMemberProblem(ref)                         => s"${ref.memberString} is non-static in $affectedVersion version"
-    case VirtualStaticMemberProblem(ref)                         => s"non-static ${ref.memberString} is static in $affectedVersion version"
-    case DirectMissingMethodProblem(ref)                         => s"${ref.abstractMethodString} does not have a correspondent in $affectedVersion version"
-    case ReversedMissingMethodProblem(ref)                       => s"${ref.abstractMethodString} is present only in $affectedVersion version"
-    case FinalMethodProblem(ref)                                 => s"${ref.methodString} is declared final in $affectedVersion version"
-    case IncompatibleResultTypeProblem(ref, newmeth)             => s"${ref.methodString} has a different result type in $affectedVersion version, where it is ${newmeth.tpe.resultType} rather than ${ref.tpe.resultType}"
-    case IncompatibleSignatureProblem(ref, newmeth)              => s"${ref.methodString} has a different signature in $affectedVersion version, where it is ${orMIA(newmeth.signature)} rather than ${orMIA(ref.signature)}"
-    case DirectAbstractMethodProblem(ref)                        => s"abstract ${ref.methodString} does not have a correspondent in $affectedVersion version"
-    case ReversedAbstractMethodProblem(ref)                      => s"in $affectedVersion version there is abstract ${ref.methodString}, which does not have a correspondent"
-    case UpdateForwarderBodyProblem(ref)                         => s"in $affectedVersion version, classes mixing ${ref.owner.fullName} needs to update body of ${ref.shortMethodString}"
-    case InheritedNewAbstractMethodProblem(ref, inheritedMethod) => s"abstract ${inheritedMethod.methodString} is inherited by class ${ref.bytecodeName} in $affectedVersion version."
+    case MissingFieldProblem(ref)                         => s"${ref.memberString} does not have a correspondent in $affectedVersion version"
+    case InaccessibleFieldProblem(ref)                    => s"${ref.memberString} is inaccessible in $affectedVersion version, it must be public."
+    case InaccessibleMethodProblem(ref)                   => s"${ref.memberString} is inaccessible in $affectedVersion version, it must be public."
+    case IncompatibleFieldTypeProblem(ref, newfld)        => s"${ref.memberString}'s type is different in $affectedVersion version, where it is: ${newfld.tpe} rather than: ${ref.tpe}"
+    case IncompatibleMethTypeProblem(ref, newmeth :: Nil) => s"${ref.memberString}'s type is different in $affectedVersion version, where it is ${newmeth.tpe} instead of ${ref.tpe}"
+    case IncompatibleMethTypeProblem(ref, newmeths)       => s"${ref.memberString} in $affectedVersion version does not have a correspondent with same parameter signature among ${newmeths.map(_.tpe).mkString(", ")}"
+    case StaticVirtualMemberProblem(ref)                  => s"${ref.memberString} is non-static in $affectedVersion version"
+    case VirtualStaticMemberProblem(ref)                  => s"non-static ${ref.memberString} is static in $affectedVersion version"
+    case DirectMissingMethodProblem(ref)                  => s"${ref.memberString} does not have a correspondent in $affectedVersion version"
+    case ReversedMissingMethodProblem(ref)                => s"${ref.memberString} is present only in $affectedVersion version"
+    case FinalMethodProblem(ref)                          => s"${ref.methodString} is declared final in $affectedVersion version"
+    case IncompatibleResultTypeProblem(ref, newmeth)      => s"${ref.methodString} has a different result type in $affectedVersion version, where it is ${newmeth.tpe.resultType} rather than ${ref.tpe.resultType}"
+    case IncompatibleSignatureProblem(ref, newmeth)       => s"${ref.methodString} has a different signature in $affectedVersion version, where it is ${orMIA(newmeth.signature)} rather than ${orMIA(ref.signature)}"
+    case DirectAbstractMethodProblem(ref)                 => s"${ref.methodString} does not have a correspondent in $affectedVersion version"
+    case ReversedAbstractMethodProblem(ref)               => s"in $affectedVersion version there is ${ref.methodString}, which does not have a correspondent"
+    case UpdateForwarderBodyProblem(ref)                  => s"in $affectedVersion version, classes mixing ${ref.owner.fullName} needs to update body of ${ref.shortMethodString}"
+    case InheritedNewAbstractMethodProblem(absmeth, ref)  => s"${absmeth.methodString} is inherited by class ${ref.owner.bytecodeName} in $affectedVersion version."
   }
 
   // a method that takes no parameters and returns Object can have no signature
@@ -87,6 +87,4 @@ sealed abstract class AbstractMethodProblem(memb: MemberInfo)                   
 final case class DirectAbstractMethodProblem(newmeth: MethodInfo)                             extends AbstractMethodProblem(newmeth)
 final case class ReversedAbstractMethodProblem(newmeth: MethodInfo)                           extends MemberProblem(newmeth)
 final case class UpdateForwarderBodyProblem(oldmeth: MethodInfo)                              extends MemberProblem(oldmeth)
-final case class InheritedNewAbstractMethodProblem(clazz: ClassInfo, inherited: MethodInfo)   extends AbstractMethodProblem(
-  new MethodInfo(clazz, inherited.bytecodeName, inherited.flags, inherited.descriptor)
-)
+final case class InheritedNewAbstractMethodProblem(absmeth: MethodInfo, newmeth: MethodInfo)  extends AbstractMethodProblem(newmeth)
