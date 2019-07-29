@@ -153,7 +153,9 @@ object TestsPlugin extends AutoPlugin {
         oracleFile.getAbsolutePath, filterPath)
       streams.log.info(s"Test '$testName' succeeded.")
     } catch {
-      case e: Exception => sys.error(e.toString)
+      case e: Exception =>
+        scala.Console.err.println(e.toString)
+        throw new MessageOnlyException(s"'$testName' failed.")
     }
   }
 
