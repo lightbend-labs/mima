@@ -43,6 +43,11 @@ object TestsPlugin extends AutoPlugin {
   private lazy val tests            = bases.get.map(testProject)
   private lazy val integrationTests = integrationTestBases.get.map(integrationTestProject)
 
+  private def sharedTestProjectSettings = Def.settings(
+    resolvers += "scala-pr-validation-snapshots" at "https://scala-ci.typesafe.com/artifactory/scala-pr-validation-snapshots/",
+    scalaVersion := testScalaVersion.value,
+  )
+
   private def integrationTestProject(base: File) =
     Project(s"it-${base.name}", base).disablePlugins(BintrayPlugin).settings(integrationTestProjectSettings)
 
@@ -67,7 +72,7 @@ object TestsPlugin extends AutoPlugin {
   }
 
   private val integrationTestProjectSettings = Def.settings(
-    scalaVersion := testScalaVersion.value,
+    sharedTestProjectSettings,
     IntegrationTest / test := runIntegrationTest.value,
   )
 
@@ -100,8 +105,7 @@ object TestsPlugin extends AutoPlugin {
   }
 
   private val testProjectSettings = Def.settings(
-    resolvers += "scala-pr-validation-snapshots" at "https://scala-ci.typesafe.com/artifactory/scala-pr-validation-snapshots/",
-    scalaVersion := testScalaVersion.value,
+    sharedTestProjectSettings,
     inConfig(V1)(testPerConfigSettings),
     inConfig(V2)(testPerConfigSettings),
     Test / test := runFunctionalTest.value,
