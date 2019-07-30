@@ -13,6 +13,7 @@ sealed abstract class MemberInfo(val owner: ClassInfo, val bytecodeName: String,
   def nonAccessible: Boolean
 
   def fullName: String          = s"${owner.formattedFullName}.$decodedName"
+  def staticPrefix: String      = if (isStatic) "static " else ""
   def tpe: Type                 = owner.owner.definitions.fromDescriptor(descriptor)
   def hasSyntheticName: Boolean = decodedName.contains('$')
 
@@ -26,7 +27,7 @@ private[mima] final class FieldInfo(owner: ClassInfo, bytecodeName: String, flag
     extends MemberInfo(owner, bytecodeName, flags, descriptor)
 {
   def nonAccessible: Boolean = !isPublic || isSynthetic || hasSyntheticName
-  def fieldString: String    = s"field $decodedName in ${owner.classString}"
+  def fieldString: String    = s"${staticPrefix}field $decodedName in ${owner.classString}"
   override def toString      = s"field $bytecodeName: $descriptor"
 }
 
@@ -39,7 +40,7 @@ private[mima] final class MethodInfo(owner: ClassInfo, bytecodeName: String, fla
   def shortMethodString: String    = {
     val prefix = if (hasSyntheticName) if (isExtensionMethod) "extension " else "synthetic " else ""
     val deprecated = if (isDeprecated) "deprecated " else ""
-    s"$prefix${deprecated}method $decodedName$tpe"
+    s"$prefix${deprecated}${staticPrefix}method $decodedName$tpe"
   }
 
   lazy val paramsCount: Int = {

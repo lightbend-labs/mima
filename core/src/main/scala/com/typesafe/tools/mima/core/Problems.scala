@@ -35,7 +35,7 @@ sealed abstract class Problem extends ProblemRef {
     case IncompatibleFieldTypeProblem(ref, newfld)               => s"${ref.memberString}'s type is different in $affectedVersion version, where it is: ${newfld.tpe} rather than: ${ref.tpe}"
     case IncompatibleMethTypeProblem(ref, newmeth :: Nil)        => s"${ref.memberString}'s type is different in $affectedVersion version, where it is ${newmeth.tpe} instead of ${ref.tpe}"
     case IncompatibleMethTypeProblem(ref, newmeths)              => s"${ref.memberString} in $affectedVersion version does not have a correspondent with same parameter signature among ${newmeths.map(_.tpe).mkString(", ")}"
-    case StaticVirtualMemberProblem(ref)                         => s"static ${ref.memberString} is non-static in $affectedVersion version"
+    case StaticVirtualMemberProblem(ref)                         => s"${ref.memberString} is non-static in $affectedVersion version"
     case VirtualStaticMemberProblem(ref)                         => s"non-static ${ref.memberString} is static in $affectedVersion version"
     case DirectMissingMethodProblem(ref)                         => s"${ref.abstractMethodString} does not have a correspondent in $affectedVersion version"
     case ReversedMissingMethodProblem(ref)                       => s"${ref.abstractMethodString} is present only in $affectedVersion version"
