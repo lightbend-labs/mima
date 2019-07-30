@@ -36,8 +36,8 @@ private[method] object MethodRules {
 
   object JavaStatic extends MethodRule {
     def apply(thisMember: MethodInfo, thatMember: MethodInfo): Option[Problem] = {
-      if (thisMember.isStatic && !thatMember.isStatic) Some(StaticVirtualMemberProblem(thatMember))
-      else if (!thisMember.isStatic && thatMember.isStatic) Some(VirtualStaticMemberProblem(thatMember))
+      if (thisMember.isStatic && !thatMember.isStatic) Some(StaticVirtualMemberProblem(thisMember))
+      else if (!thisMember.isStatic && thatMember.isStatic) Some(VirtualStaticMemberProblem(thisMember))
       else None
     }
   }

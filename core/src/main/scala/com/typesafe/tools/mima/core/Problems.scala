@@ -35,8 +35,8 @@ sealed abstract class Problem extends ProblemRef {
     case IncompatibleFieldTypeProblem(ref, newfld)               => s"${ref.memberString}'s type is different in $affectedVersion version, where it is: ${newfld.tpe} rather than: ${ref.tpe}"
     case IncompatibleMethTypeProblem(ref, newmeth :: Nil)        => s"${ref.memberString}'s type is different in $affectedVersion version, where it is ${newmeth.tpe} instead of ${ref.tpe}"
     case IncompatibleMethTypeProblem(ref, newmeths)              => s"${ref.memberString} in $affectedVersion version does not have a correspondent with same parameter signature among ${newmeths.map(_.tpe).mkString(", ")}"
-    case StaticVirtualMemberProblem(ref)                         => s"non-static ${ref.memberString} is static in $affectedVersion version"
-    case VirtualStaticMemberProblem(ref)                         => s"static ${ref.memberString} is non-static in $affectedVersion version"
+    case StaticVirtualMemberProblem(ref)                         => s"${ref.memberString} is non-static in $affectedVersion version"
+    case VirtualStaticMemberProblem(ref)                         => s"non-static ${ref.memberString} is static in $affectedVersion version"
     case DirectMissingMethodProblem(ref)                         => s"${ref.abstractMethodString} does not have a correspondent in $affectedVersion version"
     case ReversedMissingMethodProblem(ref)                       => s"${ref.abstractMethodString} is present only in $affectedVersion version"
     case FinalMethodProblem(ref)                                 => s"${ref.methodString} is declared final in $affectedVersion version"
@@ -71,8 +71,8 @@ final case class InaccessibleFieldProblem(newfld: FieldInfo)                    
 final case class IncompatibleFieldTypeProblem(oldfld: FieldInfo, newfld: FieldInfo)           extends MemberProblem(oldfld)
 
 /// Member-generic problems
-final case class StaticVirtualMemberProblem(newmemb: MemberInfo)                              extends AbstractMethodProblem(newmemb)
-final case class VirtualStaticMemberProblem(newmemb: MemberInfo)                              extends AbstractMethodProblem(newmemb)
+final case class StaticVirtualMemberProblem(oldmemb: MemberInfo)                              extends AbstractMethodProblem(oldmemb)
+final case class VirtualStaticMemberProblem(oldmemb: MemberInfo)                              extends AbstractMethodProblem(oldmemb)
 
 /// Method problems
 sealed abstract class MissingMethodProblem(meth: MethodInfo)                                  extends MemberProblem(meth)
@@ -83,7 +83,7 @@ final case class IncompatibleMethTypeProblem(oldmeth: MethodInfo, newmeths: List
 final case class IncompatibleResultTypeProblem(oldmeth: MethodInfo, newmeth: MethodInfo)      extends MemberProblem(oldmeth)
 final case class IncompatibleSignatureProblem(oldmeth: MethodInfo, newmeth: MethodInfo)       extends MemberProblem(oldmeth)
 final case class FinalMethodProblem(newmeth: MethodInfo)                                      extends MemberProblem(newmeth)
-sealed abstract class AbstractMethodProblem(newmemb: MemberInfo)                              extends MemberProblem(newmemb)
+sealed abstract class AbstractMethodProblem(memb: MemberInfo)                                 extends MemberProblem(memb)
 final case class DirectAbstractMethodProblem(newmeth: MethodInfo)                             extends AbstractMethodProblem(newmeth)
 final case class ReversedAbstractMethodProblem(newmeth: MethodInfo)                           extends MemberProblem(newmeth)
 final case class UpdateForwarderBodyProblem(oldmeth: MethodInfo)                              extends MemberProblem(oldmeth)
