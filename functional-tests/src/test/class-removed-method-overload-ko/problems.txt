@@ -1,0 +1,1 @@
+method foo(java.lang.Object)java.lang.String in class A does not have a correspondent in new version
