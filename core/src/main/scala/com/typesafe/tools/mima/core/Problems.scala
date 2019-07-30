@@ -71,8 +71,8 @@ final case class InaccessibleFieldProblem(newfld: FieldInfo)                    
 final case class IncompatibleFieldTypeProblem(oldfld: FieldInfo, newfld: FieldInfo)           extends MemberProblem(oldfld)
 
 /// Member-generic problems
-final case class StaticVirtualMemberProblem(newmemb: MemberInfo)                              extends AbstractMethodProblem(newmemb)
-final case class VirtualStaticMemberProblem(newmemb: MemberInfo)                              extends AbstractMethodProblem(newmemb)
+final case class StaticVirtualMemberProblem(oldmemb: MemberInfo)                              extends AbstractMethodProblem(oldmemb)
+final case class VirtualStaticMemberProblem(oldmemb: MemberInfo)                              extends AbstractMethodProblem(oldmemb)
 
 /// Method problems
 sealed abstract class MissingMethodProblem(meth: MethodInfo)                                  extends MemberProblem(meth)
@@ -83,7 +83,7 @@ final case class IncompatibleMethTypeProblem(oldmeth: MethodInfo, newmeths: List
 final case class IncompatibleResultTypeProblem(oldmeth: MethodInfo, newmeth: MethodInfo)      extends MemberProblem(oldmeth)
 final case class IncompatibleSignatureProblem(oldmeth: MethodInfo, newmeth: MethodInfo)       extends MemberProblem(oldmeth)
 final case class FinalMethodProblem(newmeth: MethodInfo)                                      extends MemberProblem(newmeth)
-sealed abstract class AbstractMethodProblem(newmemb: MemberInfo)                              extends MemberProblem(newmemb)
+sealed abstract class AbstractMethodProblem(memb: MemberInfo)                                 extends MemberProblem(memb)
 final case class DirectAbstractMethodProblem(newmeth: MethodInfo)                             extends AbstractMethodProblem(newmeth)
 final case class ReversedAbstractMethodProblem(newmeth: MethodInfo)                           extends MemberProblem(newmeth)
 final case class UpdateForwarderBodyProblem(oldmeth: MethodInfo)                              extends MemberProblem(oldmeth)
