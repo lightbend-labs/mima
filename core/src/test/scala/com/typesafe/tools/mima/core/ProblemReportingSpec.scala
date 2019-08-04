@@ -3,9 +3,9 @@ package com.typesafe.tools.mima.core
 import com.typesafe.tools.mima.core.util.log.Logging
 
 import org.scalatest.Matchers
-import org.scalatest.wordspec.AnyWordSpec
+import org.scalatest.WordSpec
 
-final class ProblemReportingSpec extends AnyWordSpec with Matchers {
+final class ProblemReportingSpec extends WordSpec with Matchers {
   import ProblemReportingSpec._
 
   "problem" should {
