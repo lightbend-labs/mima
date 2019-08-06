@@ -1,2 +1,2 @@
-# PENDING https://github.com/scala/scala/pull/8127
+# PENDING https://github.com/scala/scala/pull/8127 being forward-ported to 2.13
 # method boxedStringy()scala.Option in class Bar has a different signature in new version, where it is ()Lscala/Option<LFoo;>; rather than ()Lscala/Option<Ljava/lang/String;>;

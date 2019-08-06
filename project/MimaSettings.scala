@@ -80,6 +80,8 @@ object MimaSettings {
       // Changes in internal code
       ProblemFilters.exclude[Problem]("*mima.core.Reference*"),
       ProblemFilters.exclude[Problem]("*mima.core.util.*"),
+      ProblemFilters.exclude[IncompatibleSignatureProblem]("com.typesafe.tools.mima.plugin.MimaPlugin#EmptySet*"),
+      ProblemFilters.exclude[IncompatibleSignatureProblem]("com.typesafe.tools.mima.plugin.MimaPlugin#EmptyMap*"),
     ),
   )
 }
