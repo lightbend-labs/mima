@@ -13,7 +13,7 @@ private[analyze] abstract class BaseMethodChecker extends Checker[MethodInfo, Cl
     if (meths.isEmpty)
       Some(DirectMissingMethodProblem(method))
     else {
-      meths.find(m => m.descriptor == method.descriptor && m.signature == method.signature) match {
+      meths.find(m => m.descriptor == method.descriptor && methSigCheck(method, m)) match {
         case Some(found) => checkRules(rules)(method, found)
         case None        =>
           val filtered = meths.filter(method.matchesType(_))
@@ -32,6 +32,12 @@ private[analyze] abstract class BaseMethodChecker extends Checker[MethodInfo, Cl
           }
       }
     }
+  }
+
+  private def methSigCheck(oldmeth: MethodInfo, newMeth: MethodInfo): Boolean = {
+    oldmeth.signature == newMeth.signature || (
+      newMeth.bytecodeName == MemberInfo.ConstructorName && newMeth.signature.isEmpty
+    )
   }
 
   private def uniques(methods: List[MethodInfo]): List[MethodInfo] =
