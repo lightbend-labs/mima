@@ -1,2 +1,12 @@
 method genericWithChangingName()scala.Option in class A has a different signature in new version, where it is <T:Ljava/lang/Object;>()Lscala/Option<TT;>; rather than <U:Ljava/lang/Object;>()Lscala/Option<TU;>;
 method backwardsCompatibleNarrowing()scala.Option in class A has a different signature in new version, where it is ()Lscala/Option<Ljava/lang/String;>; rather than ()Lscala/Option<Ljava/lang/Object;>;
+#
+method cov1()java.lang.Object in class Api has a different signature in new version, where it is <A:Ljava/lang/Object;>()TA; rather than <missing>
+method cov2()java.lang.Object in class Api has a different signature in new version, where it is <missing> rather than <T:Ljava/lang/Object;>()TT;
+method con1(java.lang.Object)Unit in class Api has a different signature in new version, where it is <A:Ljava/lang/Object;>(TA;)V rather than <missing>
+method con2(java.lang.Object)Unit in class Api has a different signature in new version, where it is <missing> rather than <T:Ljava/lang/Object;>(TT;)V
+#
+method cov1()java.lang.Object in class Abi has a different signature in new version, where it is <A:Ljava/lang/Object;>()TA; rather than <missing>
+method cov2()java.lang.Object in class Abi has a different signature in new version, where it is <missing> rather than <T:Ljava/lang/Object;>()TT;
+method con1(java.lang.Object)Unit in class Abi has a different signature in new version, where it is <A:Ljava/lang/Object;>(TA;)V rather than <missing>
+method con2(java.lang.Object)Unit in class Abi has a different signature in new version, where it is <missing> rather than <T:Ljava/lang/Object;>(TT;)V
