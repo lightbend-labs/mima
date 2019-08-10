@@ -49,14 +49,28 @@ class CollectProblemsTest {
   private def buildErrorMessage(unexpectedProblems: List[Problem], unreportedProblems: List[String]): String = {
     val msg = new StringBuilder
 
-    if (unexpectedProblems.nonEmpty)
+    if (unexpectedProblems.nonEmpty) {
+      val qt = """""""
       unexpectedProblems.iterator
-          .map(p => s"${p.getClass.getSimpleName}: ${p.description("new")}")
-          .addString(msg, "\tThe following problems were not expected\n\t- ", "\n\t- ", "\n\n")
+          .map(_.description("new"))
+          .addString(msg, s"The following ${unexpectedProblems.size} problems were reported but not expected:\n  - ", "\n  - ", "\n")
+      unexpectedProblems.iterator
+          .flatMap(_.howToFilter.map(s => s + ",").toList)
+          .toIndexedSeq
+          .sorted
+          .distinct
+          .addString(msg, "Filter with:\n  ", "\n  ", "\n")
+      unexpectedProblems.iterator
+          .flatMap { p => p.matchName.map(matchName => s"{ matchName=$qt$matchName$qt , problemName=${p.getClass.getSimpleName} }") }
+          .toIndexedSeq
+          .sorted
+          .distinct
+          .addString(msg, "Or filter with:\n  ", "\n  ", "\n")
+    }
 
     if (unreportedProblems.nonEmpty)
       //noinspection ScalaUnusedExpression // intellij-scala is wrong, addString _does_ side-effect
-      unreportedProblems.addString(msg, "\tThe following expected problems were not reported\n\t- ", "\n\t- ", "\n")
+      unreportedProblems.addString(msg, s"The following ${unreportedProblems.size} problems were expected but not reported:\n  - ", "\n  - ", "\n")
 
     msg.result()
   }
