@@ -1,2 +1,2 @@
-abstract method foo()Int in trait AA is inherited by class A in new version.
-abstract method foo()Int in trait AA is inherited by class B in new version.
+method foo()Int in trait AA is inherited by class A in new version.
+method foo()Int in trait AA is inherited by class B in new version.

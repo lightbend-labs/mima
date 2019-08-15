@@ -13,6 +13,7 @@ sealed abstract class MemberInfo(val owner: ClassInfo, val bytecodeName: String,
   def nonAccessible: Boolean
 
   def fullName: String          = s"${owner.formattedFullName}.$decodedName"
+  def abstractPrefix            = if (isDeferred && !owner.isTrait) "abstract " else ""
   def staticPrefix: String      = if (isStatic) "static " else ""
   def tpe: Type                 = owner.owner.definitions.fromDescriptor(descriptor)
   def hasSyntheticName: Boolean = decodedName.contains('$')
@@ -34,13 +35,11 @@ private[mima] final class FieldInfo(owner: ClassInfo, bytecodeName: String, flag
 private[mima] final class MethodInfo(owner: ClassInfo, bytecodeName: String, flags: Int, descriptor: String)
     extends MemberInfo(owner, bytecodeName, flags, descriptor)
 {
-  def methodString: String         = s"$shortMethodString in ${owner.classString}"
-  def abstractMethodString: String = s"$abstractPrefix$methodString"
-  def abstractPrefix               = if (isDeferred && !owner.isTrait) "abstract " else ""
-  def shortMethodString: String    = {
+  def methodString: String      = s"$shortMethodString in ${owner.classString}"
+  def shortMethodString: String = {
     val prefix = if (hasSyntheticName) if (isExtensionMethod) "extension " else "synthetic " else ""
     val deprecated = if (isDeprecated) "deprecated " else ""
-    s"$prefix${deprecated}${staticPrefix}method $decodedName$tpe"
+    s"${abstractPrefix}$prefix${deprecated}${staticPrefix}method $decodedName$tpe"
   }
 
   lazy val paramsCount: Int = {

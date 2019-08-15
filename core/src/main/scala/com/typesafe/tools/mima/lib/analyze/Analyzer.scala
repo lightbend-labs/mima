@@ -78,17 +78,18 @@ private[analyze] trait Analyzer extends ((ClassInfo, ClassInfo) => List[Problem]
     }
 
     (for {
-      tpe <- diff.iterator
-      // if `tpe` is a trait, then the trait's concrete methods should be counted as deferred methods
-      newDeferredMethod <- tpe.deferredMethodsInBytecode
+      newInheritedType <- diff.iterator
+      // if `newInheritedType` is a trait, then the trait's concrete methods should be counted as deferred methods
+      newDeferredMethod <- newInheritedType.deferredMethodsInBytecode
          // checks that the newDeferredMethod did not already exist in one of the oldclazz supertypes 
       if noInheritedMatchingMethod(oldclazz, newDeferredMethod)(_ => true) &&
          // checks that no concrete implementation of the newDeferredMethod is provided by one of the newclazz supertypes
          noInheritedMatchingMethod(newclazz, newDeferredMethod)(_.isConcrete)
-    } yield
+    } yield {
        // report a binary incompatibility as there is a new inherited abstract method, which can lead to a AbstractErrorMethod at runtime
-       InheritedNewAbstractMethodProblem(newclazz, newDeferredMethod)
-    ).toList
+       val newmeth = new MethodInfo(newclazz, newDeferredMethod.bytecodeName, newDeferredMethod.flags, newDeferredMethod.descriptor)
+       InheritedNewAbstractMethodProblem(newDeferredMethod, newmeth)
+    }).toList
   }
 }
 
