@@ -35,9 +35,10 @@ private[analyze] abstract class BaseMethodChecker extends Checker[MethodInfo, Cl
   }
 
   private def methSigCheck(oldmeth: MethodInfo, newMeth: MethodInfo): Boolean = {
-    oldmeth.signature == newMeth.signature || (
-      newMeth.bytecodeName == MemberInfo.ConstructorName && newMeth.signature.isEmpty
-    )
+    oldmeth.signature == newMeth.signature ||
+      (newMeth.bytecodeName == MemberInfo.ConstructorName &&
+        (newMeth.signature.isEmpty || (oldmeth.signature.endsWith(newMeth.signature.drop(2))))
+      )
   }
 
   private def uniques(methods: List[MethodInfo]): List[MethodInfo] =
