@@ -47,7 +47,10 @@ private[analyze] object BaseMethodChecker {
   oldSignature == newSignature ||
     // Special case for https://github.com/scala/scala/pull/7975:
     (bytecodeName == MemberInfo.ConstructorName &&
-      (newSignature.isEmpty || (oldSignature.endsWith(newSignature.drop(2))))
+      (newSignature.isEmpty ||
+        // The dropped character is the leading '('
+        oldSignature.endsWith(newSignature.tail)
+      )
     )
 }
 
