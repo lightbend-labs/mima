@@ -5,6 +5,7 @@ import com.typesafe.tools.mima.lib.analyze.Checker
 
 private[analyze] abstract class BaseMethodChecker extends Checker[MethodInfo, ClassInfo] {
   import MethodRules._
+  import BaseMethodChecker._
 
   protected val rules = Seq(AccessModifier, FinalModifier, AbstractModifier, JavaStatic)
 
@@ -13,7 +14,7 @@ private[analyze] abstract class BaseMethodChecker extends Checker[MethodInfo, Cl
     if (meths.isEmpty)
       Some(DirectMissingMethodProblem(method))
     else {
-      meths.find(m => m.descriptor == method.descriptor && methSigCheck(method, m)) match {
+      meths.find(newMethod => hasMatchingDescriptorAndSignature(method, newMethod)) match {
         case Some(found) => checkRules(rules)(method, found)
         case None        =>
           val filtered = meths.filter(method.matchesType(_))
@@ -34,14 +35,23 @@ private[analyze] abstract class BaseMethodChecker extends Checker[MethodInfo, Cl
     }
   }
 
-  private def methSigCheck(oldmeth: MethodInfo, newMeth: MethodInfo): Boolean = {
-    oldmeth.signature == newMeth.signature || (
-      newMeth.bytecodeName == MemberInfo.ConstructorName && newMeth.signature.isEmpty
-    )
-  }
-
   private def uniques(methods: List[MethodInfo]): List[MethodInfo] =
     methods.groupBy(_.parametersDesc).values.map(_.head).toList
+}
+private[analyze] object BaseMethodChecker {
+  def hasMatchingDescriptorAndSignature(oldMethod: MethodInfo, newMethod: MethodInfo): Boolean =
+    oldMethod.descriptor == newMethod.descriptor && hasMatchingSignature(oldMethod.signature, newMethod.signature, newMethod.bytecodeName)
+
+  // Assumes it is already checked that the descriptors match
+  def hasMatchingSignature(oldSignature: String, newSignature: String, bytecodeName: String): Boolean =
+  oldSignature == newSignature ||
+    // Special case for https://github.com/scala/scala/pull/7975:
+    (bytecodeName == MemberInfo.ConstructorName &&
+      (newSignature.isEmpty ||
+        // The dropped character is the leading '('
+        oldSignature.endsWith(newSignature.tail)
+      )
+    )
 }
 
 private[analyze] class ClassMethodChecker extends BaseMethodChecker {
