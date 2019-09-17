@@ -38,6 +38,9 @@ object MimaSettings {
       // * com.typesafe.tools.mima.core.Config.setup
       // * com.typesafe.tools.mima.core.reporterClassPath
       // * com.typesafe.tools.mima.lib.MiMaLib.collectProblems
+
+      // scala/scala@f6bfdf0 changed visibleSettings from a Set to a List
+      exclude[DirectMissingMethodProblem]("*.mima.core.Settings.visibleSettings"),
     ),
   )
 }
