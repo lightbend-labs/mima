@@ -10,7 +10,7 @@ import com.typesafe.tools.mima.plugin.MimaPlugin.autoImport._
 
 object MimaSettings {
   // clear out mimaBinaryIssueFilters when changing this
-  val mimaPreviousVersion = "0.6.0"
+  val mimaPreviousVersion = "0.6.1"
 
   private val isScala213OrLater =
     Def.setting(VersionNumber(scalaVersion.value).matchesSemVer(SemanticSelector(">=2.13")))
@@ -38,9 +38,6 @@ object MimaSettings {
       // * com.typesafe.tools.mima.core.Config.setup
       // * com.typesafe.tools.mima.core.reporterClassPath
       // * com.typesafe.tools.mima.lib.MiMaLib.collectProblems
-
-      // scala/scala@f6bfdf0 changed visibleSettings from a Set to a List
-      exclude[DirectMissingMethodProblem]("*.mima.core.Settings.visibleSettings"),
     ),
   )
 }
