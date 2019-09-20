@@ -14,7 +14,11 @@ inThisBuild(Seq(
   scalaVersion := scala212.value,
   scalaVersion := sys.props.getOrElse("mima.buildScalaVersion", scalaVersion.value),
   scalacOptions := Seq("-feature", "-deprecation", "-Xlint"),
+//resolvers += stagingResolver,
 ))
+
+// Useful to self-test releases
+val stagingResolver = "Sonatype OSS Staging" at "https://oss.sonatype.org/content/repositories/staging"
 
 val root = project.in(file(".")).disablePlugins(BintrayPlugin).settings(
   name := "mima",
@@ -32,6 +36,7 @@ val core = project.disablePlugins(BintrayPlugin).settings(
   ),
   MimaSettings.mimaSettings,
   publishTo := Some(if (isSnapshot.value) Opts.resolver.sonatypeSnapshots else Opts.resolver.sonatypeStaging),
+
 )
 
 val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core).settings(
