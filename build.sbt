@@ -31,6 +31,16 @@ val core = project.disablePlugins(BintrayPlugin).settings(
     "org.scalatest"  %% "scalatest"      % "3.0.8" % Test,
   ),
   MimaSettings.mimaSettings,
+  apiMappings ++= {
+    // WORKAROUND https://github.com/scala/bug/issues/9311
+    // from https://stackoverflow.com/a/31322970/463761
+    sys.props("sun.boot.class.path")
+      .split(java.io.File.pathSeparator)
+      .collectFirst { case str if str.endsWith(java.io.File.separator + "rt.jar") =>
+        file(str) -> url("http://docs.oracle.com/javase/8/docs/api/index.html")
+      }
+      .toMap
+  },
   publishTo := Some(if (isSnapshot.value) Opts.resolver.sonatypeSnapshots else Opts.resolver.sonatypeStaging),
 )
 
