@@ -31,6 +31,7 @@ val core = project.disablePlugins(BintrayPlugin).settings(
     "org.scalatest"  %% "scalatest"      % "3.0.8" % Test,
   ),
   MimaSettings.mimaSettings,
+  publishTo := Some(if (isSnapshot.value) Opts.resolver.sonatypeSnapshots else Opts.resolver.sonatypeStaging),
 )
 
 val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core).settings(
