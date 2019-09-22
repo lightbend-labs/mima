@@ -26,7 +26,7 @@ object ProblemFilters {
    *
    *  The problemName is name of a class corresponding to a problem like `AbstractMethodProblem`.
    *
-   *  @throws ClassNotFoundException if the class corresponding to the problem cannot be located
+   *  @throws java.lang.ClassNotFoundException if the class corresponding to the problem cannot be located
    */
   def exclude(problemName: String, name: String): ProblemFilter = {
     val problemClass: Class[_ <: ProblemRef] =
