@@ -16,8 +16,6 @@ package object core {
   def definitionsPackageInfo(defs: Definitions): ConcretePackageInfo =
     new DefinitionsPackageInfo(defs)
 
-  def asClassPathString(cp: ClassPath): String = cp.asClassPathString
-
   def classFilesFrom(cp: ClassPath, pkg: String): IndexedSeq[AbstractFile] =
     cp.classesIn(pkg).flatMap(_.binary).toIndexedSeq
 

@@ -30,8 +30,8 @@ object SbtMima {
       the first for backward compatibility checking, and the second for forward checking. */
   def runMima(prev: File, curr: File, cp: Classpath, dir: String, log: Logging): (List[Problem], List[Problem]) = {
     // MiMaLib collects problems to a mutable buffer, therefore we need a new instance every time
-    def checkBC = makeMima(cp, log).collectProblems(prev.getAbsolutePath, curr.getAbsolutePath)
-    def checkFC = makeMima(cp, log).collectProblems(curr.getAbsolutePath, prev.getAbsolutePath)
+    def checkBC = makeMima(cp, log).collectProblems(prev, curr)
+    def checkFC = makeMima(cp, log).collectProblems(curr, prev)
     dir match {
        case "backward" | "backwards" => (checkBC, Nil)
        case "forward" | "forwards"   => (Nil, checkFC)

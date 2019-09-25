@@ -3,7 +3,7 @@ package com.typesafe.tools.mima.lib
 import java.io.File
 
 import com.typesafe.config.ConfigFactory
-import com.typesafe.tools.mima.core.{ Config, Problem, asClassPathString, baseClassPath }
+import com.typesafe.tools.mima.core.{ Config, Problem, baseClassPath }
 
 import scala.io.Source
 import scala.tools.nsc.util._
@@ -12,15 +12,15 @@ final case class TestFailed(msg: String) extends Exception(msg)
 
 class CollectProblemsTest {
 
-  def runTest(testClasspath: Array[String])(testName: String, oldJarPath: String, newJarPath: String, oraclePath: String, filterPath: String): Unit = {
-    val cp = testClasspath ++ ClassPath.split(asClassPathString(Config.baseClassPath))
+  def runTest(testClasspath: Array[String])(testName: String, oldJarOrDir: File, newJarOrDir: File, oraclePath: String, filterPath: String): Unit = {
+    val cp = testClasspath ++ ClassPath.split(Config.baseClassPath.asClassPathString)
     val cpString = ClassPath.join(cp.toIndexedSeq: _*)
     Config.baseClassPath = baseClassPath(cpString)
 
     val mima = new MiMaLib(Config.baseClassPath)
 
     // SUT
-    val allProblems = mima.collectProblems(oldJarPath, newJarPath)
+    val allProblems = mima.collectProblems(oldJarOrDir, newJarOrDir)
 
     val problems = if (filterPath ne null) {
       val fallback = ConfigFactory.parseString("filter { problems = [] }")

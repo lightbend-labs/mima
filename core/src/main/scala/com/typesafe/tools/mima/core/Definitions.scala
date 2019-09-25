@@ -98,6 +98,6 @@ class Definitions(val lib: Option[ClassPath], val classPath: ClassPath) {
   }
 
   override def toString = {
-    "definitions:\n\tlib: %s\n%s".format(lib, asClassPathString(classPath))
+    "definitions:\n\tlib: %s\n%s".format(lib, classPath.asClassPathString)
   }
 }

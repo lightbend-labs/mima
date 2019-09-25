@@ -127,8 +127,8 @@ object TestsPlugin extends AutoPlugin {
 
     val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest")
     val testRunner = testClass.getDeclaredConstructor().newInstance().asInstanceOf[ {
-      def runTest(testClasspath: Array[String], testName: String, oldJarPath: String,
-          newJarPath: String, oraclePath: String, filterPath: String): Unit
+      def runTest(testClasspath: Array[String], testName: String, oldJarOrDir: File,
+          newJarOrDir: File, oraclePath: String, filterPath: String): Unit
     }]
 
     // Add the scala-library to the MiMa classpath used to run this test
@@ -149,7 +149,7 @@ object TestsPlugin extends AutoPlugin {
 
     try {
       import scala.language.reflectiveCalls
-      testRunner.runTest(testClasspath, testName, oldJarOrDir.getAbsolutePath, newJarOrDir.getAbsolutePath,
+      testRunner.runTest(testClasspath, testName, oldJarOrDir, newJarOrDir,
         oracleFile.getAbsolutePath, filterPath)
       streams.log.info(s"Test '$testName' succeeded.")
     } catch {
