@@ -18,38 +18,38 @@ object TestsPlugin extends AutoPlugin {
   }
   import autoImport._
 
-  override def extraProjects = tests ++ integrationTests
+  override def extraProjects = funTestProjects ++ intTestProjects
 
   override def buildSettings = Seq(
     testScalaVersion := sys.props.getOrElse("mima.testScalaVersion", scalaVersion.value),
   )
 
   override def projectSettings = Seq(
-            testFunctional := dependOnAll(           tests, _ /            Test / test).value,
-    IntegrationTest / test := dependOnAll(integrationTests, _ / IntegrationTest / test).value,
+            testFunctional := dependOnAll(funTestProjects, _ /            Test / test).value,
+    IntegrationTest / test := dependOnAll(intTestProjects, _ / IntegrationTest / test).value,
   )
 
   private val functionalTests = LocalProject("functional-tests")
 
-  // define configurations for the V1 and V2 sources
   private val V1 = config("V1").extend(Compile)
   private val V2 = config("V2").extend(Compile)
 
-  // select all testN directories.
-  private val bases                = file("functional-tests") / "src" / "test" * dirContaining("problems.txt")
-  private val integrationTestBases = file("functional-tests") / "src" / "it" * dirContaining("test.conf")
+  private def testProjects(prefix: String, fileName: String, setup: Project => Project) = {
+    (file("functional-tests") / "src" / prefix * dirContaining(fileName)).get().map { base =>
+      Project(s"$prefix-${base.name}", base).disablePlugins(BintrayPlugin).configure(setup)
+    }
+  }
 
-  // make the Project for each discovered directory
-  private lazy val tests            = bases.get.map(testProject)
-  private lazy val integrationTests = integrationTestBases.get.map(integrationTestProject)
+  private def intTestProject(p: Project) = p.settings(intTestProjectSettings)
+  private def funTestProject(p: Project) = p.settings(funTestProjectSettings).configs(V1, V2)
+
+  private lazy val funTestProjects = testProjects("test", "problems.txt", funTestProject)
+  private lazy val intTestProjects = testProjects( "it" ,   "test.conf" , intTestProject)
 
   private def sharedTestProjectSettings = Def.settings(
     resolvers += "scala-pr-validation-snapshots" at "https://scala-ci.typesafe.com/artifactory/scala-pr-validation-snapshots/",
     scalaVersion := testScalaVersion.value,
   )
-
-  private def integrationTestProject(base: File) =
-    Project(s"it-${base.name}", base).disablePlugins(BintrayPlugin).settings(integrationTestProjectSettings)
 
   private val runIntegrationTest = Def.task {
     val confFile = baseDirectory.value / "test.conf"
@@ -71,18 +71,13 @@ object TestsPlugin extends AutoPlugin {
       confFile.getAbsolutePath)
   }
 
-  private val integrationTestProjectSettings = Def.settings(
+  private val intTestProjectSettings = Def.settings(
     sharedTestProjectSettings,
     IntegrationTest / test := runIntegrationTest.value,
   )
 
-  // defines a Project for the given base directory (for example, functional-tests/test1)
-  // Its name is the directory name (test1) and it has compile+package tasks for sources in v1/ and v2/
-  private def testProject(base: File) =
-    Project(s"test-${base.name}", base).disablePlugins(BintrayPlugin).settings(testProjectSettings).configs(V1, V2)
-
   // The settings for the V1 and V2 configurations (e.g. add compile and package).
-  private val testPerConfigSettings = Def.settings(
+  private val funTestPerConfigSettings = Def.settings(
     Defaults.configSettings, // use the normal per-configuration settings
     // but modify the source directory to be just V1/ instead of src/V1/scala/
     // scalaSource is the setting key that defines the directory for Scala sources
@@ -104,10 +99,10 @@ object TestsPlugin extends AutoPlugin {
     )
   }
 
-  private val testProjectSettings = Def.settings(
+  private val funTestProjectSettings = Def.settings(
     sharedTestProjectSettings,
-    inConfig(V1)(testPerConfigSettings),
-    inConfig(V2)(testPerConfigSettings),
+    inConfig(V1)(funTestPerConfigSettings),
+    inConfig(V2)(funTestPerConfigSettings),
     Test / test := runFunctionalTest.value,
   )
 
