@@ -1,17 +1,16 @@
 package com.typesafe.tools.mima
 
-import scala.tools.nsc.util.ClassPath
+import java.io.File
+
+import scala.reflect.io.{ AbstractFile, Path }
 import scala.tools.nsc.classpath.AggregateClassPath
-import scala.tools.nsc.io.AbstractFile
 import scala.tools.nsc.mima.ClassPathAccessors
+import scala.tools.nsc.util.ClassPath
 
 package object core {
   type ProblemFilter = Problem => Boolean
 
   import DeprecatedPathApis._
-
-  def resolveClassPath(): ClassPath =
-    AggregateClassPath.createAggregate(newPathResolver(Config.settings).containers: _*)
 
   def definitionsPackageInfo(defs: Definitions): ConcretePackageInfo =
     new DefinitionsPackageInfo(defs)
@@ -27,13 +26,11 @@ package object core {
   def definitionsTargetPackages(pkg: PackageInfo, cp: ClassPath, defs: Definitions): Seq[(String, PackageInfo)] =
     cp.packagesIn(ClassPath.RootPackage).map(p => p.name -> new ConcretePackageInfo(pkg, cp, p.name, defs))
 
-  def baseClassPath(cpString: String): ClassPath =
-    AggregateClassPath.createAggregate(newClassPathFactory(Config.settings).classesInPath(cpString): _*)
+  private[mima] def pathToClassPath(p: Path): Option[ClassPath] =
+    Option(AbstractFile.getDirectory(p)).map(newClassPath(_, Config.settings))
 
-  def reporterClassPath(classpath: String): ClassPath =
-    AggregateClassPath.createAggregate(newClassPathFactory(Config.settings).classesInPath(classpath): _*)
-
-  def dirClassPath(dir: AbstractFile): ClassPath = newClassPath(dir, Config.settings)
+  private[mima] def aggregateClassPath(cp: Seq[File]): ClassPath =
+    AggregateClassPath.createAggregate(cp.flatMap(pathToClassPath(_)): _*)
 
   private[core] type Fields  = Members[FieldInfo]
   private[core] type Methods = Members[MethodInfo]

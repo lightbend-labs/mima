@@ -120,15 +120,14 @@ object TestsPlugin extends AutoPlugin {
     val urls = Attributed.data(cp).map(_.toURI.toURL).toArray
     val loader = new java.net.URLClassLoader(urls, si.loader)
 
-    val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest")
-    val testRunner = testClass.getDeclaredConstructor().newInstance().asInstanceOf[ {
-      def runTest(testClasspath: Array[String], testName: String, oldJarOrDir: File,
+    val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest$")
+    val testRunner = testClass.getField("MODULE$").get(null).asInstanceOf[ {
+      def runTest(testClasspath: Array[File], testName: String, oldJarOrDir: File,
           newJarOrDir: File, oraclePath: String, filterPath: String): Unit
     }]
 
     // Add the scala-library to the MiMa classpath used to run this test
-    val testClasspath = Attributed.data(cp).filter(_.getName endsWith "scala-library.jar")
-        .map(_.getAbsolutePath).toArray
+    val testClasspath = Attributed.data(cp).filter(_.getName.endsWith("scala-library.jar")).toArray
 
     val oracleFile = {
       val p = projectPath / "problems.txt"

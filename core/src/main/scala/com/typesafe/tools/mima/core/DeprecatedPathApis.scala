@@ -1,8 +1,8 @@
 package com.typesafe.tools.mima.core
 
-import scala.tools.nsc
+import scala.reflect.io.AbstractFile
+import scala.tools.nsc.Settings
 import scala.tools.nsc.classpath.ClassPathFactory
-import scala.tools.nsc.io.AbstractFile
 import scala.tools.nsc.util.ClassPath
 import scala.tools.util.PathResolver
 
@@ -15,7 +15,6 @@ private[core] object DeprecatedPathApis extends DeprecatedPathApis
 
 @deprecated("", "")
 private[core] class DeprecatedPathApis {
-  def newPathResolver(settings: nsc.Settings): PathResolver              = new PathResolver(settings)
-  def newClassPathFactory(settings: nsc.Settings): ClassPathFactory      = new ClassPathFactory(settings)
-  def newClassPath(dir: AbstractFile, settings: nsc.Settings): ClassPath = ClassPathFactory.newClassPath(dir, settings)
+  def newPathResolver(settings: Settings): PathResolver              = new PathResolver(settings)
+  def newClassPath(dir: AbstractFile, settings: Settings): ClassPath = ClassPathFactory.newClassPath(dir, settings)
 }

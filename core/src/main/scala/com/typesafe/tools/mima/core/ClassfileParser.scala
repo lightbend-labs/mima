@@ -2,7 +2,7 @@ package com.typesafe.tools.mima.core
 
 import java.io.IOException
 
-import scala.tools.nsc.io.AbstractFile
+import scala.reflect.io.AbstractFile
 import scala.tools.nsc.symtab.classfile.ClassfileConstants._
 
 final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {

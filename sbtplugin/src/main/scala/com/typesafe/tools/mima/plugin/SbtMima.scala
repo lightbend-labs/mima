@@ -23,8 +23,7 @@ object SbtMima {
   private def makeMima(cp: Classpath, log: Logging): MiMaLib = new MiMaLib(convCp(cp), log)
 
   /** Convert sbt's notion of a "Classpath" to nsc's notion of a "ClassPath". */
-  private def convCp(cp: Classpath): ClassPath =
-    reporterClassPath(cp.map(_.data.getAbsolutePath()).mkString(File.pathSeparator))
+  private def convCp(cp: Classpath): ClassPath = aggregateClassPath(Attributed.data(cp))
 
   /** Runs MiMa and returns a two lists of potential binary incompatibilities,
       the first for backward compatibility checking, and the second for forward checking. */
