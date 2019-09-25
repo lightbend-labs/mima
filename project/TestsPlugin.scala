@@ -120,8 +120,8 @@ object TestsPlugin extends AutoPlugin {
     val urls = Attributed.data(cp).map(_.toURI.toURL).toArray
     val loader = new java.net.URLClassLoader(urls, si.loader)
 
-    val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest")
-    val testRunner = testClass.getDeclaredConstructor().newInstance().asInstanceOf[ {
+    val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest$")
+    val testRunner = testClass.getField("MODULE$").get(null).asInstanceOf[ {
       def runTest(testClasspath: Array[String], testName: String, oldJarOrDir: File,
           newJarOrDir: File, oraclePath: String, filterPath: String): Unit
     }]

@@ -8,11 +8,10 @@ import com.typesafe.tools.mima.core.{ Config, Problem, baseClassPath }
 import scala.io.Source
 import scala.tools.nsc.util._
 
-final case class TestFailed(msg: String) extends Exception(msg)
+object CollectProblemsTest {
 
-class CollectProblemsTest {
-
-  def runTest(testClasspath: Array[String])(testName: String, oldJarOrDir: File, newJarOrDir: File, oraclePath: String, filterPath: String): Unit = {
+  // Called via reflection from TestsPlugin
+  def runTest(testClasspath: Array[String], testName: String, oldJarOrDir: File, newJarOrDir: File, oraclePath: String, filterPath: String): Unit = {
     val cp = testClasspath ++ ClassPath.split(Config.baseClassPath.asClassPathString)
     val cpString = ClassPath.join(cp.toIndexedSeq: _*)
     Config.baseClassPath = baseClassPath(cpString)
@@ -72,4 +71,6 @@ class CollectProblemsTest {
 
     msg.result()
   }
+
+  final case class TestFailed(msg: String) extends Exception(msg)
 }
