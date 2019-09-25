@@ -1,5 +1,7 @@
 package com.typesafe.tools.mima
 
+import java.io.File
+
 import scala.reflect.io.{ AbstractFile, Path }
 import scala.tools.nsc.classpath.AggregateClassPath
 import scala.tools.nsc.mima.ClassPathAccessors
@@ -24,14 +26,11 @@ package object core {
   def definitionsTargetPackages(pkg: PackageInfo, cp: ClassPath, defs: Definitions): Seq[(String, PackageInfo)] =
     cp.packagesIn(ClassPath.RootPackage).map(p => p.name -> new ConcretePackageInfo(pkg, cp, p.name, defs))
 
-  def baseClassPath(cpString: String): ClassPath =
-    AggregateClassPath.createAggregate(newClassPathFactory(Config.settings).classesInPath(cpString): _*)
-
-  def reporterClassPath(classpath: String): ClassPath =
-    AggregateClassPath.createAggregate(newClassPathFactory(Config.settings).classesInPath(classpath): _*)
-
   private[mima] def pathToClassPath(p: Path): Option[ClassPath] =
     Option(AbstractFile.getDirectory(p)).map(newClassPath(_, Config.settings))
+
+  private[mima] def aggregateClassPath(cp: Seq[File]): ClassPath =
+    AggregateClassPath.createAggregate(cp.flatMap(pathToClassPath(_)): _*)
 
   private[core] type Fields  = Members[FieldInfo]
   private[core] type Methods = Members[MethodInfo]

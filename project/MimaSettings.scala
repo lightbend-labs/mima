@@ -28,7 +28,6 @@ object MimaSettings {
       // * com.typesafe.tools.mima.core.ProblemFilters
       // * com.typesafe.tools.mima.core.*Problem
       // to a less degree (some re-implementors):
-      // * com.typesafe.tools.mima.core.reporterClassPath
       // * com.typesafe.tools.mima.lib.MiMaLib.collectProblems
 
       // Dropped some useless/dead methods in Config & the whole Settings subclass
@@ -47,6 +46,8 @@ object MimaSettings {
       // Inlined or replaced
       ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.resolveClassPath"),
       ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.dirClassPath"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.baseClassPath"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.reporterClassPath"),
     ),
   )
 }

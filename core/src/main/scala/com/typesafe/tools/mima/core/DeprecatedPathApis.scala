@@ -16,6 +16,5 @@ private[core] object DeprecatedPathApis extends DeprecatedPathApis
 @deprecated("", "")
 private[core] class DeprecatedPathApis {
   def newPathResolver(settings: Settings): PathResolver              = new PathResolver(settings)
-  def newClassPathFactory(settings: Settings): ClassPathFactory      = new ClassPathFactory(settings)
   def newClassPath(dir: AbstractFile, settings: Settings): ClassPath = ClassPathFactory.newClassPath(dir, settings)
 }
