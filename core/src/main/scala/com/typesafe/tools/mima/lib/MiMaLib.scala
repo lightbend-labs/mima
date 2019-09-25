@@ -1,81 +1,62 @@
 package com.typesafe.tools.mima.lib
 
+import java.io.File
+
 import com.typesafe.tools.mima.core.Config._
 import com.typesafe.tools.mima.core._
-import com.typesafe.tools.mima.core.util.log.{ConsoleLogging, Logging}
+import com.typesafe.tools.mima.core.util.log.{ ConsoleLogging, Logging }
 import com.typesafe.tools.mima.lib.analyze.Analyzer
 
 import scala.collection.mutable.ListBuffer
-import scala.tools.nsc.io.{AbstractFile, File}
+import scala.tools.nsc.io.{ AbstractFile, Path }
 import scala.tools.nsc.util.ClassPath
 
-class MiMaLib(classpath: ClassPath, val log: Logging = ConsoleLogging) {
-  /*
-  options:
-  -classpath foo
-  -ignore bar
-  -d outputdir
-  -i, -iinteractive
-  -f, -fix
-  */
-
-  private def classPath(name: String) = {
-    val f = new File(new java.io.File(name))
-    val dir = AbstractFile.getDirectory(f)
-    if (dir == null) None
-    else Some(dirClassPath(dir))
-  }
-
-  private def root(name: String): Definitions = classPath(name) match {
-    case cp @ Some(_) => new Definitions(cp, classpath)
-    case None         => fatal("not a directory or jar file: " + name)
+final class MiMaLib(classpath: ClassPath, log: Logging = ConsoleLogging) {
+  private def createDefinitions(dirOrJar: File): Definitions = {
+    AbstractFile.getDirectory(Path(dirOrJar)) match {
+      case null => fatal(s"not a directory or jar file: $dirOrJar")
+      case dir  => new Definitions(Some(dirClassPath(dir)), classpath)
+    }
   }
 
   private val problems = new ListBuffer[Problem]
 
   private def raise(problem: Problem) = {
     problems += problem
-    log.debugLog("Problem: " + problem.description("new"))
+    log.debugLog(s"Problem: ${problem.description("new")}")
   }
-
 
   private def comparePackages(oldpkg: PackageInfo, newpkg: PackageInfo): Unit = {
     for (oldclazz <- oldpkg.accessibleClasses) {
-      log.info("Analyzing class "+oldclazz.bytecodeName)
-      newpkg.classes get oldclazz.bytecodeName match {
-        case None if oldclazz.isImplClass =>
+      log.info(s"Analyzing $oldclazz")
+      newpkg.classes.get(oldclazz.bytecodeName) match {
+        case Some(newclazz) => Analyzer(oldclazz, newclazz).foreach(raise)
+        case None           =>
           // if it is missing a trait implementation class, then no error should be reported
           // since there should be already errors, i.e., missing methods...
-          ()
-
-        case None => raise(MissingClassProblem(oldclazz))
-
-        case Some(newclazz) =>  Analyzer(oldclazz, newclazz).foreach(raise)
+          if (!oldclazz.isImplClass)
+            raise(MissingClassProblem(oldclazz))
       }
     }
   }
 
   private def traversePackages(oldpkg: PackageInfo, newpkg: PackageInfo): Unit = {
-    log.info("Traversing package " + oldpkg.fullName)
+    log.info(s"Traversing $oldpkg")
     comparePackages(oldpkg, newpkg)
     for (p <- oldpkg.packages.valuesIterator) {
-      newpkg.packages get p.name match {
-        case None =>
-          traversePackages(p, NoPackageInfo)
-        case Some(q) =>
-          traversePackages(p, q)
-      }
+      val q = newpkg.packages.getOrElse(p.name, NoPackageInfo)
+      traversePackages(p, q)
     }
   }
 
   /** Return a list of problems for the two versions of the library. */
-  def collectProblems(oldDir: String, newDir: String): List[Problem] = {
-    val oldRoot = root(oldDir)
-    val newRoot = root(newDir)
-    log.debugLog("[old version in: " + oldRoot + "]")
-    log.debugLog("[new version in: " + newRoot + "]")
-    log.debugLog("classpath: " + asClassPathString(Config.baseClassPath))
-    traversePackages(oldRoot.targetPackage, newRoot.targetPackage)
+  def collectProblems(oldJarOrDir: File, newJarOrDir: File): List[Problem] = {
+    val oldDefinitions = createDefinitions(oldJarOrDir)
+    val newDefinitions = createDefinitions(newJarOrDir)
+    log.debugLog(s"[old version in: $oldDefinitions]")
+    log.debugLog(s"[new version in: $newDefinitions]")
+    log.debugLog(s"classpath: ${classpath.asClassPathString}")
+    traversePackages(oldDefinitions.targetPackage, newDefinitions.targetPackage)
     problems.toList
   }
 }
