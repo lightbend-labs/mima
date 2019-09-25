@@ -1,6 +1,6 @@
 package com.typesafe.tools.mima.core
 
-import scala.tools.nsc.io.AbstractFile
+import scala.reflect.io.AbstractFile
 import scala.reflect.NameTransformer
 
 import com.typesafe.tools.mima.core.util.log.ConsoleLogging

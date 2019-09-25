@@ -1,8 +1,8 @@
 package com.typesafe.tools.mima.core
 
+import scala.reflect.io.AbstractFile
 import scala.tools.nsc.Settings
 import scala.tools.nsc.classpath.ClassPathFactory
-import scala.tools.nsc.io.AbstractFile
 import scala.tools.nsc.util.ClassPath
 import scala.tools.util.PathResolver
 

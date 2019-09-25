@@ -1,8 +1,8 @@
 package com.typesafe.tools.mima
 
+import scala.reflect.io.AbstractFile
 import scala.tools.nsc.util.ClassPath
 import scala.tools.nsc.classpath.AggregateClassPath
-import scala.tools.nsc.io.AbstractFile
 import scala.tools.nsc.mima.ClassPathAccessors
 
 package object core {

@@ -2,7 +2,7 @@ package com.typesafe.tools.mima.core
 
 import scala.collection.mutable
 import scala.annotation.tailrec
-import scala.tools.nsc.io.AbstractFile
+import scala.reflect.io.AbstractFile
 import scala.tools.nsc.classpath.AggregateClassPath
 import scala.tools.nsc.util.ClassPath
 

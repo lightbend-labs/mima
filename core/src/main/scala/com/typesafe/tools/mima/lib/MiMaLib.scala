@@ -8,7 +8,7 @@ import com.typesafe.tools.mima.core.util.log.{ ConsoleLogging, Logging }
 import com.typesafe.tools.mima.lib.analyze.Analyzer
 
 import scala.collection.mutable.ListBuffer
-import scala.tools.nsc.io.{ AbstractFile, Path }
+import scala.reflect.io.{ AbstractFile, Path }
 import scala.tools.nsc.util.ClassPath
 
 final class MiMaLib(classpath: ClassPath, log: Logging = ConsoleLogging) {
