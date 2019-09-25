@@ -10,9 +10,6 @@ package object core {
 
   import DeprecatedPathApis._
 
-  def resolveClassPath(): ClassPath =
-    AggregateClassPath.createAggregate(newPathResolver(Config.settings).containers: _*)
-
   def definitionsPackageInfo(defs: Definitions): ConcretePackageInfo =
     new DefinitionsPackageInfo(defs)
 

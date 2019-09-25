@@ -43,6 +43,9 @@ object MimaSettings {
       ProblemFilters.exclude[FinalClassProblem]("com.typesafe.tools.mima.lib.MiMaLib"),
       // Made collectProblems take file params rather than strings
       ProblemFilters.exclude[IncompatibleMethTypeProblem]("com.typesafe.tools.mima.lib.MiMaLib.collectProblems"),
+
+      // Inlined
+      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.resolveClassPath"),
     ),
   )
 }
