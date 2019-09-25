@@ -8,14 +8,13 @@ import com.typesafe.tools.mima.core.util.log.{ ConsoleLogging, Logging }
 import com.typesafe.tools.mima.lib.analyze.Analyzer
 
 import scala.collection.mutable.ListBuffer
-import scala.reflect.io.{ AbstractFile, Path }
 import scala.tools.nsc.util.ClassPath
 
 final class MiMaLib(classpath: ClassPath, log: Logging = ConsoleLogging) {
   private def createDefinitions(dirOrJar: File): Definitions = {
-    AbstractFile.getDirectory(Path(dirOrJar)) match {
-      case null => fatal(s"not a directory or jar file: $dirOrJar")
-      case dir  => new Definitions(Some(dirClassPath(dir)), classpath)
+    pathToClassPath(dirOrJar) match {
+      case None => fatal(s"not a directory or jar file: $dirOrJar")
+      case cp   => new Definitions(cp, classpath)
     }
   }
 

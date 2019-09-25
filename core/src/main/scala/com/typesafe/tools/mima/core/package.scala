@@ -1,9 +1,9 @@
 package com.typesafe.tools.mima
 
-import scala.reflect.io.AbstractFile
-import scala.tools.nsc.util.ClassPath
+import scala.reflect.io.{ AbstractFile, Path }
 import scala.tools.nsc.classpath.AggregateClassPath
 import scala.tools.nsc.mima.ClassPathAccessors
+import scala.tools.nsc.util.ClassPath
 
 package object core {
   type ProblemFilter = Problem => Boolean
@@ -30,7 +30,8 @@ package object core {
   def reporterClassPath(classpath: String): ClassPath =
     AggregateClassPath.createAggregate(newClassPathFactory(Config.settings).classesInPath(classpath): _*)
 
-  def dirClassPath(dir: AbstractFile): ClassPath = newClassPath(dir, Config.settings)
+  private[mima] def pathToClassPath(p: Path): Option[ClassPath] =
+    Option(AbstractFile.getDirectory(p)).map(newClassPath(_, Config.settings))
 
   private[core] type Fields  = Members[FieldInfo]
   private[core] type Methods = Members[MethodInfo]
