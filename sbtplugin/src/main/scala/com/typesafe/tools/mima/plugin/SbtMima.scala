@@ -5,6 +5,7 @@ import java.io.File
 
 import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.core.util.log.Logging
+import com.typesafe.tools.mima.lib.MiMaLib
 import sbt._
 import sbt.Keys.{ Classpath, TaskStreams }
 import sbt.librarymanagement.{ UpdateLogging => _, _ }
@@ -12,19 +13,18 @@ import sbt.librarymanagement.ivy._
 import sbt.internal.librarymanagement._
 
 import scala.io.Source
+import scala.tools.nsc.util.ClassPath
 import scala.util._
 import scala.util.control.NonFatal
 import scala.util.matching._
 
 object SbtMima {
   /** Creates a new MiMaLib object to run analysis. */
-  private def makeMima(cp: Classpath, log: Logging): lib.MiMaLib = {
-    // TODO: Fix MiMa so we don't have to hack this bit in.
-    core.Config.setup("sbt-mima-plugin", Array.empty)
-    val cpstring = cp.map(_.data.getAbsolutePath()).mkString(File.pathSeparator)
-    val classpath = com.typesafe.tools.mima.core.reporterClassPath(cpstring)
-    new lib.MiMaLib(classpath, log)
-  }
+  private def makeMima(cp: Classpath, log: Logging): MiMaLib = new MiMaLib(convCp(cp), log)
+
+  /** Convert sbt's notion of a "Classpath" to nsc's notion of a "ClassPath". */
+  private def convCp(cp: Classpath): ClassPath =
+    reporterClassPath(cp.map(_.data.getAbsolutePath()).mkString(File.pathSeparator))
 
   /** Runs MiMa and returns a two lists of potential binary incompatibilities,
       the first for backward compatibility checking, and the second for forward checking. */

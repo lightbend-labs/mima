@@ -10,15 +10,6 @@ import scala.tools.nsc.io.{AbstractFile, File}
 import scala.tools.nsc.util.ClassPath
 
 class MiMaLib(classpath: ClassPath, val log: Logging = ConsoleLogging) {
-  /*
-  options:
-  -classpath foo
-  -ignore bar
-  -d outputdir
-  -i, -iinteractive
-  -f, -fix
-  */
-
   private def classPath(name: String) = {
     val f = new File(new java.io.File(name))
     val dir = AbstractFile.getDirectory(f)

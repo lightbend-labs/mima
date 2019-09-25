@@ -35,9 +35,12 @@ object MimaSettings {
       // * com.typesafe.tools.mima.core.ProblemFilters
       // * com.typesafe.tools.mima.core.*Problem
       // to a less degree (some re-implementors):
-      // * com.typesafe.tools.mima.core.Config.setup
       // * com.typesafe.tools.mima.core.reporterClassPath
       // * com.typesafe.tools.mima.lib.MiMaLib.collectProblems
+
+      // Dropped some useless/dead methods in Config & the whole Settings subclass
+      ProblemFilters.exclude[MemberProblem]("com.typesafe.tools.mima.core.Config.*"),
+      ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.core.Settings"),
     ),
   )
 }

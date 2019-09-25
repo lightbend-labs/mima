@@ -13,8 +13,6 @@ final case class TestFailed(msg: String) extends Exception(msg)
 class CollectProblemsTest {
 
   def runTest(testClasspath: Array[String])(testName: String, oldJarPath: String, newJarPath: String, oraclePath: String, filterPath: String): Unit = {
-    // load test setup
-    Config.setup("scala com.typesafe.tools.mima.MiMaLibUI <old-dir> <new-dir>", Array(oldJarPath, newJarPath))
     val cp = testClasspath ++ ClassPath.split(asClassPathString(Config.baseClassPath))
     val cpString = ClassPath.join(cp.toIndexedSeq: _*)
     Config.baseClassPath = baseClassPath(cpString)
