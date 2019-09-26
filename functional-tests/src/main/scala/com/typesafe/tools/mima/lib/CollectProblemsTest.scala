@@ -11,7 +11,7 @@ import scala.tools.nsc.classpath.AggregateClassPath
 object CollectProblemsTest {
 
   // Called via reflection from TestsPlugin
-  def runTest(testClasspath: Array[File], testName: String, oldJarOrDir: File, newJarOrDir: File, oraclePath: String, filterPath: String): Unit = {
+  def runTest(testClasspath: Array[File], oldJarOrDir: File, newJarOrDir: File, baseDir: File, scalaVersion: String): Unit = {
     val testClassPath = aggregateClassPath(testClasspath)
     Config.baseClassPath = AggregateClassPath.createAggregate(testClassPath, Config.baseClassPath)
 
@@ -20,16 +20,27 @@ object CollectProblemsTest {
     // SUT
     val allProblems = mima.collectProblems(oldJarOrDir, newJarOrDir)
 
-    val problems = if (filterPath ne null) {
+    val configFile = new File(baseDir, "test.conf")
+    val problems = if (configFile.exists()) {
       val fallback = ConfigFactory.parseString("filter { problems = [] }")
-      val config = ConfigFactory.parseFile(new File(filterPath)).withFallback(fallback).resolve()
+      val config = ConfigFactory.parseFile(configFile).withFallback(fallback).resolve()
       val filters = ProblemFiltersConfig.parseProblemFilters(config)
-      allProblems.filter(p => filters.forall(_.apply(p)))
+      allProblems.filter(p => filters.forall(filter => filter(p)))
     } else allProblems
     val problemDescriptions = problems.iterator.map(_.description("new")).toSet
 
     // load oracle
-    val source = Source.fromFile(oraclePath)
+    val oracleFile = {
+      val p = new File(baseDir, "problems.txt")
+      val p212 = new File(baseDir, "problems-2.12.txt")
+      val p213 = new File(baseDir, "problems-2.13.txt")
+      scalaVersion.take(4) match {
+        case "2.13" => if (p213.exists()) p213 else if (p212.exists()) p212 else p
+        case "2.12" => if (p212.exists()) p212 else p
+        case _      => p
+      }
+    }
+    val source = Source.fromFile(oracleFile)
     val expectedProblems = try source.getLines.filter(!_.startsWith("#")).toList finally source.close()
 
     // diff between the oracle and the collected problems
