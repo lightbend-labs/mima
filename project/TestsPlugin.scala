@@ -4,7 +4,7 @@ import bintray.BintrayPlugin
 import com.typesafe.config.ConfigFactory
 import sbt._
 import sbt.Keys._
-import sbt.internal.inc.ScalaInstance
+import sbt.TupleSyntax._
 import sbt.librarymanagement.{ DependencyResolution, UnresolvedWarningConfiguration, UpdateConfiguration }
 
 object TestsPlugin extends AutoPlugin {
@@ -51,24 +51,14 @@ object TestsPlugin extends AutoPlugin {
     scalaVersion := testScalaVersion.value,
   )
 
-  private val runIntegrationTest = Def.task {
-    val confFile = baseDirectory.value / "test.conf"
+  private val runIntegrationTest = (baseDirectory, dependencyResolution, streams).map { (baseDir, depRes, streams) =>
+    val confFile = baseDir / "test.conf"
     val conf = ConfigFactory.parseFile(confFile).resolve()
     val moduleBase = conf.getString("groupId") % conf.getString("artifactId")
-    val depRes = dependencyResolution.value
-    val oldJar = getArtifact(depRes, moduleBase % conf.getString("v1"), streams.value.log)
-    val newJar = getArtifact(depRes, moduleBase % conf.getString("v2"), streams.value.log)
-    streams.value.log.info(s"Comparing $oldJar -> $newJar")
-    runCollectProblemsTest(
-      (functionalTests / Compile / fullClasspath).value, // the test classpath from the functionalTest project for the test
-      (functionalTests / scalaInstance).value, // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
-      streams.value,
-      thisProjectRef.value.project,
-      oldJar,
-      newJar,
-      baseDirectory.value,
-      scalaVersion.value,
-      confFile.getAbsolutePath)
+    val oldJar = getArtifact(depRes, moduleBase % conf.getString("v1"), streams.log)
+    val newJar = getArtifact(depRes, moduleBase % conf.getString("v2"), streams.log)
+    streams.log.info(s"Comparing $oldJar -> $newJar")
+    runCollectProblemsTest(oldJar, newJar, confFile.getAbsolutePath)
   }
 
   private val intTestProjectSettings = Def.settings(
@@ -85,18 +75,10 @@ object TestsPlugin extends AutoPlugin {
     scalaSource := baseDirectory.value / configuration.value.name.toLowerCase,
   )
 
-  private val runFunctionalTest = Def.task {
-    runCollectProblemsTest(
-      (functionalTests / Compile / fullClasspath).value, // the test classpath from the functionalTest project for the test
-      (functionalTests / scalaInstance).value, // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
-      streams.value,
-      thisProjectRef.value.project,
-      (V1 / packageBin).value, // package the V1 sources and get the configuration used
-      (V2 / packageBin).value, // same for V2
-      baseDirectory.value,
-      scalaVersion.value,
-      null,
-    )
+  private val runFunctionalTest = {
+    val oldJar = V1 / packageBin // package the V1 sources and get the configuration used
+    val newJar = V2 / packageBin // same for V2
+    (oldJar, newJar).map(runCollectProblemsTest(_, _, null))
   }
 
   private val funTestProjectSettings = Def.settings(
@@ -106,24 +88,25 @@ object TestsPlugin extends AutoPlugin {
     Test / test := runFunctionalTest.value,
   )
 
-  private def runCollectProblemsTest(
-      cp: Classpath,
-      si: ScalaInstance,
-      streams: TaskStreams,
-      testName: String,
-      oldJarOrDir: File,
-      newJarOrDir: File,
-      projectPath: File,
-      scalaVersion: String,
-      filterPath: String,
-  ): Unit = {
+  private def runCollectProblemsTest(oldJarOrDir: File, newJarOrDir: File, filterPath: String) = Def.task {
+    val testName = thisProjectRef.value.project
+    val projectPath = baseDirectory.value
+    val scalaVersion = Keys.scalaVersion.value
+    val cp = (functionalTests / Compile / fullClasspath).value // the test classpath from the functionalTest project for the test
+    val si = (functionalTests / scalaInstance).value // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
     val urls = Attributed.data(cp).map(_.toURI.toURL).toArray
     val loader = new java.net.URLClassLoader(urls, si.loader)
 
     val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest$")
     val testRunner = testClass.getField("MODULE$").get(null).asInstanceOf[ {
-      def runTest(testClasspath: Array[File], testName: String, oldJarOrDir: File,
-          newJarOrDir: File, oraclePath: String, filterPath: String): Unit
+      def runTest(
+          testClasspath: Array[File],
+          testName: String,
+          oldJarOrDir: File,
+          newJarOrDir: File,
+          oraclePath: String,
+          filterPath: String,
+      ): Unit
     }]
 
     // Add the scala-library to the MiMa classpath used to run this test
@@ -145,7 +128,7 @@ object TestsPlugin extends AutoPlugin {
       import scala.language.reflectiveCalls
       testRunner.runTest(testClasspath, testName, oldJarOrDir, newJarOrDir,
         oracleFile.getAbsolutePath, filterPath)
-      streams.log.info(s"Test '$testName' succeeded.")
+      streams.value.log.info(s"Test '$testName' succeeded.")
     } catch {
       case e: Exception =>
         scala.Console.err.println(e.toString)
