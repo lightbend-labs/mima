@@ -52,8 +52,10 @@ val core = project.disablePlugins(BintrayPlugin).settings(
 val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core).settings(
   name := "sbt-mima-plugin",
   crossScalaVersions := Seq(scala212.value),
-  scriptedDependencies := scriptedDependencies.dependsOn(publishLocal in core).value,
-  scriptedLaunchOpts += "-Dplugin.version=" + version.value,
+  // drop the previous value to drop running Test/compile
+  scriptedDependencies := Def.task(()).dependsOn(publishLocal, publishLocal in core).value,
+  scriptedLaunchOpts += s"-Dplugin.version=${version.value}",
+  scriptedLaunchOpts += s"-Dsbt.boot.directory=${file(sys.props("user.home")) / ".sbt" / "boot"}",
   MimaSettings.mimaSettings,
   bintrayOrganization := Some("typesafe"),
   bintrayReleaseOnPublish := false,
