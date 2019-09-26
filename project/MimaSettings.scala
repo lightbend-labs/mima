@@ -12,15 +12,10 @@ object MimaSettings {
   // clear out mimaBinaryIssueFilters when changing this
   val mimaPreviousVersion = "0.6.1"
 
-  private val isScala213OrLater =
-    Def.setting(VersionNumber(scalaVersion.value).matchesSemVer(SemanticSelector(">=2.13")))
-
   val mimaSettings = Def.settings (
     mimaPreviousArtifacts := Set(pluginProjectID.value.withRevision(mimaPreviousVersion)
       .withExplicitArtifacts(Vector()) // defaultProjectID uses artifacts.value which breaks it =/
     ),
-    mimaPreviousArtifacts := (if (isScala213OrLater.value) Set() else mimaPreviousArtifacts.value),
-    ThisBuild / mimaFailOnNoPrevious := !isScala213OrLater.value,
     mimaBinaryIssueFilters ++= Seq(
       // The main public API is:
       // * com.typesafe.tools.mima.plugin.MimaPlugin

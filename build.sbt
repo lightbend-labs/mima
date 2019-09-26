@@ -11,8 +11,6 @@ inThisBuild(Seq(
   ),
   scmInfo := Some(ScmInfo(url("https://github.com/lightbend/mima"), "scm:git:git@github.com:lightbend/mima.git")),
   dynverVTagPrefix := false,
-  scalaVersion := scala212.value,
-  scalaVersion := sys.props.getOrElse("mima.buildScalaVersion", scalaVersion.value),
   scalacOptions := Seq("-feature", "-deprecation", "-Xlint"),
 //resolvers += stagingResolver,
 ))
@@ -51,7 +49,6 @@ val core = project.disablePlugins(BintrayPlugin).settings(
 
 val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core).settings(
   name := "sbt-mima-plugin",
-  crossScalaVersions := Seq(scala212.value),
   // drop the previous value to drop running Test/compile
   scriptedDependencies := Def.task(()).dependsOn(publishLocal, publishLocal in core).value,
   scriptedLaunchOpts += s"-Dplugin.version=${version.value}",

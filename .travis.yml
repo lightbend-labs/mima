@@ -1,19 +1,14 @@
 language: scala
 jdk: openjdk8
-scala:
-  - 2.12.10
-  - 2.13.1
+scala: 2.12.10
 
-script: sbt "++$TRAVIS_SCALA_VERSION mimaReportBinaryIssues" "++$TRAVIS_SCALA_VERSION test" "++$TRAVIS_SCALA_VERSION IntegrationTest/test"
+script: sbt mimaReportBinaryIssues test IntegrationTest/test
 
 jobs:
   include:
-  - { name: 2.12 testFunctional 2.11, script: sbt -Dmima.buildScalaVersion=2.12.10 -Dmima.testScalaVersion=2.11.12 testFunctional }
-  - { name: 2.12 testFunctional 2.12, script: sbt -Dmima.buildScalaVersion=2.12.10 -Dmima.testScalaVersion=2.12.10  testFunctional }
-  - { name: 2.12 testFunctional 2.13, script: sbt -Dmima.buildScalaVersion=2.12.10 -Dmima.testScalaVersion=2.13.1  testFunctional }
-  - { name: 2.13 testFunctional 2.11, script: sbt -Dmima.buildScalaVersion=2.13.1 -Dmima.testScalaVersion=2.11.12 testFunctional }
-  - { name: 2.13 testFunctional 2.12, script: sbt -Dmima.buildScalaVersion=2.13.1 -Dmima.testScalaVersion=2.12.10  testFunctional }
-  - { name: 2.13 testFunctional 2.13, script: sbt -Dmima.buildScalaVersion=2.13.1 -Dmima.testScalaVersion=2.13.1  testFunctional }
+  - { name: testFunctional 2.11, script: sbt -Dmima.testScalaVersion=2.11.12 testFunctional }
+  - { name: testFunctional 2.12, script: sbt -Dmima.testScalaVersion=2.12.10  testFunctional }
+  - { name: testFunctional 2.13, script: sbt -Dmima.testScalaVersion=2.13.1  testFunctional }
   - { name: scripted 1/2, script: sbt "scripted sbt-mima-plugin/*1of2" }
   - { name: scripted 2/2, script: sbt "scripted sbt-mima-plugin/*2of2" }
 
