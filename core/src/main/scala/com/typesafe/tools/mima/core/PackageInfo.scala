@@ -2,9 +2,10 @@ package com.typesafe.tools.mima.core
 
 import scala.collection.mutable
 import scala.annotation.tailrec
-import scala.reflect.io.AbstractFile
 import scala.tools.nsc.classpath.AggregateClassPath
+import scala.tools.nsc.mima.ClassPathAccessors
 import scala.tools.nsc.util.ClassPath
+import com.typesafe.tools.mima.core.util.log.ConsoleLogging
 
 object PackageInfo {
   final private[core] def NoPackageInfo = com.typesafe.tools.mima.core.NoPackageInfo
@@ -37,18 +38,19 @@ object NoPackageInfo extends SyntheticPackageInfo(PackageInfo.NoPackageInfo, "<n
   override def definitions: Definitions = sys.error("Called definitions on NoPackageInfo")
 }
 
-/** A concrete package. cp should be a directory classpath.
- */
+/** A concrete package. cp should be a directory classpath. */
 class ConcretePackageInfo(owner: PackageInfo, cp: ClassPath, val pkg: String, val defs: Definitions) extends PackageInfo(owner) {
   def definitions = defs
   def name = pkg.split('.').last
-  private def classFiles: IndexedSeq[AbstractFile] = classFilesFrom(cp, pkg)
+  private def classFiles = cp.classesIn(pkg).flatMap(_.binary)
 
   lazy val packages: mutable.Map[String, PackageInfo] =
-    mutable.Map() ++= packagesFrom(cp, this)
+    mutable.Map() ++= cp.packagesIn(pkg).map { p =>
+      p.name.stripPrefix(s"$pkg.") -> new ConcretePackageInfo(owner, cp, p.name, defs)
+    }
 
   lazy val classes: mutable.Map[String, ClassInfo] =
-    mutable.Map() ++= (classFiles map (f => className(f.name) -> new ConcreteClassInfo(this, f)))
+    mutable.Map() ++= classFiles.map(f => className(f.name) -> new ConcreteClassInfo(this, f))
 }
 
 final private[core] class DefinitionsPackageInfo(defs: Definitions)
@@ -62,7 +64,19 @@ final private[core] class DefinitionsPackageInfo(defs: Definitions)
   override def isRoot = true
 }
 
-final private[core] class DefinitionsTargetPackageInfo(root: ConcretePackageInfo)
+private[core] object DefinitionsTargetPackageInfo {
+  def create(defs: Definitions): PackageInfo = {
+    val pkg = new DefinitionsTargetPackageInfo(defs.root)
+    val cp = defs.lib.getOrElse(AggregateClassPath(Nil))
+    for (p <- cp.packagesIn(ClassPath.RootPackage)) {
+      pkg.packages(p.name) = new ConcretePackageInfo(pkg, cp, p.name, defs)
+    }
+    ConsoleLogging.debugLog(pkg.packages.keys.mkString("added packages to <root>: ", ", ", ""))
+    pkg
+  }
+}
+
+final private[core] class DefinitionsTargetPackageInfo(root: PackageInfo)
   extends SyntheticPackageInfo(root, "<root>")
 {
   override def isRoot = true
