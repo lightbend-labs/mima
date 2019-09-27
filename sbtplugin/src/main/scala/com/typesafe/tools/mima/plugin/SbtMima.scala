@@ -14,7 +14,8 @@ import sbt.internal.librarymanagement._
 
 import scala.io.Source
 import scala.tools.nsc.util.ClassPath
-import scala.util._
+import scala.collection.mutable
+import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 import scala.util.matching._
 
@@ -86,83 +87,66 @@ object SbtMima {
   def getPreviousArtifact(m: ModuleID, ivy: IvySbt, s: TaskStreams): File = {
     val depRes = IvyDependencyResolution(ivy.configuration)
     val module = depRes.wrapDependencyInModule(m)
-    val reportEither = depRes.update(
-      module,
-      UpdateConfiguration() withLogging UpdateLogging.DownloadOnly,
-      UnresolvedWarningConfiguration(),
-      s.log
-    )
-    val report = reportEither.fold(x => throw x.resolveException, x => x)
-    val optFile = (for {
-      config <- report.configurations
+    val uc = UpdateConfiguration().withLogging(UpdateLogging.DownloadOnly)
+    val uwc = UnresolvedWarningConfiguration()
+    val report = depRes.update(module, uc, uwc, s.log).left.map(_.resolveException).toTry.get
+    val jars = for {
+      config <- report.configurations.iterator
       module <- config.modules
       (artifact, file) <- module.artifacts
       if artifact.name == m.name
       if artifact.classifier.isEmpty
-    } yield file).headOption
-    optFile.getOrElse(sys.error(s"Could not resolve previous ABI: $m"))
+    } yield file
+    jars.toList match {
+      case Nil             => sys.error(s"Could not resolve previous ABI: $m")
+      case jar :: moreJars =>
+        if (moreJars.nonEmpty)
+          s.log.debug(s"Returning $jar and ignoring $moreJars for $m")
+        jar
+    }
   }
 
   def issueFiltersFromFiles(filtersDirectory: File, fileExtension: Regex, s: TaskStreams): Map[String, Seq[ProblemFilter]] = {
-    if (filtersDirectory.exists) loadMimaIgnoredProblems(filtersDirectory, fileExtension, s.log)
-    else Map.empty
-  }
-
-  def loadMimaIgnoredProblems(directory: File, fileExtension: Regex, logger: Logger): Map[String, Seq[ProblemFilter]] = {
     val ExclusionPattern = """ProblemFilters\.exclude\[([^\]]+)\]\("([^"]+)"\)""".r
+    val mappings = mutable.HashMap.empty[String, Seq[ProblemFilter]].withDefault(_ => new ListBuffer[ProblemFilter])
+    val failures = new ListBuffer[String]
 
-    def findFiles(): Seq[(File, String)] = directory.listFiles().flatMap(f => fileExtension.findFirstIn(f.getName).map((f, _)))
-    def parseFile(fileOrDir: File, extension: String): Either[Seq[Throwable], (String, Seq[ProblemFilter])] = {
-      val version = fileOrDir.getName.dropRight(extension.length)
-
-      def parseOneFile(file: File): Either[Seq[Throwable],Seq[ProblemFilter]] = {
-        def parseLine(text: String, line: Int): Try[ProblemFilter] =
-          Try {
-            text match {
-              case ExclusionPattern(className, target) => ProblemFilters.exclude(className, target)
-              case x => throw new RuntimeException(s"Couldn't parse '$x'")
-            }
-          }.transform(Success(_), ex => Failure(ParsingException(file, line, ex)))
-
-        val lines = try Source.fromFile(file).getLines().toVector catch {
-          case NonFatal(t) => throw new RuntimeException(s"Couldn't load '$file'", t)
+    def parseOneFile(file: File): Seq[ProblemFilter] = {
+      val filters = new ListBuffer[ProblemFilter]
+      val source = Source.fromFile(file)
+      try {
+        for {
+          (rawText, line) <- source.getLines().zipWithIndex
+          if !rawText.startsWith("#")
+          text = rawText.trim
+          if text != ""
+        } {
+          text match {
+            case ExclusionPattern(className, target) =>
+              try filters += ProblemFilters.exclude(className, target) catch {
+                case NonFatal(t) => failures += s"Error while parsing $file, line $line: ${t.getMessage}"
+              }
+            case _ => failures += s"Couldn't parse $file, line $line: '$text'"
+          }
         }
-
-        val (excludes, failures) =
-          lines
-            .filterNot { str => str.trim.isEmpty || str.trim.startsWith("#") }
-            .zipWithIndex
-            .map((parseLine _).tupled)
-            .partition(_.isSuccess)
-
-        if (failures.isEmpty) Right(excludes.map(_.get))
-        else Left(failures.map(_.failed.get))
-      }
-
-      if (fileOrDir.isDirectory) {
-        val allResults = fileOrDir.listFiles().toSeq.map(parseOneFile)
-        val (mappings, failures) = allResults.partition(_.isRight)
-        if (failures.isEmpty) Right(version -> mappings.flatMap(_.right.get))
-        else Left(failures.flatMap(_.left.get))
-      } else parseOneFile(fileOrDir).right.map(version -> _)
+      } catch {
+        case NonFatal(t) => failures += s"Couldn't load '$file': ${t.getMessage}"
+      } finally source.close()
+      filters
     }
 
-    require(directory.exists(), s"Mima filter directory did not exist: ${directory.getAbsolutePath}")
+    for {
+      fileOrDir <- Option(filtersDirectory.listFiles()).getOrElse(Array.empty)
+      extension <- fileExtension.findFirstIn(fileOrDir.getName)
+      version = fileOrDir.getName.dropRight(extension.length)
+      file <- Option(fileOrDir.listFiles()).getOrElse(Array(fileOrDir))
+    } mappings(version) = mappings(version) ++ parseOneFile(file)
 
-    val (mappings, failures) = findFiles().map((parseFile _).tupled).partition(_.isRight)
-
-    if (failures.isEmpty)
-      mappings
-        .map(_.right.get)
-        .groupBy(_._1)
-        .map { case (version, filters) => version -> filters.flatMap(_._2) }
-    else {
-      failures.flatMap(_.left.get).foreach(ex => logger.error(ex.getMessage))
-
+    if (failures.isEmpty) {
+      mappings.toMap
+    } else {
+      failures.foreach(s.log.error(_))
       throw new RuntimeException(s"Loading Mima filters failed with ${failures.size} failures.")
     }
   }
-
-  case class ParsingException(file: File, line: Int, ex: Throwable)
-    extends RuntimeException(s"Error while parsing $file, line $line: ${ex.getMessage}", ex)
 }
