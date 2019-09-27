@@ -1,61 +1,36 @@
 package com.typesafe.tools.mima.core
 
-import com.typesafe.tools.mima.core.util.log.Logging
-
-import org.scalatest.Matchers
-import org.scalatest.WordSpec
+import org.scalatest.{ Assertion, Matchers, WordSpec }
 
 final class ProblemReportingSpec extends WordSpec with Matchers {
   import ProblemReportingSpec._
 
-  "problem" should {
-    "be reported when there are no filters" in {
-      isReported("0.0.1", Seq.empty) shouldBe true
-    }
+  // Given a generic Problem (FinalClassProblem)
+  "isReported" should {
+    "return true on no filters"                         in (check("0.0.1", Nil)      shouldBe true)
+    "return false when filtered out by general filters" in (check("0.0.1", KeepNone) shouldBe false)
 
-    "not be reported when filtered out by general filters" in {
-      isReported("0.0.1", Seq(AllMatchingFilter)) shouldBe false
-    }
-
-    "not be reported when filtered out by versioned filters" in {
-      isReported("0.0.1", Map("0.0.1" -> Seq(AllMatchingFilter))) shouldBe false
-    }
-
-    "not be reported when filtered out by versioned wildcard filters" in {
-      isReported("0.0.1", Map("0.0.x" -> Seq(AllMatchingFilter))) shouldBe false
-    }
-
-    "not be reported when filter version does not have patch segment" in {
-      isReported("0.1", Map("0.1" -> Seq(AllMatchingFilter))) shouldBe false
-    }
-
-    "not be reported when filter version is only epoch" in {
-      isReported("1", Map("1" -> Seq(AllMatchingFilter))) shouldBe false
-    }
-
-    "not be reported when filter version has less segments than module version" in {
-      isReported("0.1.0", Map("0.1" -> Seq(AllMatchingFilter))) shouldBe false
-    }
-
-    "not be reported when filter version has more segments than module version" in {
-      isReported("0.1", Map("0.1.0" -> Seq(AllMatchingFilter))) shouldBe false
-    }
+    "match when filter is used"                               in checkVersioned("0.0.1", "0.0.1")
+    "match when filter uses a wildcard"                       in checkVersioned("0.0.1", "0.0.x")
+    "match when filter does not have patch segment"           in checkVersioned("0.1", "0.1")
+    "match when filter is only epoch"                         in checkVersioned("1", "1")
+    "match when filter has less segments than module version" in checkVersioned("0.1.0", "0.1")
+    "match when filter has more segments than module version" in checkVersioned("0.1", "0.1.0")
   }
 
-  private def isReported(moduleVersion: String, filters: Seq[ProblemFilter]) =
-    ProblemReporting.isReported(moduleVersion, filters, Map.empty)(NoOpLogger, "test", "current")(FinalClassProblem(NoClass))
-  private def isReported(moduleVersion: String, versionedFilters: Map[String, Seq[ProblemFilter]]) =
-    ProblemReporting.isReported(moduleVersion, Seq.empty, versionedFilters)(NoOpLogger, "test", "current")(FinalClassProblem(NoClass))
+  private def check(version: String, filters: Seq[ProblemFilter]): Boolean = {
+    impl(version, filters, Map.empty)
+  }
 
+  private def checkVersioned(version: String, filterVersion: String): Assertion = {
+    impl(version, Nil, Map(filterVersion -> KeepNone)) shouldBe false
+  }
+
+  private def impl(v: String, pfs: Seq[ProblemFilter], pfMap: Map[String, Seq[ProblemFilter]]) = {
+    ProblemReporting.isReported(v, pfs, pfMap)(FinalClassProblem(NoClass))
+  }
 }
 
 object ProblemReportingSpec {
-  final val NoOpLogger = new Logging {
-    override def info(str: String): Unit = ()
-    override def debugLog(str: String): Unit = ()
-    override def warn(str: String): Unit = ()
-    override def error(str: String): Unit = ()
-  }
-
-  final val AllMatchingFilter = (_: Problem) => false
+  final val KeepNone: Seq[ProblemFilter] = Seq(Function.const(false))
 }
