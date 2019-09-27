@@ -11,7 +11,7 @@ import scala.tools.nsc.classpath.AggregateClassPath
 object CollectProblemsTest {
 
   // Called via reflection from TestsPlugin
-  def runTest(testClasspath: Array[File], oldJarOrDir: File, newJarOrDir: File, baseDir: File, scalaVersion: String): Unit = {
+  def runTest(testClasspath: Array[File], testName: String, oldJarOrDir: File, newJarOrDir: File, baseDir: File, scalaVersion: String): Unit = {
     val testClassPath = aggregateClassPath(testClasspath)
     Config.baseClassPath = AggregateClassPath.createAggregate(testClassPath, Config.baseClassPath)
 

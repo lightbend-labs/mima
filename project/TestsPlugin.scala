@@ -99,6 +99,7 @@ object TestsPlugin extends AutoPlugin {
     val testRunner = testClass.getField("MODULE$").get(null).asInstanceOf[ {
       def runTest(
           testClasspath: Array[File],
+          testName: String,
           oldJarOrDir: File,
           newJarOrDir: File,
           baseDir: File,
@@ -111,7 +112,7 @@ object TestsPlugin extends AutoPlugin {
 
     try {
       import scala.language.reflectiveCalls
-      testRunner.runTest(testClasspath, oldJarOrDir, newJarOrDir, baseDirectory.value, scalaVersion.value)
+      testRunner.runTest(testClasspath, testName, oldJarOrDir, newJarOrDir, baseDirectory.value, scalaVersion.value)
       streams.value.log.info(s"Test '$testName' succeeded.")
     } catch {
       case e: Exception =>

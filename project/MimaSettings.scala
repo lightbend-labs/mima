@@ -43,6 +43,11 @@ object MimaSettings {
       ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.dirClassPath"),
       ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.baseClassPath"),
       ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.reporterClassPath"),
+
+      // Redefined (or dropped) internal methods and classes
+      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.ProblemReporting.isReported"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.plugin.SbtMima.loadMimaIgnoredProblems"),
+      ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.plugin.SbtMima$ParsingException*"),
     ),
   )
 }

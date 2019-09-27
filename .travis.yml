@@ -2,12 +2,12 @@ language: scala
 jdk: openjdk8
 scala: 2.12.10
 
-script: sbt mimaReportBinaryIssues test IntegrationTest/test
 
 jobs:
   include:
+  - { script: sbt mimaReportBinaryIssues test IntegrationTest/test }
   - { name: testFunctional 2.11, script: sbt -Dmima.testScalaVersion=2.11.12 testFunctional }
-  - { name: testFunctional 2.12, script: sbt -Dmima.testScalaVersion=2.12.10  testFunctional }
+  - { name: testFunctional 2.12, script: sbt -Dmima.testScalaVersion=2.12.10 testFunctional }
   - { name: testFunctional 2.13, script: sbt -Dmima.testScalaVersion=2.13.1  testFunctional }
   - { name: scripted 1/2, script: sbt "scripted sbt-mima-plugin/*1of2" }
   - { name: scripted 2/2, script: sbt "scripted sbt-mima-plugin/*2of2" }
