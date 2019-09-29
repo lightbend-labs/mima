@@ -38,7 +38,7 @@ object NoClass extends SyntheticClassInfo(NoPackageInfo, "<noclass>") {
 
 /** A class for which we have the classfile. */
 class ConcreteClassInfo(owner: PackageInfo, val file: AbstractFile) extends ClassInfo(owner) {
-  override def bytecodeName = PackageInfo.className(file.name)
+  override def bytecodeName = file.name.stripSuffix(".class")
   override def canEqual(other: Any) = other.isInstanceOf[ConcreteClassInfo]
 }
 
@@ -220,7 +220,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Equals {
   }
 
   /** Is this class an implementation class? */
-  lazy val isImplClass: Boolean = bytecodeName endsWith PackageInfo.implClassSuffix
+  lazy val isImplClass: Boolean = bytecodeName.endsWith("$class")
 
   /** The implementation class corresponding to this trait */
   private var _implClass: ClassInfo = NoClass
@@ -230,7 +230,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Equals {
   /** The implementation class of this trait, or NoClass if it is not a trait.
    */
   def implClass: ClassInfo = {
-    owner.traits // make sure we have implClass set
+    owner.setImplClasses // make sure we have implClass set
     _implClass
   }
 

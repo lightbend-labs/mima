@@ -1,65 +1,54 @@
 package com.typesafe.tools.mima.core
 
-import scala.collection.mutable
 import scala.annotation.tailrec
+import scala.collection.mutable
 import scala.tools.nsc.classpath.AggregateClassPath
 import scala.tools.nsc.mima.ClassPathAccessors
 import scala.tools.nsc.util.ClassPath
 import com.typesafe.tools.mima.core.util.log.ConsoleLogging
 
-object PackageInfo {
-  final private[core] def NoPackageInfo = com.typesafe.tools.mima.core.NoPackageInfo
-
-  val classExtension = ".class"
-  val implClassSuffix = "$class"
-
-  def className(fileName: String) = {
-    assert(fileName endsWith classExtension)
-    fileName.substring(0, fileName.length - classExtension.length)
-  }
-
-  def traitName(iclassName: String) = {
-    assert(iclassName endsWith implClassSuffix)
-    iclassName.substring(0, iclassName.length - implClassSuffix.length)
-  }
-}
-
-import com.typesafe.tools.mima.core.PackageInfo._
-
-class SyntheticPackageInfo(owner: PackageInfo, val name: String) extends PackageInfo(owner) {
-  def definitions: Definitions = owner.definitions
+sealed class SyntheticPackageInfo(owner: PackageInfo, val name: String) extends PackageInfo(owner) {
+  def definitions   = owner.definitions
   lazy val packages = mutable.Map.empty[String, PackageInfo]
-  lazy val classes = mutable.Map.empty[String, ClassInfo]
+  lazy val classes  = Map.empty[String, ClassInfo]
 }
 
-object NoPackageInfo extends SyntheticPackageInfo(PackageInfo.NoPackageInfo, "<no package>") {
-  override val owner = this
-  override def isRoot = true
-  override def definitions: Definitions = sys.error("Called definitions on NoPackageInfo")
+object NoPackageInfo extends SyntheticPackageInfo(null, "<no package>") {
+  override val owner       = this
+  override def isRoot      = true
+  override def definitions = sys.error("Called definitions on NoPackageInfo")
 }
 
 /** A concrete package. cp should be a directory classpath. */
-class ConcretePackageInfo(owner: PackageInfo, cp: ClassPath, val pkg: String, val defs: Definitions) extends PackageInfo(owner) {
+sealed class ConcretePackageInfo(owner: PackageInfo, cp: ClassPath, pkg: String, defs: Definitions)
+    extends PackageInfo(owner)
+{
+  def name        = pkg.split('.').last
   def definitions = defs
-  def name = pkg.split('.').last
+
   private def classFiles = cp.classesIn(pkg).flatMap(_.binary)
 
-  lazy val packages: mutable.Map[String, PackageInfo] =
-    mutable.Map() ++= cp.packagesIn(pkg).map { p =>
+  lazy val packages = {
+    cp.packagesIn(pkg).iterator.map { p =>
       p.name.stripPrefix(s"$pkg.") -> new ConcretePackageInfo(this, cp, p.name, defs)
-    }
+    }.to[({type M[_] = mutable.Map[String, PackageInfo]})#M]
+  }
 
-  lazy val classes: mutable.Map[String, ClassInfo] =
-    mutable.Map() ++= classFiles.map(f => className(f.name) -> new ConcreteClassInfo(this, f))
+  lazy val classes = {
+    classFiles.iterator.map { f =>
+      val c = new ConcreteClassInfo(this, f)
+      c.bytecodeName -> c
+    }.toMap
+  }
 }
 
 final private[core] class DefinitionsPackageInfo(defs: Definitions)
-  extends ConcretePackageInfo(
-    NoPackageInfo,
-    AggregateClassPath.createAggregate(defs.lib.toList :+ defs.classPath: _*),
-    ClassPath.RootPackage,
-    defs,
-  )
+    extends ConcretePackageInfo(
+      NoPackageInfo,
+      AggregateClassPath.createAggregate(defs.lib.toList :+ defs.classPath: _*),
+      ClassPath.RootPackage,
+      defs,
+    )
 {
   override def isRoot = true
 }
@@ -81,62 +70,54 @@ final private[core] class DefinitionsTargetPackageInfo(root: PackageInfo)
 {
   override def isRoot = true
 
-  /** Needed to fetch classes located in the root (empty package) */
+  // Needed to fetch classes located in the root (empty package).
   override lazy val classes = root.classes
 }
 
-/** Package information, including available classes and packages, and what is
- *  accessible.
- */
-abstract class PackageInfo(val owner: PackageInfo) {
-
+/** Package information, including available classes and packages, and what is accessible. */
+sealed abstract class PackageInfo(val owner: PackageInfo) {
   def name: String
-
   def definitions: Definitions
+  def packages: mutable.Map[String, PackageInfo]
+  def classes: Map[String, ClassInfo]
+
+  final def fullName: String = {
+    if (isRoot) "<root>"
+    else if (owner.isRoot) name
+    else s"${owner.fullName}.$name"
+  }
 
   def isRoot = false
 
-  private lazy val root: PackageInfo = if (isRoot) this else owner.root
-
-  def fullName: String = if (isRoot) "<root>"
-                         else if (owner.isRoot) name
-                         else owner.fullName + "." + name
-
-  def packages: mutable.Map[String, PackageInfo]
-  def classes: mutable.Map[String, ClassInfo]
-
-  lazy val accessibleClasses: Set[ClassInfo] = {
-    /* Fixed point iteration for finding all accessible classes. */
+  final lazy val accessibleClasses: Set[ClassInfo] = {
+    // Fixed point iteration for finding all accessible classes.
     @tailrec
     def accessibleClassesUnder(prefix: Set[ClassInfo], found: Set[ClassInfo]): Set[ClassInfo] = {
       val vclasses = (classes.valuesIterator.filter(isAccessible(_, prefix))).toSet
       if (vclasses.isEmpty) found
-      else accessibleClassesUnder(vclasses, vclasses union found)
+      else accessibleClassesUnder(vclasses, vclasses.union(found))
     }
 
     def isAccessible(clazz: ClassInfo, prefix: Set[ClassInfo]) = {
       def isReachable = {
-        if (clazz.isSynthetic) false
-        else if (prefix.isEmpty) clazz.isTopLevel && !clazz.decodedName.contains("$$")
-        else prefix.exists(_.innerClasses contains clazz.bytecodeName)
+        if (prefix.isEmpty) clazz.isTopLevel && !clazz.decodedName.contains("$$")
+        else prefix.exists(_.innerClasses.contains(clazz.bytecodeName))
       }
-      clazz.isPublic && !clazz.isLocalClass && isReachable
+      clazz.isPublic && !clazz.isLocalClass && !clazz.isSynthetic && isReachable
     }
 
     accessibleClassesUnder(Set.empty, Set.empty)
   }
 
-  /** All implementation classes of traits (classes that end in "$" followed by "class"). */
-  lazy val implClasses: mutable.Map[String, ClassInfo] =
-    classes filter { case (name, _) => name endsWith implClassSuffix }
-
-  lazy val traits : mutable.Map[String, ClassInfo] = for {
-    (name, iclazz) <- implClasses
-    tclazz <- classes get traitName(name)
-  } yield {
-    tclazz.implClass = iclazz
-    (traitName(name), tclazz)
+  final lazy val setImplClasses: Unit = {
+    for {
+      (name, clazz) <- classes.iterator
+      if clazz.isImplClass
+      traitClass <- classes.get(name.stripSuffix("$class"))
+    } {
+      traitClass.implClass = clazz
+    }
   }
 
-  override def toString = s"package $fullName"
+  final override def toString = s"package $fullName"
 }
