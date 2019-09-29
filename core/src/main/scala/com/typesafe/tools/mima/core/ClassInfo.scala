@@ -18,31 +18,31 @@ object ClassInfo {
   }
 }
 
-/** A placeholder class info for a class that is not found on the classpath or in a given
- *  package.
- */
-class SyntheticClassInfo(owner: PackageInfo, override val bytecodeName: String) extends ClassInfo(owner) {
+/** A placeholder class info for a class that is not found on the classpath or in a given package. */
+sealed class SyntheticClassInfo(owner: PackageInfo, val bytecodeName: String) extends ClassInfo(owner) {
   loaded = true
   def file: AbstractFile = throw new UnsupportedOperationException
-  override lazy val superClasses = Set(ClassInfo.ObjectClass)
-  override lazy val allTraits = Set.empty[ClassInfo]
-  override lazy val allInterfaces: Set[ClassInfo] = Set.empty[ClassInfo]
+
+  override lazy val superClasses        = Set(ClassInfo.ObjectClass)
+  final override lazy val allTraits     = Set.empty[ClassInfo]
+  final override lazy val allInterfaces = Set.empty[ClassInfo]
+
   override def canEqual(other: Any) = other.isInstanceOf[SyntheticClassInfo]
 }
 
-/** As the name implies. */
 object NoClass extends SyntheticClassInfo(NoPackageInfo, "<noclass>") {
-  override def canEqual(other: Any) = other.isInstanceOf[NoClass.type]
   override lazy val superClasses = Set.empty[ClassInfo]
+
+  override def canEqual(other: Any) = other.isInstanceOf[NoClass.type]
 }
 
 /** A class for which we have the classfile. */
-class ConcreteClassInfo(owner: PackageInfo, val file: AbstractFile) extends ClassInfo(owner) {
-  override def bytecodeName = file.name.stripSuffix(".class")
+final class ConcreteClassInfo(owner: PackageInfo, val file: AbstractFile) extends ClassInfo(owner) {
+  def bytecodeName                  = file.name.stripSuffix(".class")
   override def canEqual(other: Any) = other.isInstanceOf[ConcreteClassInfo]
 }
 
-abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Equals {
+sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Equals {
   import ClassInfo._
 
   def file: AbstractFile
@@ -63,7 +63,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Equals {
   def isTopLevel = { ensureLoaded(); _isTopLevel }
 
   final override def equals(other: Any): Boolean = other match {
-    case that: ClassInfo => (that canEqual this) && this.fullName == that.fullName
+    case that: ClassInfo => that.canEqual(this) && this.fullName == that.fullName
     case _               => false
   }
 
@@ -116,18 +116,20 @@ abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Equals {
     if (this == ClassInfo.ObjectClass) Set.empty
     else superClass.superClasses + superClass
 
+  private def thisAndSuperClasses = Iterator.single(this) ++ superClasses.iterator
+
   final def lookupClassFields(field: FieldInfo): Iterator[FieldInfo] =
-    (Iterator.single(this) ++ superClasses.iterator) flatMap (_.fields.get(field.bytecodeName))
+    thisAndSuperClasses.flatMap(_.fields.get(field.bytecodeName))
 
   final def lookupClassMethods(method: MethodInfo): Iterator[MethodInfo] = {
     method.bytecodeName match {
       case MemberInfo.ConstructorName => methods.get(MemberInfo.ConstructorName) // constructors are not inherited
-      case name                       => (Iterator.single(this) ++ superClasses.iterator).flatMap(_.methods.get(name))
+      case name                       => thisAndSuperClasses.flatMap(_.methods.get(name))
     }
   }
 
   private def lookupInterfaceMethods(method: MethodInfo): Iterator[MethodInfo] =
-    allInterfaces.iterator flatMap (_.methods.get(method.bytecodeName))
+    allInterfaces.iterator.flatMap(_.methods.get(method.bytecodeName))
 
   final def lookupMethods(method: MethodInfo): Iterator[MethodInfo] =
     lookupClassMethods(method) ++ lookupInterfaceMethods(method)
@@ -135,8 +137,8 @@ abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Equals {
   final def lookupConcreteTraitMethods(method: MethodInfo): Iterator[MethodInfo] =
     allTraits.iterator.flatMap(_.concreteMethods).filter(_.bytecodeName == method.bytecodeName)
 
-  /** The concrete methods of this trait */
-  lazy val concreteMethods: List[MethodInfo] = {
+  /** The concrete methods of this trait. */
+  final lazy val concreteMethods: List[MethodInfo] = {
     if (isTrait) methods.value.filter(m => hasStaticImpl(m) || m.isConcrete)
     else if (isClass || isInterface) methods.value.filter(_.isConcrete)
     else Nil
@@ -145,71 +147,71 @@ abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Equals {
   /** The subset of concrete methods of this trait that are abstract at the JVM level.
     * This corresponds to the pre-Scala-2.12 trait encoding where all `concreteMethods`
     * are `emulatedConcreteMethods`. In 2.12 most concrete trait methods are translated
-    * to concrete interface methods. */
-  lazy val emulatedConcreteMethods: List[MethodInfo] =
-    concreteMethods.filter(_.isDeferred)
+    * to concrete interface methods.
+    */
+  final lazy val emulatedConcreteMethods: List[MethodInfo] = concreteMethods.filter(_.isDeferred)
 
-  /** The deferred methods of this trait */
-  lazy val deferredMethods: List[MethodInfo] = methods.value.filterNot(concreteMethods.toSet)
+  /** The deferred methods of this trait. */
+  final lazy val deferredMethods: List[MethodInfo] = {
+    val concreteMethods = this.concreteMethods.toSet
+    methods.value.filterNot(concreteMethods)
+  }
 
   /** All deferred methods of this type as seen in the bytecode. */
-  def deferredMethodsInBytecode: List[MethodInfo] = if (isTrait) methods.value else deferredMethods
+  final def deferredMethodsInBytecode: List[MethodInfo] = if (isTrait) methods.value else deferredMethods
 
   /** The inherited traits in the linearization of this class or trait,
    *  except any traits inherited by its superclass.
    *  Traits appear in linearization order of this class or trait.
    */
-  lazy val directTraits: List[ClassInfo] = {
-    /* All traits in the transitive, reflexive inheritance closure of given trait `t' */
-    def traitClosure(t: ClassInfo): List[ClassInfo] =
-      if (superClass.allTraits contains t) Nil
-      // traits with only abstract methods are presented as interfaces, but nonetheless 
-      // they should still be collected
+  final lazy val directTraits: List[ClassInfo] = {
+    val superClassTraits = superClass.allTraits.toSet
+
+    // All traits in the transitive, reflexive inheritance closure of the given trait.
+    def traitClosure(t: ClassInfo): List[ClassInfo] = {
+      if (superClassTraits.contains(t)) Nil
+      // traits with only abstract methods are presented as interfaces,
+      // but nonetheless they should still be collected
       else if (t.isInterface) parentsClosure(t) :+ t
       else parentsClosure(t)
+    }
 
-    def parentsClosure(c: ClassInfo) =
-      (c.interfaces flatMap traitClosure).distinct
+    def parentsClosure(c: ClassInfo) = c.interfaces.flatMap(traitClosure).distinct
 
     parentsClosure(this)
   }
 
-  /** All traits inherited directly or indirectly by this class */
-  lazy val allTraits: Set[ClassInfo] =
+  /** All traits inherited directly or indirectly by this class. */
+  lazy val allTraits: Set[ClassInfo] = {
     if (this == ClassInfo.ObjectClass) Set.empty
     else superClass.allTraits ++ directTraits
-
-  /** All interfaces inherited directly or indirectly by this class */
-  lazy val allInterfaces: Set[ClassInfo] =
-    if (this == ClassInfo.ObjectClass) Set.empty
-    else superClass.allInterfaces ++ interfaces ++ (interfaces flatMap (_.allInterfaces))
-
-  /** Does this implementation class have a static implementation of given method `m`? */
-  def hasStaticImpl(m: MemberInfo) = staticImpl(m).isDefined
-
-  /** Optionally, the static implementation method corresponding to trait member `m`. */
-  private def staticImpl(m: MemberInfo): Option[MemberInfo] = {
-    if (isTrait) {
-      implClass match {
-        case impl: ConcreteClassInfo =>
-          assert(impl.isImplClass, impl)
-          impl.methods.get(m.bytecodeName) find (im => hasImplSig(im.descriptor, m.descriptor))
-
-        case _ => None
-      }
-    }
-    else None
   }
 
-  /** Does `isig` correspond to `tsig` if seen as the signature of the static
-   *  implementation method of a trait method with signature `tsig`?
-   */
-  private def hasImplSig(isig: String, tsig: String) = {
+  /** All interfaces inherited directly or indirectly by this class. */
+  lazy val allInterfaces: Set[ClassInfo] = {
+    if (this == ClassInfo.ObjectClass) Set.empty
+    else superClass.allInterfaces ++ interfaces ++ interfaces.flatMap(_.allInterfaces)
+  }
+
+  /** Does this implementation class have a static implementation of given method `m`? */
+  final def hasStaticImpl(m: MethodInfo): Boolean = {
+    implClass match {
+      case _: SyntheticClassInfo   => false
+      case impl: ConcreteClassInfo =>
+        assert(impl.isImplClass, impl)
+        impl.methods.get(m.bytecodeName).exists(im => hasImplSig(im.descriptor, m.descriptor))
+    }
+  }
+
+  // Does `isig` correspond to `tsig` if seen as the signature of the static
+  // implementation method of a trait method with signature `tsig`?
+  private def hasImplSig(isig: String, tsig: String): Boolean = {
     assert(isig(0) == '(' && isig(1) == 'L' && tsig(0) == '(')
     val ilen = isig.length
     val tlen = tsig.length
     var i = 2
-    while (isig(i) != ';') i += 1
+    while (isig(i) != ';')
+      i += 1
     i += 1
     var j = 1
     while (i < ilen && j < tlen && isig(i) == tsig(j)) {
@@ -248,7 +250,7 @@ abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Equals {
 
   def isModule: Boolean = bytecodeName.endsWith("$")
 
-  override def toString = "class " + bytecodeName
+  override def toString = s"class $bytecodeName"
 
-  def description: String = declarationPrefix + " " + formattedFullName
+  def description: String = s"$declarationPrefix $formattedFullName"
 }
