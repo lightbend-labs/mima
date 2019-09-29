@@ -7,7 +7,7 @@ import scala.tools.nsc.mima.ClassPathAccessors
 import scala.tools.nsc.util.ClassPath
 import com.typesafe.tools.mima.core.util.log.ConsoleLogging
 
-sealed class SyntheticPackageInfo(val owner: PackageInfo, val name: String) extends PackageInfo {
+final private[core] class EmptyPackage(val owner: PackageInfo, val name: String) extends PackageInfo {
   def definitions   = owner.definitions
   lazy val packages = mutable.Map.empty[String, PackageInfo]
   lazy val classes  = Map.empty[String, ClassInfo]
@@ -21,7 +21,7 @@ object NoPackageInfo extends PackageInfo {
   val classes     = Map.empty[String, ClassInfo]
 }
 
-sealed class ConcretePackageInfo(val owner: PackageInfo, cp: ClassPath, pkg: String, defs: Definitions)
+final class ConcretePackageInfo(val owner: PackageInfo, cp: ClassPath, pkg: String, defs: Definitions)
     extends PackageInfo
 {
   def name        = pkg.split('.').last
@@ -31,7 +31,7 @@ sealed class ConcretePackageInfo(val owner: PackageInfo, cp: ClassPath, pkg: Str
 
   lazy val packages = {
     cp.packagesIn(pkg).iterator.map { p =>
-      p.name.stripPrefix(s"$pkg.") -> new ConcretePackageInfo(this, cp, p.name, defs)
+      p.name.stripPrefix(s"$pkg.") -> new ConcretePackageInfo(owner, cp, p.name, defs)
     }.to[({type M[_] = mutable.Map[String, PackageInfo]})#M]
   }
 
@@ -43,17 +43,9 @@ sealed class ConcretePackageInfo(val owner: PackageInfo, cp: ClassPath, pkg: Str
   }
 }
 
-final private[core] class DefinitionsPackageInfo(defs: Definitions)
-    extends ConcretePackageInfo(
-      NoPackageInfo,
-      AggregateClassPath.createAggregate(defs.lib.toList :+ defs.classPath: _*),
-      ClassPath.RootPackage,
-      defs,
-    )
-
-private[core] object DefinitionsTargetPackageInfo {
+private[core] object TargetRootPackageInfo {
   def create(defs: Definitions): PackageInfo = {
-    val pkg = new DefinitionsTargetPackageInfo(defs.root)
+    val pkg = new TargetRootPackageInfo(defs)
     val cp = defs.lib.getOrElse(AggregateClassPath(Nil))
     for (p <- cp.packagesIn(ClassPath.RootPackage)) {
       pkg.packages(p.name) = new ConcretePackageInfo(pkg, cp, p.name, defs)
@@ -63,11 +55,11 @@ private[core] object DefinitionsTargetPackageInfo {
   }
 }
 
-final private[core] class DefinitionsTargetPackageInfo(root: PackageInfo)
-  extends SyntheticPackageInfo(root, "<root>")
-{
-  // Needed to fetch classes located in the root (empty package).
-  override lazy val classes = root.classes
+final private[core] class TargetRootPackageInfo(val definitions: Definitions) extends PackageInfo {
+  def owner         = definitions.root
+  def name          = "<root>"
+  lazy val packages = mutable.Map.empty[String, PackageInfo]
+  lazy val classes  = definitions.root.classes // Fetch classes located in the root/empty package
 }
 
 /** Package information, including available classes and packages, and what is accessible. */
@@ -84,13 +76,7 @@ sealed abstract class PackageInfo {
     else s"${owner.fullName}.$name"
   }
 
-  final def isRoot: Boolean = this match {
-    case NoPackageInfo                   => true
-    case _: DefinitionsPackageInfo       => true
-    case _: DefinitionsTargetPackageInfo => true
-    case _: ConcretePackageInfo          => false
-    case _: SyntheticPackageInfo         => false
-  }
+  final def isRoot: Boolean = owner == NoPackageInfo || owner == definitions.root
 
   final lazy val accessibleClasses: Set[ClassInfo] = {
     // Fixed point iteration for finding all accessible classes.

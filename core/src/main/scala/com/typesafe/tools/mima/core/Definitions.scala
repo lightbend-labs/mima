@@ -1,8 +1,9 @@
 package com.typesafe.tools.mima.core
 
 import scala.annotation.tailrec
+import scala.tools.nsc.classpath.AggregateClassPath
 import scala.tools.nsc.symtab.classfile.ClassfileConstants._
-import scala.tools.nsc.util.ClassPath
+import scala.tools.nsc.util.ClassPath, ClassPath.RootPackage
 
 /** This class holds together a root package and a classpath.
  *  It also offers definitions of commonly used classes, including java.lang.Object.
@@ -11,8 +12,9 @@ import scala.tools.nsc.util.ClassPath
  *  used to resolve type names during classfile parsing.
  */
 final class Definitions(val lib: Option[ClassPath], val classPath: ClassPath) {
-  lazy val root: PackageInfo          = new DefinitionsPackageInfo(this)
-  lazy val targetPackage: PackageInfo = DefinitionsTargetPackageInfo.create(this)
+  private lazy val cp: ClassPath      = AggregateClassPath.createAggregate(lib.toList :+ classPath: _*)
+  lazy val root: PackageInfo          = new ConcretePackageInfo(NoPackageInfo, cp, RootPackage, this)
+  lazy val targetPackage: PackageInfo = TargetRootPackageInfo.create(this)
   lazy val ObjectClass: ClassInfo     = fromName("java.lang.Object")
   lazy val AnnotationClass: ClassInfo = fromName("java.lang.annotation.Annotation")
 
@@ -24,7 +26,7 @@ final class Definitions(val lib: Option[ClassPath], val classPath: ClassPath) {
     @tailrec def loop(pkg: PackageInfo, parts: List[String]): ClassInfo = parts match {
       case Nil      => NoClass
       case c :: Nil => pkg.classes.getOrElse(c, new SyntheticClassInfo(pkg, c))
-      case p :: rem => loop(pkg.packages.getOrElseUpdate(p, new SyntheticPackageInfo(pkg, p)), rem)
+      case p :: rem => loop(pkg.packages.getOrElseUpdate(p, new EmptyPackage(pkg, p)), rem)
     }
     loop(root, name.split("\\.").toList)
   }
