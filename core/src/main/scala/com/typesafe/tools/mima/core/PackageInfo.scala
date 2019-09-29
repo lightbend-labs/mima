@@ -46,7 +46,7 @@ class ConcretePackageInfo(owner: PackageInfo, cp: ClassPath, val pkg: String, va
 
   lazy val packages: mutable.Map[String, PackageInfo] =
     mutable.Map() ++= cp.packagesIn(pkg).map { p =>
-      p.name.stripPrefix(s"$pkg.") -> new ConcretePackageInfo(owner, cp, p.name, defs)
+      p.name.stripPrefix(s"$pkg.") -> new ConcretePackageInfo(this, cp, p.name, defs)
     }
 
   lazy val classes: mutable.Map[String, ClassInfo] =
