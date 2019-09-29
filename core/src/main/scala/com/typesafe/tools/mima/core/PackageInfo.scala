@@ -138,7 +138,5 @@ abstract class PackageInfo(val owner: PackageInfo) {
     (traitName(name), tclazz)
   }
 
-  override def toString = "package "+name
-
-  def packageString = "package "+fullName
+  override def toString = s"package $fullName"
 }
