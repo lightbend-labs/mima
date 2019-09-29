@@ -48,17 +48,17 @@ object MimaSettings {
       ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.definitionsTargetPackages"),
       ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.packagesFrom"),
 
-      // Redefined (or dropped) internal methods and classes
+      // Redefined or dropped internal methods and classes
       ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.ProblemReporting.isReported"),
       ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.plugin.SbtMima.loadMimaIgnoredProblems"),
       ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.plugin.SbtMima$ParsingException*"),
+      ProblemFilters.exclude[Problem]("com.typesafe.tools.mima.core.*PackageInfo*"),
 
       // defined final
       ProblemFilters.exclude[FinalClassProblem]("com.typesafe.tools.mima.core.Definitions"),
 
       // widened param/result types
       ProblemFilters.exclude[IncompatibleResultTypeProblem]("com.typesafe.tools.mima.core.Definitions.root"),
-      ProblemFilters.exclude[IncompatibleMethTypeProblem]("com.typesafe.tools.mima.core.DefinitionsTargetPackageInfo.this"),
     ),
   )
 }
