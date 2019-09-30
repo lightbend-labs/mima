@@ -22,15 +22,15 @@ object ClassInfo {
 sealed class SyntheticClassInfo(owner: PackageInfo, val bytecodeName: String) extends ClassInfo(owner) {
   final protected def afterLoading[A](x: => A): A = x
 
-  override lazy val superClasses        = Set(ClassInfo.ObjectClass)
-  final override lazy val allTraits     = Set.empty[ClassInfo]
-  final override lazy val allInterfaces = Set.empty[ClassInfo]
+  override lazy val superClasses        = List(ClassInfo.ObjectClass)
+  final override lazy val allTraits     = Nil
+  final override lazy val allInterfaces = Nil
 
   override def canEqual(other: Any) = other.isInstanceOf[SyntheticClassInfo]
 }
 
 object NoClass extends SyntheticClassInfo(NoPackageInfo, "<noclass>") {
-  override lazy val superClasses = Set.empty[ClassInfo]
+  override lazy val superClasses = Nil
 
   override def canEqual(other: Any) = other.isInstanceOf[NoClass.type]
 }
@@ -92,12 +92,12 @@ sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Eq
   final def description: String       = s"$declarationPrefix $formattedFullName"
   final def classString: String       = s"$accessModifier $declarationPrefix $formattedFullName".trim
 
-  lazy val superClasses: Set[ClassInfo] = {
-    if (this == ClassInfo.ObjectClass) Set.empty
-    else superClass.superClasses + superClass
+  lazy val superClasses: List[ClassInfo] = {
+    if (this == ClassInfo.ObjectClass) Nil
+    else (superClass.superClasses :+ superClass).distinct
   }
 
-  private def thisAndSuperClasses = Iterator.single(this) ++ superClasses.iterator
+  private def thisAndSuperClasses = (this :: superClasses).iterator
 
   final def lookupClassFields(field: FieldInfo): Iterator[FieldInfo] =
     thisAndSuperClasses.flatMap(_.fields.get(field.bytecodeName))
@@ -163,15 +163,17 @@ sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Eq
   }
 
   /** All traits inherited directly or indirectly by this class. */
-  lazy val allTraits: Set[ClassInfo] = {
-    if (this == ClassInfo.ObjectClass) Set.empty
-    else superClass.allTraits ++ directTraits
+  lazy val allTraits: List[ClassInfo] = {
+    if (this == ClassInfo.ObjectClass) Nil else {
+      val allTraits = if (this eq superClass) Nil else superClass.allTraits
+      (allTraits ::: directTraits).distinct
+    }
   }
 
   /** All interfaces inherited directly or indirectly by this class. */
-  lazy val allInterfaces: Set[ClassInfo] = {
-    if (this == ClassInfo.ObjectClass) Set.empty
-    else superClass.allInterfaces ++ interfaces ++ interfaces.flatMap(_.allInterfaces)
+  lazy val allInterfaces: List[ClassInfo] = {
+    if (this == ClassInfo.ObjectClass) Nil
+    else (superClass.allInterfaces ::: interfaces ::: interfaces.flatMap(_.allInterfaces)).distinct
   }
 
   /** Does this implementation class have a static implementation of given method `m`? */
