@@ -7,18 +7,18 @@ object MemberInfo {
 sealed abstract class MemberInfo(val owner: ClassInfo, val bytecodeName: String, val flags: Int, val descriptor: String)
     extends InfoLike
 {
-  var isDeprecated = false
-  var signature    = "" // Includes generics. 'descriptor' is the erased version.
+  final var isDeprecated: Boolean = false
+  final var signature: String     = "" // Includes generics. 'descriptor' is the erased version.
 
   def nonAccessible: Boolean
 
-  def fullName: String          = s"${owner.formattedFullName}.$decodedName"
-  def abstractPrefix            = if (isDeferred && !owner.isTrait) "abstract " else ""
-  def staticPrefix: String      = if (isStatic) "static " else ""
-  def tpe: Type                 = owner.owner.definitions.fromDescriptor(descriptor)
-  def hasSyntheticName: Boolean = decodedName.contains('$')
+  final def fullName: String          = s"${owner.formattedFullName}.$decodedName"
+  final def abstractPrefix            = if (isDeferred && !owner.isTrait) "abstract " else ""
+  final def staticPrefix: String      = if (isStatic) "static " else ""
+  final def tpe: Type                 = owner.owner.definitions.fromDescriptor(descriptor)
+  final def hasSyntheticName: Boolean = decodedName.contains('$')
 
-  def memberString: String = this match {
+  final def memberString: String = this match {
     case info: FieldInfo  => info.fieldString
     case info: MethodInfo => info.methodString
   }

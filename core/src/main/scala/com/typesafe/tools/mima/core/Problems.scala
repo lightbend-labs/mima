@@ -14,13 +14,13 @@ trait TemplateRef extends ProblemRef
 trait MemberRef extends ProblemRef
 
 sealed abstract class Problem extends ProblemRef {
-  override def matchName: Some[String] = this match {
+  final override def matchName: Some[String] = this match {
     case p: TemplateProblem => Some(p.ref.fullName)
     case p: MemberProblem   => Some(p.ref.fullName)
   }
 
   /** 'affectedVersion' is "current" for bincompat, "other" or "previous" for forward-compat. */
-  def description: String => String = affectedVersion => this match {
+  final def description: String => String = affectedVersion => this match {
     case MissingClassProblem(oldclazz)                 => s"${oldclazz.classString} does not have a correspondent in $affectedVersion version"
     case IncompatibleTemplateDefProblem(ref, newclazz) => s"declaration of ${ref.description} is ${newclazz.description} in $affectedVersion version; changing ${ref.declarationPrefix} to ${newclazz.declarationPrefix} breaks client code"
     case InaccessibleClassProblem(ref)                 => s"${ref.classString} is inaccessible in $affectedVersion version, it must be public."

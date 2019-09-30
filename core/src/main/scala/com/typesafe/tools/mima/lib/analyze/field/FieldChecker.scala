@@ -6,7 +6,7 @@ import com.typesafe.tools.mima.core._
 private[analyze] abstract class BaseFieldChecker extends Checker[FieldInfo, ClassInfo] {
   def check(field: FieldInfo, in: ClassInfo): Option[Problem] = {
     if (field.nonAccessible) None else {
-      val newflds = in.lookupClassFields(field.bytecodeName)
+      val newflds = in.lookupClassFields(field)
       if (newflds.hasNext) {
         val newfld = newflds.next
         if (!newfld.isPublic)
