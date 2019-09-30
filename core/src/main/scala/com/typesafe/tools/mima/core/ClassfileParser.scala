@@ -10,13 +10,13 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
 
   private def parseClass(clazz: ClassInfo): Unit = {
     val flags = in.nextChar
-    clazz.flags = flags
+    clazz._flags = flags
     in.skip(2) // external name index
 
-    clazz.superClass = parseSuperClass(clazz, flags)
-    clazz.interfaces = parseInterfaces()
-    clazz.fields     = parseMembers[FieldInfo](clazz)
-    clazz.methods    = parseMembers[MethodInfo](clazz)
+    clazz._superClass = parseSuperClass(clazz, flags)
+    clazz._interfaces = parseInterfaces()
+    clazz._fields     = parseMembers[FieldInfo](clazz)
+    clazz._methods    = parseMembers[MethodInfo](clazz)
     parseAttributes(clazz)
   }
 

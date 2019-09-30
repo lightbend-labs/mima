@@ -105,12 +105,6 @@ sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Eq
   def classString: String    = s"$accessModifier $declarationPrefix $formattedFullName".trim
   def accessModifier: String = if (isProtected) "protected" else if (isPrivate) "private" else ""
 
-  def superClass_=(x: ClassInfo) = _superClass = x
-  def interfaces_=(x: List[ClassInfo]) = _interfaces = x
-  def fields_=(x: Fields) = _fields = x
-  def methods_=(x: Methods) = _methods = x
-  def flags_=(x: Int) = _flags = x
-
   lazy val superClasses: Set[ClassInfo] =
     if (this == ClassInfo.ObjectClass) Set.empty
     else superClass.superClasses + superClass
@@ -222,8 +216,6 @@ sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Eq
 
   /** Is this class an implementation class? */
   lazy val isImplClass: Boolean = bytecodeName.endsWith("$class")
-
-  def implClass_=(ic: ClassInfo) = _implClass = ic
 
   /** The implementation class of this trait, or NoClass if it is not a trait.
    */

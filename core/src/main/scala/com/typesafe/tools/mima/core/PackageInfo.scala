@@ -118,7 +118,7 @@ sealed abstract class PackageInfo {
       if clazz.isImplClass
       traitClass <- classes.get(name.stripSuffix("$class"))
     } {
-      traitClass.implClass = clazz
+      traitClass._implClass = clazz
     }
   }
 
