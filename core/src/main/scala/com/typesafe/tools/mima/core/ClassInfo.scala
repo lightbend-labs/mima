@@ -20,8 +20,7 @@ object ClassInfo {
 
 /** A placeholder class info for a class that is not found on the classpath or in a given package. */
 sealed class SyntheticClassInfo(owner: PackageInfo, val bytecodeName: String) extends ClassInfo(owner) {
-  loaded = true
-  def file: AbstractFile = throw new UnsupportedOperationException
+  final protected def afterLoading[A](x: => A): A = x
 
   override lazy val superClasses        = Set(ClassInfo.ObjectClass)
   final override lazy val allTraits     = Set.empty[ClassInfo]
@@ -40,16 +39,10 @@ object NoClass extends SyntheticClassInfo(NoPackageInfo, "<noclass>") {
 final class ConcreteClassInfo(owner: PackageInfo, val file: AbstractFile) extends ClassInfo(owner) {
   def bytecodeName                  = file.name.stripSuffix(".class")
   override def canEqual(other: Any) = other.isInstanceOf[ConcreteClassInfo]
-}
 
-sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Equals {
-  import ClassInfo._
+  private var loaded: Boolean = false
 
-  def file: AbstractFile
-
-  final protected var loaded: Boolean = false
-
-  private def afterLoading[A](x: => A): A = {
+  protected def afterLoading[A](x: => A) = {
     if (!loaded)
       try {
         ConsoleLogging.info(s"parsing $file")
@@ -59,6 +52,10 @@ sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Eq
       }
     x
   }
+}
+
+sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Equals {
+  import ClassInfo._
 
   final var _innerClasses: Seq[String]   = Nil
   final var _isLocalClass: Boolean       = false
@@ -69,6 +66,8 @@ sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Eq
   final var _methods: Methods            = NoMembers
   final var _flags: Int                  = 0
   final var _implClass: ClassInfo        = NoClass
+
+  protected def afterLoading[A](x: => A): A
 
   final def innerClasses: Seq[String]   = afterLoading(_innerClasses)
   final def isLocalClass: Boolean       = afterLoading(_isLocalClass)
