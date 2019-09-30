@@ -7,20 +7,22 @@ import scala.tools.nsc.mima.ClassPathAccessors
 import scala.tools.nsc.util.ClassPath
 import com.typesafe.tools.mima.core.util.log.ConsoleLogging
 
-sealed class SyntheticPackageInfo(owner: PackageInfo, val name: String) extends PackageInfo(owner) {
+sealed class SyntheticPackageInfo(val owner: PackageInfo, val name: String) extends PackageInfo {
   def definitions   = owner.definitions
   lazy val packages = mutable.Map.empty[String, PackageInfo]
   lazy val classes  = Map.empty[String, ClassInfo]
 }
 
-object NoPackageInfo extends SyntheticPackageInfo(null, "<no package>") {
-  override val owner       = this
-  override def definitions = sys.error("Called definitions on NoPackageInfo")
+object NoPackageInfo extends PackageInfo {
+  val name        = "<no package>"
+  val owner       = this
+  def definitions = sys.error("Called definitions on NoPackageInfo")
+  val packages    = mutable.Map.empty[String, PackageInfo]
+  val classes     = Map.empty[String, ClassInfo]
 }
 
-/** A concrete package. cp should be a directory classpath. */
-sealed class ConcretePackageInfo(owner: PackageInfo, cp: ClassPath, pkg: String, defs: Definitions)
-    extends PackageInfo(owner)
+sealed class ConcretePackageInfo(val owner: PackageInfo, cp: ClassPath, pkg: String, defs: Definitions)
+    extends PackageInfo
 {
   def name        = pkg.split('.').last
   def definitions = defs
@@ -69,8 +71,9 @@ final private[core] class DefinitionsTargetPackageInfo(root: PackageInfo)
 }
 
 /** Package information, including available classes and packages, and what is accessible. */
-sealed abstract class PackageInfo(val owner: PackageInfo) {
+sealed abstract class PackageInfo {
   def name: String
+  def owner: PackageInfo
   def definitions: Definitions
   def packages: mutable.Map[String, PackageInfo]
   def classes: Map[String, ClassInfo]
