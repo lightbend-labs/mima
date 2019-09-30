@@ -15,7 +15,6 @@ sealed class SyntheticPackageInfo(owner: PackageInfo, val name: String) extends 
 
 object NoPackageInfo extends SyntheticPackageInfo(null, "<no package>") {
   override val owner       = this
-  override def isRoot      = true
   override def definitions = sys.error("Called definitions on NoPackageInfo")
 }
 
@@ -49,9 +48,6 @@ final private[core] class DefinitionsPackageInfo(defs: Definitions)
       ClassPath.RootPackage,
       defs,
     )
-{
-  override def isRoot = true
-}
 
 private[core] object DefinitionsTargetPackageInfo {
   def create(defs: Definitions): PackageInfo = {
@@ -68,8 +64,6 @@ private[core] object DefinitionsTargetPackageInfo {
 final private[core] class DefinitionsTargetPackageInfo(root: PackageInfo)
   extends SyntheticPackageInfo(root, "<root>")
 {
-  override def isRoot = true
-
   // Needed to fetch classes located in the root (empty package).
   override lazy val classes = root.classes
 }
@@ -87,7 +81,13 @@ sealed abstract class PackageInfo(val owner: PackageInfo) {
     else s"${owner.fullName}.$name"
   }
 
-  def isRoot = false
+  final def isRoot: Boolean = this match {
+    case NoPackageInfo                   => true
+    case _: DefinitionsPackageInfo       => true
+    case _: DefinitionsTargetPackageInfo => true
+    case _: ConcretePackageInfo          => false
+    case _: SyntheticPackageInfo         => false
+  }
 
   final lazy val accessibleClasses: Set[ClassInfo] = {
     // Fixed point iteration for finding all accessible classes.
