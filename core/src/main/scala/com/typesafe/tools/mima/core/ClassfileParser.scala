@@ -20,14 +20,14 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
     parseAttributes(clazz)
   }
 
-  def parseSuperClass(clazz: ClassInfo, flags: Int): ClassInfo = {
+  private def parseSuperClass(clazz: ClassInfo, flags: Int): ClassInfo = {
     if (isAnnotation(flags)) {
       in.skip(2)
       clazz.owner.definitions.AnnotationClass
     } else pool.getSuperClass(in.nextChar)
   }
 
-  def parseInterfaces(): List[ClassInfo] = {
+  private def parseInterfaces(): List[ClassInfo] = {
     List.fill(in.nextChar)(pool.getSuperClass(in.nextChar))
   }
 
@@ -96,7 +96,7 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
 }
 
 object ClassfileParser {
-  def parseInPlace(clazz: ClassInfo, file: AbstractFile): Unit = {
+  private[core] def parseInPlace(clazz: ClassInfo, file: AbstractFile): Unit = {
     val in = new BufferReader(file.toByteArray)
     parseHeader(in, file.toString())
     val pool = ConstantPool.parseNew(clazz.owner.definitions, in)

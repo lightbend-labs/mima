@@ -15,7 +15,7 @@ object Type {
 sealed abstract class Type {
   def resultType: Type = throw new UnsupportedOperationException
 
-  override def toString = this match {
+  final override def toString = this match {
     case ValueType(name)                => name
     case ClassType(clazz)               => ClassInfo.formatClassName(clazz.fullName) // formattedFullName?
     case ArrayType(elemType)            => s"Array[$elemType]"
