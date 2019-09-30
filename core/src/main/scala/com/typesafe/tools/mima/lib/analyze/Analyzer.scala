@@ -68,7 +68,7 @@ private[analyze] trait Analyzer extends ((ClassInfo, ClassInfo) => List[Problem]
     def noInheritedMatchingMethod(clazz: ClassInfo, deferredMethod: MethodInfo)(
         extraMethodMatchingCond: MemberInfo => Boolean
     ): Boolean = {
-      val methods = clazz.lookupMethods(deferredMethod.bytecodeName)
+      val methods = clazz.lookupMethods(deferredMethod)
       val matchingMethods = methods.filter(_.matchesType(deferredMethod))
 
       !matchingMethods.exists { method =>
@@ -108,7 +108,7 @@ private[analyze] class ClassAnalyzer extends Analyzer {
   override def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
     (for {
       newAbstrMeth <- newclazz.deferredMethods
-      problem <- oldclazz.lookupMethods(newAbstrMeth.bytecodeName).find(_.descriptor == newAbstrMeth.descriptor) match {
+      problem <- oldclazz.lookupMethods(newAbstrMeth).find(_.descriptor == newAbstrMeth.descriptor) match {
         case None        => Some(ReversedMissingMethodProblem(newAbstrMeth))
         case Some(found) => if (found.isConcrete) Some(ReversedAbstractMethodProblem(newAbstrMeth)) else None
       }
@@ -124,7 +124,7 @@ private[analyze] class TraitAnalyzer extends Analyzer {
     val res = scala.collection.mutable.ListBuffer.empty[Problem]
 
     for (newmeth <- newclazz.emulatedConcreteMethods if !oldclazz.hasStaticImpl(newmeth)) {
-      if (!oldclazz.lookupMethods(newmeth.bytecodeName).exists(_.descriptor == newmeth.descriptor)) {
+      if (!oldclazz.lookupMethods(newmeth).exists(_.descriptor == newmeth.descriptor)) {
         // this means that the method is brand new and therefore the implementation
         // has to be injected
         res += ReversedMissingMethodProblem(newmeth)
@@ -136,7 +136,7 @@ private[analyze] class TraitAnalyzer extends Analyzer {
     }
 
     for (newmeth <- newclazz.deferredMethods) {
-      val oldmeths = oldclazz.lookupMethods(newmeth.bytecodeName)
+      val oldmeths = oldclazz.lookupMethods(newmeth)
       oldmeths.find(_.descriptor == newmeth.descriptor) match {
         case Some(_) => ()
         case None    => res += ReversedMissingMethodProblem(newmeth)

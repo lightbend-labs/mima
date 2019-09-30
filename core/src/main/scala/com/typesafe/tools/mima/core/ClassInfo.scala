@@ -116,21 +116,24 @@ abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Equals {
     if (this == ClassInfo.ObjectClass) Set.empty
     else superClass.superClasses + superClass
 
-  def lookupClassFields(name: String): Iterator[FieldInfo] =
-    (Iterator.single(this) ++ superClasses.iterator) flatMap (_.fields.get(name))
+  final def lookupClassFields(field: FieldInfo): Iterator[FieldInfo] =
+    (Iterator.single(this) ++ superClasses.iterator) flatMap (_.fields.get(field.bytecodeName))
 
-  def lookupClassMethods(name: String): Iterator[MethodInfo] =
-    if (name == MemberInfo.ConstructorName) methods.get(name) // constructors are not inherited
-    else (Iterator.single(this) ++ superClasses.iterator) flatMap (_.methods.get(name))
+  final def lookupClassMethods(method: MethodInfo): Iterator[MethodInfo] = {
+    method.bytecodeName match {
+      case MemberInfo.ConstructorName => methods.get(MemberInfo.ConstructorName) // constructors are not inherited
+      case name                       => (Iterator.single(this) ++ superClasses.iterator).flatMap(_.methods.get(name))
+    }
+  }
 
-  private def lookupInterfaceMethods(name: String): Iterator[MethodInfo] =
-    allInterfaces.iterator flatMap (_.methods.get(name))
+  private def lookupInterfaceMethods(method: MethodInfo): Iterator[MethodInfo] =
+    allInterfaces.iterator flatMap (_.methods.get(method.bytecodeName))
 
-  def lookupMethods(name: String): Iterator[MethodInfo] =
-    lookupClassMethods(name) ++ lookupInterfaceMethods(name)
+  final def lookupMethods(method: MethodInfo): Iterator[MethodInfo] =
+    lookupClassMethods(method) ++ lookupInterfaceMethods(method)
 
-  def lookupConcreteTraitMethods(name: String): Iterator[MethodInfo] =
-    allTraits.toList.flatten(_.concreteMethods).filter(_.bytecodeName == bytecodeName).iterator
+  final def lookupConcreteTraitMethods(method: MethodInfo): Iterator[MethodInfo] =
+    allTraits.iterator.flatMap(_.concreteMethods).filter(_.bytecodeName == method.bytecodeName)
 
   /** The concrete methods of this trait */
   lazy val concreteMethods: List[MethodInfo] = {
