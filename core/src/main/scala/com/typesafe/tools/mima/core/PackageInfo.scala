@@ -112,6 +112,7 @@ sealed abstract class PackageInfo {
     accessibleClassesUnder(Set.empty, Set.empty)
   }
 
+  // Used to make sure trait classes have their impl class field set
   final lazy val setImplClasses: Unit = {
     for {
       (name, clazz) <- classes.iterator

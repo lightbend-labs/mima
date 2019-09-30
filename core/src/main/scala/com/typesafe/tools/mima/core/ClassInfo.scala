@@ -77,37 +77,25 @@ sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Eq
   final def fields: Fields              = afterLoading(_fields)
   final def methods: Methods            = afterLoading(_methods)
   final def flags: Int                  = afterLoading(_flags)
+  final def implClass: ClassInfo        = { owner.setImplClasses; _implClass } // returns NoClass if this is not a trait
 
-  lazy val fullName: String = {
-    assert(bytecodeName != null)
-    if (owner.isRoot) bytecodeName
-    else owner.fullName + "." + bytecodeName
-  }
+  final def isTrait: Boolean     = implClass ne NoClass // trait with some concrete methods or fields
+  final def isModule: Boolean    = bytecodeName.endsWith("$") // super scuffed
+  final def isImplClass: Boolean = bytecodeName.endsWith("$class")
+  final def isInterface: Boolean = ClassfileParser.isInterface(flags) // java interface or trait w/o impl methods
+  final def isClass: Boolean     = !isTrait && !isInterface // class, object or trait's impl class
 
-  final override def equals(other: Any): Boolean = other match {
-    case that: ClassInfo => that.canEqual(this) && this.fullName == that.fullName
-    case _               => false
-  }
+  final def accessModifier: String    = if (isProtected) "protected" else if (isPrivate) "private" else ""
+  final def declarationPrefix: String = if (isModule) "object" else if (isTrait) "trait" else if (isInterface) "interface" else "class"
+  final lazy val fullName: String     = if (owner.isRoot) bytecodeName else s"${owner.fullName}.$bytecodeName"
+  final def formattedFullName: String = formatClassName(if (isModule) fullName.init else fullName)
+  final def description: String       = s"$declarationPrefix $formattedFullName"
+  final def classString: String       = s"$accessModifier $declarationPrefix $formattedFullName".trim
 
-  final override def hashCode = this.fullName.hashCode
-
-  override def canEqual(other: Any) = other.isInstanceOf[ClassInfo]
-
-  def formattedFullName = formatClassName(if (isModule) fullName.init else fullName)
-
-  def declarationPrefix = {
-    if (isModule) "object"
-    else if (isTrait) "trait"
-    else if (isInterface) "interface" // java interfaces and traits with no implementation methods
-    else "class"
-  }
-
-  def classString: String    = s"$accessModifier $declarationPrefix $formattedFullName".trim
-  def accessModifier: String = if (isProtected) "protected" else if (isPrivate) "private" else ""
-
-  lazy val superClasses: Set[ClassInfo] =
+  lazy val superClasses: Set[ClassInfo] = {
     if (this == ClassInfo.ObjectClass) Set.empty
     else superClass.superClasses + superClass
+  }
 
   private def thisAndSuperClasses = Iterator.single(this) ++ superClasses.iterator
 
@@ -158,7 +146,7 @@ sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Eq
    *  Traits appear in linearization order of this class or trait.
    */
   final lazy val directTraits: List[ClassInfo] = {
-    val superClassTraits = superClass.allTraits.toSet
+    val superClassTraits = superClass.allTraits
 
     // All traits in the transitive, reflexive inheritance closure of the given trait.
     def traitClosure(t: ClassInfo): List[ClassInfo] = {
@@ -214,28 +202,11 @@ sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Eq
     i == ilen && j == tlen
   }
 
-  /** Is this class an implementation class? */
-  lazy val isImplClass: Boolean = bytecodeName.endsWith("$class")
-
-  /** The implementation class of this trait, or NoClass if it is not a trait.
-   */
-  def implClass: ClassInfo = {
-    owner.setImplClasses // make sure we have implClass set
-    _implClass
+  def canEqual(other: Any) = other.isInstanceOf[ClassInfo]
+  final override def equals(other: Any) = other match {
+    case that: ClassInfo => that.canEqual(this) && fullName == that.fullName
+    case _               => false
   }
-
-  /** is this a class, an object or a trait's implementation class*/
-  def isClass: Boolean = !isTrait && !isInterface
-
-  /** Is this class a trait with some concrete methods or fields? */
-  def isTrait: Boolean = implClass ne NoClass
-
-  /** Is this class a trait without concrete methods or a java interface? */
-  def isInterface: Boolean = ClassfileParser.isInterface(flags)
-
-  def isModule: Boolean = bytecodeName.endsWith("$")
-
-  override def toString = s"class $bytecodeName"
-
-  def description: String = s"$declarationPrefix $formattedFullName"
+  final override def hashCode = fullName.hashCode
+  final override def toString = s"class $bytecodeName"
 }
