@@ -29,8 +29,6 @@ object MimaSettings {
       ProblemFilters.exclude[MemberProblem]("com.typesafe.tools.mima.core.Config.*"),
       ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.core.Settings"),
 
-      // In-lined an internal package method
-      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.asClassPathString"),
       // Dropped exposing MiMaLib's log
       ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.lib.MiMaLib.log"),
       // Made MiMaLib final
@@ -39,26 +37,26 @@ object MimaSettings {
       ProblemFilters.exclude[IncompatibleMethTypeProblem]("com.typesafe.tools.mima.lib.MiMaLib.collectProblems"),
 
       // Inlined or replaced
-      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.resolveClassPath"),
-      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.dirClassPath"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.asClassPathString"),
       ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.baseClassPath"),
-      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.reporterClassPath"),
       ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.classFilesFrom"),
       ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.definitionsPackageInfo"),
       ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.definitionsTargetPackages"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.dirClassPath"),
       ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.packagesFrom"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.reporterClassPath"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.package.resolveClassPath"),
 
-      // Redefined or dropped internal methods and classes
-      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.ProblemReporting.isReported"),
-      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.plugin.SbtMima.loadMimaIgnoredProblems"),
-      ProblemFilters.exclude[MissingClassProblem]("com.typesafe.tools.mima.plugin.SbtMima$ParsingException*"),
-      ProblemFilters.exclude[Problem]("com.typesafe.tools.mima.core.*PackageInfo*"),
-
-      // defined final
-      ProblemFilters.exclude[FinalClassProblem]("com.typesafe.tools.mima.core.Definitions"),
-
-      // widened param/result types
-      ProblemFilters.exclude[IncompatibleResultTypeProblem]("com.typesafe.tools.mima.core.Definitions.root"),
+      // non-problems
+      ProblemFilters.exclude[FinalClassProblem]("com.typesafe.tools.mima.core.*"),
+      ProblemFilters.exclude[FinalMethodProblem]("com.typesafe.tools.mima.core.*"),
+      ProblemFilters.exclude[Problem]("com.typesafe.tools.mima.core.*Class*"),
+      ProblemFilters.exclude[Problem]("com.typesafe.tools.mima.core.*Definitions*"),
+      ProblemFilters.exclude[Problem]("com.typesafe.tools.mima.core.*Info*"),
+      ProblemFilters.exclude[Problem]("com.typesafe.tools.mima.core.*Members*"),
+      ProblemFilters.exclude[Problem]("com.typesafe.tools.mima.core.*Package*"),
+      ProblemFilters.exclude[Problem]("com.typesafe.tools.mima.core.ProblemReporting*"),
+      ProblemFilters.exclude[Problem]("com.typesafe.tools.mima.plugin.SbtMima*"),
     ),
   )
 }
