@@ -134,8 +134,8 @@ abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Equals {
 
   /** The concrete methods of this trait */
   lazy val concreteMethods: List[MethodInfo] = {
-    if (isTrait) methods.iterator.filter(m => hasStaticImpl(m) || !m.isDeferred).toList
-    else if (isClass || isInterface) methods.iterator.filter(!_.isDeferred).toList
+    if (isTrait) methods.value.filter(m => hasStaticImpl(m) || m.isConcrete)
+    else if (isClass || isInterface) methods.value.filter(_.isConcrete)
     else Nil
   }
 
@@ -147,13 +147,10 @@ abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Equals {
     concreteMethods.filter(_.isDeferred)
 
   /** The deferred methods of this trait */
-  lazy val deferredMethods: List[MethodInfo] =
-    methods.iterator.toList.filterNot(concreteMethods.toSet)
+  lazy val deferredMethods: List[MethodInfo] = methods.value.filterNot(concreteMethods.toSet)
 
   /** All deferred methods of this type as seen in the bytecode. */
-  def deferredMethodsInBytecode: List[MethodInfo] =
-    if (isTrait) methods.iterator.toList
-    else deferredMethods
+  def deferredMethodsInBytecode: List[MethodInfo] = if (isTrait) methods.value else deferredMethods
 
   /** The inherited traits in the linearization of this class or trait,
    *  except any traits inherited by its superclass.

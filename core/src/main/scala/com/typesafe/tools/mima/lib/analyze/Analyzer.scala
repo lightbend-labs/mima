@@ -41,10 +41,10 @@ private[analyze] trait Analyzer extends ((ClassInfo, ClassInfo) => List[Problem]
 
   def analyzeFields(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
     for {
-      oldfld <- oldclazz.fields.iterator.toList
+      oldfld <- oldclazz.fields.value.iterator
       p <- fieldChecker.check(oldfld, newclazz)
     } yield p
-  }
+  }.toList
 
   def analyzeMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] =
     analyzeOldClassMethods(oldclazz, newclazz) ::: analyzeNewClassMethods(oldclazz, newclazz)
@@ -52,10 +52,10 @@ private[analyze] trait Analyzer extends ((ClassInfo, ClassInfo) => List[Problem]
   /** Analyze incompatibilities that may derive from methods in the `oldclazz`*/
   def analyzeOldClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
     for {
-      oldmeth <- oldclazz.methods.iterator.toList
+      oldmeth <- oldclazz.methods.value.iterator
       p <- methodChecker.check(oldmeth, newclazz)
     } yield p
-  }
+  }.toList
 
   def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem]
 
