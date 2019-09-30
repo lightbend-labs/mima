@@ -47,20 +47,43 @@ sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Eq
 
   def file: AbstractFile
 
+  final protected var loaded: Boolean = false
+
+  private def afterLoading[A](x: => A): A = {
+    if (!loaded)
+      try {
+        ConsoleLogging.info(s"parsing $file")
+        ClassfileParser.parseInPlace(this, file)
+      } finally {
+        loaded = true
+      }
+    x
+  }
+
+  final var _innerClasses: Seq[String]   = Nil
+  final var _isLocalClass: Boolean       = false
+  final var _isTopLevel: Boolean         = true
+  final var _superClass: ClassInfo       = NoClass
+  final var _interfaces: List[ClassInfo] = Nil
+  final var _fields: Fields              = NoMembers
+  final var _methods: Methods            = NoMembers
+  final var _flags: Int                  = 0
+  final var _implClass: ClassInfo        = NoClass
+
+  final def innerClasses: Seq[String]   = afterLoading(_innerClasses)
+  final def isLocalClass: Boolean       = afterLoading(_isLocalClass)
+  final def isTopLevel: Boolean         = afterLoading(_isTopLevel)
+  final def superClass: ClassInfo       = afterLoading(_superClass)
+  final def interfaces: List[ClassInfo] = afterLoading(_interfaces)
+  final def fields: Fields              = afterLoading(_fields)
+  final def methods: Methods            = afterLoading(_methods)
+  final def flags: Int                  = afterLoading(_flags)
+
   lazy val fullName: String = {
     assert(bytecodeName != null)
     if (owner.isRoot) bytecodeName
     else owner.fullName + "." + bytecodeName
   }
-
-  var _innerClasses: Seq[String] = Seq.empty
-  def innerClasses = { ensureLoaded(); _innerClasses }
-
-  var _isLocalClass = false
-  def isLocalClass = { ensureLoaded(); _isLocalClass}
-
-  var _isTopLevel = true
-  def isTopLevel = { ensureLoaded(); _isTopLevel }
 
   final override def equals(other: Any): Boolean = other match {
     case that: ClassInfo => that.canEqual(this) && this.fullName == that.fullName
@@ -76,35 +99,12 @@ sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Eq
   def declarationPrefix = {
     if (isModule) "object"
     else if (isTrait) "trait"
-    else if (loaded && isInterface) "interface" // java interfaces and traits with no implementation methods
+    else if (isInterface) "interface" // java interfaces and traits with no implementation methods
     else "class"
   }
 
   def classString: String    = s"$accessModifier $declarationPrefix $formattedFullName".trim
   def accessModifier: String = if (isProtected) "protected" else if (isPrivate) "private" else ""
-
-  protected var loaded = false
-
-  override protected def ensureLoaded() =
-    if (!loaded)
-      try {
-        ConsoleLogging.info(s"parsing $file")
-        ClassfileParser.parseInPlace(this, file)
-      } finally {
-        loaded = true
-      }
-
-  private var _superClass: ClassInfo = NoClass
-  private var _interfaces: List[ClassInfo] = Nil
-  private var _fields: Fields = NoMembers
-  private var _methods: Methods = NoMembers
-  private var _flags: Int = 0
-
-  def superClass: ClassInfo = { ensureLoaded(); _superClass }
-  def interfaces: List[ClassInfo] = { ensureLoaded(); _interfaces }
-  def fields: Fields = { ensureLoaded(); _fields }
-  def methods: Methods = { ensureLoaded(); _methods }
-  override def flags: Int = _flags
 
   def superClass_=(x: ClassInfo) = _superClass = x
   def interfaces_=(x: List[ClassInfo]) = _interfaces = x
@@ -224,9 +224,6 @@ sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Eq
   /** Is this class an implementation class? */
   lazy val isImplClass: Boolean = bytecodeName.endsWith("$class")
 
-  /** The implementation class corresponding to this trait */
-  private var _implClass: ClassInfo = NoClass
-
   def implClass_=(ic: ClassInfo) = _implClass = ic
 
   /** The implementation class of this trait, or NoClass if it is not a trait.
@@ -243,10 +240,7 @@ sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Eq
   def isTrait: Boolean = implClass ne NoClass
 
   /** Is this class a trait without concrete methods or a java interface? */
-  def isInterface: Boolean = {
-    ensureLoaded()
-    ClassfileParser.isInterface(flags)
-  }
+  def isInterface: Boolean = ClassfileParser.isInterface(flags)
 
   def isModule: Boolean = bytecodeName.endsWith("$")
 
