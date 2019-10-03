@@ -9,18 +9,15 @@ import com.typesafe.tools.mima.lib.analyze.method.TraitMethodChecker
 import com.typesafe.tools.mima.lib.analyze.template.TemplateChecker
 
 object Analyzer {
-  def apply(oldclz: ClassInfo, newclz: ClassInfo): List[Problem] = {
-    if (oldclz.isClass && newclz.isClass) new ClassAnalyzer().apply(oldclz, newclz)
-    else new TraitAnalyzer().apply(oldclz, newclz)
+  def analyze(oldclz: ClassInfo, newclz: ClassInfo): List[Problem] = {
+    if (oldclz.isClass && newclz.isClass) new ClassAnalyzer().analyze(oldclz, newclz)
+    else new TraitAnalyzer().analyze(oldclz, newclz)
   }
 }
 
-private[analyze] trait Analyzer extends ((ClassInfo, ClassInfo) => List[Problem]) {
+private[analyze] trait Analyzer {
   protected def fieldChecker: BaseFieldChecker
   protected def methodChecker: BaseMethodChecker
-
-  def apply(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] =
-    analyze(oldclazz, newclazz)
 
   def analyze(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
     assert(oldclazz.bytecodeName == newclazz.bytecodeName)
@@ -34,7 +31,7 @@ private[analyze] trait Analyzer extends ((ClassInfo, ClassInfo) => List[Problem]
   }
 
   def analyzeTemplateDecl(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] =
-    TemplateChecker(oldclazz, newclazz).toList
+    TemplateChecker.check(oldclazz, newclazz).toList
 
   def analyzeMembers(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] =
     analyzeFields(oldclazz, newclazz) ::: analyzeMethods(oldclazz, newclazz)

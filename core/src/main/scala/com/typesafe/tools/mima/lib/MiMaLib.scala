@@ -29,7 +29,7 @@ final class MiMaLib(classpath: ClassPath, log: Logging = ConsoleLogging) {
     for (oldclazz <- oldpkg.accessibleClasses) {
       log.info(s"Analyzing $oldclazz")
       newpkg.classes.get(oldclazz.bytecodeName) match {
-        case Some(newclazz) => Analyzer(oldclazz, newclazz).foreach(raise)
+        case Some(newclazz) => Analyzer.analyze(oldclazz, newclazz).foreach(raise)
         case None           =>
           // if it is missing a trait implementation class, then no error should be reported
           // since there should be already errors, i.e., missing methods...
