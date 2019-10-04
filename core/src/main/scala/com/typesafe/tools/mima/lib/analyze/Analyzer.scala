@@ -1,8 +1,7 @@
 package com.typesafe.tools.mima.lib.analyze
 
 import com.typesafe.tools.mima.core._
-import com.typesafe.tools.mima.lib.analyze.field.BaseFieldChecker
-import com.typesafe.tools.mima.lib.analyze.field.ClassFieldChecker
+import com.typesafe.tools.mima.lib.analyze.field.FieldChecker
 import com.typesafe.tools.mima.lib.analyze.method.BaseMethodChecker
 import com.typesafe.tools.mima.lib.analyze.method.ClassMethodChecker
 import com.typesafe.tools.mima.lib.analyze.method.TraitMethodChecker
@@ -16,7 +15,6 @@ object Analyzer {
 }
 
 private[analyze] trait Analyzer {
-  protected def fieldChecker: BaseFieldChecker
   protected def methodChecker: BaseMethodChecker
 
   def analyze(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
@@ -34,14 +32,7 @@ private[analyze] trait Analyzer {
     TemplateChecker.check(oldclazz, newclazz).toList
 
   def analyzeMembers(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] =
-    analyzeFields(oldclazz, newclazz) ::: analyzeMethods(oldclazz, newclazz)
-
-  def analyzeFields(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
-    for {
-      oldfld <- oldclazz.fields.value.iterator
-      p <- fieldChecker.check(oldfld, newclazz)
-    } yield p
-  }.toList
+    FieldChecker.check(oldclazz, newclazz) ::: analyzeMethods(oldclazz, newclazz)
 
   def analyzeMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] =
     analyzeOldClassMethods(oldclazz, newclazz) ::: analyzeNewClassMethods(oldclazz, newclazz)
@@ -91,7 +82,6 @@ private[analyze] trait Analyzer {
 }
 
 private[analyze] class ClassAnalyzer extends Analyzer {
-  protected val fieldChecker = new ClassFieldChecker
   protected val methodChecker = new ClassMethodChecker
 
   override def analyze(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
@@ -114,7 +104,6 @@ private[analyze] class ClassAnalyzer extends Analyzer {
 }
 
 private[analyze] class TraitAnalyzer extends Analyzer {
-  protected val fieldChecker = new ClassFieldChecker
   protected val methodChecker = new TraitMethodChecker
 
   override def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
