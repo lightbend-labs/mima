@@ -7,6 +7,8 @@ object Config {
   val verbose: Boolean   = settings.verbose.value
   val debug: Boolean     = settings.debug.value
 
+  val baseClassPath = DeprecatedPathApis.newPathResolver(Config.settings).result
+
   def fatal(msg: String): Nothing = {
     Console.err.println(msg)
     sys.exit(-1)
