@@ -4,15 +4,12 @@ import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.lib.analyze.Checker
 
 private[analyze] abstract class BaseMethodChecker extends Checker[MethodInfo, ClassInfo] {
-  import MethodRules._
   import BaseMethodChecker._
-
-  protected val rules = Seq(AccessModifier, FinalModifier, AbstractModifier, JavaStatic)
 
   protected def check(oldmeth: MethodInfo, newclazz: ClassInfo, methsLookup: ClassInfo => Iterator[MethodInfo]): Option[Problem] = {
     val newmeths = methsLookup(newclazz).filter(oldmeth.paramsCount == _.paramsCount).toList
     newmeths.find(newmeth => hasMatchingDescriptorAndSignature(oldmeth, newmeth)) match {
-      case Some(newmeth) => checkRules(rules)(oldmeth, newmeth)
+      case Some(newmeth) => checkExisting1v1(oldmeth, newmeth)
       case None          =>
         val newmethAndBridges = newmeths.filter(oldmeth.matchesType(_)) // _the_ corresponding new method + its bridges
         newmethAndBridges.find(_.tpe.resultType == oldmeth.tpe.resultType) match {
@@ -28,6 +25,21 @@ private[analyze] abstract class BaseMethodChecker extends Checker[MethodInfo, Cl
             }
         }
     }
+  }
+
+  private def checkExisting1v1(oldmeth: MethodInfo, newmeth: MethodInfo) = {
+    if (newmeth.isLessVisibleThan(oldmeth))
+      Some(InaccessibleMethodProblem(newmeth))
+    else if (oldmeth.nonFinal && newmeth.isFinal && oldmeth.owner.nonFinal)
+      Some(FinalMethodProblem(newmeth))
+    else if (oldmeth.isConcrete && newmeth.isDeferred)
+      Some(DirectAbstractMethodProblem(newmeth))
+    else if (oldmeth.isStatic && !newmeth.isStatic)
+      Some(StaticVirtualMemberProblem(oldmeth))
+    else if (!oldmeth.isStatic && newmeth.isStatic)
+      Some(VirtualStaticMemberProblem(oldmeth))
+    else
+      None
   }
 
   private def uniques(methods: Iterable[MethodInfo]): List[MethodInfo] =
