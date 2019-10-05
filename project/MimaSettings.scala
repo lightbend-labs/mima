@@ -56,6 +56,7 @@ object MimaSettings {
       ProblemFilters.exclude[Problem]("com.typesafe.tools.mima.core.*Members*"),
       ProblemFilters.exclude[Problem]("com.typesafe.tools.mima.core.*Package*"),
       ProblemFilters.exclude[Problem]("com.typesafe.tools.mima.core.ProblemReporting*"),
+      ProblemFilters.exclude[Problem]("com.typesafe.tools.mima.lib.analyze.*"),
       ProblemFilters.exclude[Problem]("com.typesafe.tools.mima.plugin.SbtMima*"),
     ),
   )
