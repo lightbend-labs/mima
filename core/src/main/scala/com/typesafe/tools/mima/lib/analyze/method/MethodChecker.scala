@@ -9,33 +9,28 @@ private[analyze] abstract class BaseMethodChecker extends Checker[MethodInfo, Cl
 
   protected val rules = Seq(AccessModifier, FinalModifier, AbstractModifier, JavaStatic)
 
-  protected def check(method: MethodInfo, newclazz: ClassInfo, methsLookup: ClassInfo => Iterator[MethodInfo]): Option[Problem] = {
-    val meths = methsLookup(newclazz).filter(method.paramsCount == _.paramsCount).toList // newmeths
-    if (meths.isEmpty)
-      Some(DirectMissingMethodProblem(method))
-    else {
-      meths.find(newMethod => hasMatchingDescriptorAndSignature(method, newMethod)) match {
-        case Some(found) => checkRules(rules)(method, found)
-        case None        =>
-          val filtered = meths.filter(method.matchesType(_))
-          filtered.find(_.tpe.resultType == method.tpe.resultType) match {
-            case Some(found) => Some(IncompatibleSignatureProblem(method, found))
-            case None        =>
-              val oldmethsDescriptors = methsLookup(method.owner).map(_.descriptor).toSet
-              if (meths.forall(newmeth => oldmethsDescriptors.contains(newmeth.descriptor)))
-                Some(DirectMissingMethodProblem(method))
-              else {
-                filtered match {
-                  case Nil        => Some(IncompatibleMethTypeProblem(method, uniques(meths)))
-                  case first :: _ => Some(IncompatibleResultTypeProblem(method, first))
-                }
+  protected def check(oldmeth: MethodInfo, newclazz: ClassInfo, methsLookup: ClassInfo => Iterator[MethodInfo]): Option[Problem] = {
+    val newmeths = methsLookup(newclazz).filter(oldmeth.paramsCount == _.paramsCount).toList
+    newmeths.find(newmeth => hasMatchingDescriptorAndSignature(oldmeth, newmeth)) match {
+      case Some(newmeth) => checkRules(rules)(oldmeth, newmeth)
+      case None          =>
+        val newmethAndBridges = newmeths.filter(oldmeth.matchesType(_)) // _the_ corresponding new method + its bridges
+        newmethAndBridges.find(_.tpe.resultType == oldmeth.tpe.resultType) match {
+          case Some(newmeth) => Some(IncompatibleSignatureProblem(oldmeth, newmeth))
+          case None          =>
+            if (newmeths.isEmpty || methsLookup(oldmeth.owner).toStream.lengthCompare(1) > 0) // method was overloaded
+              Some(DirectMissingMethodProblem(oldmeth))
+            else {
+              newmethAndBridges match {
+                case Nil          => Some(IncompatibleMethTypeProblem(oldmeth, uniques(newmeths)))
+                case newmeth :: _ => Some(IncompatibleResultTypeProblem(oldmeth, newmeth))
               }
-          }
-      }
+            }
+        }
     }
   }
 
-  private def uniques(methods: List[MethodInfo]): List[MethodInfo] =
+  private def uniques(methods: Iterable[MethodInfo]): List[MethodInfo] =
     methods.groupBy(_.parametersDesc).values.map(_.head).toList
 }
 private[analyze] object BaseMethodChecker {
