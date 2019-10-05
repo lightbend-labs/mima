@@ -3,12 +3,22 @@ package com.typesafe.tools.mima.lib.analyze.method
 import com.typesafe.tools.mima.core._
 
 private[analyze] object MethodChecker {
-  /** Analyze incompatibilities that may derive from methods in the `oldclazz`. */
-  def check(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
-    for (oldfld <- oldclazz.methods.value; problem <- check1(oldfld, newclazz)) yield problem
+  def check(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] =
+    checkExisting(oldclazz, newclazz) ::: checkNew(oldclazz, newclazz)
+
+  /** Analyze incompatibilities that may derive from changes in existing methods. */
+  private def checkExisting(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
+    for (oldmeth <- oldclazz.methods.value; problem <- checkExisting1(oldmeth, newclazz)) yield problem
   }
 
-  private def check1(oldmeth: MethodInfo, newclazz: ClassInfo): Option[Problem] = {
+  /** Analyze incompatibilities that may derive from new methods in `newclazz`. */
+  private def checkNew(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
+    checkEmulatedConcreteMethodsProblems(oldclazz, newclazz) :::
+      checkDeferredMethodsProblems(oldclazz, newclazz) :::
+      checkInheritedNewAbstractMethodProblems(oldclazz, newclazz)
+  }
+
+  private def checkExisting1(oldmeth: MethodInfo, newclazz: ClassInfo): Option[Problem] = {
     if (oldmeth.nonAccessible)
       None
     else if (newclazz.isClass) {
@@ -96,4 +106,62 @@ private[analyze] object MethodChecker {
 
   private def uniques(methods: Iterable[MethodInfo]): List[MethodInfo] =
     methods.groupBy(_.parametersDesc).values.collect { case method :: _ => method }.toList
+
+  private def checkEmulatedConcreteMethodsProblems(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
+    if (oldclazz.isClass && newclazz.isClass) Nil else {
+      for {
+        newmeth <- newclazz.emulatedConcreteMethods.iterator
+        if !oldclazz.hasStaticImpl(newmeth)
+        problem <- {
+          if (oldclazz.lookupMethods(newmeth).exists(_.descriptor == newmeth.descriptor)) {
+            // a static implementation for the same method existed already, therefore
+            // class that mixed-in the trait already have a forwarder to the implementation
+            // class. Mind that, despite no binary incompatibility arises, program's
+            // semantic may be severely affected.
+            None
+          } else {
+            // this means that the method is brand new and therefore the implementation
+            // has to be injected
+            Some(ReversedMissingMethodProblem(newmeth))
+          }
+        }
+      } yield problem
+    }.toList
+  }
+
+  private def checkDeferredMethodsProblems(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
+    for {
+      newmeth <- newclazz.deferredMethods
+      problem <- oldclazz.lookupMethods(newmeth).find(_.descriptor == newmeth.descriptor) match {
+        case None          => Some(ReversedMissingMethodProblem(newmeth))
+        case Some(oldmeth) =>
+          if (newclazz.isClass && oldmeth.isConcrete)
+            Some(ReversedAbstractMethodProblem(newmeth))
+          else None
+      }
+    } yield problem
+  }
+
+  private def checkInheritedNewAbstractMethodProblems(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
+    def allInheritedTypes(clazz: ClassInfo) = clazz.superClasses ++ clazz.allInterfaces
+    val diffInheritedTypes = allInheritedTypes(newclazz).diff(allInheritedTypes(oldclazz))
+
+    def noInheritedMatchingMethod(clazz: ClassInfo, meth: MethodInfo)(p: MemberInfo => Boolean) = {
+      !clazz.lookupMethods(meth).filter(_.matchesType(meth)).exists(m => m.owner != meth.owner && p(m))
+    }
+
+    for {
+      newInheritedType <- diffInheritedTypes.iterator
+      // if `newInheritedType` is a trait, then the trait's concrete methods should be counted as deferred methods
+      newDeferredMethod <- newInheritedType.deferredMethodsInBytecode
+      // checks that the newDeferredMethod did not already exist in one of the oldclazz supertypes
+      if noInheritedMatchingMethod(oldclazz, newDeferredMethod)(_ => true) &&
+          // checks that no concrete implementation of the newDeferredMethod is provided by one of the newclazz supertypes
+          noInheritedMatchingMethod(newclazz, newDeferredMethod)(_.isConcrete)
+    } yield {
+      // report a binary incompatibility as there is a new inherited abstract method, which can lead to a AbstractErrorMethod at runtime
+      val newmeth = new MethodInfo(newclazz, newDeferredMethod.bytecodeName, newDeferredMethod.flags, newDeferredMethod.descriptor)
+      InheritedNewAbstractMethodProblem(newDeferredMethod, newmeth)
+    }
+  }.toList
 }
