@@ -28,20 +28,7 @@ private[analyze] object MethodChecker {
     val newmeths = methsLookup(newclazz).filter(oldmeth.paramsCount == _.paramsCount).toList
     newmeths.find(newmeth => hasMatchingDescriptorAndSignature(oldmeth, newmeth)) match {
       case Some(newmeth) => checkExisting1v1(oldmeth, newmeth)
-      case None          =>
-        val newmethAndBridges = newmeths.filter(oldmeth.matchesType(_)) // _the_ corresponding new method + its bridges
-        newmethAndBridges.find(_.tpe.resultType == oldmeth.tpe.resultType) match {
-          case Some(newmeth) => Some(IncompatibleSignatureProblem(oldmeth, newmeth))
-          case None          =>
-            if (newmeths.isEmpty || methsLookup(oldmeth.owner).toStream.lengthCompare(1) > 0) // method was overloaded
-              Some(DirectMissingMethodProblem(oldmeth))
-            else {
-              newmethAndBridges match {
-                case Nil          => Some(IncompatibleMethTypeProblem(oldmeth, uniques(newmeths)))
-                case newmeth :: _ => Some(IncompatibleResultTypeProblem(oldmeth, newmeth))
-              }
-            }
-        }
+      case None          => Some(missingOrIncompatible(oldmeth, newmeths, methsLookup))
     }
   }
 
@@ -73,28 +60,40 @@ private[analyze] object MethodChecker {
       None
   }
 
-  private def uniques(methods: Iterable[MethodInfo]): List[MethodInfo] =
-    methods.groupBy(_.parametersDesc).values.map(_.head).toList
-
-  private def checkStaticImplMethod(method: MethodInfo, inclazz: ClassInfo) = {
-    assert(method.owner.hasStaticImpl(method))
-    if (inclazz.hasStaticImpl(method)) {
-      // then it's ok, the method it is still there
-      None
+  private def checkStaticImplMethod(oldmeth: MethodInfo, newclazz: ClassInfo) = {
+    if (newclazz.hasStaticImpl(oldmeth)) {
+      None // then it's ok, the method it is still there
     } else {
       // if a concrete method exists on some inherited trait, then we
       // report the missing method but we can upgrade the bytecode for
       // this specific issue
-      if (inclazz.allTraits.exists(_.hasStaticImpl(method))) {
-        Some(UpdateForwarderBodyProblem(method))
+      if (newclazz.allTraits.exists(_.hasStaticImpl(oldmeth))) {
+        Some(UpdateForwarderBodyProblem(oldmeth))
       } else {
-        // otherwise we check the all concrete trait methods and report
-        // either that the method is missing or that no method with the
-        // same signature exists. Either way, we expect that a problem is reported!
-        val prob = check(method, inclazz, _.lookupConcreteTraitMethods(method))
-        assert(prob.isDefined)
-        prob
+        // otherwise we check all the concrete trait methods and report
+        // the missing or incompatible method.
+        val methsLookup = (_: ClassInfo).lookupConcreteTraitMethods(oldmeth)
+        Some(missingOrIncompatible(oldmeth, methsLookup(newclazz).toList, methsLookup))
       }
     }
   }
+
+  private def missingOrIncompatible(oldmeth: MethodInfo, newmeths: List[MethodInfo], methsLookup: ClassInfo => Iterator[MethodInfo]) = {
+    val newmethAndBridges = newmeths.filter(oldmeth.matchesType(_)) // _the_ corresponding new method + its bridges
+    newmethAndBridges.find(_.tpe.resultType == oldmeth.tpe.resultType) match {
+      case Some(newmeth) => IncompatibleSignatureProblem(oldmeth, newmeth)
+      case None          =>
+        if (newmeths.isEmpty || methsLookup(oldmeth.owner).toStream.lengthCompare(1) > 0) // method was overloaded
+          DirectMissingMethodProblem(oldmeth)
+        else {
+          newmethAndBridges match {
+            case Nil          => IncompatibleMethTypeProblem(oldmeth, uniques(newmeths))
+            case newmeth :: _ => IncompatibleResultTypeProblem(oldmeth, newmeth)
+          }
+        }
+    }
+  }
+
+  private def uniques(methods: Iterable[MethodInfo]): List[MethodInfo] =
+    methods.groupBy(_.parametersDesc).values.collect { case method :: _ => method }.toList
 }
