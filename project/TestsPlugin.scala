@@ -4,7 +4,7 @@ import bintray.BintrayPlugin
 import com.typesafe.config.ConfigFactory
 import sbt._
 import sbt.Keys._
-import sbt.TupleSyntax._
+import sbt.internal.inc.ScalaInstance
 import sbt.librarymanagement.{ DependencyResolution, UnresolvedWarningConfiguration, UpdateConfiguration }
 
 object TestsPlugin extends AutoPlugin {
@@ -51,14 +51,24 @@ object TestsPlugin extends AutoPlugin {
     scalaVersion := testScalaVersion.value,
   )
 
-  private val runIntegrationTest = (baseDirectory, dependencyResolution, streams).map { (baseDir, depRes, streams) =>
-    val confFile = baseDir / "test.conf"
+  private val runIntegrationTest = Def.task {
+    val confFile = baseDirectory.value / "test.conf"
     val conf = ConfigFactory.parseFile(confFile).resolve()
     val moduleBase = conf.getString("groupId") % conf.getString("artifactId")
-    val oldJar = getArtifact(depRes, moduleBase % conf.getString("v1"), streams.log)
-    val newJar = getArtifact(depRes, moduleBase % conf.getString("v2"), streams.log)
-    streams.log.info(s"Comparing $oldJar -> $newJar")
-    runCollectProblemsTest(oldJar, newJar)
+    val depRes = dependencyResolution.value
+    val oldJar = getArtifact(depRes, moduleBase % conf.getString("v1"), streams.value.log)
+    val newJar = getArtifact(depRes, moduleBase % conf.getString("v2"), streams.value.log)
+    streams.value.log.info(s"Comparing $oldJar -> $newJar")
+    runCollectProblemsTest(
+      (functionalTests / Compile / fullClasspath).value, // the test classpath from the functionalTest project for the test
+      (functionalTests / scalaInstance).value, // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
+      streams.value,
+      thisProjectRef.value.project,
+      oldJar,
+      newJar,
+      baseDirectory.value,
+      scalaVersion.value,
+    )
   }
 
   private val intTestProjectSettings = Def.settings(
@@ -75,10 +85,17 @@ object TestsPlugin extends AutoPlugin {
     scalaSource := baseDirectory.value / configuration.value.name.toLowerCase,
   )
 
-  private val runFunctionalTest = {
-    val oldJar = V1 / packageBin // package the V1 sources and get the configuration used
-    val newJar = V2 / packageBin // same for V2
-    (oldJar, newJar).map(runCollectProblemsTest)
+  private val runFunctionalTest = Def.task {
+    runCollectProblemsTest(
+      (functionalTests / Compile / fullClasspath).value, // the test classpath from the functionalTest project for the test
+      (functionalTests / scalaInstance).value, // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
+      streams.value,
+      thisProjectRef.value.project,
+      (V1 / packageBin).value, // package the V1 sources and get the configuration used
+      (V2 / packageBin).value, // same for V2
+      baseDirectory.value,
+      scalaVersion.value,
+    )
   }
 
   private val funTestProjectSettings = Def.settings(
@@ -88,10 +105,16 @@ object TestsPlugin extends AutoPlugin {
     Test / test := runFunctionalTest.value,
   )
 
-  private def runCollectProblemsTest(oldJarOrDir: File, newJarOrDir: File) = Def.task {
-    val testName = thisProjectRef.value.project
-    val cp = (functionalTests / Compile / fullClasspath).value // the test classpath from the functionalTest project for the test
-    val si = (functionalTests / scalaInstance).value // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
+  private def runCollectProblemsTest(
+      cp: Classpath,
+      si: ScalaInstance,
+      streams: TaskStreams,
+      testName: String,
+      oldJarOrDir: File,
+      newJarOrDir: File,
+      projectPath: File,
+      scalaVersion: String,
+  ): Unit = {
     val urls = Attributed.data(cp).map(_.toURI.toURL).toArray
     val loader = new java.net.URLClassLoader(urls, si.loader)
 
@@ -112,8 +135,8 @@ object TestsPlugin extends AutoPlugin {
 
     try {
       import scala.language.reflectiveCalls
-      testRunner.runTest(testClasspath, testName, oldJarOrDir, newJarOrDir, baseDirectory.value, scalaVersion.value)
-      streams.value.log.info(s"Test '$testName' succeeded.")
+      testRunner.runTest(testClasspath, testName, oldJarOrDir, newJarOrDir, projectPath, scalaVersion)
+      streams.log.info(s"Test '$testName' succeeded.")
     } catch {
       case e: Exception =>
         scala.Console.err.println(e.toString)

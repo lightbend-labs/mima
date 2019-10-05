@@ -11,11 +11,7 @@ object ClassInfo {
   /** We assume there can be only one java.lang.Object class,
    *  and that comes from the configuration class path.
    */
-  lazy val ObjectClass = {
-    val baseClassPath = DeprecatedPathApis.newPathResolver(Config.settings).result
-    val baseDefinitions = new Definitions(None, baseClassPath)
-    baseDefinitions.ObjectClass
-  }
+  lazy val ObjectClass = new Definitions(None, Config.baseClassPath).ObjectClass
 }
 
 /** A placeholder class info for a class that is not found on the classpath or in a given package. */
