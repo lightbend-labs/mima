@@ -12,18 +12,15 @@ object Analyzer {
     if (oldclazz.isImplClass)
       return Nil // do not analyze trait's implementation classes
 
-    val templateProblems = analyzeTemplateDecl(oldclazz, newclazz)
+    TemplateChecker.check(oldclazz, newclazz) match {
+      case Some(p @ (_: IncompatibleTemplateDefProblem | _: CyclicTypeReferenceProblem)) =>
+        // these implies major incompatibility, does not make sense to continue
+        List(p)
 
-    if (templateProblems.exists(p => p.isInstanceOf[IncompatibleTemplateDefProblem] ||
-      p.isInstanceOf[CyclicTypeReferenceProblem]))
-      templateProblems // IncompatibleTemplateDefProblem implies major incompatibility, does not make sense to continue
-    else
-      templateProblems ::: analyzeMembers(oldclazz, newclazz)
+      case maybeProblem =>
+        maybeProblem.toList :::
+          FieldChecker.check(oldclazz, newclazz) :::
+          MethodChecker.check(oldclazz, newclazz)
+    }
   }
-
-  def analyzeTemplateDecl(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] =
-    TemplateChecker.check(oldclazz, newclazz).toList
-
-  def analyzeMembers(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] =
-    FieldChecker.check(oldclazz, newclazz) ::: MethodChecker.check(oldclazz, newclazz)
 }
