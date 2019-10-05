@@ -18,7 +18,7 @@ final class MethodCheckerSpec extends WordSpec with Matchers {
             // going from a Scala version that does not have the fix in
             // https://github.com/scala/scala/pull/7975 (2.12.8, 2.13.0) to
             // one that does
-            BaseMethodChecker.hasMatchingSignature(
+            MethodChecker.hasMatchingSignature(
                 `signatureOn2.12.8`,
                 `signatureOn2.12.9`,
                 MemberInfo.ConstructorName
@@ -26,7 +26,7 @@ final class MethodCheckerSpec extends WordSpec with Matchers {
         }
 
         "reject adding the first parameter of the Signature attribute of a constructor back" in {
-            BaseMethodChecker.hasMatchingSignature(
+            MethodChecker.hasMatchingSignature(
                 `signatureOn2.12.9`,
                 `signatureOn2.12.8`,
                 MemberInfo.ConstructorName

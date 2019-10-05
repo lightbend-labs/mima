@@ -2,9 +2,7 @@ package com.typesafe.tools.mima.lib.analyze
 
 import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.lib.analyze.field.FieldChecker
-import com.typesafe.tools.mima.lib.analyze.method.BaseMethodChecker
-import com.typesafe.tools.mima.lib.analyze.method.ClassMethodChecker
-import com.typesafe.tools.mima.lib.analyze.method.TraitMethodChecker
+import com.typesafe.tools.mima.lib.analyze.method.MethodChecker
 import com.typesafe.tools.mima.lib.analyze.template.TemplateChecker
 
 object Analyzer {
@@ -15,8 +13,6 @@ object Analyzer {
 }
 
 private[analyze] trait Analyzer {
-  protected def methodChecker: BaseMethodChecker
-
   def analyze(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
     assert(oldclazz.bytecodeName == newclazz.bytecodeName)
     val templateProblems = analyzeTemplateDecl(oldclazz, newclazz)
@@ -35,15 +31,7 @@ private[analyze] trait Analyzer {
     FieldChecker.check(oldclazz, newclazz) ::: analyzeMethods(oldclazz, newclazz)
 
   def analyzeMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] =
-    analyzeOldClassMethods(oldclazz, newclazz) ::: analyzeNewClassMethods(oldclazz, newclazz)
-
-  /** Analyze incompatibilities that may derive from methods in the `oldclazz`*/
-  def analyzeOldClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
-    for {
-      oldmeth <- oldclazz.methods.value.iterator
-      p <- methodChecker.check(oldmeth, newclazz)
-    } yield p
-  }.toList
+    MethodChecker.check(oldclazz, newclazz) ::: analyzeNewClassMethods(oldclazz, newclazz)
 
   def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem]
 
@@ -82,8 +70,6 @@ private[analyze] trait Analyzer {
 }
 
 private[analyze] class ClassAnalyzer extends Analyzer {
-  protected val methodChecker = new ClassMethodChecker
-
   override def analyze(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
     if (oldclazz.isImplClass)
       Nil // do not analyze trait's implementation classes
@@ -104,8 +90,6 @@ private[analyze] class ClassAnalyzer extends Analyzer {
 }
 
 private[analyze] class TraitAnalyzer extends Analyzer {
-  protected val methodChecker = new TraitMethodChecker
-
   override def analyzeNewClassMethods(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
     val res = scala.collection.mutable.ListBuffer.empty[Problem]
 
