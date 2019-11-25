@@ -31,10 +31,10 @@ object CollectProblemsTest {
     // load oracle
     val oracleFile = {
       val p = new File(baseDir, "problems.txt")
+      val p211 = new File(baseDir, "problems-2.11.txt")
       val p212 = new File(baseDir, "problems-2.12.txt")
-      val p213 = new File(baseDir, "problems-2.13.txt")
       scalaVersion.take(4) match {
-        case "2.13" => if (p213.exists()) p213 else if (p212.exists()) p212 else p
+        case "2.11" => if (p211.exists()) p211 else if (p212.exists()) p212 else p
         case "2.12" => if (p212.exists()) p212 else p
         case _      => p
       }
