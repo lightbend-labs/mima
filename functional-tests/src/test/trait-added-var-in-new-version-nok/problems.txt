@@ -1,2 +1,2 @@
-method bar_=(Int)Unit in trait A is present only in new version
-method bar()Int in trait A is present only in new version
+abstract method bar_=(Int)Unit in interface A is present only in new version
+abstract method bar()Int in interface A is present only in new version
