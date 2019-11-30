@@ -1,10 +1,10 @@
 package com.typesafe.tools.mima.core
 
-import org.scalatest.Matchers
 import org.scalatest.prop.TableDrivenPropertyChecks
-import org.scalatest.WordSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-final class ProblemFiltersSpec extends WordSpec with TableDrivenPropertyChecks with Matchers {
+final class ProblemFiltersSpec extends AnyWordSpec with TableDrivenPropertyChecks with Matchers {
   val filters = Table(
     ("filter", "problem", "realProblem"),
     (ProblemFilters.exclude[Problem]("impl.Http"), problem("impl.Http"),  false),
