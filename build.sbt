@@ -30,7 +30,7 @@ val core = project.disablePlugins(BintrayPlugin).settings(
   name := "mima-core",
   libraryDependencies ++= Seq(
     "org.scala-lang" %  "scala-compiler" % scalaVersion.value,
-    "org.scalatest"  %% "scalatest"      % "3.0.8" % Test,
+    "org.scalatest"  %% "scalatest"      % "3.1.0" % Test,
   ),
   MimaSettings.mimaSettings,
   apiMappings ++= {

@@ -1,8 +1,10 @@
 package com.typesafe.tools.mima.core
 
-import org.scalatest.{ Assertion, Matchers, WordSpec }
+import org.scalatest.Assertion
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-final class ProblemReportingSpec extends WordSpec with Matchers {
+final class ProblemReportingSpec extends AnyWordSpec with Matchers {
   import ProblemReportingSpec._
 
   // Given a generic Problem (FinalClassProblem)

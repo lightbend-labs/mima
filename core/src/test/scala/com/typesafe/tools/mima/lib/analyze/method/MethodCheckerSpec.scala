@@ -2,10 +2,10 @@ package com.typesafe.tools.mima.lib.analyze.method
 
 import com.typesafe.tools.mima.core.MemberInfo
 
-import org.scalatest.Matchers
-import org.scalatest.WordSpec
+import org.scalatest.matchers.should.Matchers
+import org.scalatest.wordspec.AnyWordSpec
 
-final class MethodCheckerSpec extends WordSpec with Matchers {
+final class MethodCheckerSpec extends AnyWordSpec with Matchers {
     "The method checker" should {
         val `signatureOn2.12.8` =
             "(Lakka/http/impl/engine/server/GracefulTerminatorStage;Lscala/concurrent/Promise<Lscala/Function1<Lscala/concurrent/duration/FiniteDuration;Lscala/concurrent/Future<Lakka/http/scaladsl/Http$HttpTerminated;>;>;>;)V"
