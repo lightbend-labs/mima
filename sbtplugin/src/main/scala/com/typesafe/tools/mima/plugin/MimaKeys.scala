@@ -22,4 +22,5 @@ class MimaKeys {
   final val mimaForwardIssueFilters  = taskKey[Map[String, Seq[ProblemFilter]]]("Filters to apply to binary issues found grouped by version of a module checked against. These filters only apply to forward compatibility checking.")
   final val mimaFiltersDirectory     = settingKey[File]("Directory containing issue filters.")
 
+  final val mimaCreateExclusionFile = taskKey[Seq[File]]("Creates an exclusion file for all the found issues")
 }
