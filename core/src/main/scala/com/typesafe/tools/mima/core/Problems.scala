@@ -41,7 +41,7 @@ sealed abstract class Problem extends ProblemRef {
     case ReversedMissingMethodProblem(ref)                => s"${ref.memberString} is present only in $affectedVersion version"
     case FinalMethodProblem(ref)                          => s"${ref.methodString} is declared final in $affectedVersion version"
     case IncompatibleResultTypeProblem(ref, newmeth)      => s"${ref.methodString} has a different result type in $affectedVersion version, where it is ${newmeth.tpe.resultType} rather than ${ref.tpe.resultType}"
-    case IncompatibleSignatureProblem(ref, newmeth)       => s"${ref.methodString} has a different signature in $affectedVersion version, where it is ${orMIA(newmeth.signature)} rather than ${orMIA(ref.signature)}"
+    case IncompatibleSignatureProblem(ref, newmeth)       => s"${ref.methodString} has a different signature in $affectedVersion version, where it is ${orMIA(newmeth.signature)} rather than ${orMIA(ref.signature)}. Note that the erased signature is still consistent. This means this change in the generics may or may not lead to problems at runtime, and possibly can be safely filtered out"
     case DirectAbstractMethodProblem(ref)                 => s"${ref.methodString} does not have a correspondent in $affectedVersion version"
     case ReversedAbstractMethodProblem(ref)               => s"in $affectedVersion version there is ${ref.methodString}, which does not have a correspondent"
     case UpdateForwarderBodyProblem(ref)                  => s"in $affectedVersion version, classes mixing ${ref.owner.fullName} needs to update body of ${ref.shortMethodString}"
