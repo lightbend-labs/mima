@@ -85,6 +85,24 @@ mimaBinaryIssueFilters ++= Seq(
 )
 ```
 
+### IncompatibleSignatureProblem
+
+Most MiMa checks (`DirectMissingMethod`, `IncompatibleResultType`,
+`IncompatibleMethType`, etc) are against the method `descriptor`, which
+includes the signature without information about generic parameters.
+
+The `IncompatibleSignature` check compares the `Signature`, which includes the
+full signature including generic parameters. This can catch real
+incompatibilities, but also sometimes triggers for a change in generics that
+would not in fact cause problems at run time. To opt-out of this check you can
+filter them like this:
+
+```scala
+mimaBinaryIssueFilters ++= Seq(
+  ProblemFilters.exclude[IncompatibleSignatureProblem]("*"),
+)
+```
+
 ## Setting different mimaPreviousArtifacts
 
 From time to time you may need to set `mimaPreviousArtifacts` according to some conditions.  For
