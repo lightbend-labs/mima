@@ -1,1 +1,1 @@
-method boxedStringy()scala.Option in class Bar has a different signature in new version, where it is ()Lscala/Option<LFoo;>; rather than ()Lscala/Option<Ljava/lang/String;>;
+method boxedStringy()scala.Option in class Bar has a different signature in new version, where it is ()Lscala/Option<LFoo;>; rather than ()Lscala/Option<Ljava/lang/String;>;. Note that the erased signature is still consistent. This means this change in the generics may or may not lead to problems at runtime, and possibly can be safely filtered out
