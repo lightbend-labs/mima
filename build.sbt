@@ -65,7 +65,7 @@ val functionalTests = Project("functional-tests", file("functional-tests"))
   .settings(
     libraryDependencies ++= Seq(
       "com.typesafe"           %  "config"                  % "1.4.0",
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.2",
+      "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.3",
     ),
     mimaFailOnNoPrevious := false,
     skip in publish := true,
