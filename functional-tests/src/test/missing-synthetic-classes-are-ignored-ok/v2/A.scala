@@ -1,3 +1,3 @@
 abstract class A {
-  new A {}
+  def foo = List(new A {})
 }
