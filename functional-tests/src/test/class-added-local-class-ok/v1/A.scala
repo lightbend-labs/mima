@@ -1,1 +1,1 @@
-class A { def f() = { class Local } }
+class A { def f() = { } }
