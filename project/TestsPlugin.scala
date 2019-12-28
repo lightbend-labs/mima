@@ -52,23 +52,17 @@ object TestsPlugin extends AutoPlugin {
   )
 
   private val runIntegrationTest = Def.task {
+    val cp = (functionalTests / Compile / fullClasspath).value // the test classpath from the functionalTest project for the test
+    val si = (functionalTests / scalaInstance).value // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
     val confFile = baseDirectory.value / "test.conf"
     val conf = ConfigFactory.parseFile(confFile).resolve()
     val moduleBase = conf.getString("groupId") % conf.getString("artifactId")
     val depRes = dependencyResolution.value
-    val oldJar = getArtifact(depRes, moduleBase % conf.getString("v1"), streams.value.log)
-    val newJar = getArtifact(depRes, moduleBase % conf.getString("v2"), streams.value.log)
-    streams.value.log.info(s"Comparing $oldJar -> $newJar")
-    runCollectProblemsTest(
-      (functionalTests / Compile / fullClasspath).value, // the test classpath from the functionalTest project for the test
-      (functionalTests / scalaInstance).value, // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
-      streams.value,
-      thisProjectRef.value.project,
-      oldJar,
-      newJar,
-      baseDirectory.value,
-      scalaVersion.value,
-    )
+    val v1 = getArtifact(depRes, moduleBase % conf.getString("v1"), streams.value.log)
+    val v2 = getArtifact(depRes, moduleBase % conf.getString("v2"), streams.value.log)
+    streams.value.log.info(s"Comparing $v1 -> $v2")
+    runCollectProblemsTest(cp, si, streams.value, name.value, v1, v2, baseDirectory.value, scalaVersion.value)
+    streams.value.log.info(s"Test '${name.value}' succeeded.")
   }
 
   private val intTestProjectSettings = Def.settings(
@@ -82,16 +76,13 @@ object TestsPlugin extends AutoPlugin {
   )
 
   private val runFunctionalTest = Def.task {
-    runCollectProblemsTest(
-      (functionalTests / Compile / fullClasspath).value, // the test classpath from the functionalTest project for the test
-      (functionalTests / scalaInstance).value, // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
-      streams.value,
-      thisProjectRef.value.project,
-      (V1 / packageBin).value, // package the V1 sources and get the configuration used
-      (V2 / packageBin).value, // same for V2
-      baseDirectory.value,
-      scalaVersion.value,
-    )
+    val cp = (functionalTests / Compile / fullClasspath).value // the test classpath from the functionalTest project for the test
+    val si = (functionalTests / scalaInstance).value // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
+    (V1 / compile).value: Unit
+    (V2 / compile).value: Unit
+    val v1 = (V1 / classDirectory).value // compile the V1 sources and get the classes directory
+    val v2 = (V2 / classDirectory).value // same for V2
+    runCollectProblemsTest(cp, si, streams.value, name.value, v1, v2, baseDirectory.value, scalaVersion.value)
   }
 
   private val funTestProjectSettings = Def.settings(
