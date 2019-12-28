@@ -1,5 +1,6 @@
 package mimabuild
 
+import java.net.URLClassLoader
 import bintray.BintrayPlugin
 import com.typesafe.config.ConfigFactory
 import sbt._
@@ -102,11 +103,10 @@ object TestsPlugin extends AutoPlugin {
       projectPath: File,
       scalaVersion: String,
   ): Unit = {
-    val urls = Attributed.data(cp).map(_.toURI.toURL).toArray
-    val loader = new java.net.URLClassLoader(urls, si.loader)
+    val loader = new URLClassLoader(Attributed.data(cp).map(_.toURI.toURL).toArray, si.loader)
 
     val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest$")
-    val testRunner = testClass.getField("MODULE$").get(null).asInstanceOf[ {
+    val testRunner = testClass.getField("MODULE$").get(null).asInstanceOf[{
       def runTest(
           testClasspath: Array[File],
           testName: String,
