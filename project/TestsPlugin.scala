@@ -31,8 +31,8 @@ object TestsPlugin extends AutoPlugin {
 
   private val functionalTests = LocalProject("functional-tests")
 
-  private val V1 = config("V1").extend(Compile)
-  private val V2 = config("V2").extend(Compile)
+  private val V1 = config("v1").extend(Compile)
+  private val V2 = config("v2").extend(Compile)
 
   private def testProjects(prefix: String, fileName: String, setup: Project => Project) = {
     (file("functional-tests") / "src" / prefix * dirContaining(fileName)).get().map { base =>
@@ -76,13 +76,9 @@ object TestsPlugin extends AutoPlugin {
     IntegrationTest / test := runIntegrationTest.value,
   )
 
-  // The settings for the V1 and V2 configurations (e.g. add compile and package).
   private val funTestPerConfigSettings = Def.settings(
-    Defaults.configSettings, // use the normal per-configuration settings
-    // but modify the source directory to be just V1/ instead of src/V1/scala/
-    // scalaSource is the setting key that defines the directory for Scala sources
-    // configuration gets the current configuration
-    scalaSource := baseDirectory.value / configuration.value.name.toLowerCase,
+    Defaults.configSettings, // e.g. compile and package
+    scalaSource := baseDirectory.value / configuration.value.name, // e.g., use v1/ instead of src/v1/scala/
   )
 
   private val runFunctionalTest = Def.task {
