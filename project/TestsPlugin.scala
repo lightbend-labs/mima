@@ -7,6 +7,7 @@ import sbt._
 import sbt.Keys._
 import sbt.internal.inc.ScalaInstance
 import sbt.librarymanagement.{ DependencyResolution, UnresolvedWarningConfiguration, UpdateConfiguration }
+import scala.Console
 
 object TestsPlugin extends AutoPlugin {
   object autoImport {
@@ -126,8 +127,8 @@ object TestsPlugin extends AutoPlugin {
       streams.log.info(s"Test '$testName' succeeded.")
     } catch {
       case e: Exception =>
-        scala.Console.err.println(e.toString)
-        throw new MessageOnlyException(s"'$testName' failed.")
+        Console.err.println(e.toString)
+        throw new MessageOnlyException(s"Test '$testName' failed.")
     }
   }
 
@@ -147,7 +148,7 @@ object TestsPlugin extends AutoPlugin {
           if artifact.name == m.name
         } yield file
 
-        allFiles.headOption getOrElse sys.error(s"Could not resolve artifact: $m")
+        allFiles.headOption.getOrElse(sys.error(s"Could not resolve artifact: $m"))
     }
   }
 
