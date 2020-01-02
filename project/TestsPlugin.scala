@@ -1,5 +1,6 @@
 package mimabuild
 
+import java.net.URLClassLoader
 import bintray.BintrayPlugin
 import com.typesafe.config.ConfigFactory
 import sbt._
@@ -31,8 +32,8 @@ object TestsPlugin extends AutoPlugin {
 
   private val functionalTests = LocalProject("functional-tests")
 
-  private val V1 = config("V1").extend(Compile)
-  private val V2 = config("V2").extend(Compile)
+  private val V1 = config("v1").extend(Compile)
+  private val V2 = config("v2").extend(Compile)
 
   private def testProjects(prefix: String, fileName: String, setup: Project => Project) = {
     (file("functional-tests") / "src" / prefix * dirContaining(fileName)).get().map { base =>
@@ -52,23 +53,17 @@ object TestsPlugin extends AutoPlugin {
   )
 
   private val runIntegrationTest = Def.task {
+    val cp = (functionalTests / Compile / fullClasspath).value // the test classpath from the functionalTest project for the test
+    val si = (functionalTests / scalaInstance).value // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
     val confFile = baseDirectory.value / "test.conf"
     val conf = ConfigFactory.parseFile(confFile).resolve()
     val moduleBase = conf.getString("groupId") % conf.getString("artifactId")
     val depRes = dependencyResolution.value
-    val oldJar = getArtifact(depRes, moduleBase % conf.getString("v1"), streams.value.log)
-    val newJar = getArtifact(depRes, moduleBase % conf.getString("v2"), streams.value.log)
-    streams.value.log.info(s"Comparing $oldJar -> $newJar")
-    runCollectProblemsTest(
-      (functionalTests / Compile / fullClasspath).value, // the test classpath from the functionalTest project for the test
-      (functionalTests / scalaInstance).value, // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
-      streams.value,
-      thisProjectRef.value.project,
-      oldJar,
-      newJar,
-      baseDirectory.value,
-      scalaVersion.value,
-    )
+    val v1 = getArtifact(depRes, moduleBase % conf.getString("v1"), streams.value.log)
+    val v2 = getArtifact(depRes, moduleBase % conf.getString("v2"), streams.value.log)
+    streams.value.log.info(s"Comparing $v1 -> $v2")
+    runCollectProblemsTest(cp, si, streams.value, name.value, v1, v2, baseDirectory.value, scalaVersion.value)
+    streams.value.log.info(s"Test '${name.value}' succeeded.")
   }
 
   private val intTestProjectSettings = Def.settings(
@@ -76,26 +71,19 @@ object TestsPlugin extends AutoPlugin {
     IntegrationTest / test := runIntegrationTest.value,
   )
 
-  // The settings for the V1 and V2 configurations (e.g. add compile and package).
   private val funTestPerConfigSettings = Def.settings(
-    Defaults.configSettings, // use the normal per-configuration settings
-    // but modify the source directory to be just V1/ instead of src/V1/scala/
-    // scalaSource is the setting key that defines the directory for Scala sources
-    // configuration gets the current configuration
-    scalaSource := baseDirectory.value / configuration.value.name.toLowerCase,
+    Defaults.configSettings, // e.g. compile and package
+    scalaSource := baseDirectory.value / configuration.value.name, // e.g., use v1/ instead of src/v1/scala/
   )
 
   private val runFunctionalTest = Def.task {
-    runCollectProblemsTest(
-      (functionalTests / Compile / fullClasspath).value, // the test classpath from the functionalTest project for the test
-      (functionalTests / scalaInstance).value, // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
-      streams.value,
-      thisProjectRef.value.project,
-      (V1 / packageBin).value, // package the V1 sources and get the configuration used
-      (V2 / packageBin).value, // same for V2
-      baseDirectory.value,
-      scalaVersion.value,
-    )
+    val cp = (functionalTests / Compile / fullClasspath).value // the test classpath from the functionalTest project for the test
+    val si = (functionalTests / scalaInstance).value // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
+    (V1 / compile).value: Unit
+    (V2 / compile).value: Unit
+    val v1 = (V1 / classDirectory).value // compile the V1 sources and get the classes directory
+    val v2 = (V2 / classDirectory).value // same for V2
+    runCollectProblemsTest(cp, si, streams.value, name.value, v1, v2, baseDirectory.value, scalaVersion.value)
   }
 
   private val funTestProjectSettings = Def.settings(
@@ -115,11 +103,10 @@ object TestsPlugin extends AutoPlugin {
       projectPath: File,
       scalaVersion: String,
   ): Unit = {
-    val urls = Attributed.data(cp).map(_.toURI.toURL).toArray
-    val loader = new java.net.URLClassLoader(urls, si.loader)
+    val loader = new URLClassLoader(Attributed.data(cp).map(_.toURI.toURL).toArray, si.loader)
 
     val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest$")
-    val testRunner = testClass.getField("MODULE$").get(null).asInstanceOf[ {
+    val testRunner = testClass.getField("MODULE$").get(null).asInstanceOf[{
       def runTest(
           testClasspath: Array[File],
           testName: String,
