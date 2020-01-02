@@ -16,17 +16,13 @@ object CollectProblemsTest {
     val classpath = AggregateClassPath.createAggregate(testClassPath, Config.baseClassPath)
     val mima = new MiMaLib(classpath)
 
-    // SUT
-    val allProblems = mima.collectProblems(oldJarOrDir, newJarOrDir)
-
     val configFile = new File(baseDir, "test.conf")
-    val problems = if (configFile.exists()) {
-      val fallback = ConfigFactory.parseString("filter { problems = [] }")
-      val config = ConfigFactory.parseFile(configFile).withFallback(fallback).resolve()
-      val filters = ProblemFiltersConfig.parseProblemFilters(config)
-      allProblems.filter(p => filters.forall(filter => filter(p)))
-    } else allProblems
-    val problemDescriptions = problems.iterator.map(_.description("new")).toSet
+    val configFallback = ConfigFactory.parseString("filter { problems = [] }")
+    val config = ConfigFactory.parseFile(configFile).withFallback(configFallback).resolve()
+    val filters = ProblemFiltersConfig.parseProblemFilters(config)
+    val problemFilter = (p: Problem) => filters.forall(filter => filter(p))
+
+    val problems = mima.collectProblems(oldJarOrDir, newJarOrDir).filter(problemFilter)
 
     // load oracle
     val oracleFile = {
@@ -43,6 +39,7 @@ object CollectProblemsTest {
     val expectedProblems = try source.getLines.filter(!_.startsWith("#")).toList finally source.close()
 
     // diff between the oracle and the collected problems
+    val problemDescriptions = problems.iterator.map(_.description("new")).toSet
     val unexpectedProblems = problems.filterNot(p => expectedProblems.contains(p.description("new")))
     val unreportedProblems = expectedProblems.filterNot(problemDescriptions.contains)
 
