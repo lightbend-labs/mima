@@ -7,6 +7,7 @@ import sbt._
 import sbt.Keys._
 import sbt.internal.inc.ScalaInstance
 import sbt.librarymanagement.{ DependencyResolution, UnresolvedWarningConfiguration, UpdateConfiguration }
+import scala.Console
 
 object TestsPlugin extends AutoPlugin {
   object autoImport {
@@ -16,6 +17,8 @@ object TestsPlugin extends AutoPlugin {
     val testScalaVersion = settingKey[String]("The scala version to use to compile the test classes")
 
     val testFunctional = taskKey[Unit]("Run the functional test")
+
+    val testCollectProblems = taskKey[Unit]("Run the 'collect problems' test")
   }
   import autoImport._
 
@@ -62,7 +65,7 @@ object TestsPlugin extends AutoPlugin {
     val v1 = getArtifact(depRes, moduleBase % conf.getString("v1"), streams.value.log)
     val v2 = getArtifact(depRes, moduleBase % conf.getString("v2"), streams.value.log)
     streams.value.log.info(s"Comparing $v1 -> $v2")
-    runCollectProblemsTest(cp, si, streams.value, name.value, v1, v2, baseDirectory.value, scalaVersion.value)
+    runCollectProblemsTest(cp, si, name.value, v1, v2, baseDirectory.value, scalaVersion.value)
     streams.value.log.info(s"Test '${name.value}' succeeded.")
   }
 
@@ -76,27 +79,32 @@ object TestsPlugin extends AutoPlugin {
     scalaSource := baseDirectory.value / configuration.value.name, // e.g., use v1/ instead of src/v1/scala/
   )
 
-  private val runFunctionalTest = Def.task {
+  private val testCollectProblemsImpl = Def.task {
     val cp = (functionalTests / Compile / fullClasspath).value // the test classpath from the functionalTest project for the test
     val si = (functionalTests / scalaInstance).value // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
     (V1 / compile).value: Unit
     (V2 / compile).value: Unit
     val v1 = (V1 / classDirectory).value // compile the V1 sources and get the classes directory
     val v2 = (V2 / classDirectory).value // same for V2
-    runCollectProblemsTest(cp, si, streams.value, name.value, v1, v2, baseDirectory.value, scalaVersion.value)
+    runCollectProblemsTest(cp, si, name.value, v1, v2, baseDirectory.value, scalaVersion.value)
+  }
+
+  private val runFunctionalTest = Def.task {
+    testCollectProblems.value
+    streams.value.log.info(s"Test '${name.value}' succeeded.")
   }
 
   private val funTestProjectSettings = Def.settings(
     sharedTestProjectSettings,
     inConfig(V1)(funTestPerConfigSettings),
     inConfig(V2)(funTestPerConfigSettings),
+    testCollectProblems := testCollectProblemsImpl.value,
     Test / test := runFunctionalTest.value,
   )
 
   private def runCollectProblemsTest(
       cp: Classpath,
       si: ScalaInstance,
-      streams: TaskStreams,
       testName: String,
       oldJarOrDir: File,
       newJarOrDir: File,
@@ -123,11 +131,10 @@ object TestsPlugin extends AutoPlugin {
     try {
       import scala.language.reflectiveCalls
       testRunner.runTest(testClasspath, testName, oldJarOrDir, newJarOrDir, projectPath, scalaVersion)
-      streams.log.info(s"Test '$testName' succeeded.")
     } catch {
       case e: Exception =>
-        scala.Console.err.println(e.toString)
-        throw new MessageOnlyException(s"'$testName' failed.")
+        Console.err.println(e.toString)
+        throw new MessageOnlyException(s"Test '$testName' failed.")
     }
   }
 
@@ -147,7 +154,7 @@ object TestsPlugin extends AutoPlugin {
           if artifact.name == m.name
         } yield file
 
-        allFiles.headOption getOrElse sys.error(s"Could not resolve artifact: $m")
+        allFiles.headOption.getOrElse(sys.error(s"Could not resolve artifact: $m"))
     }
   }
 
