@@ -1,2 +1,1 @@
-method foo()Int in interface B does not have a correspondent in new version
 synthetic static method $init$(B)Unit in interface B does not have a correspondent in new version

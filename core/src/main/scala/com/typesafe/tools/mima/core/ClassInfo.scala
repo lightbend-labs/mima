@@ -99,14 +99,15 @@ sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Eq
     thisAndSuperClasses.flatMap(_.fields.get(field.bytecodeName))
 
   final def lookupClassMethods(method: MethodInfo): Iterator[MethodInfo] = {
-    method.bytecodeName match {
-      case MemberInfo.ConstructorName => methods.get(MemberInfo.ConstructorName) // constructors are not inherited
-      case name                       => thisAndSuperClasses.flatMap(_.methods.get(name))
-    }
+    val name = method.bytecodeName
+    if (name == MemberInfo.ConstructorName) methods.get(name) // constructors are not inherited
+    else if (method.isStatic) methods.get(name) // static methods are not inherited
+    else thisAndSuperClasses.flatMap(_.methods.get(name))
   }
 
   private def lookupInterfaceMethods(method: MethodInfo): Iterator[MethodInfo] =
-    allInterfaces.iterator.flatMap(_.methods.get(method.bytecodeName))
+    if (method.isStatic) Iterator.empty // static methods are not inherited
+    else allInterfaces.iterator.flatMap(_.methods.get(method.bytecodeName))
 
   final def lookupMethods(method: MethodInfo): Iterator[MethodInfo] =
     lookupClassMethods(method) ++ lookupInterfaceMethods(method)
