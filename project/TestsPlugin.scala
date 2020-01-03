@@ -18,7 +18,8 @@ object TestsPlugin extends AutoPlugin {
 
     val testFunctional = taskKey[Unit]("Run the functional test")
 
-    val testCollectProblems = taskKey[Unit]("Run the 'collect problems' test")
+    val testCollectProblems = taskKey[Unit]("Test collecting problems")
+    val testAppRun          = taskKey[Unit]("Test running the App, using library v2")
   }
   import autoImport._
 
@@ -29,14 +30,18 @@ object TestsPlugin extends AutoPlugin {
   )
 
   override def projectSettings = Seq(
-            testFunctional := dependOnAll(funTestProjects, _ /            Test / test).value,
-    IntegrationTest / test := dependOnAll(intTestProjects, _ / IntegrationTest / test).value,
+            testFunctional := dependOnAll(funTestProjects, Test / test).value,
+       testCollectProblems := dependOnAll(funTestProjects, testCollectProblems).value,
+                testAppRun := dependOnAll(funTestProjects, testAppRun).value,
+    IntegrationTest / test := dependOnAll(intTestProjects, IntegrationTest / test).value,
   )
 
   private val functionalTests = LocalProject("functional-tests")
 
-  private val V1 = config("v1").extend(Compile)
-  private val V2 = config("v2").extend(Compile)
+  private val V1   = config("v1").extend(Compile)   // Version 1 of a library
+  private val V2   = config("v2").extend(Compile)   // Version 2 of a library
+  private val App  = config("app").extend(V1)       // An App, built against library v1
+  private val App2 = config("app2").extend(V2, App) // The App, using library v2
 
   private def testProjects(prefix: String, fileName: String, setup: Project => Project) = {
     (file("functional-tests") / "src" / prefix * dirContaining(fileName)).get().map { base =>
@@ -45,7 +50,7 @@ object TestsPlugin extends AutoPlugin {
   }
 
   private def intTestProject(p: Project) = p.settings(intTestProjectSettings)
-  private def funTestProject(p: Project) = p.settings(funTestProjectSettings).configs(V1, V2)
+  private def funTestProject(p: Project) = p.settings(funTestProjectSettings).configs(V1, V2, App, App2)
 
   private lazy val funTestProjects = testProjects("test", "problems.txt", funTestProject)
   private lazy val intTestProjects = testProjects( "it" ,   "test.conf" , intTestProject)
@@ -54,6 +59,27 @@ object TestsPlugin extends AutoPlugin {
     resolvers += "scala-pr-validation-snapshots" at "https://scala-ci.typesafe.com/artifactory/scala-pr-validation-snapshots/",
     scalaVersion := testScalaVersion.value,
   )
+
+  private val oracleFile = Def.task {
+    val p    = baseDirectory.value / "problems.txt"
+    val p211 = baseDirectory.value / "problems-2.11.txt"
+    val p212 = baseDirectory.value / "problems-2.12.txt"
+    scalaVersion.value.take(4) match {
+      case "2.11" => if (p211.exists()) p211 else if (p212.exists()) p212 else p
+      case "2.12" => if (p212.exists()) p212 else p
+      case _      => p
+    }
+  }
+
+  private val oracleFileCheck = Def.setting { () =>
+    // The test name is must match the expectations of problems.txt (only, not -2.11/-2.12.txt)
+    val emptyProblemsTxt = IO.readLines(baseDirectory.value / "problems.txt").forall(_.startsWith("#"))
+    name.value.takeRight(4).dropWhile(_ != '-') match {
+      case "-ok"  => if (!emptyProblemsTxt) sys.error(s"[${name.value}] OK test with non-empty problems.txt")
+      case "-nok" => if (emptyProblemsTxt) sys.error(s"[${name.value}] NOK test with empty problems.txt")
+      case _      => sys.error(s"[${name.value}] Missing '-ok' or '-nok' suffix in project name")
+    }
+  }
 
   private val runIntegrationTest = Def.task {
     val cp = (functionalTests / Compile / fullClasspath).value // the test classpath from the functionalTest project for the test
@@ -65,7 +91,7 @@ object TestsPlugin extends AutoPlugin {
     val v1 = getArtifact(depRes, moduleBase % conf.getString("v1"), streams.value.log)
     val v2 = getArtifact(depRes, moduleBase % conf.getString("v2"), streams.value.log)
     streams.value.log.info(s"Comparing $v1 -> $v2")
-    runCollectProblemsTest(cp, si, name.value, v1, v2, baseDirectory.value, scalaVersion.value)
+    runCollectProblemsTest(cp, si, name.value, v1, v2, baseDirectory.value, oracleFile.value)
     streams.value.log.info(s"Test '${name.value}' succeeded.")
   }
 
@@ -86,11 +112,32 @@ object TestsPlugin extends AutoPlugin {
     (V2 / compile).value: Unit
     val v1 = (V1 / classDirectory).value // compile the V1 sources and get the classes directory
     val v2 = (V2 / classDirectory).value // same for V2
-    runCollectProblemsTest(cp, si, name.value, v1, v2, baseDirectory.value, scalaVersion.value)
+    runCollectProblemsTest(cp, si, name.value, v1, v2, baseDirectory.value, oracleFile.value)
+  }
+
+  private val testAppRunImpl = Def.task {
+    val p    = baseDirectory.value / "testAppRun.pending"
+    val p211 = baseDirectory.value / "testAppRun-2.11.pending"
+    val p212 = baseDirectory.value / "testAppRun-2.12.pending"
+    val pending = scalaVersion.value.take(4) match {
+      case "2.11" => p211.exists() || p212.exists() || p.exists()
+      case "2.12" => p212.exists() || p.exists()
+      case _      => p.exists()
+    }
+    (App / fgRun).toTask("").value
+    val result = (App2 / fgRun).toTask("").result.value
+    if (IO.read(oracleFile.value).isEmpty) {
+      if (!pending) Result.tryValue(result)
+    } else {
+      if (!pending) result.toEither.foreach { (_: Unit) =>
+        throw new MessageOnlyException(s"Test '${name.value}' failed: expected running App to fail")
+      }
+    }
   }
 
   private val runFunctionalTest = Def.task {
     testCollectProblems.value
+    testAppRun.value
     streams.value.log.info(s"Test '${name.value}' succeeded.")
   }
 
@@ -98,8 +145,17 @@ object TestsPlugin extends AutoPlugin {
     sharedTestProjectSettings,
     inConfig(V1)(funTestPerConfigSettings),
     inConfig(V2)(funTestPerConfigSettings),
+    inConfig(App)(funTestPerConfigSettings),
+    inConfig(App2)(Def.settings(
+      funTestPerConfigSettings,
+      internalDependencyClasspath --= (V1 / exportedProducts).value, // V2 only, drop V2 classes
+      run / mainClass := Some("App"),
+      run / trapExit  := false,
+    )),
     testCollectProblems := testCollectProblemsImpl.value,
+    testAppRun := testAppRunImpl.value,
     Test / test := runFunctionalTest.value,
+    Global / onLoad += oracleFileCheck.value,
   )
 
   private def runCollectProblemsTest(
@@ -109,7 +165,7 @@ object TestsPlugin extends AutoPlugin {
       oldJarOrDir: File,
       newJarOrDir: File,
       projectPath: File,
-      scalaVersion: String,
+      oracleFile: File,
   ): Unit = {
     val loader = new URLClassLoader(Attributed.data(cp).map(_.toURI.toURL).toArray, si.loader)
 
@@ -121,7 +177,7 @@ object TestsPlugin extends AutoPlugin {
           oldJarOrDir: File,
           newJarOrDir: File,
           baseDir: File,
-          scalaVersion: String,
+          oracleFile: File,
       ): Unit
     }]
 
@@ -130,7 +186,7 @@ object TestsPlugin extends AutoPlugin {
 
     try {
       import scala.language.reflectiveCalls
-      testRunner.runTest(testClasspath, testName, oldJarOrDir, newJarOrDir, projectPath, scalaVersion)
+      testRunner.runTest(testClasspath, testName, oldJarOrDir, newJarOrDir, projectPath, oracleFile)
     } catch {
       case e: Exception =>
         Console.err.println(e.toString)
@@ -158,10 +214,10 @@ object TestsPlugin extends AutoPlugin {
     }
   }
 
-  private def dependOnAll(projects: Seq[Project], f: Project => TaskKey[Unit]): Def.Initialize[Task[Unit]] =
+  private def dependOnAll(projects: Seq[Project], task: TaskKey[Unit]): Def.Initialize[Task[Unit]] =
     Def.taskDyn {
       val structure = Project.structure(state.value)
-      val allTasks = projects.flatMap(p => f(p).get(structure.data))
+      val allTasks = projects.flatMap(p => (p / task).get(structure.data))
       Def.task(allTasks.join.map(_ => ()).value)
     }
 

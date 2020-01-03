@@ -1,2 +1,2 @@
-abstract method foo()Unit in interface AA is inherited by class B in new version.
-abstract method foo()Unit in interface AA is inherited by class A in new version.
+abstract method foo()Int in interface AA is inherited by class A in new version.
+abstract method foo()Int in interface AA is inherited by class B in new version.
