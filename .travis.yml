@@ -2,7 +2,6 @@ language: scala
 jdk: openjdk8
 scala: 2.12.10
 
-
 jobs:
   include:
   - { script: sbt mimaReportBinaryIssues test IntegrationTest/test }
@@ -14,7 +13,8 @@ jobs:
 
 cache:
   directories:
-  - $HOME/.ivy2
+  - $HOME/.cache/coursier
+  - $HOME/.ivy2/cache
   - $HOME/.sbt
 
 before_cache:
