@@ -53,27 +53,27 @@ final class ConcreteClassInfo(owner: PackageInfo, val file: AbstractFile) extend
 sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Equals {
   import ClassInfo._
 
-  final var _innerClasses: Seq[String]   = Nil
-  final var _isLocalClass: Boolean       = false
-  final var _isTopLevel: Boolean         = true
-  final var _superClass: ClassInfo       = NoClass
-  final var _interfaces: List[ClassInfo] = Nil
-  final var _fields: Fields              = NoMembers
-  final var _methods: Methods            = NoMembers
-  final var _flags: Int                  = 0
-  final var _implClass: ClassInfo        = NoClass
+  final var _innerClasses: Seq[String]    = Nil
+  final var _isLocalClass: Boolean        = false
+  final var _isTopLevel: Boolean          = true
+  final var _superClass: ClassInfo        = NoClass
+  final var _interfaces: List[ClassInfo]  = Nil
+  final var _fields: Members[FieldInfo]   = NoMembers
+  final var _methods: Members[MethodInfo] = NoMembers
+  final var _flags: Int                   = 0
+  final var _implClass: ClassInfo         = NoClass
 
   protected def afterLoading[A](x: => A): A
 
-  final def innerClasses: Seq[String]   = afterLoading(_innerClasses)
-  final def isLocalClass: Boolean       = afterLoading(_isLocalClass)
-  final def isTopLevel: Boolean         = afterLoading(_isTopLevel)
-  final def superClass: ClassInfo       = afterLoading(_superClass)
-  final def interfaces: List[ClassInfo] = afterLoading(_interfaces)
-  final def fields: Fields              = afterLoading(_fields)
-  final def methods: Methods            = afterLoading(_methods)
-  final def flags: Int                  = afterLoading(_flags)
-  final def implClass: ClassInfo        = { owner.setImplClasses; _implClass } // returns NoClass if this is not a trait
+  final def innerClasses: Seq[String]    = afterLoading(_innerClasses)
+  final def isLocalClass: Boolean        = afterLoading(_isLocalClass)
+  final def isTopLevel: Boolean          = afterLoading(_isTopLevel)
+  final def superClass: ClassInfo        = afterLoading(_superClass)
+  final def interfaces: List[ClassInfo]  = afterLoading(_interfaces)
+  final def fields: Members[FieldInfo]   = afterLoading(_fields)
+  final def methods: Members[MethodInfo] = afterLoading(_methods)
+  final def flags: Int                   = afterLoading(_flags)
+  final def implClass: ClassInfo         = { owner.setImplClasses; _implClass } // returns NoClass if this is not a trait
 
   final def isTrait: Boolean     = implClass ne NoClass // trait with some concrete methods or fields
   final def isModule: Boolean    = bytecodeName.endsWith("$") // super scuffed
