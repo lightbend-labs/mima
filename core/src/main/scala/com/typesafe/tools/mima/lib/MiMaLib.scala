@@ -7,7 +7,6 @@ import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.core.util.log.{ ConsoleLogging, Logging }
 import com.typesafe.tools.mima.lib.analyze.Analyzer
 
-import scala.collection.mutable.ListBuffer
 import scala.tools.nsc.util.ClassPath
 
 final class MiMaLib(classpath: ClassPath, log: Logging = ConsoleLogging) {
@@ -18,31 +17,27 @@ final class MiMaLib(classpath: ClassPath, log: Logging = ConsoleLogging) {
     }
   }
 
-  private val problems = new ListBuffer[Problem]
-
-  private def raise(problem: Problem) = {
-    problems += problem
-    log.debugLog(s"Problem: ${problem.description("new")}")
-  }
-
-  private def comparePackages(oldpkg: PackageInfo, newpkg: PackageInfo): Unit = {
-    for (oldclazz <- oldpkg.accessibleClasses) {
-      log.info(s"Analyzing $oldclazz")
-      newpkg.classes.get(oldclazz.bytecodeName) match {
-        case Some(newclazz) => Analyzer.analyze(oldclazz, newclazz).foreach(raise)
+  private def comparePackages(oldpkg: PackageInfo, newpkg: PackageInfo): List[Problem] = {
+    for {
+      oldclazz <- oldpkg.accessibleClasses.toList
+      _ = log.info(s"Analyzing $oldclazz")
+      problem <- newpkg.classes.get(oldclazz.bytecodeName) match {
+        case Some(newclazz) => Analyzer.analyze(oldclazz, newclazz)
         case None           =>
           // if it is missing a trait implementation class, then no error should be reported
           // since there should be already errors, i.e., missing methods...
-          if (!oldclazz.isImplClass)
-            raise(MissingClassProblem(oldclazz))
+          if (oldclazz.isImplClass) Nil
+          else List(MissingClassProblem(oldclazz))
       }
+    } yield {
+      log.debugLog(s"Problem: ${problem.description("new")}")
+      problem
     }
   }
 
-  private def traversePackages(oldpkg: PackageInfo, newpkg: PackageInfo): Unit = {
+  private def traversePackages(oldpkg: PackageInfo, newpkg: PackageInfo): List[Problem] = {
     log.info(s"Traversing $oldpkg")
-    comparePackages(oldpkg, newpkg)
-    for (p <- oldpkg.packages.valuesIterator) {
+    comparePackages(oldpkg, newpkg) ++ oldpkg.packages.valuesIterator.flatMap { p =>
       val q = newpkg.packages.getOrElse(p.name, NoPackageInfo)
       traversePackages(p, q)
     }
@@ -56,6 +51,5 @@ final class MiMaLib(classpath: ClassPath, log: Logging = ConsoleLogging) {
     log.debugLog(s"[new version in: $newDefinitions]")
     log.debugLog(s"classpath: ${classpath.asClassPathString}")
     traversePackages(oldDefinitions.targetPackage, newDefinitions.targetPackage)
-    problems.toList
   }
 }

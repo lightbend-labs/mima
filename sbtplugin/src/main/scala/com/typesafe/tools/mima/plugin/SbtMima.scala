@@ -13,25 +13,18 @@ import sbt.librarymanagement.ivy._
 import sbt.internal.librarymanagement._
 
 import scala.io.Source
-import scala.tools.nsc.util.ClassPath
 import scala.collection.mutable
 import scala.collection.mutable.ListBuffer
 import scala.util.control.NonFatal
 import scala.util.matching._
 
 object SbtMima {
-  /** Creates a new MiMaLib object to run analysis. */
-  private def makeMima(cp: Classpath, log: Logging): MiMaLib = new MiMaLib(convCp(cp), log)
-
-  /** Convert sbt's notion of a "Classpath" to nsc's notion of a "ClassPath". */
-  private def convCp(cp: Classpath): ClassPath = aggregateClassPath(Attributed.data(cp))
-
   /** Runs MiMa and returns a two lists of potential binary incompatibilities,
       the first for backward compatibility checking, and the second for forward checking. */
   def runMima(prev: File, curr: File, cp: Classpath, dir: String, log: Logging): (List[Problem], List[Problem]) = {
-    // MiMaLib collects problems to a mutable buffer, therefore we need a new instance every time
-    def checkBC = makeMima(cp, log).collectProblems(prev, curr)
-    def checkFC = makeMima(cp, log).collectProblems(curr, prev)
+    val mimaLib = new MiMaLib(aggregateClassPath(Attributed.data(cp)), log)
+    def checkBC = mimaLib.collectProblems(prev, curr)
+    def checkFC = mimaLib.collectProblems(curr, prev)
     dir match {
        case "backward" | "backwards" => (checkBC, Nil)
        case "forward" | "forwards"   => (Nil, checkFC)
