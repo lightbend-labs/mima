@@ -2,19 +2,24 @@ package com.typesafe.tools.mima.lib
 
 import java.io.File
 
-import com.typesafe.tools.mima.core.Config._
 import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.core.util.log.{ ConsoleLogging, Logging }
 import com.typesafe.tools.mima.lib.analyze.Analyzer
 
+import scala.tools.nsc.classpath.AggregateClassPath
+import scala.tools.nsc.mima.ClassPathAccessors
 import scala.tools.nsc.util.ClassPath
 
 final class MiMaLib(classpath: ClassPath, log: Logging = ConsoleLogging) {
-  private def createDefinitions(dirOrJar: File): Definitions = {
-    pathToClassPath(dirOrJar) match {
-      case None => fatal(s"not a directory or jar file: $dirOrJar")
-      case cp   => new Definitions(cp, classpath)
+  private def createPackage(classpath: ClassPath, dirOrJar: File): PackageInfo = {
+    val cp = pathToClassPath(dirOrJar).getOrElse(Config.fatal(s"not a directory or jar file: $dirOrJar"))
+    val defs = new Definitions(AggregateClassPath.createAggregate(cp, classpath))
+    val pkg = new DefinitionsTargetPackageInfo(defs.root)
+    for (p <- cp.packagesIn(ClassPath.RootPackage)) {
+      pkg.packages(p.name) = new ConcretePackageInfo(pkg, cp, p.name, defs)
     }
+    log.debugLog(s"added packages to <root>: ${pkg.packages.keys.mkString(", ")}")
+    pkg
   }
 
   private def comparePackages(oldpkg: PackageInfo, newpkg: PackageInfo): List[Problem] = {
@@ -45,11 +50,11 @@ final class MiMaLib(classpath: ClassPath, log: Logging = ConsoleLogging) {
 
   /** Return a list of problems for the two versions of the library. */
   def collectProblems(oldJarOrDir: File, newJarOrDir: File): List[Problem] = {
-    val oldDefinitions = createDefinitions(oldJarOrDir)
-    val newDefinitions = createDefinitions(newJarOrDir)
-    log.debugLog(s"[old version in: $oldDefinitions]")
-    log.debugLog(s"[new version in: $newDefinitions]")
+    val oldPackage = createPackage(classpath, oldJarOrDir)
+    val newPackage = createPackage(classpath, newJarOrDir)
+    log.debugLog(s"[old version in: ${oldPackage.definitions}]")
+    log.debugLog(s"[new version in: ${newPackage.definitions}]")
     log.debugLog(s"classpath: ${classpath.asClassPathString}")
-    traversePackages(oldDefinitions.targetPackage, newDefinitions.targetPackage)
+    traversePackages(oldPackage, newPackage)
   }
 }

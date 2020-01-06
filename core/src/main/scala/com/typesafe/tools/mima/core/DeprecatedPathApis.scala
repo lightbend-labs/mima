@@ -11,10 +11,10 @@ import scala.tools.util.PathResolver
 // In sbt the compiler used is determined by scalaVersion
 // So we must continue to use the old APIs to use MiMa on builds with Scala <2.12.9.
 // So use the WORKAROUND in scala/bug#7934
-private[core] object DeprecatedPathApis extends DeprecatedPathApis
+private[mima] object DeprecatedPathApis extends DeprecatedPathApis
 
 @deprecated("", "")
-private[core] class DeprecatedPathApis {
+private[mima] class DeprecatedPathApis {
   def newPathResolver(settings: Settings): PathResolver              = new PathResolver(settings)
   def newClassPath(dir: AbstractFile, settings: Settings): ClassPath = ClassPathFactory.newClassPath(dir, settings)
 }
