@@ -2,10 +2,8 @@ package com.typesafe.tools.mima.core
 
 import scala.annotation.tailrec
 import scala.collection.mutable
-import scala.tools.nsc.classpath.AggregateClassPath
 import scala.tools.nsc.mima.ClassPathAccessors
 import scala.tools.nsc.util.ClassPath
-import com.typesafe.tools.mima.core.util.log.ConsoleLogging
 
 sealed class SyntheticPackageInfo(val owner: PackageInfo, val name: String) extends PackageInfo {
   def definitions   = owner.definitions
@@ -44,27 +42,10 @@ sealed class ConcretePackageInfo(val owner: PackageInfo, cp: ClassPath, pkg: Str
 }
 
 final private[core] class DefinitionsPackageInfo(defs: Definitions)
-    extends ConcretePackageInfo(
-      NoPackageInfo,
-      AggregateClassPath.createAggregate(defs.lib.toList :+ defs.classPath: _*),
-      ClassPath.RootPackage,
-      defs,
-    )
+    extends ConcretePackageInfo(NoPackageInfo, defs.classPath, ClassPath.RootPackage, defs)
 
-private[core] object DefinitionsTargetPackageInfo {
-  def create(defs: Definitions): PackageInfo = {
-    val pkg = new DefinitionsTargetPackageInfo(defs.root)
-    val cp = defs.lib.getOrElse(AggregateClassPath(Nil))
-    for (p <- cp.packagesIn(ClassPath.RootPackage)) {
-      pkg.packages(p.name) = new ConcretePackageInfo(pkg, cp, p.name, defs)
-    }
-    ConsoleLogging.debugLog(pkg.packages.keys.mkString("added packages to <root>: ", ", ", ""))
-    pkg
-  }
-}
-
-final private[core] class DefinitionsTargetPackageInfo(root: PackageInfo)
-  extends SyntheticPackageInfo(root, "<root>")
+final private[mima] class DefinitionsTargetPackageInfo(root: PackageInfo)
+    extends SyntheticPackageInfo(root, "<root>")
 {
   // Needed to fetch classes located in the root (empty package).
   override lazy val classes = root.classes
