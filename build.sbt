@@ -12,6 +12,7 @@ inThisBuild(Seq(
   scmInfo := Some(ScmInfo(url("https://github.com/lightbend/mima"), "scm:git:git@github.com:lightbend/mima.git")),
   dynverVTagPrefix := false,
   scalacOptions := Seq("-feature", "-deprecation", "-Xlint"),
+  useCoursier := false, // b/c otherwise IntegrationTest/test uses scala-library-2.12 always
 //resolvers += stagingResolver,
 ))
 
