@@ -54,13 +54,17 @@ private[mima] final class MethodInfo(owner: ClassInfo, bytecodeName: String, fla
   def matchesType(other: MethodInfo): Boolean = parametersDesc == other.parametersDesc
 
   private def isDefaultGetter: Boolean   = decodedName.contains("$default$")
+  private def isTraitInit: Boolean       = decodedName == "$init$"
   private def isExtensionMethod: Boolean = {
     var i = decodedName.length - 1
     while (i >= 0 && Character.isDigit(decodedName.charAt(i)))
       i -= 1
     decodedName.substring(0, i + 1).endsWith("$extension")
   }
-  def nonAccessible: Boolean = !isPublic || isSynthetic || (hasSyntheticName && !isExtensionMethod && !isDefaultGetter)
+  def nonAccessible: Boolean = {
+    !isPublic || isSynthetic ||
+      (hasSyntheticName && !(isExtensionMethod || isDefaultGetter || isTraitInit))
+  }
 
   override def toString = s"def $bytecodeName: $descriptor"
 }

@@ -1,0 +1,1 @@
+synthetic static method $init$(B)Unit in interface B does not have a correspondent in new version
