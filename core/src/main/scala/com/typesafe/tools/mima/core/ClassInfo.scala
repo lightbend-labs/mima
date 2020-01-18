@@ -118,8 +118,7 @@ sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Eq
   /** The concrete methods of this trait. */
   final lazy val concreteMethods: List[MethodInfo] = {
     if (isTrait) methods.value.filter(m => hasStaticImpl(m) || m.isConcrete)
-    else if (isClass || isInterface) methods.value.filter(_.isConcrete)
-    else Nil
+    else methods.value.filter(_.isConcrete)
   }
 
   /** The subset of concrete methods of this trait that are abstract at the JVM level.
