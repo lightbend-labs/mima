@@ -9,4 +9,7 @@ object A {
   abstract class B {
     def f: Int
   }
+
+  def giveLt: < = new < { def f = 1 }
+  def giveB: B  = new B { def f = 2 }
 }

@@ -5,3 +5,6 @@ abstract class C extends B {
 }
 abstract class D extends C
 
+object Usage {
+  def use(a: A) = ()
+}

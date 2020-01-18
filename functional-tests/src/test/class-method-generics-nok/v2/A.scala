@@ -4,8 +4,8 @@ class A {
 }
 
 final class Api {
-  def cov1[A](): A        = ??? // OK
-  def cov2(): Any         = ??? // KO
+  def cov1[A](): A        = null.asInstanceOf[A] // OK
+  def cov2(): Any         = ()                   // KO
 
   def con1[A](x: A): Unit = () // KO
   def con2(x: Any): Unit  = () // OK

@@ -5,3 +5,7 @@ trait A {
 
 
 trait B extends A
+
+object Usage {
+  def use(a: A): Int = a.foo
+}

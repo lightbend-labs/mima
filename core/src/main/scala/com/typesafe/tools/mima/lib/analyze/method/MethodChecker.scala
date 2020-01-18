@@ -13,7 +13,7 @@ private[analyze] object MethodChecker {
 
   /** Analyze incompatibilities that may derive from new methods in `newclazz`. */
   private def checkNew(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
-    checkEmulatedConcreteMethodsProblems(oldclazz, newclazz) :::
+    (if (newclazz.isClass) Nil else checkEmulatedConcreteMethodsProblems(oldclazz, newclazz)) :::
       checkDeferredMethodsProblems(oldclazz, newclazz) :::
       checkInheritedNewAbstractMethodProblems(oldclazz, newclazz)
   }
@@ -108,30 +108,28 @@ private[analyze] object MethodChecker {
     methods.groupBy(_.parametersDesc).values.collect { case method :: _ => method }.toList
 
   private def checkEmulatedConcreteMethodsProblems(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
-    if (oldclazz.isClass && newclazz.isClass) Nil else {
-      for {
-        newmeth <- newclazz.emulatedConcreteMethods.iterator
-        if !oldclazz.hasStaticImpl(newmeth)
-        problem <- {
-          if (oldclazz.lookupMethods(newmeth).exists(_.descriptor == newmeth.descriptor)) {
-            // a static implementation for the same method existed already, therefore
-            // class that mixed-in the trait already have a forwarder to the implementation
-            // class. Mind that, despite no binary incompatibility arises, program's
-            // semantic may be severely affected.
-            None
-          } else {
-            // this means that the method is brand new and therefore the implementation
-            // has to be injected
-            Some(ReversedMissingMethodProblem(newmeth))
-          }
+    for {
+      newmeth <- newclazz.emulatedConcreteMethods.iterator
+      if !oldclazz.hasStaticImpl(newmeth)
+      problem <- {
+        if (oldclazz.lookupMethods(newmeth).exists(_.descriptor == newmeth.descriptor)) {
+          // a static implementation for the same method existed already, therefore
+          // classes that mixed-in the trait already have a forwarder to the implementation
+          // class. Mind that, despite no binary incompatibility arises, program's
+          // semantic may be severely affected.
+          None
+        } else {
+          // this means that the method is brand new
+          // and therefore the implementation has to be injected
+          Some(ReversedMissingMethodProblem(newmeth))
         }
-      } yield problem
-    }.toList
-  }
+      }
+    } yield problem
+  }.toList
 
   private def checkDeferredMethodsProblems(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
     for {
-      newmeth <- newclazz.deferredMethods
+      newmeth <- newclazz.deferredMethods.iterator
       problem <- oldclazz.lookupMethods(newmeth).find(_.descriptor == newmeth.descriptor) match {
         case None          => Some(ReversedMissingMethodProblem(newmeth))
         case Some(oldmeth) =>
@@ -140,7 +138,7 @@ private[analyze] object MethodChecker {
           else None
       }
     } yield problem
-  }
+  }.toList
 
   private def checkInheritedNewAbstractMethodProblems(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
     def allInheritedTypes(clazz: ClassInfo) = clazz.superClasses ++ clazz.allInterfaces

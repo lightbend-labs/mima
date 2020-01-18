@@ -11,7 +11,7 @@ import scala.tools.nsc.classpath.AggregateClassPath
 object CollectProblemsTest {
 
   // Called via reflection from TestsPlugin
-  def runTest(testClasspath: Array[File], testName: String, oldJarOrDir: File, newJarOrDir: File, baseDir: File, scalaVersion: String): Unit = {
+  def runTest(testClasspath: Array[File], testName: String, oldJarOrDir: File, newJarOrDir: File, baseDir: File, oracleFile: File): Unit = {
     val testClassPath = aggregateClassPath(testClasspath)
     val classpath = AggregateClassPath.createAggregate(testClassPath, Config.baseClassPath)
     val mima = new MiMaLib(classpath)
@@ -25,16 +25,6 @@ object CollectProblemsTest {
     val problems = mima.collectProblems(oldJarOrDir, newJarOrDir).filter(problemFilter)
 
     // load oracle
-    val oracleFile = {
-      val p = new File(baseDir, "problems.txt")
-      val p211 = new File(baseDir, "problems-2.11.txt")
-      val p212 = new File(baseDir, "problems-2.12.txt")
-      scalaVersion.take(4) match {
-        case "2.11" => if (p211.exists()) p211 else if (p212.exists()) p212 else p
-        case "2.12" => if (p212.exists()) p212 else p
-        case _      => p
-      }
-    }
     val source = Source.fromFile(oracleFile)
     val expectedProblems = try source.getLines.filter(!_.startsWith("#")).toList finally source.close()
 
