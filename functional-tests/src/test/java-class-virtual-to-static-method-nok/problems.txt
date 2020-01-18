@@ -1,4 +1,4 @@
 non-static field fld in class A is static in new version
 non-static method bar()Int in class A is static in new version
-method foo()Int in class A does not have a correspondent in new version
+non-static method foo(A)Int in class A is static in new version
 method this(A)Unit in class A#Nested does not have a correspondent in new version
