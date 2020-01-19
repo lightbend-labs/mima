@@ -26,6 +26,7 @@ object TestsPlugin extends AutoPlugin {
   override def extraProjects = funTestProjects ++ intTestProjects
 
   override def buildSettings = Seq(
+    resolvers += "scala-pr-validation-snapshots" at "https://scala-ci.typesafe.com/artifactory/scala-pr-validation-snapshots/",
     testScalaVersion := sys.props.getOrElse("mima.testScalaVersion", scalaVersion.value),
   )
 
@@ -56,7 +57,6 @@ object TestsPlugin extends AutoPlugin {
   private lazy val intTestProjects = testProjects( "it" ,   "test.conf" , intTestProject)
 
   private def sharedTestProjectSettings = Def.settings(
-    resolvers += "scala-pr-validation-snapshots" at "https://scala-ci.typesafe.com/artifactory/scala-pr-validation-snapshots/",
     scalaVersion := testScalaVersion.value,
   )
 
