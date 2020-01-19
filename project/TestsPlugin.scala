@@ -26,6 +26,7 @@ object TestsPlugin extends AutoPlugin {
   override def extraProjects = funTestProjects ++ intTestProjects
 
   override def buildSettings = Seq(
+    resolvers += "scala-pr-validation-snapshots" at "https://scala-ci.typesafe.com/artifactory/scala-pr-validation-snapshots/",
     testScalaVersion := sys.props.getOrElse("mima.testScalaVersion", scalaVersion.value),
   )
 
@@ -41,7 +42,6 @@ object TestsPlugin extends AutoPlugin {
   private val V1   = config("v1").extend(Compile)   // Version 1 of a library
   private val V2   = config("v2").extend(Compile)   // Version 2 of a library
   private val App  = config("app").extend(V1)       // An App, built against library v1
-  private val App2 = config("app2").extend(V2, App) // The App, using library v2
 
   private def testProjects(prefix: String, fileName: String, setup: Project => Project) = {
     (file("functional-tests") / "src" / prefix * dirContaining(fileName)).get().map { base =>
@@ -49,16 +49,11 @@ object TestsPlugin extends AutoPlugin {
     }
   }
 
-  private def intTestProject(p: Project) = p.settings(intTestProjectSettings)
-  private def funTestProject(p: Project) = p.settings(funTestProjectSettings).configs(V1, V2, App, App2)
+  private def intTestProject(p: Project) = p.settings(IntegrationTest / test := runIntegrationTest.value)
+  private def funTestProject(p: Project) = p.settings(funTestProjectSettings).configs(V1, V2, App)
 
   private lazy val funTestProjects = testProjects("test", "problems.txt", funTestProject)
   private lazy val intTestProjects = testProjects( "it" ,   "test.conf" , intTestProject)
-
-  private def sharedTestProjectSettings = Def.settings(
-    resolvers += "scala-pr-validation-snapshots" at "https://scala-ci.typesafe.com/artifactory/scala-pr-validation-snapshots/",
-    scalaVersion := testScalaVersion.value,
-  )
 
   private val oracleFile = Def.task {
     val p    = baseDirectory.value / "problems.txt"
@@ -88,17 +83,12 @@ object TestsPlugin extends AutoPlugin {
     val conf = ConfigFactory.parseFile(confFile).resolve()
     val moduleBase = conf.getString("groupId") % conf.getString("artifactId")
     val depRes = dependencyResolution.value
-    val v1 = getArtifact(depRes, moduleBase % conf.getString("v1"), streams.value.log)
-    val v2 = getArtifact(depRes, moduleBase % conf.getString("v2"), streams.value.log)
+    val v1 = getArtifact(depRes, moduleBase % conf.getString(V1.name), streams.value.log)
+    val v2 = getArtifact(depRes, moduleBase % conf.getString(V2.name), streams.value.log)
     streams.value.log.info(s"Comparing $v1 -> $v2")
     runCollectProblemsTest(cp, si, name.value, v1, v2, baseDirectory.value, oracleFile.value)
     streams.value.log.info(s"Test '${name.value}' succeeded.")
   }
-
-  private val intTestProjectSettings = Def.settings(
-    sharedTestProjectSettings,
-    IntegrationTest / test := runIntegrationTest.value,
-  )
 
   private val funTestPerConfigSettings = Def.settings(
     Defaults.configSettings, // e.g. compile and package
@@ -125,7 +115,7 @@ object TestsPlugin extends AutoPlugin {
       case _      => p.exists()
     }
     (App / fgRun).toTask("").value
-    val result = (App2 / fgRun).toTask("").result.value
+    val result = (Test / fgRun).toTask("").result.value
     if (IO.read(oracleFile.value).isEmpty) {
       if (!pending) Result.tryValue(result)
     } else {
@@ -138,24 +128,24 @@ object TestsPlugin extends AutoPlugin {
   private val runFunctionalTest = Def.task {
     testCollectProblems.value
     testAppRun.value
-    streams.value.log.info(s"Test '${name.value}' succeeded.")
+    streams.value.log.info(s"Test '${name.value}' succeeded")
   }
 
   private val funTestProjectSettings = Def.settings(
-    sharedTestProjectSettings,
+    scalaVersion := testScalaVersion.value,
     inConfig(V1)(funTestPerConfigSettings),
     inConfig(V2)(funTestPerConfigSettings),
     inConfig(App)(funTestPerConfigSettings),
-    inConfig(App2)(Def.settings(
-      funTestPerConfigSettings,
-      internalDependencyClasspath --= (V1 / exportedProducts).value, // V2 only, drop V2 classes
+    inConfig(Test)(Def.settings(
+      internalDependencyClasspath ++= (V2 / exportedProducts).value,
+      internalDependencyClasspath ++= (App / exportedProducts).value,
       run / mainClass := Some("App"),
       run / trapExit  := false,
     )),
+    Global / onLoad += oracleFileCheck.value,
     testCollectProblems := testCollectProblemsImpl.value,
     testAppRun := testAppRunImpl.value,
     Test / test := runFunctionalTest.value,
-    Global / onLoad += oracleFileCheck.value,
   )
 
   private def runCollectProblemsTest(
@@ -190,7 +180,7 @@ object TestsPlugin extends AutoPlugin {
     } catch {
       case e: Exception =>
         Console.err.println(e.toString)
-        throw new MessageOnlyException(s"Test '$testName' failed.")
+        throw new MessageOnlyException(s"Test '$testName' failed")
     }
   }
 
