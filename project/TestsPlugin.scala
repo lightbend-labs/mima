@@ -50,15 +50,11 @@ object TestsPlugin extends AutoPlugin {
     }
   }
 
-  private def intTestProject(p: Project) = p.settings(intTestProjectSettings)
+  private def intTestProject(p: Project) = p.settings(IntegrationTest / test := runIntegrationTest.value)
   private def funTestProject(p: Project) = p.settings(funTestProjectSettings).configs(V1, V2, App, App2)
 
   private lazy val funTestProjects = testProjects("test", "problems.txt", funTestProject)
   private lazy val intTestProjects = testProjects( "it" ,   "test.conf" , intTestProject)
-
-  private def sharedTestProjectSettings = Def.settings(
-    scalaVersion := testScalaVersion.value,
-  )
 
   private val oracleFile = Def.task {
     val p    = baseDirectory.value / "problems.txt"
@@ -94,11 +90,6 @@ object TestsPlugin extends AutoPlugin {
     runCollectProblemsTest(cp, si, name.value, v1, v2, baseDirectory.value, oracleFile.value)
     streams.value.log.info(s"Test '${name.value}' succeeded.")
   }
-
-  private val intTestProjectSettings = Def.settings(
-    sharedTestProjectSettings,
-    IntegrationTest / test := runIntegrationTest.value,
-  )
 
   private val funTestPerConfigSettings = Def.settings(
     Defaults.configSettings, // e.g. compile and package
@@ -142,7 +133,7 @@ object TestsPlugin extends AutoPlugin {
   }
 
   private val funTestProjectSettings = Def.settings(
-    sharedTestProjectSettings,
+    scalaVersion := testScalaVersion.value,
     inConfig(V1)(funTestPerConfigSettings),
     inConfig(V2)(funTestPerConfigSettings),
     inConfig(App)(funTestPerConfigSettings),
