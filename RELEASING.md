@@ -24,7 +24,7 @@ See the [prerequisites](#prerequisites) if this is your first release.
 * [ ] Update the MiMa version in `plugins.sbt` and for `mimaPreviousArtifacts`, and clear out `mimaBinaryIssueFilters`.
 * [ ] Test the staged artifacts by uncommenting `stagingResolvers` in `plugins.sbt` and `build.sbt` and `reload`ing in sbt and running `mimaReportBinaryIssues`.
 * [ ] Recomment `stagingResolvers`, `git commit -am 'Update sbt-mima-plugin to 0.x.y`, and PR it (`hub pull-request`).
-* [ ] [Find and release][sonatype/staging-repos] your stating repository.
+* [ ] [Find and release][sonatype/staging-repos] your staging repository.
 * [ ] [Close][milestones/list] the milestone.
 * [ ] [Find and merge][prs/list] your update PR. You may poll [repo1 directly][repo1/list] (note the trailing slash in the URL).
 * [ ] Run `git push --follow-tags` to push the tag.
@@ -40,7 +40,7 @@ See the [prerequisites](#prerequisites) if this is your first release.
 
 [RELEASING.md]: https://raw.githubusercontent.com/lightbend/mima/master/RELEASING.md
 [repo1/list]: https://repo1.maven.org/maven2/com/typesafe/mima-core_2.12/0.5.0/
-[sbt-mima/view]: https://bintray.com/typesafe/sbt-plugins/sbt-mima-plugin/view
+[sbt-mima/view]: https://bintray.com/sbt/sbt-plugin-releases/sbt-mima-plugin-imported2/view
 [sonatype/guide]: https://central.sonatype.org/pages/releasing-the-deployment.html
 [sonatype/staging-repos]: https://oss.sonatype.org/#stagingRepositories
 [travis-ci]: https://travis-ci.org/lightbend/mima
