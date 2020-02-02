@@ -37,8 +37,8 @@ val core = project.disablePlugins(BintrayPlugin).settings(
   apiMappings ++= {
     // WORKAROUND https://github.com/scala/bug/issues/9311
     // from https://stackoverflow.com/a/31322970/463761
-    sys.props("sun.boot.class.path")
-      .split(java.io.File.pathSeparator)
+    sys.props.get("sun.boot.class.path").toList
+      .flatMap(_.split(java.io.File.pathSeparator))
       .collectFirst { case str if str.endsWith(java.io.File.separator + "rt.jar") =>
         file(str) -> url("http://docs.oracle.com/javase/8/docs/api/index.html")
       }
