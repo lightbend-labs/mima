@@ -4,7 +4,8 @@ scala: 2.12.10
 
 jobs:
   include:
-  - { script: sbt mimaReportBinaryIssues test IntegrationTest/test }
+  - { script: "sbt mimaReportBinaryIssues test IntegrationTest/test
+        'set sbtplugin/scriptedSbt := \"1.2.8\"' 'scripted sbt-mima-plugin/minimal'" }
   - { name: testFunctional 2.11, script: sbt -Dmima.testScalaVersion=2.11.12 testFunctional }
   - { name: testFunctional 2.12, script: sbt -Dmima.testScalaVersion=2.12.10 testFunctional }
   - { name: testFunctional 2.13, script: sbt -Dmima.testScalaVersion=2.13.1  testFunctional }

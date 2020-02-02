@@ -2,7 +2,7 @@ package com.typesafe.tools.mima
 package plugin
 
 import com.typesafe.tools.mima.core.{ Problem, ProblemFilter }
-import sbt._
+import sbt.{ File, ModuleID, settingKey, taskKey } // no sbt._, to avoid 1.3+ only singleFileJsonFormatter
 
 object MimaKeys extends MimaKeys
 
