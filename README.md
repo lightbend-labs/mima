@@ -36,13 +36,12 @@ source compatibility.
 
 ## Usage
 
-The latest version of MiMa's sbt plugin supports sbt 1.3.0+.
-Use v0.6.0 for sbt 1.0.x - 1.2.x, and v0.3.0 for sbt 0.13.x.
+MiMa's sbt plugin supports sbt 1.x only.  Use v0.3.0 for sbt 0.13.x.
 
 To use it add the following to your `project/plugins.sbt` file:
 
 ```
-addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.6.1")
+addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.6.2")
 ```
 
 Add the following to your `build.sbt` file:
