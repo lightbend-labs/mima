@@ -55,7 +55,9 @@ val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core).settings(
   scriptedLaunchOpts += s"-Dplugin.version=${version.value}",
   scriptedLaunchOpts += s"-Dsbt.boot.directory=${file(sys.props("user.home")) / ".sbt" / "boot"}",
   MimaSettings.mimaSettings,
-  bintrayOrganization := Some("typesafe"),
+  bintrayOrganization := Some("sbt"),
+  bintrayRepository := "sbt-plugin-releases",
+  bintrayPackage := "sbt-mima-plugin-imported2",
   bintrayReleaseOnPublish := false,
 )
 
