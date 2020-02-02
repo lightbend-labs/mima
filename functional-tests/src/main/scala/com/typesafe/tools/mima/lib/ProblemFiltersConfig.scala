@@ -3,7 +3,7 @@ package lib
 
 import com.typesafe.tools.mima.core.{ProblemFilter, ProblemFilters}
 import com.typesafe.config._
-import scala.jdk.CollectionConverters._
+import scala.collection.JavaConverters._
 
 object ProblemFiltersConfig {
   private val filterProblemsPath = "filter.problems"

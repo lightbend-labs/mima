@@ -64,10 +64,7 @@ val functionalTests = Project("functional-tests", file("functional-tests"))
   .enablePlugins(TestsPlugin)
   .disablePlugins(BintrayPlugin)
   .settings(
-    libraryDependencies ++= Seq(
-      "com.typesafe"           %  "config"                  % "1.4.0",
-      "org.scala-lang.modules" %% "scala-collection-compat" % "2.1.3",
-    ),
+    libraryDependencies += "com.typesafe" % "config" % "1.4.0",
     mimaFailOnNoPrevious := false,
     skip in publish := true,
   )
