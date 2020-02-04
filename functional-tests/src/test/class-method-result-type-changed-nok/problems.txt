@@ -1,0 +1,1 @@
+method bar()Int in class Foo has a different result type in new version, where it is Long rather than Int

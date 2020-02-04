@@ -93,7 +93,8 @@ private[analyze] object MethodChecker {
     newmethAndBridges.find(_.tpe.resultType == oldmeth.tpe.resultType) match {
       case Some(newmeth) => IncompatibleSignatureProblem(oldmeth, newmeth)
       case None          =>
-        if (newmeths.isEmpty || methsLookup(oldmeth.owner).toStream.lengthCompare(1) > 0) // method was overloaded
+        val oldmethsDescriptors = methsLookup(oldmeth.owner).map(_.descriptor).toSet
+        if (newmeths.forall(newmeth => oldmethsDescriptors.contains(newmeth.descriptor)))
           DirectMissingMethodProblem(oldmeth)
         else {
           newmethAndBridges match {
