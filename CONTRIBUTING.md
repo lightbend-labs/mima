@@ -38,6 +38,7 @@ To add a new functional test to the suite, create a new folder within the 'funct
             |-----> problems.txt (the expected list of reported errors - 1 line per error)
             |-----> v1 (folder containing sources @ version 1)
             |-----> v2 (folder containing sources @ version 2)
+            |-----> app (folder containing app using the tested code)
 
 After doing that, `reload` if you are in an `sbt` shell session (if that makes no sense to you, it means you are fine and you can run the test as usual).
 
