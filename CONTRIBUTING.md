@@ -8,28 +8,19 @@ If you'd like to contribute to the MiMa project, please sign the [contributor's 
 
 MiMa is split into several modules:
 
-- mima-core: classes that are used for detection and reporting
-- sbt-mima-plugin: the sbt plugin to run MiMa within an sbt build
+- `mima-core`: classes that are used for detection and reporting
+- `sbt-mima-plugin`: the sbt plugin to integrate MiMa into sbt builds
 
-## Building
+## Functional Tests
 
-Using [sbt][sbt]:
+The directory 'functional-tests' contains tests to verify MiMa's behaviour (blackbox testing). These may be run
+by executing
 
-      $ sbt compile
+    testFunctional
 
-[sbt]: http://www.scala-sbt.org/
+within sbt.
 
-This will recompile all MiMa's modules.
-
-## Functional tests
-
-The directory 'functional-tests' contains several functional tests exercising MiMa. All tests are executed as part of the build, therefore when running
-
-    $ sbt testFunctional
-
-if one (or more) test fails, the build is stopped and no jar will be produced.
-
-To add a new functional test to the suite, create a new folder within the 'functional-tests' directory with the following structure:
+To add a new functional test to the suite, create a new directory within the 'functional-tests' directory with the following structure:
 
     functional-tests
         |
@@ -44,7 +35,18 @@ After doing that, `reload` if you are in an `sbt` shell session (if that makes n
 
 Tests within the `functional-tests` folder should always pass.
 
-Note: The `problems.txt` is the test oracle. Expected errors are declared using the MiMa's reporting output (i.e., the output of the tool and the expected errors should match perfectly). Admittedly, this coupling is an issue since the testing framework is highly coupled with the tool output used to report errors to the user. We should improve this and make the two independent. Until then, mind that by changing the output of the tool you will likely have to update some of the test oracles (i.e., problems.txt file). When running tests against Scala 2.12 or higher, `problems-2.12.txt` is preferred over `problems.txt` if the former exists.
+Note: The `problems.txt` is the test oracle. Expected errors are declared using the MiMa's reporting output (i.e., the output of the tool and the expected errors should match perfectly). Admittedly, this coupling is an issue since the testing framework is highly coupled with the tool output used to report errors to the user. We should improve this and make the two independent. Until then, mind that by changing the output of the tool you will likely have to update some of the test oracles (i.e., problems.txt file). If the problems reported are different in Scala 2.11 or 2.12, compared to Scala 2.13, then you may use a `problems-2.11.txt` or `problems-2.12.txt` file.
+
+The functional tests also include `app` sources (typically an `app/App.scala`) which exercises the library code.
+In more detail, it confirms that if no problems are expected (`problem.txt` is empty, after removing comments)
+that running the app doesn't throw any error at runtime.  It also asserts the reverse: if the test asserts that
+there are problems (i.e. `problem.txt` is non-empty, after removing comments) that running the app _does_ throw
+an error at runtime (i.e. MiMa isn't reporting false positives).  Broken down into steps, it does the following:
+
+1. compile `v1`
+2. compile `app`, against the classfiles of `v1`
+3. compile `v2`
+4. run the `app`, with a classpath that contains `v2` and not `v1`
 
 ## Other tests
 
@@ -56,8 +58,8 @@ There are also a few other test types:
 
 Unit tests should be favoured to verify specific MiMa APIs.  Functional tests should be favoured to verify
 MiMa's behaviour (in a blackbox fashion).  Scripted tests should be favoured to verify behaviour when it also
-concerns its integration in sbt and/or user's tweaking in sbt.  (It's unclear when integration tests should be
-favoured.)
+concerns its integration in sbt and/or user's tweaking in sbt.  Integration tests are used when there's an
+external dependency, such as depending on resolving external dependencies, and should only be a last resort.
 
 ## General Workflow
 
