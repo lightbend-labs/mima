@@ -1,3 +1,5 @@
-object Main extends App {
-  println(new Foo().bar)
+object App {
+  def main(args: Array[String]): Unit = {
+    println(new Foo().bar)
+  }
 }
