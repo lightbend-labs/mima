@@ -13,11 +13,17 @@ inThisBuild(Seq(
   dynverVTagPrefix := false,
   scalacOptions := Seq("-feature", "-deprecation", "-Xlint"),
   useCoursier := false, // b/c otherwise IntegrationTest/test uses scala-library-2.12 always
-//resolvers += stagingResolver,
+  resolvers ++= (if (isStaging) List(stagingResolver) else Nil),
 ))
 
 // Useful to self-test releases
 val stagingResolver = "Sonatype OSS Staging" at "https://oss.sonatype.org/content/repositories/staging"
+def isStaging = sys.props.contains("mimabuild.staging")
+commands += Command.command("testStaging") { state =>
+  val prep = if (isStaging) Nil else List("reload")
+  sys.props("mimabuild.staging") = "true"
+  prep ::: "mimaReportBinaryIssues" :: state
+}
 
 val root = project.in(file(".")).settings(
   name := "mima",
