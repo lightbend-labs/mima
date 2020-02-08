@@ -60,7 +60,7 @@ object MimaPlugin extends AutoPlugin {
     mimaFiltersDirectory := (sourceDirectory in Compile).value / "mima-filters",
   )
 
-  /** Setup MiMa with default settings, applicable for most projects. */
+  @deprecated("Switch to enablePlugins(MimaPlugin)", "0.7.0")
   def mimaDefaultSettings: Seq[Setting[_]] = globalSettings ++ buildSettings ++ projectSettings
 
   // Allows reuse between mimaFindBinaryIssues and mimaReportBinaryIssues
