@@ -135,11 +135,14 @@ object TestsPlugin extends AutoPlugin {
     scalaVersion := testScalaVersion.value,
     inConfig(V1)(funTestPerConfigSettings),
     inConfig(V2)(funTestPerConfigSettings),
-    inConfig(App)(funTestPerConfigSettings),
+    inConfig(App)(Def.settings(
+      funTestPerConfigSettings,
+      run / trapExit := false,
+    )),
     inConfig(Test)(Def.settings(
       internalDependencyClasspath ++= (V2 / exportedProducts).value,
       internalDependencyClasspath ++= (App / exportedProducts).value,
-      run / mainClass := Some("App"),
+      run / mainClass := (App / run / mainClass).value,
       run / trapExit  := false,
     )),
     Global / onLoad += oracleFileCheck.value,
