@@ -25,6 +25,7 @@ object MimaSettings {
       // to a less degree (some re-implementors):
       // * com.typesafe.tools.mima.lib.MiMaLib.collectProblems
       exclude[Problem]("*.mima.core.ProblemFilters#ExcludeByName*"), // private class
+      exclude[Problem]("*.mima.lib.analyze.*"),                      // impl package
     ),
   )
 }
