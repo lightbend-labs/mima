@@ -18,7 +18,7 @@ object ProblemReporting {
   )(problem: Problem): Boolean = {
     val versionMatchingFilters = versionedFilters
       // get all filters that apply to given module version or any version after it
-      .collect { case (version, filters) if versionOrdering.gteq(version, version) => filters }
+      .collect { case (version2, filters) if versionOrdering.gteq(version2, version) => filters }
       .flatten
 
     (versionMatchingFilters.iterator ++ filters).forall(filter => filter(problem))

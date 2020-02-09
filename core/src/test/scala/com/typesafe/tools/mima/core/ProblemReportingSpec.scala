@@ -14,6 +14,9 @@ final class ProblemReportingSpec extends AnyWordSpec with Matchers {
     "only major"       in assert(!isReportedV("1", "1"))
     "less segments"    in assert(!isReportedV("0.1.0", "0.1"))
     "more segments"    in assert(!isReportedV("0.1", "0.1.0"))
+
+    "later version"    in assert(!isReportedV("1.2.3", filterVersion = "1.9.9"))
+    "earlier version"  in assert(isReportedV("1.2.3", filterVersion = "1.1.6"))
   }
 
   private def isReported(filters: List[ProblemFilter]) = helper("0.0.1", filters, Map.empty)
