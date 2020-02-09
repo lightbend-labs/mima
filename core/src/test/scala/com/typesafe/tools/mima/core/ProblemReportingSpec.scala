@@ -1,38 +1,29 @@
 package com.typesafe.tools.mima.core
 
-import org.scalatest.Assertion
 import org.scalatest.matchers.should.Matchers
 import org.scalatest.wordspec.AnyWordSpec
 
 final class ProblemReportingSpec extends AnyWordSpec with Matchers {
-  import ProblemReportingSpec._
+  "isReported" should handle {
+    "no filters"       in assert(isReported(Nil))
+    "filters"          in assert(!isReported(List(excludeAll)))
 
-  // Given a generic Problem (FinalClassProblem)
-  "isReported" should {
-    "return true on no filters"                         in (check("0.0.1", Nil)      shouldBe true)
-    "return false when filtered out by general filters" in (check("0.0.1", KeepNone) shouldBe false)
-
-    "match when filter is used"                               in checkVersioned("0.0.1", "0.0.1")
-    "match when filter uses a wildcard"                       in checkVersioned("0.0.1", "0.0.x")
-    "match when filter does not have patch segment"           in checkVersioned("0.1", "0.1")
-    "match when filter is only epoch"                         in checkVersioned("1", "1")
-    "match when filter has less segments than module version" in checkVersioned("0.1.0", "0.1")
-    "match when filter has more segments than module version" in checkVersioned("0.1", "0.1.0")
+    "version filter"   in assert(!isReportedV("0.0.1", "0.0.1"))
+    "wildcard"         in assert(!isReportedV("0.0.1", "0.0.x"))
+    "no patch segment" in assert(!isReportedV("0.1", "0.1"))
+    "only major"       in assert(!isReportedV("1", "1"))
+    "less segments"    in assert(!isReportedV("0.1.0", "0.1"))
+    "more segments"    in assert(!isReportedV("0.1", "0.1.0"))
   }
 
-  private def check(version: String, filters: Seq[ProblemFilter]): Boolean = {
-    impl(version, filters, Map.empty)
-  }
+  private def isReported(filters: List[ProblemFilter]) = helper("0.0.1", filters, Map.empty)
 
-  private def checkVersioned(version: String, filterVersion: String): Assertion = {
-    impl(version, Nil, Map(filterVersion -> KeepNone)) shouldBe false
-  }
+  private def isReportedV(version: String, filterVersion: String) =
+    helper(version, Nil, Map(filterVersion -> Seq(excludeAll)))
 
-  private def impl(v: String, pfs: Seq[ProblemFilter], pfMap: Map[String, Seq[ProblemFilter]]) = {
-    ProblemReporting.isReported(v, pfs, pfMap)(FinalClassProblem(NoClass))
-  }
-}
+  private def helper(v: String, fs: Seq[ProblemFilter], vfs: Map[String, Seq[ProblemFilter]]) =
+    ProblemReporting.isReported(v, fs, vfs)(FinalClassProblem(NoClass))
 
-object ProblemReportingSpec {
-  final val KeepNone: Seq[ProblemFilter] = Seq(Function.const(false))
+  private def excludeAll = ProblemFilters.exclude[Problem]("*")
+  private def handle     = afterWord("handle")
 }
