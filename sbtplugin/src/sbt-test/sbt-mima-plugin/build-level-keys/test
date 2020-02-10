@@ -15,3 +15,7 @@
 > set ThisBuild / mimaPreviousArtifacts := Set(organization.value %% name.value % s"0.0.1-SNAPSHOT")
 > set ThisBuild / mimaBinaryIssueFilters := Seq(com.typesafe.tools.mima.core.ProblemFilters.exclude(s"MissingMethodProblem", s"A.bar"))
 > mimaReportBinaryIssues
+
+# fail, because mimaReportSignatureProblems was set
+> set ThisBuild / mimaReportSignatureProblems := true
+-> mimaReportBinaryIssues

@@ -88,13 +88,18 @@ mimaBinaryIssueFilters ++= Seq(
 
 Most MiMa checks (`DirectMissingMethod`, `IncompatibleResultType`,
 `IncompatibleMethType`, etc) are against the method `descriptor`, which
-includes the signature without information about generic parameters.
+is the "raw" type signature, without any information about generic parameters.
 
 The `IncompatibleSignature` check compares the `Signature`, which includes the
 full signature including generic parameters. This can catch real
 incompatibilities, but also sometimes triggers for a change in generics that
-would not in fact cause problems at run time. To opt-out of this check you can
-filter them like this:
+would not in fact cause problems at run time. Opt-in to this check by setting:
+
+```scala
+ThisBuild / mimaReportSignatureProblems := true
+```
+
+Prior to MiMa 0.7 this check was always on, and you could opt-out like this:
 
 ```scala
 mimaBinaryIssueFilters ++= Seq(

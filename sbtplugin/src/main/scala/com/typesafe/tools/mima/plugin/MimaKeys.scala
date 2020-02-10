@@ -8,11 +8,12 @@ object MimaKeys extends MimaKeys
 
 class MimaKeys {
 
-  final val mimaPreviousArtifacts    = settingKey[Set[ModuleID]]("Previous released artifacts used to test binary compatibility.")
-  final val mimaReportBinaryIssues   = taskKey[Unit]("Logs all binary incompatibilities to the sbt console/logs.")
-  final val mimaBinaryIssueFilters   = taskKey[Seq[ProblemFilter]]("Filters to apply to binary issues found. Applies both to backward and forward binary compatibility checking.")
-  final val mimaFailOnProblem        = settingKey[Boolean]("if true, fail the build on binary incompatibility detection.")
-  final val mimaFailOnNoPrevious     = settingKey[Boolean]("if true, fail the build if no previous artifacts are set.")
+  final val mimaPreviousArtifacts       = settingKey[Set[ModuleID]]("Previous released artifacts used to test binary compatibility.")
+  final val mimaReportBinaryIssues      = taskKey[Unit]("Logs all binary incompatibilities to the sbt console/logs.")
+  final val mimaBinaryIssueFilters      = taskKey[Seq[ProblemFilter]]("Filters to apply to binary issues found. Applies both to backward and forward binary compatibility checking.")
+  final val mimaFailOnProblem           = settingKey[Boolean]("if true, fail the build on binary incompatibility detection.")
+  final val mimaFailOnNoPrevious        = settingKey[Boolean]("if true, fail the build if no previous artifacts are set.")
+  final val mimaReportSignatureProblems = settingKey[Boolean]("if true, report `IncompatibleSignatureProblem`s.")
 
   final val mimaPreviousClassfiles   = taskKey[Map[ModuleID, File]]("Directories or jars containing the previous class files used to test compatibility with a given module.")
   final val mimaCurrentClassfiles    = taskKey[File]("Directory or jar containing the current class files used to test compatibility.")
