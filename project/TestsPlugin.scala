@@ -1,7 +1,6 @@
 package mimabuild
 
 import java.net.URLClassLoader
-import bintray.BintrayPlugin
 import com.typesafe.config.ConfigFactory
 import sbt._
 import sbt.Keys._
@@ -46,7 +45,7 @@ object TestsPlugin extends AutoPlugin {
 
   private def testProjects(prefix: String, fileName: String, setup: Project => Project) = {
     (file("functional-tests") / "src" / prefix * dirContaining(fileName)).get().map { base =>
-      Project(s"$prefix-${base.name}", base).disablePlugins(BintrayPlugin).configure(setup)
+      Project(s"$prefix-${base.name}", base).configure(setup)
     }
   }
 

@@ -13,13 +13,19 @@ inThisBuild(Seq(
   dynverVTagPrefix := false,
   scalacOptions := Seq("-feature", "-deprecation", "-Xlint"),
   useCoursier := false, // b/c otherwise IntegrationTest/test uses scala-library-2.12 always
-//resolvers += stagingResolver,
+  resolvers ++= (if (isStaging) List(stagingResolver) else Nil),
 ))
 
 // Useful to self-test releases
 val stagingResolver = "Sonatype OSS Staging" at "https://oss.sonatype.org/content/repositories/staging"
+def isStaging = sys.props.contains("mimabuild.staging")
+commands += Command.command("testStaging") { state =>
+  val prep = if (isStaging) Nil else List("reload")
+  sys.props("mimabuild.staging") = "true"
+  prep ::: "mimaReportBinaryIssues" :: state
+}
 
-val root = project.in(file(".")).disablePlugins(BintrayPlugin).settings(
+val root = project.in(file(".")).settings(
   name := "mima",
   crossScalaVersions := Nil,
   mimaFailOnNoPrevious := false,
@@ -27,7 +33,7 @@ val root = project.in(file(".")).disablePlugins(BintrayPlugin).settings(
 )
 aggregateProjects(core, sbtplugin, functionalTests)
 
-val core = project.disablePlugins(BintrayPlugin).settings(
+val core = project.settings(
   name := "mima-core",
   libraryDependencies ++= Seq(
     "org.scala-lang" %  "scala-compiler" % scalaVersion.value,
@@ -55,16 +61,11 @@ val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core).settings(
   scriptedLaunchOpts += s"-Dplugin.version=${version.value}",
   scriptedLaunchOpts += s"-Dsbt.boot.directory=${file(sys.props("user.home")) / ".sbt" / "boot"}",
   MimaSettings.mimaSettings,
-  bintrayOrganization := Some("sbt"),
-  bintrayRepository := "sbt-plugin-releases",
-  bintrayPackage := "sbt-mima-plugin-imported2",
-  bintrayReleaseOnPublish := false,
 )
 
 val functionalTests = Project("functional-tests", file("functional-tests"))
   .dependsOn(core)
   .enablePlugins(TestsPlugin)
-  .disablePlugins(BintrayPlugin)
   .settings(
     libraryDependencies += "com.typesafe" % "config" % "1.4.0",
     mimaFailOnNoPrevious := false,
