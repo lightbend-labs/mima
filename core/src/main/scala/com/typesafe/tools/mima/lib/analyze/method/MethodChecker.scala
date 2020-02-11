@@ -47,13 +47,14 @@ private[analyze] object MethodChecker {
         hasMatchingSignature(oldmeth.signature, newmeth.signature, newmeth.bytecodeName)
   }
 
-  private[analyze] def hasMatchingSignature(oldsig: String, newsig: String, bytecodeName: String): Boolean = {
-    oldsig == newsig || {
-      // Special case for https://github.com/scala/scala/pull/7975:
-      // uses .tail to drop the leading '(' in the signature
-      bytecodeName == MemberInfo.ConstructorName && (newsig.isEmpty || oldsig.endsWith(newsig.tail))
-    }
+  private def hasMatchingSignature(oldsig: String, newsig: String, bytecodeName: String): Boolean = {
+    oldsig == newsig || // Special case for scala#7975
+      bytecodeName == MemberInfo.ConstructorName && hasMatchingCtorSig(oldsig, newsig)
   }
+
+  private[analyze] def hasMatchingCtorSig(oldsig: String, newsig: String): Boolean =
+    newsig.isEmpty ||              // ignore losing signature on constructors
+      oldsig.endsWith(newsig.tail) // ignore losing the 1st (outer) param (.tail drops the leading '(')
 
   private def checkExisting1v1(oldmeth: MethodInfo, newmeth: MethodInfo) = {
     if (newmeth.isLessVisibleThan(oldmeth))
