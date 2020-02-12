@@ -2,11 +2,10 @@ package mimabuild
 
 import java.net.URLClassLoader
 import com.typesafe.config.ConfigFactory
-import sbt._
+import sbt.{ Console => _, _ }
 import sbt.Keys._
 import sbt.internal.inc.ScalaInstance
 import sbt.librarymanagement.{ DependencyResolution, UnresolvedWarningConfiguration, UpdateConfiguration }
-import scala.Console
 
 object TestsPlugin extends AutoPlugin {
   object autoImport {
@@ -76,9 +75,7 @@ object TestsPlugin extends AutoPlugin {
     }
   }
 
-  private val runIntegrationTest = Def.task {
-    val cp = (functionalTests / Compile / fullClasspath).value // the test classpath from the functionalTest project for the test
-    val si = (functionalTests / scalaInstance).value // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
+  private val runIntegrationTest = Def.taskDyn {
     val confFile = baseDirectory.value / "test.conf"
     val conf = ConfigFactory.parseFile(confFile).resolve()
     val moduleBase = conf.getString("groupId") % conf.getString("artifactId")
@@ -86,8 +83,7 @@ object TestsPlugin extends AutoPlugin {
     val v1 = getArtifact(depRes, moduleBase % conf.getString(V1.name), streams.value.log)
     val v2 = getArtifact(depRes, moduleBase % conf.getString(V2.name), streams.value.log)
     streams.value.log.info(s"Comparing $v1 -> $v2")
-    runCollectProblemsTest(cp, si, name.value, v1, v2, baseDirectory.value, oracleFile.value)
-    streams.value.log.info(s"Test '${name.value}' succeeded.")
+    runCollectProblemsTest(v1, v2)
   }
 
   private val funTestPerConfigSettings = Def.settings(
@@ -95,14 +91,12 @@ object TestsPlugin extends AutoPlugin {
     scalaSource := baseDirectory.value / configuration.value.name, // e.g., use v1/ instead of src/v1/scala/
   )
 
-  private val testCollectProblemsImpl = Def.task {
-    val cp = (functionalTests / Compile / fullClasspath).value // the test classpath from the functionalTest project for the test
-    val si = (functionalTests / scalaInstance).value // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
+  private val testCollectProblemsImpl = Def.taskDyn {
     (V1 / compile).value: Unit
     (V2 / compile).value: Unit
     val v1 = (V1 / classDirectory).value // compile the V1 sources and get the classes directory
     val v2 = (V2 / classDirectory).value // same for V2
-    runCollectProblemsTest(cp, si, name.value, v1, v2, baseDirectory.value, oracleFile.value)
+    runCollectProblemsTest(v1, v2)
   }
 
   private val testAppRunImpl = Def.task {
@@ -151,15 +145,10 @@ object TestsPlugin extends AutoPlugin {
     Test / test := runFunctionalTest.value,
   )
 
-  private def runCollectProblemsTest(
-      cp: Classpath,
-      si: ScalaInstance,
-      testName: String,
-      oldJarOrDir: File,
-      newJarOrDir: File,
-      projectPath: File,
-      oracleFile: File,
-  ): Unit = {
+  private def runCollectProblemsTest(oldJarOrDir: File, newJarOrDir: File) = Def.task {
+    val cp = (functionalTests / Compile / fullClasspath).value // the test classpath from the functionalTest project for the test
+    val si = (functionalTests / scalaInstance).value // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
+
     val loader = new URLClassLoader(Attributed.data(cp).map(_.toURI.toURL).toArray, si.loader)
 
     val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest$")
@@ -179,11 +168,12 @@ object TestsPlugin extends AutoPlugin {
 
     try {
       import scala.language.reflectiveCalls
-      testRunner.runTest(testClasspath, testName, oldJarOrDir, newJarOrDir, projectPath, oracleFile)
+      testRunner.runTest(testClasspath, name.value, oldJarOrDir, newJarOrDir, baseDirectory.value, oracleFile.value)
+      streams.value.log.info(s"Test '${name.value}' succeeded.")
     } catch {
       case e: Exception =>
         Console.err.println(e.toString)
-        throw new MessageOnlyException(s"Test '$testName' failed")
+        throw new MessageOnlyException(s"Test '${name.value}' failed")
     }
   }
 
