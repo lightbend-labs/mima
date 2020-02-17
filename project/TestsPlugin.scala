@@ -4,7 +4,6 @@ import java.net.URLClassLoader
 import com.typesafe.config.ConfigFactory
 import sbt.{ Console => _, _ }
 import sbt.Keys._
-import sbt.internal.inc.ScalaInstance
 import sbt.librarymanagement.{ DependencyResolution, UnresolvedWarningConfiguration, UpdateConfiguration }
 
 object TestsPlugin extends AutoPlugin {
@@ -92,10 +91,8 @@ object TestsPlugin extends AutoPlugin {
   )
 
   private val testCollectProblemsImpl = Def.taskDyn {
-    (V1 / compile).value: Unit
-    (V2 / compile).value: Unit
-    val v1 = (V1 / classDirectory).value // compile the V1 sources and get the classes directory
-    val v2 = (V2 / classDirectory).value // same for V2
+    val v1 = (classDirectory in V1).toTask.dependsOn(compile in V1).value // compile the V1 sources and get the classes directory
+    val v2 = (classDirectory in V2).toTask.dependsOn(compile in V2).value // same for V2
     runCollectProblemsTest(v1, v2)
   }
 
