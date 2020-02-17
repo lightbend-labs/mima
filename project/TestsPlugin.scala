@@ -4,7 +4,6 @@ import java.net.URLClassLoader
 import com.typesafe.config.ConfigFactory
 import sbt.{ Console => _, _ }
 import sbt.Keys._
-import sbt.internal.inc.ScalaInstance
 import sbt.librarymanagement.{ DependencyResolution, UnresolvedWarningConfiguration, UpdateConfiguration }
 
 object TestsPlugin extends AutoPlugin {
