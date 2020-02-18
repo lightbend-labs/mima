@@ -1,4 +1,4 @@
 class A {
-  def foo = 1
+  def foo = Option(1)
   def bar = foo
 }

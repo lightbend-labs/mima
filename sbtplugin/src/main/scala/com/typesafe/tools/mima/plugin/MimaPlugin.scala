@@ -3,6 +3,7 @@ package plugin
 
 import sbt._
 import sbt.Keys._
+import com.typesafe.tools.mima.core.{ IncompatibleSignatureProblem, ProblemFilters }
 
 /** MiMa's sbt plugin. */
 object MimaPlugin extends AutoPlugin {
@@ -17,6 +18,7 @@ object MimaPlugin extends AutoPlugin {
     mimaBinaryIssueFilters := Nil,
     mimaFailOnProblem := true,
     mimaFailOnNoPrevious := true,
+    mimaReportSignatureProblems := false,
     mimaCheckDirection := "backward",
   )
 
@@ -29,7 +31,7 @@ object MimaPlugin extends AutoPlugin {
           problems._1,
           problems._2,
           mimaFailOnProblem.value,
-          mimaBinaryIssueFilters.value,
+          binaryIssueFilters.value,
           mimaBackwardIssueFilters.value,
           mimaForwardIssueFilters.value,
           log,
@@ -62,6 +64,11 @@ object MimaPlugin extends AutoPlugin {
 
   @deprecated("Switch to enablePlugins(MimaPlugin)", "0.7.0")
   def mimaDefaultSettings: Seq[Setting[_]] = globalSettings ++ buildSettings ++ projectSettings
+
+  private def binaryIssueFilters = Def.task {
+    val noSigs = ProblemFilters.exclude[IncompatibleSignatureProblem]("*")
+    mimaBinaryIssueFilters.value ++ (if (mimaReportSignatureProblems.value) Nil else Seq(noSigs))
+  }
 
   // Allows reuse between mimaFindBinaryIssues and mimaReportBinaryIssues
   // without blowing up the Akka build's heap

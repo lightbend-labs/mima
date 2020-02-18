@@ -1,3 +1,3 @@
 class A {
-  def foo = 1
+  def foo = Option("one")
 }
