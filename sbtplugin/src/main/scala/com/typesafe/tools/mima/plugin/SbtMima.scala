@@ -64,15 +64,15 @@ object SbtMima {
     val count = backErrors.size + forwErrors.size
     val filteredCount = backward.size + forward.size - count
     val filteredNote = if (filteredCount > 0) s" (filtered $filteredCount)" else ""
-    log.info(s"$projectName: found $count potential binary incompatibilities while checking against $module$filteredNote")
+    val msg = s"Failed binary compatibility check against $module! Found $count potential problems$filteredNote"
+    val doLog = if (count == 0) log.info(_) else if (failOnProblem) log.error(_) else log.warn(_)
 
-    (backErrors.iterator.map(pretty("current")) ++ forwErrors.iterator.map(pretty("other"))).foreach { msg =>
-      if (failOnProblem) log.error(msg)
-      else log.warn(msg)
-    }
+    doLog(s"$projectName: $msg")
+    for (p <- backErrors) doLog(pretty("current")(p))
+    for (p <- forwErrors) doLog(pretty("other")(p))
 
     if (failOnProblem && count > 0) {
-      sys.error(s"$projectName: Binary compatibility check failed!")
+      sys.error(msg)
     }
   }
 

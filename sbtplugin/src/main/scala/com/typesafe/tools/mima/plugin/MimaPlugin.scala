@@ -68,21 +68,16 @@ object MimaPlugin extends AutoPlugin {
   private def binaryIssuesIterator = Def.task {
     val s = streams.value
     val previousClassfiles = mimaPreviousClassfiles.value
-
-    if (previousClassfiles.isEmpty) {
-      val projectName = name.value
-      var msg = s"$projectName: mimaPreviousArtifacts is empty, not analyzing binary compatibility."
-      if (previousClassfiles eq NoPreviousClassfiles) {
-        msg = s"$projectName: mimaPreviousArtifacts not set, not analyzing binary compatibility."
-        if (mimaFailOnNoPrevious.value)
-          sys.error(msg)
-      }
-      s.log.info(msg)
-    }
-
     val currentClassfiles = mimaCurrentClassfiles.value
     val cp = (fullClasspath in mimaFindBinaryIssues).value
     val log = new SbtLogger(s)
+
+    if (previousClassfiles eq NoPreviousClassfiles) {
+      val msg = "mimaPreviousArtifacts not set, not analyzing binary compatibility"
+      if (mimaFailOnNoPrevious.value) sys.error(msg) else s.log.info(s"${name.value}: $msg")
+    } else if (previousClassfiles.isEmpty) {
+      s.log.info(s"${name.value}: mimaPreviousArtifacts is empty, not analyzing binary compatibility.")
+    }
 
     previousClassfiles.iterator.map { case (moduleId, prevClassfiles) =>
       moduleId -> SbtMima.runMima(prevClassfiles, currentClassfiles, cp, mimaCheckDirection.value, log)
