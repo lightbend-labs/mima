@@ -2,15 +2,11 @@ language: scala
 jdk: openjdk8
 scala: 2.12.10
 
-jobs:
-  include:
-  - { script: "sbt mimaReportBinaryIssues test IntegrationTest/test
-        'set sbtplugin/scriptedSbt := \"1.2.8\"' 'scripted sbt-mima-plugin/minimal'" }
-  - { name: testFunctional 2.11, script: sbt -Dmima.testScalaVersion=2.11.12 testFunctional }
-  - { name: testFunctional 2.12, script: sbt -Dmima.testScalaVersion=2.12.10 testFunctional }
-  - { name: testFunctional 2.13, script: sbt -Dmima.testScalaVersion=2.13.1  testFunctional }
-  - { name: scripted 1/2, script: sbt "scripted sbt-mima-plugin/*1of2" }
-  - { name: scripted 2/2, script: sbt "scripted sbt-mima-plugin/*2of2" }
+script:
+  - export JAVA_TOOL_OPTIONS="-XX:+TraceClassLoading"
+  - ls -la ~/.sbt/boot/scala-2.12.7/lib/
+  - jar tf ~/.sbt/boot/scala-2.12.7/lib/scala-reflect.jar
+  - sbt -v -batch 'set sbtplugin/scriptedSbt := "1.2.8"' 'set sbtplugin/scriptedBufferLog := false' 'scripted sbt-mima-plugin/minimal'
 
 cache:
   directories:
@@ -21,3 +17,8 @@ cache:
 before_cache:
   - find $HOME/.ivy2 -name "ivydata-*.properties" -delete
   - find $HOME/.sbt  -name "*.lock"               -delete
+
+before_install:
+  - echo "JVM_OPTS=$JVM_OPTS"; cat /etc/sbt/jvmopts
+  - echo "SBT_OPTS=$SBT_OPTS"; cat /etc/sbt/sbtopts
+  - export JAVA_TOOL_OPTIONS="-XX:+TraceClassLoading"
