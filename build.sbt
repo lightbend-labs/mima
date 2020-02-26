@@ -37,7 +37,7 @@ val core = project.settings(
   name := "mima-core",
   libraryDependencies ++= Seq(
     "org.scala-lang" %  "scala-compiler" % scalaVersion.value,
-    "org.scalatest"  %% "scalatest"      % "3.1.0" % Test,
+    "org.scalatest"  %% "scalatest"      % "3.1.1" % Test,
   ),
   MimaSettings.mimaSettings,
   apiMappings ++= {
