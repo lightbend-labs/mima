@@ -21,7 +21,7 @@ See the [prerequisites](#prerequisites) if this is your first release.
 * [ ] [Find and close][sonatype/staging-repos] your staging repository.  (See Sonatype's [Releasing the Deployment][sonatype/guide] guide.)
 * [ ] In `plugins.sbt` update `sbt-mima-plugins`.
 * [ ] In `project/MimaSettings.scala` update `mimaPreviousVersion` & clear out `mimaBinaryIssueFilters`.
-* [ ] In sbt run `testStaging` to test the staged artifacts.
+* [ ] In sbt run `testStaging` **WITHOUT** `reload`ing first (`testStaging` add staging resolvers & then runs `reload`).
 * [ ] Run `git commit -am 'Update sbt-mima-plugin to 0.x.y` and PR it (`hub pull-request`).
 * [ ] [Find and release][sonatype/staging-repos] your staging repository.
 * [ ] [Close][milestones/list] the milestone.
