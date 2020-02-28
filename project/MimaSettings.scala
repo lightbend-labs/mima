@@ -16,6 +16,7 @@ object MimaSettings {
     mimaPreviousArtifacts := Set(pluginProjectID.value.withRevision(mimaPreviousVersion)
       .withExplicitArtifacts(Vector()) // defaultProjectID uses artifacts.value which breaks it =/
     ),
+    mimaReportSignatureProblems := true,
     mimaBinaryIssueFilters ++= Seq(
       // The main public API is:
       // * com.typesafe.tools.mima.plugin.MimaPlugin
