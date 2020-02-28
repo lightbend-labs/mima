@@ -14,6 +14,7 @@ inThisBuild(Seq(
   scalacOptions := Seq("-feature", "-deprecation", "-Xlint"),
   useCoursier := false, // b/c otherwise IntegrationTest/test uses scala-library-2.12 always
   resolvers ++= (if (isStaging) List(stagingResolver) else Nil),
+  publishTo := Some(if (isSnapshot.value) Opts.resolver.sonatypeSnapshots else Opts.resolver.sonatypeStaging),
 ))
 
 // Useful to self-test releases
@@ -50,7 +51,6 @@ val core = project.settings(
       }
       .toMap
   },
-  publishTo := Some(if (isSnapshot.value) Opts.resolver.sonatypeSnapshots else Opts.resolver.sonatypeStaging),
 
 )
 
