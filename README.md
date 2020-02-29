@@ -93,18 +93,16 @@ is the "raw" type signature, without any information about generic parameters.
 The `IncompatibleSignature` check compares the `Signature`, which includes the
 full signature including generic parameters. This can catch real
 incompatibilities, but also sometimes triggers for a change in generics that
-would not in fact cause problems at run time. Opt-in to this check by setting:
+would not in fact cause problems at run time. Notably, it will warn when
+updating your project to scala 2.12.9+ or 2.13.1+,
+see [this issue](https://github.com/lightbend/mima/issues/423) for details.
+
+You can opt-in to this check by setting:
 
 ```scala
+import com.typesafe.tools.mima.plugin.MimaKeys._
+
 ThisBuild / mimaReportSignatureProblems := true
-```
-
-Prior to MiMa 0.7 this check was always on, and you could opt-out like this:
-
-```scala
-mimaBinaryIssueFilters ++= Seq(
-  ProblemFilters.exclude[IncompatibleSignatureProblem]("*"),
-)
 ```
 
 ## Setting different mimaPreviousArtifacts
