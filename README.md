@@ -100,6 +100,8 @@ see [this issue](https://github.com/lightbend/mima/issues/423) for details.
 You can opt-in to this check by setting:
 
 ```scala
+import com.typesafe.tools.mima.plugin.MimaKeys._
+
 ThisBuild / mimaReportSignatureProblems := true
 ```
 
