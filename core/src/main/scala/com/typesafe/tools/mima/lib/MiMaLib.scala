@@ -6,12 +6,16 @@ import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.core.util.log.{ ConsoleLogging, Logging }
 import com.typesafe.tools.mima.lib.analyze.Analyzer
 
+import scala.reflect.io.{ AbstractFile, Path }
 import scala.tools.nsc.classpath.AggregateClassPath
 import scala.tools.nsc.mima.ClassPathAccessors
 import scala.tools.nsc.util.ClassPath
 
-final class MiMaLib(classpath: ClassPath, log: Logging = ConsoleLogging) {
-  private def createPackage(classpath: ClassPath, dirOrJar: File): PackageInfo = {
+final class MiMaLib(cp: Seq[File], log: Logging = ConsoleLogging) {
+  val classpath =
+    AggregateClassPath.createAggregate(cp.flatMap(pathToClassPath(_)) :+ Config.baseClassPath: _*)
+
+  private def createPackage(dirOrJar: File): PackageInfo = {
     val cp = pathToClassPath(dirOrJar).getOrElse(Config.fatal(s"not a directory or jar file: $dirOrJar"))
     val defs = new Definitions(AggregateClassPath.createAggregate(cp, classpath))
     val pkg = new DefinitionsTargetPackageInfo(defs.root)
@@ -50,11 +54,14 @@ final class MiMaLib(classpath: ClassPath, log: Logging = ConsoleLogging) {
 
   /** Return a list of problems for the two versions of the library. */
   def collectProblems(oldJarOrDir: File, newJarOrDir: File): List[Problem] = {
-    val oldPackage = createPackage(classpath, oldJarOrDir)
-    val newPackage = createPackage(classpath, newJarOrDir)
+    val oldPackage = createPackage(oldJarOrDir)
+    val newPackage = createPackage(newJarOrDir)
     log.debugLog(s"[old version in: ${oldPackage.definitions}]")
     log.debugLog(s"[new version in: ${newPackage.definitions}]")
     log.debugLog(s"classpath: ${classpath.asClassPathString}")
     traversePackages(oldPackage, newPackage)
   }
+
+  private def pathToClassPath(p: Path): Option[ClassPath] =
+    Option(AbstractFile.getDirectory(p)).map(DeprecatedPathApis.newClassPath(_, Config.settings))
 }

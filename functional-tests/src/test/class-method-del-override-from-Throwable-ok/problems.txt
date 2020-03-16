@@ -1,0 +1,8 @@
+# was:  (https://github.com/lightbend/mima/issues/477)
+#   com.typesafe.tools.mima.lib.CollectProblemsTest$TestFailed: 'test-class-method-del-override-from-Throwable-ok' failed.
+#   The following 1 problems were reported but not expected:
+#     - method fillInStackTrace()java.lang.Throwable in class A does not have a correspondent in new version
+#   Filter with:
+#     ProblemFilters.exclude[DirectMissingMethodProblem]("A.fillInStackTrace"),
+#   Or filter with:
+#     { matchName="A.fillInStackTrace" , problemName=DirectMissingMethodProblem }
