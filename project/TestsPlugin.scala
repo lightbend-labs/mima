@@ -107,7 +107,7 @@ object TestsPlugin extends AutoPlugin {
     }
     (App / fgRun).toTask("").value
     val result = (Test / fgRun).toTask("").result.value
-    if (IO.read(oracleFile.value).isEmpty) {
+    if (IO.readLines(oracleFile.value).forall(_.startsWith("#"))) {
       if (!pending) Result.tryValue(result)
     } else {
       if (!pending) result.toEither.foreach { (_: Unit) =>
