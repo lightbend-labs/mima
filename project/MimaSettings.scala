@@ -23,8 +23,8 @@ object MimaSettings {
       // * com.typesafe.tools.mima.plugin.MimaKeys
       // * com.typesafe.tools.mima.core.ProblemFilters
       // * com.typesafe.tools.mima.core.*Problem
-      // to a less degree (some re-implementors):
-      // * com.typesafe.tools.mima.lib.MiMaLib.collectProblems
+      exclude[Problem]("*mima.core.package.*"),
+      exclude[Problem]("*mima.lib.MiMaLib.this"),
     ),
   )
 }

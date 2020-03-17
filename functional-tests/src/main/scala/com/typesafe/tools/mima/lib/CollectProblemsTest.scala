@@ -3,18 +3,15 @@ package com.typesafe.tools.mima.lib
 import java.io.File
 
 import com.typesafe.config.ConfigFactory
-import com.typesafe.tools.mima.core.{ Config, Problem, aggregateClassPath }
+import com.typesafe.tools.mima.core.Problem
 
 import scala.io.Source
-import scala.tools.nsc.classpath.AggregateClassPath
 
 object CollectProblemsTest {
 
   // Called via reflection from TestsPlugin
-  def runTest(testClasspath: Array[File], testName: String, oldJarOrDir: File, newJarOrDir: File, baseDir: File, oracleFile: File): Unit = {
-    val testClassPath = aggregateClassPath(testClasspath)
-    val classpath = AggregateClassPath.createAggregate(testClassPath, Config.baseClassPath)
-    val mima = new MiMaLib(classpath)
+  def runTest(cp: Array[File], testName: String, oldJarOrDir: File, newJarOrDir: File, baseDir: File, oracleFile: File): Unit = {
+    val mima = new MiMaLib(cp)
 
     val configFile = new File(baseDir, "test.conf")
     val configFallback = ConfigFactory.parseString("filter { problems = [] }")

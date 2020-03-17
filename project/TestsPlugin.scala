@@ -107,7 +107,7 @@ object TestsPlugin extends AutoPlugin {
     }
     (App / fgRun).toTask("").value
     val result = (Test / fgRun).toTask("").result.value
-    if (IO.read(oracleFile.value).isEmpty) {
+    if (IO.readLines(oracleFile.value).forall(_.startsWith("#"))) {
       if (!pending) Result.tryValue(result)
     } else {
       if (!pending) result.toEither.foreach { (_: Unit) =>
@@ -151,7 +151,7 @@ object TestsPlugin extends AutoPlugin {
     val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest$")
     val testRunner = testClass.getField("MODULE$").get(null).asInstanceOf[{
       def runTest(
-          testClasspath: Array[File],
+          cp: Array[File],
           testName: String,
           oldJarOrDir: File,
           newJarOrDir: File,
@@ -161,11 +161,11 @@ object TestsPlugin extends AutoPlugin {
     }]
 
     // Add the scala-library to the MiMa classpath used to run this test
-    val testClasspath = Attributed.data(cp).filter(_.getName.endsWith("scala-library.jar")).toArray
+    val jars = Attributed.data(cp).filter(_.getName.endsWith("scala-library.jar")).toArray
 
     try {
       import scala.language.reflectiveCalls
-      testRunner.runTest(testClasspath, name.value, oldJarOrDir, newJarOrDir, baseDirectory.value, oracleFile.value)
+      testRunner.runTest(jars, name.value, oldJarOrDir, newJarOrDir, baseDirectory.value, oracleFile.value)
       streams.value.log.info(s"Test '${name.value}' succeeded.")
     } catch {
       case e: Exception =>
