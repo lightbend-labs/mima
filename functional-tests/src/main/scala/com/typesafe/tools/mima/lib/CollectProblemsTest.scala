@@ -11,7 +11,7 @@ object CollectProblemsTest {
 
   // Called via reflection from TestsPlugin
   def runTest(cp: Array[File], testName: String, oldJarOrDir: File, newJarOrDir: File, baseDir: File, oracleFile: File): Unit = {
-    val mima = new MiMaLib(cp)
+    val mima = new MiMaLib(cp, scala.util.Properties.versionNumberString)
 
     val configFile = new File(baseDir, "test.conf")
     val configFallback = ConfigFactory.parseString("filter { problems = [] }")
