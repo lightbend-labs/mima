@@ -21,8 +21,8 @@ import scala.util.matching._
 object SbtMima {
   /** Runs MiMa and returns a two lists of potential binary incompatibilities,
       the first for backward compatibility checking, and the second for forward checking. */
-  def runMima(prev: File, curr: File, cp: Classpath, dir: String, log: Logging): (List[Problem], List[Problem]) = {
-    val mimaLib = new MiMaLib(Attributed.data(cp), log)
+  def runMima(prev: File, curr: File, cp: Classpath, dir: String, scalaVersion: String, log: Logging): (List[Problem], List[Problem]) = {
+    val mimaLib = new MiMaLib(Attributed.data(cp), scalaVersion, log)
     def checkBC = mimaLib.collectProblems(prev, curr)
     def checkFC = mimaLib.collectProblems(curr, prev)
     dir match {

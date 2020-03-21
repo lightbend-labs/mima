@@ -77,6 +77,7 @@ object MimaPlugin extends AutoPlugin {
     val previousClassfiles = mimaPreviousClassfiles.value
     val currentClassfiles = mimaCurrentClassfiles.value
     val cp = (fullClasspath in mimaFindBinaryIssues).value
+    val sv = scalaVersion.value
     val log = new SbtLogger(s)
 
     if (previousClassfiles eq NoPreviousClassfiles) {
@@ -87,7 +88,7 @@ object MimaPlugin extends AutoPlugin {
     }
 
     previousClassfiles.iterator.map { case (moduleId, prevClassfiles) =>
-      moduleId -> SbtMima.runMima(prevClassfiles, currentClassfiles, cp, mimaCheckDirection.value, log)
+      moduleId -> SbtMima.runMima(prevClassfiles, currentClassfiles, cp, mimaCheckDirection.value, sv, log)
     }
   }
 

@@ -11,7 +11,14 @@ import scala.tools.nsc.classpath.AggregateClassPath
 import scala.tools.nsc.mima.ClassPathAccessors
 import scala.tools.nsc.util.ClassPath
 
-final class MiMaLib(cp: Seq[File], log: Logging = ConsoleLogging) {
+final class MiMaLib(cp: Seq[File], scalaVersion: String, log: Logging = ConsoleLogging) {
+  locally {
+    scalaVersion.take(5) match {
+      case "2.11." | "2.12." | "2.13." => () // ok
+      case _ => throw new IllegalArgumentException(s"MiMa supports Scala 2.10-2.13, not $scalaVersion")
+    }
+  }
+
   val classpath =
     AggregateClassPath.createAggregate(cp.flatMap(pathToClassPath(_)) :+ Config.baseClassPath: _*)
 
