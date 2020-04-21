@@ -9,8 +9,5 @@ object Config {
 
   val baseClassPath = DeprecatedPathApis.newPathResolver(Config.settings).result
 
-  def fatal(msg: String): Nothing = {
-    Console.err.println(msg)
-    sys.exit(-1)
-  }
+  def fatal(msg: String): Nothing = sys.error(msg)
 }
