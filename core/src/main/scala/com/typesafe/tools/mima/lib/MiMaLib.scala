@@ -6,11 +6,6 @@ import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.core.util.log.{ ConsoleLogging, Logging }
 import com.typesafe.tools.mima.lib.analyze.Analyzer
 
-import scala.reflect.io.{ AbstractFile, Path }
-import scala.tools.nsc.classpath.AggregateClassPath
-import scala.tools.nsc.mima.ClassPathAccessors
-import scala.tools.nsc.util.ClassPath
-
 final class MiMaLib(cp: Seq[File], scalaVersion: String, log: Logging = ConsoleLogging) {
   locally {
     scalaVersion.take(5) match {
@@ -19,15 +14,14 @@ final class MiMaLib(cp: Seq[File], scalaVersion: String, log: Logging = ConsoleL
     }
   }
 
-  val classpath =
-    AggregateClassPath.createAggregate(cp.flatMap(pathToClassPath(_)) :+ Config.baseClassPath: _*)
+  private val classpath = ClassPath.of(cp.flatMap(ClassPath.fromJarOrDir(_)) :+ ClassPath.base)
 
   private def createPackage(dirOrJar: File): PackageInfo = {
-    val cp = pathToClassPath(dirOrJar).getOrElse(Config.fatal(s"not a directory or jar file: $dirOrJar"))
-    val defs = new Definitions(AggregateClassPath.createAggregate(cp, classpath))
+    val cp = ClassPath.fromJarOrDir(dirOrJar).getOrElse(sys.error(s"not a directory or jar file: $dirOrJar"))
+    val defs = new Definitions(ClassPath.of(List(cp, classpath)))
     val pkg = new DefinitionsTargetPackageInfo(defs.root)
-    for (p <- cp.packagesIn(ClassPath.RootPackage)) {
-      pkg.packages(p.name) = new ConcretePackageInfo(pkg, cp, p.name, defs)
+    for (pkgName <- cp.packages(ClassPath.RootPackage)) {
+      pkg.packages(pkgName) = new ConcretePackageInfo(pkg, cp, pkgName, defs)
     }
     log.debug(s"added packages to <root>: ${pkg.packages.keys.mkString(", ")}")
     pkg
@@ -68,7 +62,4 @@ final class MiMaLib(cp: Seq[File], scalaVersion: String, log: Logging = ConsoleL
     log.debug(s"classpath: ${classpath.asClassPathString}")
     traversePackages(oldPackage, newPackage)
   }
-
-  private def pathToClassPath(p: Path): Option[ClassPath] =
-    Option(AbstractFile.getDirectory(p)).map(DeprecatedPathApis.newClassPath(_, Config.settings))
 }

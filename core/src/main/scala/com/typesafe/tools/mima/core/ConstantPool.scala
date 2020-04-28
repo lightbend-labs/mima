@@ -2,7 +2,7 @@ package com.typesafe.tools.mima.core
 
 import scala.annotation.switch
 
-import scala.tools.nsc.symtab.classfile.ClassfileConstants._
+import ClassfileConstants._
 
 private[core] object ConstantPool {
   def parseNew(definitions: Definitions, in: BufferReader): ConstantPool = {
@@ -32,10 +32,6 @@ private[core] object ConstantPool {
   /** Throws an exception signaling a bad tag at given address. */
   private[ConstantPool] def errorBadTag(tag: Int, start: Int) =
     throw new RuntimeException(s"bad constant pool tag $tag at byte $start")
-
-  // 2 new tags in Java 9: https://docs.oracle.com/javase/specs/jvms/se9/html/jvms-4.html#jvms-4.4
-  private final val CONSTANT_MODULE  = 19
-  private final val CONSTANT_PACKAGE = 20
 }
 
 private[core]

@@ -1,6 +1,5 @@
 package com.typesafe.tools.mima.core
 
-import scala.reflect.io.AbstractFile
 import scala.reflect.NameTransformer
 
 import com.typesafe.tools.mima.core.util.log.ConsoleLogging
@@ -11,7 +10,7 @@ private[core] object ClassInfo {
   /** We assume there can be only one java.lang.Object class,
    *  and that comes from the configuration class path.
    */
-  lazy val ObjectClass = new Definitions(Config.baseClassPath).ObjectClass
+  lazy val ObjectClass = new Definitions(ClassPath.base).ObjectClass
 }
 
 /** A placeholder class info for a class that is not found on the classpath or in a given package. */
@@ -32,7 +31,7 @@ private[core] object NoClass extends SyntheticClassInfo(NoPackageInfo, "<noclass
 }
 
 /** A class for which we have the classfile. */
-private[core] final class ConcreteClassInfo(owner: PackageInfo, val file: AbstractFile) extends ClassInfo(owner) {
+private[core] final class ConcreteClassInfo(owner: PackageInfo, val file: AbsFile) extends ClassInfo(owner) {
   def bytecodeName                  = file.name.stripSuffix(".class")
   override def canEqual(other: Any) = other.isInstanceOf[ConcreteClassInfo]
 

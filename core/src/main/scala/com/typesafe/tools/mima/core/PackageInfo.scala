@@ -2,8 +2,6 @@ package com.typesafe.tools.mima.core
 
 import scala.annotation.tailrec
 import scala.collection.mutable
-import scala.tools.nsc.mima.ClassPathAccessors
-import scala.tools.nsc.util.ClassPath
 
 sealed class SyntheticPackageInfo(val owner: PackageInfo, val name: String) extends PackageInfo {
   def definitions   = owner.definitions
@@ -25,20 +23,16 @@ sealed class ConcretePackageInfo(val owner: PackageInfo, cp: ClassPath, pkg: Str
   def name        = pkg.split('.').last
   def definitions = defs
 
-  private def classFiles = cp.classesIn(pkg).flatMap(_.binary)
-
-  lazy val packages = {
-    cp.packagesIn(pkg).iterator.map { p =>
-      p.name.stripPrefix(s"$pkg.") -> new ConcretePackageInfo(this, cp, p.name, defs)
+  lazy val packages =
+    cp.packages(pkg).map { p =>
+      p.stripPrefix(s"$pkg.") -> new ConcretePackageInfo(this, cp, p, defs)
     }.to[({type M[_] = mutable.Map[String, PackageInfo]})#M]
-  }
 
-  lazy val classes = {
-    classFiles.iterator.map { f =>
+  lazy val classes =
+    cp.classes(pkg).map { f =>
       val c = new ConcreteClassInfo(this, f)
       c.bytecodeName -> c
     }.toMap
-  }
 }
 
 final private[core] class DefinitionsPackageInfo(defs: Definitions)

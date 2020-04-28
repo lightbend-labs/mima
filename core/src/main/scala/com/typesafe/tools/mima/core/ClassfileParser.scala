@@ -2,8 +2,7 @@ package com.typesafe.tools.mima.core
 
 import java.io.IOException
 
-import scala.reflect.io.AbstractFile
-import scala.tools.nsc.symtab.classfile.ClassfileConstants._
+import ClassfileConstants._
 
 final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
   import ClassfileParser._
@@ -96,7 +95,7 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
 }
 
 object ClassfileParser {
-  private[core] def parseInPlace(clazz: ClassInfo, file: AbstractFile): Unit = {
+  private[core] def parseInPlace(clazz: ClassInfo, file: AbsFile): Unit = {
     val in = new BufferReader(file.toByteArray)
     parseHeader(in, file.toString())
     val pool = ConstantPool.parseNew(clazz.owner.definitions, in)

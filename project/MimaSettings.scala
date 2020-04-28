@@ -23,11 +23,17 @@ object MimaSettings {
       // * com.typesafe.tools.mima.plugin.MimaKeys
       // * com.typesafe.tools.mima.core.ProblemFilters
       // * com.typesafe.tools.mima.core.*Problem
+      exclude[Problem]("*mima.core.ClassfileParser*"),
+      exclude[Problem]("*mima.core.*Info*"),
+      exclude[Problem]("*mima.core.Config*"),
+      exclude[Problem]("*mima.core.Definitions*"),
+      exclude[Problem]("*mima.core.DeprecatedPathApis*"),
       exclude[Problem]("*mima.core.package.*"),
       exclude[Problem]("*mima.core.util*"),
       exclude[Problem]("*mima.lib.MiMaLib.*"),
       exclude[Problem]("*mima.plugin.SbtLogger*"),
       exclude[Problem]("*mima.plugin.SbtMima.*"),
+      exclude[Problem]("scala.tools.nsc.mima*"),
     ),
   )
 }
