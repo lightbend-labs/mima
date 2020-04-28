@@ -29,14 +29,14 @@ final class MiMaLib(cp: Seq[File], scalaVersion: String, log: Logging = ConsoleL
     for (p <- cp.packagesIn(ClassPath.RootPackage)) {
       pkg.packages(p.name) = new ConcretePackageInfo(pkg, cp, p.name, defs)
     }
-    log.debugLog(s"added packages to <root>: ${pkg.packages.keys.mkString(", ")}")
+    log.debug(s"added packages to <root>: ${pkg.packages.keys.mkString(", ")}")
     pkg
   }
 
   private def comparePackages(oldpkg: PackageInfo, newpkg: PackageInfo): List[Problem] = {
     for {
       oldclazz <- oldpkg.accessibleClasses.toList
-      _ = log.info(s"Analyzing $oldclazz")
+      _ = log.verbose(s"Analyzing $oldclazz")
       problem <- newpkg.classes.get(oldclazz.bytecodeName) match {
         case Some(newclazz) => Analyzer.analyze(oldclazz, newclazz)
         case None           =>
@@ -46,13 +46,13 @@ final class MiMaLib(cp: Seq[File], scalaVersion: String, log: Logging = ConsoleL
           else List(MissingClassProblem(oldclazz))
       }
     } yield {
-      log.debugLog(s"Problem: ${problem.description("new")}")
+      log.debug(s"Problem: ${problem.description("new")}")
       problem
     }
   }
 
   private def traversePackages(oldpkg: PackageInfo, newpkg: PackageInfo): List[Problem] = {
-    log.info(s"Traversing $oldpkg")
+    log.verbose(s"Traversing $oldpkg")
     comparePackages(oldpkg, newpkg) ++ oldpkg.packages.valuesIterator.flatMap { p =>
       val q = newpkg.packages.getOrElse(p.name, NoPackageInfo)
       traversePackages(p, q)
@@ -63,9 +63,9 @@ final class MiMaLib(cp: Seq[File], scalaVersion: String, log: Logging = ConsoleL
   def collectProblems(oldJarOrDir: File, newJarOrDir: File): List[Problem] = {
     val oldPackage = createPackage(oldJarOrDir)
     val newPackage = createPackage(newJarOrDir)
-    log.debugLog(s"[old version in: ${oldPackage.definitions}]")
-    log.debugLog(s"[new version in: ${newPackage.definitions}]")
-    log.debugLog(s"classpath: ${classpath.asClassPathString}")
+    log.debug(s"[old version in: ${oldPackage.definitions}]")
+    log.debug(s"[new version in: ${newPackage.definitions}]")
+    log.debug(s"classpath: ${classpath.asClassPathString}")
     traversePackages(oldPackage, newPackage)
   }
 

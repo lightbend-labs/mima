@@ -65,7 +65,7 @@ object SbtMima {
     val filteredCount = backward.size + forward.size - count
     val filteredNote = if (filteredCount > 0) s" (filtered $filteredCount)" else ""
     val msg = s"Failed binary compatibility check against $module! Found $count potential problems$filteredNote"
-    val doLog = if (count == 0) log.info(_) else if (failOnProblem) log.error(_) else log.warn(_)
+    val doLog = if (count == 0) log.verbose(_) else if (failOnProblem) log.error(_) else log.warn(_)
 
     doLog(s"$projectName: $msg")
     for (p <- backErrors) doLog(pretty("current")(p))

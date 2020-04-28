@@ -24,7 +24,9 @@ object MimaSettings {
       // * com.typesafe.tools.mima.core.ProblemFilters
       // * com.typesafe.tools.mima.core.*Problem
       exclude[Problem]("*mima.core.package.*"),
+      exclude[Problem]("*mima.core.util*"),
       exclude[Problem]("*mima.lib.MiMaLib.*"),
+      exclude[Problem]("*mima.plugin.SbtLogger*"),
       exclude[Problem]("*mima.plugin.SbtMima.*"),
     ),
   )
