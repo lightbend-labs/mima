@@ -10,7 +10,7 @@ import scala.tools.nsc.util.ClassPath
  *  Each version of the input jar file has an instance of Definitions,
  *  used to resolve type names during classfile parsing.
  */
-final class Definitions(val classPath: ClassPath) {
+private[mima] final class Definitions(val classPath: ClassPath) {
   lazy val root: PackageInfo          = new DefinitionsPackageInfo(this)
   lazy val ObjectClass: ClassInfo     = fromName("java.lang.Object")
   lazy val AnnotationClass: ClassInfo = fromName("java.lang.annotation.Annotation")

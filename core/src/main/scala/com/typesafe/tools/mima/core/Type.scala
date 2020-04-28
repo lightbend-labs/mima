@@ -1,6 +1,6 @@
 package com.typesafe.tools.mima.core
 
-object Type {
+private[core] object Type {
   val byteType    = ValueType("Byte")
   val shortType   = ValueType("Short")
   val charType    = ValueType("Char")
@@ -12,7 +12,7 @@ object Type {
   val unitType    = ValueType("Unit")
 }
 
-sealed abstract class Type {
+private[core] sealed abstract class Type {
   def resultType: Type = throw new UnsupportedOperationException
 
   final override def toString = this match {
@@ -23,7 +23,7 @@ sealed abstract class Type {
   }
 }
 
-final case class ValueType(name: String)                                           extends Type
-final case class ClassType(private val clazz: ClassInfo)                           extends Type
-final case class ArrayType(elemType: Type)                                         extends Type
-final case class MethodType(paramTypes: List[Type], override val resultType: Type) extends Type
+private[core] final case class ValueType(name: String)                                           extends Type
+private[core] final case class ClassType(private val clazz: ClassInfo)                           extends Type
+private[core] final case class ArrayType(elemType: Type)                                         extends Type
+private[core] final case class MethodType(paramTypes: List[Type], override val resultType: Type) extends Type

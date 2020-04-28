@@ -5,7 +5,7 @@ import scala.reflect.NameTransformer
 
 import com.typesafe.tools.mima.core.util.log.ConsoleLogging
 
-object ClassInfo {
+private[core] object ClassInfo {
   def formatClassName(str: String) = NameTransformer.decode(str).replace('$', '#')
 
   /** We assume there can be only one java.lang.Object class,
@@ -15,7 +15,7 @@ object ClassInfo {
 }
 
 /** A placeholder class info for a class that is not found on the classpath or in a given package. */
-sealed class SyntheticClassInfo(owner: PackageInfo, val bytecodeName: String) extends ClassInfo(owner) {
+private[core] sealed class SyntheticClassInfo(owner: PackageInfo, val bytecodeName: String) extends ClassInfo(owner) {
   final protected def afterLoading[A](x: => A): A = x
 
   override lazy val superClasses        = Set(ClassInfo.ObjectClass)
@@ -25,14 +25,14 @@ sealed class SyntheticClassInfo(owner: PackageInfo, val bytecodeName: String) ex
   override def canEqual(other: Any) = other.isInstanceOf[SyntheticClassInfo]
 }
 
-object NoClass extends SyntheticClassInfo(NoPackageInfo, "<noclass>") {
+private[core] object NoClass extends SyntheticClassInfo(NoPackageInfo, "<noclass>") {
   override lazy val superClasses = Set.empty[ClassInfo]
 
   override def canEqual(other: Any) = other.isInstanceOf[NoClass.type]
 }
 
 /** A class for which we have the classfile. */
-final class ConcreteClassInfo(owner: PackageInfo, val file: AbstractFile) extends ClassInfo(owner) {
+private[core] final class ConcreteClassInfo(owner: PackageInfo, val file: AbstractFile) extends ClassInfo(owner) {
   def bytecodeName                  = file.name.stripSuffix(".class")
   override def canEqual(other: Any) = other.isInstanceOf[ConcreteClassInfo]
 
@@ -50,7 +50,7 @@ final class ConcreteClassInfo(owner: PackageInfo, val file: AbstractFile) extend
   }
 }
 
-sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Equals {
+private[mima] sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Equals {
   import ClassInfo._
 
   final var _innerClasses: Seq[String]    = Nil
