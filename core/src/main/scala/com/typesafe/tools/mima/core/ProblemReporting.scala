@@ -2,8 +2,8 @@ package com.typesafe.tools.mima.core
 
 import scala.util.Try
 
-object ProblemReporting {
-  private[mima] val versionOrdering: Ordering[String] = {
+private[mima] object ProblemReporting {
+  val versionOrdering: Ordering[String] = {
     // version string "x.y.z" is converted to an Int tuple (x, y, z) for comparison
     val VersionRegex = """(\d+)\.?(\d+)?\.?(.*)?""".r
     def int(versionPart: String) =
@@ -11,7 +11,7 @@ object ProblemReporting {
     Ordering[(Int, Int, Int)].on[String] { case VersionRegex(x, y, z) => (int(x), int(y), int(z)) }
   }
 
-  private[mima] def isReported(
+  def isReported(
       version: String,
       filters: Seq[ProblemFilter],
       versionedFilters: Map[String, Seq[ProblemFilter]]
