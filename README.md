@@ -114,7 +114,7 @@ with something like:
 
 ```scala
 mimaPreviousArtifacts := {
-  if (CrossVersion.partialVersion(scalaVersion.scala) == Some((2, 13))) Set.empty else {
+  if (CrossVersion.partialVersion(scalaVersion.value) == Some((2, 13))) Set.empty else {
     Set("com.example" %% "my-library" % "1.2.3")
   }
 }
