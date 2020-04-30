@@ -1,8 +1,7 @@
 package com.typesafe.tools.mima.core
 
 import scala.annotation.tailrec
-import scala.tools.nsc.symtab.classfile.ClassfileConstants._
-import scala.tools.nsc.util.ClassPath
+import ClassfileConstants._
 
 /** This class holds together a root package and a classpath.
  *  It also offers definitions of commonly used classes, including java.lang.Object.
