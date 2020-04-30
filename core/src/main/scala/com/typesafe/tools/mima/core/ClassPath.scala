@@ -26,7 +26,7 @@ private[mima] object ClassPath {
   val RootPackage     = ""
   val base: ClassPath = of(jrt +: javaBootCp)
 
-  def of(xs: Seq[ClassPath]): ClassPath = {
+  def of(xs: Seq[ClassPath]): ClassPath = log {
     xs.toStream.flatMap {
       case x: AggrCp => x.aggregates
       case x                     => List(x)
@@ -39,7 +39,7 @@ private[mima] object ClassPath {
   def fromJarOrDir(file: java.io.File): Option[ClassPath] = Option(file.toPath).collect {
     case p if file.isDirectory                             => PathCp(p)(p)
     case p if file.isFile && file.getName.endsWith(".jar") => PathCp(p)(rootPath(p))
-  }
+  }.map(compare)
 
   private def join(xs: Stream[String]) = xs.filter("" != _).mkString(java.io.File.pathSeparator)
   private def split(cp: String)        = cp.split(java.io.File.pathSeparator).toStream.filter("" != _).distinct
@@ -89,5 +89,51 @@ private[mima] object ClassPath {
     def packages(pkg: String) = aggregates.flatMap(_.packages(pkg)).distinct
     def  classes(pkg: String) = aggregates.flatMap(_.classes(pkg)).distinct
     def asClassPathString     = join(aggregates.map(_.asClassPathString).distinct)
+  }
+
+  private final case class CompCp(main: ClassPath, comp: ClassPath) extends ClassPath {
+    def packages(pkg: String) = compare("packages", pkg, (_: ClassPath).packages(pkg))
+    def  classes(pkg: String) = compare("classes ", pkg, (_: ClassPath).classes(pkg))(Ordering.by(_.name))
+    def asClassPathString     = s"(${main.asClassPathString} vs ${comp.asClassPathString})"
+    override def toString     = s"($main VS ${comp.getClass.getName})"
+
+    def compare[A: Ordering](which: String, pkg: String, f: ClassPath => Stream[A]) = {
+      val a = f(main).force
+      val b = f(comp).sorted(implicitly[Ordering[A]]).force
+      if (a != b) {
+        log(s"""Difference in $which for package "$pkg":""")
+        log(s"main returned (size: ${a.size}): [${a.map("\n  " + _).mkString(", ")}\n]")
+        log(s"comp returned (size: ${b.size}): [${b.map("\n  " + _).mkString(", ")}\n]")
+        log(s"main is $main")
+        log(s"comp is $comp")
+        sys.error("fail: diff")
+      }
+      a
+    }
+  }
+
+  private object log {
+    val pw = new java.io.PrintWriter(java.nio.file.Files.newBufferedWriter(Paths.get("/tmp/dnw.log"),
+      java.nio.file.StandardOpenOption.CREATE, java.nio.file.StandardOpenOption.APPEND), /* autoFlush = */ true)
+    def apply[A](x: A) = { pw.println(x); x }
+  }
+
+  private def compare(pathCp: PathCp): ClassPath = {
+    // Requires scala-compiler to compile
+//    import scala.reflect.io.AbstractFile
+//    import scala.tools.nsc
+//
+//    final case class NscCp(cp: nsc.util.ClassPath) extends ClassPath {
+//      def packages(pkg: String) = cp.packages(pkg).toStream.map(_.name)
+//      def classes(pkg: String)  = cp.classes(pkg).toStream.map(e => nscAbsFile(e.file))
+//      def asClassPathString     = cp.asClassPathString
+//      override def toString     = cp.toString
+//      def nscAbsFile(f: AbstractFile) = AbsFile(f.name)(f.path, () => f.toByteArray)
+//    }
+//
+//    val af    = AbstractFile.getDirectory(pathCp.src.toFile)
+//    val nscCp = nsc.classpath.ClassPathFactory.newClassPath(af, new nsc.Settings)
+//    log(CompCp(pathCp, NscCp(nscCp)))
+    pathCp
   }
 }
