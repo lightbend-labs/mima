@@ -42,7 +42,7 @@ private[mima] object ClassPath {
   }
 
   private def join(xs: Stream[String]) = xs.filter("" != _).mkString(java.io.File.pathSeparator)
-  private def split(cp: String)        = cp.split(java.io.File.pathSeparator).toStream.filter("" != _).distinct
+          def split(cp: String)        = cp.split(java.io.File.pathSeparator).toStream.filter("" != _).distinct
   private def expandCp(cp: String)     = split(cp).flatMap(s => fromJarOrDir(new java.io.File(s)))
   private def javaBootCp               = expandCp(System.getProperty("sun.boot.class.path", ""))
 

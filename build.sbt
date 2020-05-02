@@ -48,8 +48,9 @@ val core = project.settings(
       }
       .toMap
   },
-
-)
+  GraalVMNativeImage / name := "mima",
+  graalVMNativeImageOptions := List("--no-fallback"),
+).enablePlugins(GraalVMNativeImagePlugin)
 
 val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core).settings(
   name := "sbt-mima-plugin",

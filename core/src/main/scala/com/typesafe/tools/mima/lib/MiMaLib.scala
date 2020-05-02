@@ -6,6 +6,37 @@ import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.core.util.log.{ ConsoleLogging, Logging }
 import com.typesafe.tools.mima.lib.analyze.Analyzer
 
+object MiMaLib {
+  def main(args: Array[String]): Unit = sys.exit(runArgs(args.toList))
+
+  private def runArgs(argv: List[String]) =
+    argv.map(ClassPath.split(_).map(new File(_))) match {
+      case Seq(v1 #:: _, v2 #:: cp) => run(v1, v2, cp)
+      case cps                      => sys.error(s"Need 2 classpath args, got $cps")
+    }
+
+  private def run(v1: File, v2: File, cp: Seq[File]) = {
+    val mima = new MiMaLib(cp)
+    val problems = mima.collectProblems(v1, v2)
+
+    if (problems.isEmpty) {
+      println("Binary compatibility check passed")
+      0
+    } else {
+      val msg = s"Failed binary compatibility check! Found ${problems.size} potential problems"
+      println(msg + ":")
+      val width1 = problems.foldLeft(0)(_ max _.matchName.value.length)
+      val width2 = problems.foldLeft(0)(_ max _.getClass.getSimpleName.length)
+      problems.sortBy(_.getClass.getSimpleName).foreach { p =>
+        val refName  = s"%-${width1}s".format(p.matchName.value)
+        val probName = s"%${width2}s".format(p.getClass.getSimpleName)
+        println(s"  $probName $refName")
+      }
+      1
+    }
+  }
+}
+
 final class MiMaLib(cp: Seq[File], log: Logging = ConsoleLogging) {
   private val classpath = ClassPath.of(cp.flatMap(ClassPath.fromJarOrDir(_)) :+ ClassPath.base)
 
