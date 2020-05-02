@@ -22,7 +22,8 @@ object SbtMima {
   /** Runs MiMa and returns a two lists of potential binary incompatibilities,
       the first for backward compatibility checking, and the second for forward checking. */
   def runMima(prev: File, curr: File, cp: Classpath, dir: String, scalaVersion: String, log: Logging): (List[Problem], List[Problem]) = {
-    val mimaLib = new MiMaLib(Attributed.data(cp), scalaVersion, log)
+    sanityCheckScalaVersion(scalaVersion)
+    val mimaLib = new MiMaLib(Attributed.data(cp), log)
     def checkBC = mimaLib.collectProblems(prev, curr)
     def checkFC = mimaLib.collectProblems(curr, prev)
     dir match {
@@ -30,6 +31,13 @@ object SbtMima {
        case "forward" | "forwards"   => (Nil, checkFC)
        case "both"                   => (checkBC, checkFC)
        case _                        => (Nil, Nil)
+    }
+  }
+
+  private def sanityCheckScalaVersion(scalaVersion: String) = {
+    scalaVersion.take(5) match {
+      case "2.11." | "2.12." | "2.13." => () // ok
+      case _ => throw new IllegalArgumentException(s"MiMa supports Scala 2.10-2.13, not $scalaVersion")
     }
   }
 
@@ -62,17 +70,22 @@ object SbtMima {
     val forwErrors = forward.filter(isReported(forwardFilters))
 
     val count = backErrors.size + forwErrors.size
-    val filteredCount = backward.size + forward.size - count
-    val filteredNote = if (filteredCount > 0) s" (filtered $filteredCount)" else ""
-    val msg = s"Failed binary compatibility check against $module! Found $count potential problems$filteredNote"
     val doLog = if (count == 0) log.verbose(_) else if (failOnProblem) log.error(_) else log.warn(_)
+    def logResult(msg: String) = doLog(s"$projectName: $msg")
 
-    doLog(s"$projectName: $msg")
-    for (p <- backErrors) doLog(pretty("current")(p))
-    for (p <- forwErrors) doLog(pretty("other")(p))
+    if (count == 0) {
+      logResult(s"Binary compatibility check against $module passed.")
+    } else {
+      val filteredCount = backward.size + forward.size - count
+      val filteredNote = if (filteredCount > 0) s" (filtered $filteredCount)" else ""
+      val msg = s"Failed binary compatibility check against $module! Found $count potential problems$filteredNote"
 
-    if (failOnProblem && count > 0) {
-      sys.error(msg)
+      logResult(msg)
+      for (p <- backErrors) doLog(pretty("current")(p))
+      for (p <- forwErrors) doLog(pretty("other")(p))
+
+      if (failOnProblem)
+        sys.error(msg)
     }
   }
 
