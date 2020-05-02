@@ -126,20 +126,18 @@ object TestsPlugin extends AutoPlugin {
     scalaVersion := testScalaVersion.value,
     inConfig(V1)(funTestPerConfigSettings),
     inConfig(V2)(funTestPerConfigSettings),
-    inConfig(App)(Def.settings(
-      funTestPerConfigSettings,
-      run / trapExit := false,
-    )),
+    inConfig(App)(funTestPerConfigSettings),
+    inConfig(App)(run / trapExit := false),
     inConfig(Test)(Def.settings(
       internalDependencyClasspath ++= (V2 / exportedProducts).value,
       internalDependencyClasspath ++= (App / exportedProducts).value,
       run / mainClass := (App / run / mainClass).value,
-      run / trapExit  := false,
+      run / trapExit  := (App / run / trapExit).value,
     )),
-    Global / onLoad += oracleFileCheck.value,
+    Global / onLoad     += oracleFileCheck.value,
     testCollectProblems := testCollectProblemsImpl.value,
-    testAppRun := testAppRunImpl.value,
-    Test / test := runFunctionalTest.value,
+    testAppRun          := testAppRunImpl.value,
+    Test / test         := runFunctionalTest.value,
   )
 
   private def runCollectProblemsTest(oldJarOrDir: File, newJarOrDir: File) = Def.task {
