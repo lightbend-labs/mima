@@ -3,8 +3,9 @@ package com.typesafe.tools.mima.lib
 import java.io.File
 
 import com.typesafe.config.ConfigFactory
-import com.typesafe.tools.mima.core.Problem
+import com.typesafe.tools.mima.core.{Problem, ProblemFilters}
 
+import scala.collection.JavaConverters._
 import scala.io.Source
 
 object CollectProblemsTest {
@@ -16,7 +17,8 @@ object CollectProblemsTest {
     val configFile = new File(baseDir, "test.conf")
     val configFallback = ConfigFactory.parseString("filter { problems = [] }")
     val config = ConfigFactory.parseFile(configFile).withFallback(configFallback).resolve()
-    val filters = ProblemFiltersConfig.parseProblemFilters(config)
+    val filters = for (conf <- config.getConfigList("filter.problems").asScala)
+      yield ProblemFilters.exclude(conf.getString("problemName"), conf.getString("matchName"))
     val problemFilter = (p: Problem) => filters.forall(filter => filter(p))
 
     val problems = mima.collectProblems(oldJarOrDir, newJarOrDir).filter(problemFilter)
