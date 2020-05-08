@@ -11,7 +11,7 @@ import scala.io.Source
 object CollectProblemsTest {
 
   // Called via reflection from TestsPlugin
-  def runTest(cp: Array[File], testName: String, oldJarOrDir: File, newJarOrDir: File, baseDir: File, oracleFile: File): Unit = {
+  def runTest(cp: Array[File], oldJarOrDir: File, newJarOrDir: File, baseDir: File, oracleFile: File): Unit = {
     val mima = new MiMaLib(cp)
 
     val configFile = new File(baseDir, "test.conf")
@@ -32,13 +32,6 @@ object CollectProblemsTest {
     val unexpectedProblems = problems.filterNot(p => expectedProblems.contains(p.description("new")))
     val unreportedProblems = expectedProblems.filterNot(problemDescriptions.contains)
 
-    val msg = buildErrorMessage(unexpectedProblems, unreportedProblems)
-
-    if (!msg.isEmpty)
-      throw TestFailed(s"'$testName' failed.\n$msg")
-  }
-
-  private def buildErrorMessage(unexpectedProblems: List[Problem], unreportedProblems: List[String]): String = {
     val msg = new StringBuilder
 
     if (unexpectedProblems.nonEmpty) {
@@ -66,6 +59,4 @@ object CollectProblemsTest {
 
     msg.result()
   }
-
-  final case class TestFailed(msg: String) extends Exception(msg)
 }

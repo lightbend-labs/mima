@@ -53,20 +53,11 @@ object TestsPlugin extends AutoPlugin {
   private lazy val funTestProjects = testProjects("test", "problems.txt", funTestProject)
   private lazy val intTestProjects = testProjects( "it" ,   "test.conf" , intTestProject)
 
-  private val oracleFile = Def.task {
-    val p    = baseDirectory.value / "problems.txt"
-    val p211 = baseDirectory.value / "problems-2.11.txt"
-    val p212 = baseDirectory.value / "problems-2.12.txt"
-    scalaVersion.value.take(4) match {
-      case "2.11" => if (p211.exists()) p211 else if (p212.exists()) p212 else p
-      case "2.12" => if (p212.exists()) p212 else p
-      case _      => p
-    }
-  }
+  private val oracleFile = Def.task(versionedFile(baseDirectory.value, scalaVersion.value, "problems", "txt"))
 
   private val oracleFileCheck = Def.setting { () =>
     // The test name is must match the expectations of problems.txt (only, not -2.11/-2.12.txt)
-    val emptyProblemsTxt = IO.readLines(baseDirectory.value / "problems.txt").forall(_.startsWith("#"))
+    val emptyProblemsTxt = blankFile(baseDirectory.value / "problems.txt")
     name.value.takeRight(4).dropWhile(_ != '-') match {
       case "-ok"  => if (!emptyProblemsTxt) sys.error(s"[${name.value}] OK test with non-empty problems.txt")
       case "-nok" => if (emptyProblemsTxt) sys.error(s"[${name.value}] NOK test with empty problems.txt")
@@ -97,22 +88,17 @@ object TestsPlugin extends AutoPlugin {
   }
 
   private val testAppRunImpl = Def.task {
-    val p    = baseDirectory.value / "testAppRun.pending"
-    val p211 = baseDirectory.value / "testAppRun-2.11.pending"
-    val p212 = baseDirectory.value / "testAppRun-2.12.pending"
-    val pending = scalaVersion.value.take(4) match {
-      case "2.11" => p211.exists() || p212.exists() || p.exists()
-      case "2.12" => p212.exists() || p.exists()
-      case _      => p.exists()
-    }
-    (App / fgRun).toTask("").value
-    val result = (Test / fgRun).toTask("").result.value
-    if (IO.readLines(oracleFile.value).forall(_.startsWith("#"))) {
-      if (!pending) Result.tryValue(result)
-    } else {
-      if (!pending) result.toEither.foreach { (_: Unit) =>
+    val pending = versionedFile(baseDirectory.value, scalaVersion.value, "testAppRun", "pending")
+    val emptyProblemsTxt = blankFile(oracleFile.value)
+
+    (App / fgRun).toTask("").value // sanity check v1 App runs
+
+    val result = (Test / fgRun).toTask("").result.value // meh, run it always, error out conditionally
+
+    if (!pending.exists) result match {
+      case Inc(i)    => if (emptyProblemsTxt) throw i
+      case Value(()) => if (!emptyProblemsTxt)
         throw new MessageOnlyException(s"Test '${name.value}' failed: expected running App to fail")
-      }
     }
   }
 
@@ -143,32 +129,38 @@ object TestsPlugin extends AutoPlugin {
   private def runCollectProblemsTest(oldJarOrDir: File, newJarOrDir: File) = Def.task {
     val cp = (functionalTests / Compile / fullClasspath).value // the test classpath from the functionalTest project for the test
     val si = (functionalTests / scalaInstance).value // get a reference to the already loaded Scala classes so we get the advantage of a warm jvm
+    val jars = si.libraryJars // Add the scala-library to the MiMa classpath used to run this test
+    val log = streams.value.log
 
-    val loader = new URLClassLoader(Attributed.data(cp).map(_.toURI.toURL).toArray, si.loader)
-
-    val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest$")
-    val testRunner = testClass.getField("MODULE$").get(null).asInstanceOf[{
-      def runTest(
-          cp: Array[File],
-          testName: String,
-          oldJarOrDir: File,
-          newJarOrDir: File,
-          baseDir: File,
-          oracleFile: File,
-      ): Unit
-    }]
-
-    // Add the scala-library to the MiMa classpath used to run this test
-    val jars = Attributed.data(cp).filter(_.getName.endsWith("scala-library.jar")).toArray
-
-    try {
+    val msg = {
       import scala.language.reflectiveCalls
-      testRunner.runTest(jars, name.value, oldJarOrDir, newJarOrDir, baseDirectory.value, oracleFile.value)
-      streams.value.log.info(s"Test '${name.value}' succeeded.")
-    } catch {
-      case e: Exception =>
-        Console.err.println(e.toString)
-        throw new MessageOnlyException(s"Test '${name.value}' failed")
+      val loader = new URLClassLoader(Attributed.data(cp).map(_.toURI.toURL).toArray, si.loader)
+      val testClass = loader.loadClass("com.typesafe.tools.mima.lib.CollectProblemsTest$")
+      val testRunner = testClass.getField("MODULE$").get(null).asInstanceOf[{
+        def runTest(cp: Array[File], oldJarOrDir: File, newJarOrDir: File, baseDir: File, oracleFile: File): String
+      }]
+      testRunner.runTest(jars, oldJarOrDir, newJarOrDir, baseDirectory.value, oracleFile.value)
+    }
+
+    if (msg.isEmpty) {
+      log.info(s"Test '${name.value}' succeeded")
+    } else {
+      val fail = s"Test '${name.value}' failed"
+      log.error(s"$fail\n$msg")
+      throw new MessageOnlyException(fail)
+    }
+  }
+
+  private def blankFile(f: File) = IO.readLines(f).forall(_.startsWith("#"))
+
+  private def versionedFile(baseDir: File, scalaV: String, name: String, suffix: String) = {
+    val p    = baseDir / s"$name.$suffix"
+    val p211 = baseDir / s"$name-2.11.$suffix"
+    val p212 = baseDir / s"$name-2.12.$suffix"
+    scalaV.take(4) match {
+      case "2.11" => if (p211.exists()) p211 else if (p212.exists()) p212 else p
+      case "2.12" => if (p212.exists()) p212 else p
+      case _      => p
     }
   }
 
