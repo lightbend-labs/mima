@@ -1,5 +1,5 @@
 language: scala
-scala: 2.12.10
+scala: 2.12.11
 jdk:
 - openjdk8
 - openjdk11
@@ -9,8 +9,8 @@ jobs:
   - { script: "sbt mimaReportBinaryIssues test IntegrationTest/test
         'set sbtplugin/scriptedSbt := \"1.2.8\"' 'scripted sbt-mima-plugin/minimal'" }
   - { name: testFunctional 2.11, script: sbt -Dmima.testScalaVersion=2.11.12 testFunctional }
-  - { name: testFunctional 2.12, script: sbt -Dmima.testScalaVersion=2.12.10 testFunctional }
-  - { name: testFunctional 2.13, script: sbt -Dmima.testScalaVersion=2.13.1  testFunctional }
+  - { name: testFunctional 2.12, script: sbt -Dmima.testScalaVersion=2.12.11 testFunctional }
+  - { name: testFunctional 2.13, script: sbt -Dmima.testScalaVersion=2.13.2  testFunctional }
   - { name: scripted 1/2, script: sbt "scripted sbt-mima-plugin/*1of2" }
   - { name: scripted 2/2, script: sbt "scripted sbt-mima-plugin/*2of2" }
 
