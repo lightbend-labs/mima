@@ -36,7 +36,7 @@ aggregateProjects(core, sbtplugin, functionalTests)
 
 val core = project.settings(
   name := "mima-core",
-  libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.1" % Test,
+  libraryDependencies += "org.scalatest" %% "scalatest" % "3.1.2" % Test,
   MimaSettings.mimaSettings,
   apiMappings ++= {
     // WORKAROUND https://github.com/scala/bug/issues/9311
