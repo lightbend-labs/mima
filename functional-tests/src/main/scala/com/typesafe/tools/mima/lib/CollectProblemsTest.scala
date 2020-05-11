@@ -11,7 +11,7 @@ import scala.io.Source
 object CollectProblemsTest {
 
   // Called via reflection from TestsPlugin
-  def runTest(cp: Array[File], oldJarOrDir: File, newJarOrDir: File, baseDir: File, oracleFile: File): Unit = {
+  def runTest(cp: Array[File], oldJarOrDir: File, newJarOrDir: File, baseDir: File, oracleFile: File): String = {
     val mima = new MiMaLib(cp)
 
     val configFile = new File(baseDir, "test.conf")
