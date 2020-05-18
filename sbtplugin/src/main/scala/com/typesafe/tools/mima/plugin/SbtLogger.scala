@@ -2,12 +2,12 @@ package com.typesafe.tools.mima
 package plugin
 
 import com.typesafe.tools.mima.core.util.log.Logging
-import sbt.Keys._
+import sbt.Logger
 
 /** Wrapper on sbt logging for MiMa. */
-private[plugin] final class SbtLogger(s: TaskStreams) extends Logging {
-  def verbose(msg: String): Unit = s.log.verbose(msg)
-  def debug(msg: String): Unit   = s.log.debug(msg)
-  def warn(msg: String): Unit    = s.log.warn(msg)
-  def error(msg: String): Unit   = s.log.error(msg)
+private[plugin] final class SbtLogger(log: Logger) extends Logging {
+  def verbose(msg: String): Unit = log.verbose(msg)
+  def debug(msg: String): Unit   = log.debug(msg)
+  def warn(msg: String): Unit    = log.warn(msg)
+  def error(msg: String): Unit   = log.error(msg)
 }
