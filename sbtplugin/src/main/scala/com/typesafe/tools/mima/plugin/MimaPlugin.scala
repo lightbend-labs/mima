@@ -24,7 +24,6 @@ object MimaPlugin extends AutoPlugin {
 
   override def projectSettings: Seq[Def.Setting[_]] = Seq(
     mimaReportBinaryIssues := {
-      val log = new SbtLogger(streams.value)
       binaryIssuesIterator.value.foreach { case (moduleId, problems) =>
         SbtMima.reportModuleErrors(
           moduleId,
@@ -34,7 +33,7 @@ object MimaPlugin extends AutoPlugin {
           binaryIssueFilters.value,
           mimaBackwardIssueFilters.value,
           mimaForwardIssueFilters.value,
-          log,
+          streams.value.log,
           name.value,
         )
       }
@@ -78,7 +77,6 @@ object MimaPlugin extends AutoPlugin {
     val currentClassfiles = mimaCurrentClassfiles.value
     val cp = (fullClasspath in mimaFindBinaryIssues).value
     val sv = scalaVersion.value
-    val log = new SbtLogger(s)
 
     if (previousClassfiles eq NoPreviousClassfiles) {
       val msg = "mimaPreviousArtifacts not set, not analyzing binary compatibility"
@@ -88,7 +86,7 @@ object MimaPlugin extends AutoPlugin {
     }
 
     previousClassfiles.iterator.map { case (moduleId, prevClassfiles) =>
-      moduleId -> SbtMima.runMima(prevClassfiles, currentClassfiles, cp, mimaCheckDirection.value, sv, log)
+      moduleId -> SbtMima.runMima(prevClassfiles, currentClassfiles, cp, mimaCheckDirection.value, sv, s.log)
     }
   }
 

@@ -4,7 +4,6 @@ package plugin
 import java.io.File
 
 import com.typesafe.tools.mima.core._
-import com.typesafe.tools.mima.core.util.log.Logging
 import com.typesafe.tools.mima.lib.MiMaLib
 import sbt._
 import sbt.Keys.{ Classpath, TaskStreams }
@@ -21,7 +20,8 @@ import scala.util.matching._
 object SbtMima {
   /** Runs MiMa and returns a two lists of potential binary incompatibilities,
       the first for backward compatibility checking, and the second for forward checking. */
-  def runMima(prev: File, curr: File, cp: Classpath, dir: String, scalaVersion: String, log: Logging): (List[Problem], List[Problem]) = {
+  def runMima(prev: File, curr: File, cp: Classpath, dir: String, scalaVersion: String, logger: Logger): (List[Problem], List[Problem]) = {
+    val log = new SbtLogger(logger)
     sanityCheckScalaVersion(scalaVersion)
     val mimaLib = new MiMaLib(Attributed.data(cp), log)
     def checkBC = mimaLib.collectProblems(prev, curr)
@@ -50,11 +50,12 @@ object SbtMima {
       filters: Seq[ProblemFilter],
       backwardFilters: Map[String, Seq[ProblemFilter]],
       forwardFilters: Map[String, Seq[ProblemFilter]],
-      log: Logging,
+      logger: Logger,
       projectName: String,
   ): Unit = {
     // filters * found is n-squared, it's fixable in principle by special-casing known
     // filter types or something, not worth it most likely...
+    val log = new SbtLogger(logger)
 
     def isReported(versionedFilters: Map[String, Seq[ProblemFilter]])(problem: Problem) = {
       ProblemReporting.isReported(module.revision, filters, versionedFilters)(problem)
