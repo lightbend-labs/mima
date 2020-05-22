@@ -1,6 +1,6 @@
 class A {
-  def genericWithChangingName[T]: Option[T] = ???
-  def backwardsCompatibleNarrowing: Option[String] = ???
+  def genericWithChangingName[T]: Option[T] = ???        // OK
+  def backwardsCompatibleNarrowing: Option[String] = ??? // KO
 }
 
 final class Api {
