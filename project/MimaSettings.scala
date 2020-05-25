@@ -34,6 +34,7 @@ object MimaSettings {
       exclude[Problem]("*mima.plugin.SbtLogger*"),
       exclude[Problem]("*mima.plugin.SbtMima.*"),
       exclude[Problem]("scala.tools.nsc.mima*"),
+      exclude[DirectMissingMethodProblem]("*mima.lib.analyze.method.MethodChecker.hasMatchingCtorSig"),
     ),
   )
 }
