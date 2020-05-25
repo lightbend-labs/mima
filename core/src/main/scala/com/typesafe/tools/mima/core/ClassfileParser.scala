@@ -86,7 +86,7 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
       val attrEnd = in.bp + attrLen
       pool.getName(attrIndex) match {
         case "Deprecated" => m.isDeprecated = true
-        case "Signature"  => m.signature = pool.getName(in.nextChar)
+        case "Signature"  => m.signature = Signature(pool.getName(in.nextChar))
         case _            => ()
       }
       in.bp = attrEnd
