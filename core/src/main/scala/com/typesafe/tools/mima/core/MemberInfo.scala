@@ -8,7 +8,7 @@ sealed abstract class MemberInfo(val owner: ClassInfo, val bytecodeName: String,
     extends InfoLike
 {
   final var isDeprecated: Boolean = false
-  final var signature: String     = "" // Includes generics. 'descriptor' is the erased version.
+  final var signature: Signature  = Signature.none // Includes generics. 'descriptor' is the erased version.
 
   def nonAccessible: Boolean
 
