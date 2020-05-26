@@ -31,7 +31,7 @@ class Signature(private val signature: String) {
     signature.endsWith(newer.tail) // ignore losing the 1st (outer) param (.tail drops the leading '(')
 
     // a method that takes no parameters and returns Object can have no signature
-    override def toString = if (signature.isBlank) "<missing>" else signature
+    override def toString = if (signature.isEmpty) "<missing>" else signature
 }
 
 object Signature {
