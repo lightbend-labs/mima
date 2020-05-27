@@ -4,6 +4,7 @@ package plugin
 import sbt._
 import sbt.Keys._
 import com.typesafe.tools.mima.core.{ IncompatibleSignatureProblem, ProblemFilters }
+import lmcoursier.CoursierDependencyResolution
 
 /** MiMa's sbt plugin. */
 object MimaPlugin extends AutoPlugin {
@@ -39,7 +40,17 @@ object MimaPlugin extends AutoPlugin {
       }
     },
     mimaPreviousClassfiles := {
-      val ivy = ivySbt.value
+      val depRes = CoursierDependencyResolution(
+        csrConfiguration.value
+          .withInterProjectDependencies(Vector.empty)
+          .withFallbackDependencies(Vector.empty)
+          .withSbtScalaOrganization(None)
+          .withSbtScalaVersion(None)
+          .withSbtScalaJars(Vector.empty)
+          .withExcludeDependencies(Vector.empty)
+          .withForceVersions(Vector.empty)
+          .withReconciliation(Vector.empty)
+      )
       val taskStreams = streams.value
       mimaPreviousArtifacts.value match {
         case _: NoPreviousArtifacts.type => NoPreviousClassfiles
@@ -49,7 +60,7 @@ object MimaPlugin extends AutoPlugin {
               case Some(f) => m.withName(f(m.name))
               case None    => m
             }
-            moduleId -> SbtMima.getPreviousArtifact(moduleId, ivy, taskStreams)
+            moduleId -> SbtMima.getPreviousArtifact(moduleId, depRes, taskStreams)
           }.toMap
       }
     },

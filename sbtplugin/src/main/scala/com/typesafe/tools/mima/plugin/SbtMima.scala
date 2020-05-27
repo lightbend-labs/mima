@@ -91,8 +91,7 @@ object SbtMima {
   }
 
   /** Resolves an artifact representing the previous abstract binary interface for testing. */
-  def getPreviousArtifact(m: ModuleID, ivy: IvySbt, s: TaskStreams): File = {
-    val depRes = IvyDependencyResolution(ivy.configuration)
+  def getPreviousArtifact(m: ModuleID, depRes: DependencyResolution, s: TaskStreams): File = {
     val module = depRes.wrapDependencyInModule(m)
     val uc = UpdateConfiguration().withLogging(UpdateLogging.DownloadOnly)
     val uwc = UnresolvedWarningConfiguration()
