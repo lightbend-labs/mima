@@ -38,30 +38,29 @@ object MimaPlugin extends AutoPlugin {
         )
       }
     },
-    mimaPreviousClassfiles := (Def.taskDyn {
-      val depResTask = SbtMima.csrConfigurationKeyOpt match {
+    mimaDependencyResolution := (Def.taskDyn {
+      SbtMima.csrConfigurationKeyOpt match {
         case None =>
           SbtMima.ivyDependencyResolution
         case Some(csrConfiguration) =>
           SbtMima.csrDependencyResolution(csrConfiguration)
       }
-
-      Def.task {
-        val depRes = depResTask.value
-        val taskStreams = streams.value
-        mimaPreviousArtifacts.value match {
-          case _: NoPreviousArtifacts.type => NoPreviousClassfiles
-          case previousArtifacts =>
-            previousArtifacts.iterator.map { m =>
-              val moduleId = CrossVersion(m, scalaModuleInfo.value) match {
-                case Some(f) => m.withName(f(m.name))
-                case None    => m
-              }
-              moduleId -> SbtMima.getPreviousArtifact(moduleId, depRes, taskStreams)
-            }.toMap
-        }
-      }
     }).value,
+    mimaPreviousClassfiles := {
+      val depRes = mimaDependencyResolution.value
+      val taskStreams = streams.value
+      mimaPreviousArtifacts.value match {
+        case _: NoPreviousArtifacts.type => NoPreviousClassfiles
+        case previousArtifacts =>
+          previousArtifacts.iterator.map { m =>
+            val moduleId = CrossVersion(m, scalaModuleInfo.value) match {
+              case Some(f) => m.withName(f(m.name))
+              case None    => m
+            }
+            moduleId -> SbtMima.getPreviousArtifact(moduleId, depRes, taskStreams)
+          }.toMap
+      }
+    },
     mimaCurrentClassfiles := (classDirectory in Compile).value,
     mimaFindBinaryIssues := binaryIssuesIterator.value.toMap,
     fullClasspath in mimaFindBinaryIssues := (fullClasspath in Compile).value,
