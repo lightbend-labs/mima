@@ -155,4 +155,55 @@ object SbtMima {
       throw new RuntimeException(s"Loading Mima filters failed with ${failures.size} failures.")
     }
   }
+
+  def csrConfigurationKeyOpt: Option[TaskKey[Object]] =
+    try {
+      Option(sbt.Keys.getClass.getMethod("csrConfiguration"))
+        .map(_.invoke(sbt.Keys.getClass.getField("MODULE$").get(null)).asInstanceOf[TaskKey[Object]])
+    }
+    catch {
+      case _: NoSuchMethodException | _: NoSuchFieldException =>
+        None
+    }
+
+  def ivyDependencyResolution: Def.Initialize[Task[DependencyResolution]] =
+    Def.task {
+      val ivy = sbt.Keys.ivySbt.value
+      IvyDependencyResolution(ivy.configuration)
+    }
+
+  def csrDependencyResolution(csrConfiguration: TaskKey[Object]) =
+    Def.task {
+      import scala.language.reflectiveCalls
+      val coursierDependencyResolutionApply = Class.forName("lmcoursier.CoursierDependencyResolution")
+        .getMethod("apply", Class.forName("lmcoursier.CoursierConfiguration"))
+      val csrConfiguration0 = csrConfiguration.value
+        .asInstanceOf[{ def withInterProjectDependencies(interProjectDependencies: Vector[Object]): Object }]
+        .withInterProjectDependencies(Vector.empty)
+        .asInstanceOf[{ def withFallbackDependencies(fallbackDependencies: Vector[Object]): Object }]
+        .withFallbackDependencies(Vector.empty)
+        .asInstanceOf[{ def withSbtScalaOrganization(sbtScalaOrganization: Option[Object]): Object }]
+        .withSbtScalaOrganization(None)
+        .asInstanceOf[{ def withSbtScalaVersion(sbtScalaVersion: Option[Object]): Object }]
+        .withSbtScalaVersion(None)
+        .asInstanceOf[{ def withSbtScalaJars(sbtScalaJars: Vector[Object]): Object }]
+        .withSbtScalaJars(Vector.empty)
+        .asInstanceOf[{ def withExcludeDependencies(excludeDependencies: Vector[Object]): Object }]
+        .withExcludeDependencies(Vector.empty)
+        .asInstanceOf[{ def withForceVersions(forceVersions: Vector[Object]): Object }]
+        .withForceVersions(Vector.empty)
+
+      val csrConfiguration1 = try {
+        // CoursierConfiguration.reconciliation was added after the others
+        csrConfiguration0
+          .asInstanceOf[{ def withReconciliation(reconciliation: Vector[Object]): Object }]
+          .withReconciliation(Vector.empty)
+      } catch {
+        case _: NoSuchMethodException =>
+          csrConfiguration0
+      }
+
+      coursierDependencyResolutionApply.invoke(null, csrConfiguration1)
+        .asInstanceOf[DependencyResolution]
+    }
 }
