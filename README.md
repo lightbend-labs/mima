@@ -143,3 +143,16 @@ To make `mimaReportBinaryIssues` not fail you may want to do one of the followin
 * avoid calling `mimaPreviousArtifacts` when binary compatibility checking isn't needed
 * set `mimaFailOnNoPrevious := false` on specific projects that want to opt-out (alternatively `disablePlugins(MimaPlugin)`)
 * set `mimaFailOnNoPrevious in ThisBuild := false`, which disables it build-wide, effectively reverting back to the previous behaviour
+
+## Setting mimaPreviousArtifacts when name contains a "."
+
+To refer to the project name in `mimaPreviousArtifacts`, use `moduleName` rather
+than `name`, like
+```scala
+mimaPreviousArtifacts := Set(organization.value %% moduleName.value % "0.1.0")
+```
+
+Unlike `name`, `moduleName` escapes characters like `.`, and is the name
+actually used by `publish` and `publishLocal` to publish your project. It's
+also the value your users should use when adding a dependency towards your
+project.
