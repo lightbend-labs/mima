@@ -9,7 +9,6 @@ import sbt._
 import sbt.Keys.{ Classpath, TaskStreams }
 import sbt.librarymanagement.{ UpdateLogging => _, _ }
 import sbt.librarymanagement.ivy._
-import sbt.internal.librarymanagement._
 
 import scala.io.Source
 import scala.collection.mutable
