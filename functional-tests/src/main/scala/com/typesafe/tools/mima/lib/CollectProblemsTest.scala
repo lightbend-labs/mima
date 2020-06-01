@@ -1,18 +1,28 @@
 package com.typesafe.tools.mima.lib
 
 import java.io.File
+import java.nio.file.Files
 
 import com.typesafe.config.ConfigFactory
-import com.typesafe.tools.mima.core.{Problem, ProblemFilters}
+import com.typesafe.tools.mima.core.{ Problem, ProblemFilters }
 
 import scala.collection.JavaConverters._
-import scala.io.Source
+import scala.util.{ Failure, Success, Try }
 
 object CollectProblemsTest {
+  def main(args: Array[String]): Unit = TestCase.testAll(args.toList)(testCollectProblems)
 
-  // Called via reflection from TestsPlugin
-  def runTest(cp: Array[File], oldJarOrDir: File, newJarOrDir: File, baseDir: File, oracleFile: File): String = {
-    val mima = new MiMaLib(cp)
+  def testCollectProblems(testCase: TestCase) = {
+    import testCase._
+    for {
+      () <- compileThem
+      oracleFile = versionedFile(baseDir / "problems.txt")
+      () <- runTest(outV1.jfile, outV2.jfile, baseDir.jfile, oracleFile.jfile)
+    } yield ()
+  }
+
+  def runTest(oldJarOrDir: File, newJarOrDir: File, baseDir: File, oracleFile: File): Try[Unit] = {
+    val mima = new MiMaLib(Nil)
 
     val configFile = new File(baseDir, "test.conf")
     val configFallback = ConfigFactory.parseString("filter { problems = [] }")
@@ -24,8 +34,7 @@ object CollectProblemsTest {
     val problems = mima.collectProblems(oldJarOrDir, newJarOrDir).filter(problemFilter)
 
     // load oracle
-    val source = Source.fromFile(oracleFile)
-    val expectedProblems = try source.getLines.filter(!_.startsWith("#")).toList finally source.close()
+    val expectedProblems = Files.lines(oracleFile.toPath).iterator.asScala.filter(!_.startsWith("#")).toList
 
     // diff between the oracle and the collected problems
     val problemDescriptions = problems.iterator.map(_.description("new")).toSet
@@ -57,6 +66,9 @@ object CollectProblemsTest {
       //noinspection ScalaUnusedExpression // intellij-scala is wrong, addString _does_ side-effect
       unreportedProblems.addString(msg, s"The following ${unreportedProblems.size} problems were expected but not reported:\n  - ", "\n  - ", "\n")
 
-    msg.result()
+    msg.result() match {
+      case ""  => Success(())
+      case msg => Failure(new Exception(msg))
+    }
   }
 }

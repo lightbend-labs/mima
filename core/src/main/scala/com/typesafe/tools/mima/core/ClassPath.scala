@@ -41,10 +41,10 @@ private[mima] object ClassPath {
     case p if file.isFile && file.getName.endsWith(".jar") => PathCp(p)(rootPath(p))
   }
 
-  private def join(xs: Stream[String]) = xs.filter("" != _).mkString(java.io.File.pathSeparator)
-  private def split(cp: String)        = cp.split(java.io.File.pathSeparator).toStream.filter("" != _).distinct
-  private def expandCp(cp: String)     = split(cp).flatMap(s => fromJarOrDir(new java.io.File(s)))
-  private def javaBootCp               = expandCp(System.getProperty("sun.boot.class.path", ""))
+          def join(xs: Seq[String]) = xs.filter("" != _).mkString(java.io.File.pathSeparator)
+          def split(cp: String)     = cp.split(java.io.File.pathSeparator).toStream.filter("" != _).distinct
+  private def expandCp(cp: String)  = split(cp).flatMap(s => fromJarOrDir(new java.io.File(s)))
+  private def javaBootCp            = expandCp(System.getProperty("sun.boot.class.path", ""))
 
   import scala.collection.JavaConverters._
   private def list(p: Path)      = Files.newDirectoryStream(p).asScala.toStream.sortBy(_.toString)

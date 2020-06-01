@@ -60,11 +60,14 @@ val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core).settings(
   MimaSettings.mimaSettings,
 )
 
+val testFunctional = taskKey[Unit]("Run the functional test")
 val functionalTests = Project("functional-tests", file("functional-tests"))
   .dependsOn(core)
-  .enablePlugins(TestsPlugin)
   .settings(
     libraryDependencies += "com.typesafe" % "config" % "1.4.0",
+    libraryDependencies += "io.get-coursier" %% "coursier" % "2.0.0-RC6-18",
+    testFunctional := (Compile / runMain).toTask(" com.typesafe.tools.mima.lib.UnitTests").value,
+    IntegrationTest / test := (Compile / runMain).toTask(" com.typesafe.tools.mima.lib.IntegrationTests").value,
     mimaFailOnNoPrevious := false,
     skip in publish := true,
   )
