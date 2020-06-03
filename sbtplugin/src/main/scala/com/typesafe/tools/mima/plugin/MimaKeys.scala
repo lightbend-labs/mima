@@ -3,6 +3,7 @@ package plugin
 
 import com.typesafe.tools.mima.core.{ Problem, ProblemFilter }
 import sbt.{ File, ModuleID, settingKey, taskKey } // no sbt._, to avoid 1.3+ only singleFileJsonFormatter
+import sbt.librarymanagement.DependencyResolution
 
 object MimaKeys extends MimaKeys
 
@@ -15,6 +16,7 @@ class MimaKeys {
   final val mimaFailOnNoPrevious        = settingKey[Boolean]("if true, fail the build if no previous artifacts are set.")
   final val mimaReportSignatureProblems = settingKey[Boolean]("if true, report `IncompatibleSignatureProblem`s.")
 
+  final val mimaDependencyResolution = taskKey[DependencyResolution]("DependencyResolution to use to fetch previous artifacts.")
   final val mimaPreviousClassfiles   = taskKey[Map[ModuleID, File]]("Directories or jars containing the previous class files used to test compatibility with a given module.")
   final val mimaCurrentClassfiles    = taskKey[File]("Directory or jar containing the current class files used to test compatibility.")
   final val mimaCheckDirection       = settingKey[String]("Compatibility checking direction; default is \"backward\", but can also be \"forward\" or \"both\".")
