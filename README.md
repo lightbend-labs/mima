@@ -5,6 +5,8 @@ diagnosing [binary incompatibilities][] for Scala libraries.
 
 [binary incompatibilities]: https://docs.scala-lang.org/overviews/core/binary-compatibility-for-library-authors.html
 
+It's pronounced _MEE-ma_.
+
 ## What it is?
 
 MiMa can report binary modifications that may
