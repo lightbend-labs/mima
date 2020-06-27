@@ -1,23 +1,20 @@
 package com.typesafe.tools.mima.core
 
-import org.scalatest.prop.TableDrivenPropertyChecks
-import org.scalatest.matchers.should.Matchers
-import org.scalatest.wordspec.AnyWordSpec
+final class ProblemFiltersSpec extends munit.FunSuite {
+  check(ProblemFilters.exclude[Problem]("impl.Http"), problem("impl.Http"),  false)
+  check(ProblemFilters.exclude[Problem]("impl.Http"), problem("impl.Http2"), true)
+  check(ProblemFilters.exclude[Problem]("impl.*"),    problem("impl.Http"),  false)
+  check(ProblemFilters.exclude[Problem]("impl.*"),    problem("impl2.Http"), true)
+  check(ProblemFilters.exclude[Problem]("a$Impl*"),   problem("a$Impl$B"),   false)
+  check(ProblemFilters.exclude[Problem]("a$Impl*"),   problem("a2$Impl$B"),  true)
 
-final class ProblemFiltersSpec extends AnyWordSpec with TableDrivenPropertyChecks with Matchers {
-  val filters = Table(
-    ("filter", "problem", "realProblem"),
-    (ProblemFilters.exclude[Problem]("impl.Http"), problem("impl.Http"),  false),
-    (ProblemFilters.exclude[Problem]("impl.Http"), problem("impl.Http2"), true),
-    (ProblemFilters.exclude[Problem]("impl.*"),    problem("impl.Http"),  false),
-    (ProblemFilters.exclude[Problem]("impl.*"),    problem("impl2.Http"), true),
-    (ProblemFilters.exclude[Problem]("a$Impl*"),   problem("a$Impl$B"),   false),
-    (ProblemFilters.exclude[Problem]("a$Impl*"),   problem("a2$Impl$B"),  true),
-  )
-
-  "problem filters" should {
-    "filter problems" in {
-      forAll(filters) { (filter, problem, realProblem) => filter(problem) shouldBe realProblem }
+  def check[T](
+      filter: ProblemFilter,
+      problem: Problem,
+      realProblem: Boolean,
+  )(implicit loc: munit.Location): Unit = {
+    test(s"problem filters should filter problems; filter=$filter problem=$problem realProblem=$realProblem") {
+      assertEquals(filter(problem), realProblem)
     }
   }
 
