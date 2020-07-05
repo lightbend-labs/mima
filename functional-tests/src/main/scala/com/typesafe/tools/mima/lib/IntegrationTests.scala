@@ -8,15 +8,17 @@ import scala.reflect.io.Directory
 import scala.util.Try
 
 object IntegrationTests {
-  def main(args: Array[String]): Unit = {
+  def main(args: Array[String]): Unit = fromArgs(args.toList).assert()
+
+  def fromArgs(args: List[String]): Tests = {
     val dirs = Directory("functional-tests/src/it").dirs.filter(args match {
-      case Array() => dir => dir.files.exists(_.name == "test.conf")
-      case xs      => xs.toSet.compose(_.name)
-    }).toSeq.sortBy(_.path)
-    TestPrinter.testAll(dirs)(dir => s"${dir.name}")(testIntegration)
+      case Seq() => dir => dir.files.exists(_.name == "test.conf")
+      case names => dir => names.contains(dir.name)
+    }).toList.sortBy(_.path)
+    Tests(dirs.map(dir => Test(dir.name, testIntegration(dir))))
   }
 
-  def testIntegration(baseDir: Directory) = {
+  def testIntegration(baseDir: Directory): Try[Unit] = {
     val conf       = ConfigFactory.parseFile((baseDir / "test.conf").jfile).resolve()
     val groupId    = conf.getString("groupId")
     val artifactId = conf.getString("artifactId")

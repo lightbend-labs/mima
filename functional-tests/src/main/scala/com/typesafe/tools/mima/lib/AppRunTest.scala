@@ -9,7 +9,7 @@ import scala.util.{ Failure, Success, Try }
 
 /** Test running the App, using library v2. */
 object AppRunTest {
-  def main(args: Array[String]): Unit = TestCase.testAll(args.toList)(testAppRun)
+  def main(args: Array[String]): Unit = TestCase.argsToTests(args.toList, testAppRun).assert()
 
   def testAppRun(testCase: TestCase) = {
     import testCase._

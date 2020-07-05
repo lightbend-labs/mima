@@ -10,7 +10,7 @@ import scala.collection.JavaConverters._
 import scala.util.{ Failure, Success, Try }
 
 object CollectProblemsTest {
-  def main(args: Array[String]): Unit = TestCase.testAll(args.toList)(testCollectProblems)
+  def main(args: Array[String]): Unit = TestCase.argsToTests(args.toList, testCollectProblems).assert()
 
   def testCollectProblems(testCase: TestCase) = {
     import testCase._

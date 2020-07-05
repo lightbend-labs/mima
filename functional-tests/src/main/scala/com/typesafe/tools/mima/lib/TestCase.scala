@@ -18,8 +18,8 @@ object TestCase {
   val scala213 = "2.13.2"
   val hostScalaVersion = scala.util.Properties.versionNumberString
 
-  def testAll(argv: List[String])(test: TestCase => Try[Unit]): Unit =
-    TestPrinter.testAll(fromArgs(argv))(tc => s"${tc.scalaBinaryVersion} / ${tc.name}")(test)
+  def argsToTests(argv: List[String], runTestCase: TestCase => Try[Unit]): Tests =
+    Tests(fromArgs(argv).map(tc => Test(s"${tc.scalaBinaryVersion} / ${tc.name}", runTestCase(tc))))
 
   def fromArgs(argv: List[String]): List[TestCase] = {
     val Conf(svs, dirs0) = go(argv, Conf(Nil, Nil))
@@ -121,4 +121,6 @@ final class TestCase(val baseDir: Directory, val scalaCompiler: ScalaCompiler, v
       case _      => p
     }
   }
+
+  override def toString = s"TestCase(baseDir=${baseDir.name}, scalaVersion=${scalaCompiler.version})"
 }

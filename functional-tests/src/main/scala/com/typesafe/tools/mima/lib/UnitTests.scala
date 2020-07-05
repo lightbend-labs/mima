@@ -4,15 +4,13 @@ import scala.reflect.io.Path
 import scala.util.{ Failure, Success, Try }
 
 object UnitTests {
-  def main(args: Array[String]): Unit = {
-    TestCase.testAll(args.toList) { testCase =>
-      for {
-        () <- testNameCheck(testCase)
-        () <- CollectProblemsTest.testCollectProblems(testCase)
-        () <- AppRunTest.testAppRun(testCase)
-      } yield ()
-    }
-  }
+  def main(args: Array[String]): Unit = TestCase.argsToTests(args.toList, runTestCase).assert()
+
+  def runTestCase(testCase: TestCase) = for {
+    () <- testNameCheck(testCase)
+    () <- CollectProblemsTest.testCollectProblems(testCase)
+    () <- AppRunTest.testAppRun(testCase)
+  } yield ()
 
   def testNameCheck(testCase: TestCase): Try[Unit] = {
     val emptyProblemsTxt = blankFile(testCase.baseDir / "problems.txt")
