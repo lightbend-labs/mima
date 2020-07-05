@@ -17,5 +17,10 @@ object TestPrinter {
         case Failure(ex) => ko(s"- $fail  ${toText(x)}", ex)
       }
     }.get
+
+  if (System.out != Console.out) {
+    System.out.println(" System.out identity ##: " + System.identityHashCode(System.out))
+    System.out.println("Console.out identity ##: " + System.identityHashCode(scala.Console.out))
+    System.out.println("cwd: " + new java.io.File("").getAbsoluteFile)
   }
 }
