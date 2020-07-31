@@ -65,7 +65,7 @@ val functionalTests = Project("functional-tests", file("functional-tests"))
   .dependsOn(core)
   .settings(
     libraryDependencies += "com.typesafe" % "config" % "1.4.0",
-    libraryDependencies += "io.get-coursier" %% "coursier" % "2.0.0-RC6-23",
+    libraryDependencies += "io.get-coursier" %% "coursier" % "2.0.0-RC6-24",
     testFunctional := (Compile / runMain).toTask(" com.typesafe.tools.mima.lib.UnitTests").value,
     IntegrationTest / test := (Compile / runMain).toTask(" com.typesafe.tools.mima.lib.IntegrationTests").value,
     mimaFailOnNoPrevious := false,
