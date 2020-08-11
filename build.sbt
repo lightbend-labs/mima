@@ -35,7 +35,7 @@ aggregateProjects(core, sbtplugin, functionalTests)
 
 val core = project.settings(
   name := "mima-core",
-  libraryDependencies += "org.scalameta" %% "munit" % "0.7.10" % Test,
+  libraryDependencies += "org.scalameta" %% "munit" % "0.7.11" % Test,
   testFrameworks += new TestFramework("munit.Framework"),
   MimaSettings.mimaSettings,
   apiMappings ++= {
