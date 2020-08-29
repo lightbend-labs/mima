@@ -63,11 +63,16 @@ val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core).settings(
 val testFunctional = taskKey[Unit]("Run the functional test")
 val functionalTests = Project("functional-tests", file("functional-tests"))
   .dependsOn(core)
+  .configs(IntegrationTest)
   .settings(
     libraryDependencies += "com.typesafe" % "config" % "1.4.0",
     libraryDependencies += "io.get-coursier" %% "coursier" % "2.0.0-RC6-25",
-    testFunctional := (Compile / runMain).toTask(" com.typesafe.tools.mima.lib.UnitTests").value,
-    IntegrationTest / test := (Compile / runMain).toTask(" com.typesafe.tools.mima.lib.IntegrationTests").value,
+    libraryDependencies += "org.scalameta" %% "munit" % "0.7.9" % s"$Test;$IntegrationTest",
+    testFrameworks += new TestFramework("munit.Framework"),
+    //Test / run / fork := true,
+    //Test / run / forkOptions := (Test / run / forkOptions).value.withWorkingDirectory((ThisBuild / baseDirectory).value),
+    testFunctional := (Test / test).value,
+    Defaults.itSettings,
     mimaFailOnNoPrevious := false,
     skip in publish := true,
   )

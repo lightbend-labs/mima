@@ -18,16 +18,16 @@ object TestCase {
   val scala213 = "2.13.2"
   val hostScalaVersion = scala.util.Properties.versionNumberString
 
-  def testAll(argv: List[String])(test: TestCase => Try[Unit]): Unit =
-    TestPrinter.testAll(fromArgs(argv))(tc => s"${tc.scalaBinaryVersion} / ${tc.name}")(test)
+  def argsToTests(argv: List[String], runTestCase: TestCase => Try[Unit]): Tests =
+    Tests(fromArgs(argv).map(tc => Test(s"${tc.scalaBinaryVersion} / ${tc.name}", runTestCase(tc))))
 
   def fromArgs(argv: List[String]): List[TestCase] = {
     val Conf(svs, dirs0) = go(argv, Conf(Nil, Nil))
-    val dirs = if (dirs0.nonEmpty) dirs0 else
+    val dirs = if (dirs0.nonEmpty) dirs0.reverse else
       Directory("functional-tests/src/test").dirs
         .filter(_.files.exists(_.name == "problems.txt"))
         .toSeq.sortBy(_.path)
-    val scalaCompilers = (if (svs.isEmpty) List(hostScalaVersion) else svs).map(new ScalaCompiler(_))
+    val scalaCompilers = (if (svs.isEmpty) List(hostScalaVersion) else svs.reverse).map(new ScalaCompiler(_))
     val javaCompiler = ToolProvider.getSystemJavaCompiler
     for (sc <- scalaCompilers; dir <- dirs) yield new TestCase(dir, sc, javaCompiler)
   }
@@ -35,13 +35,24 @@ object TestCase {
   final case class Conf(scalaVersions: List[String], dirs: List[Directory])
 
   @tailrec private def go(argv: List[String], conf: Conf): Conf = argv match {
-    case "-213" :: xs                  => go(xs, conf.copy(scalaVersions = conf.scalaVersions :+ scala213))
-    case "-212" :: xs                  => go(xs, conf.copy(scalaVersions = conf.scalaVersions :+ scala212))
-    case "-211" :: xs                  => go(xs, conf.copy(scalaVersions = conf.scalaVersions :+ scala211))
-    case "--scala-version" :: sv :: xs => go(xs, conf.copy(scalaVersions = conf.scalaVersions :+ sv))
-    case "--cross" :: xs               => go(xs, conf.copy(scalaVersions = List(scala213, scala212, scala211)))
-    case s :: xs                       => go(xs, conf.copy(dirs = conf.dirs :+ Directory(s"functional-tests/src/test/$s")))
+    case "-213" :: xs                  => go(xs, conf.copy(scalaVersions = scala213 :: conf.scalaVersions))
+    case "-212" :: xs                  => go(xs, conf.copy(scalaVersions = scala212 :: conf.scalaVersions))
+    case "-211" :: xs                  => go(xs, conf.copy(scalaVersions = scala211 :: conf.scalaVersions))
+    case "--scala-version" :: sv :: xs => go(xs, conf.copy(scalaVersions = sv :: conf.scalaVersions))
+    case "--cross" :: xs               => go(xs, conf.copy(scalaVersions = List(scala211, scala212, scala213)))
+    case s :: xs                       => go(xs, conf.copy(dirs = testDir(s) ::: conf.dirs))
     case Nil                           => conf
+  }
+
+  def testDir(s: String) = {
+    val base = Directory("functional-tests/src/test")
+    base.dirs.find(_.name == s) match {
+      case Some(d) => List(d)
+      case _       => base.dirs.filter(_.name.contains(s)).toList.sortBy(_.path) match {
+        case Nil  => sys.error(s"No such directory: ${base / s}")
+        case dirs => dirs
+      }
+    }
   }
 }
 
@@ -110,4 +121,6 @@ final class TestCase(val baseDir: Directory, val scalaCompiler: ScalaCompiler, v
       case _      => p
     }
   }
+
+  override def toString = s"TestCase(baseDir=${baseDir.name}, scalaVersion=${scalaCompiler.version})"
 }
