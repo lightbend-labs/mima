@@ -33,9 +33,11 @@ val root = project.in(file(".")).settings(
 )
 aggregateProjects(core, sbtplugin, functionalTests)
 
+val munit = "org.scalameta" %% "munit" % "0.7.12"
+
 val core = project.settings(
   name := "mima-core",
-  libraryDependencies += "org.scalameta" %% "munit" % "0.7.12" % Test,
+  libraryDependencies += munit % Test,
   testFrameworks += new TestFramework("munit.Framework"),
   MimaSettings.mimaSettings,
   apiMappings ++= {
@@ -67,7 +69,7 @@ val functionalTests = Project("functional-tests", file("functional-tests"))
   .settings(
     libraryDependencies += "com.typesafe" % "config" % "1.4.0",
     libraryDependencies += "io.get-coursier" %% "coursier" % "2.0.0-RC6-25",
-    libraryDependencies += "org.scalameta" %% "munit" % "0.7.9" % s"$Test;$IntegrationTest",
+    libraryDependencies += munit % s"$Test;$IntegrationTest",
     testFrameworks += new TestFramework("munit.Framework"),
     //Test / run / fork := true,
     //Test / run / forkOptions := (Test / run / forkOptions).value.withWorkingDirectory((ThisBuild / baseDirectory).value),
