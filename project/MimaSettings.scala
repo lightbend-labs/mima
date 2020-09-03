@@ -35,6 +35,8 @@ object MimaSettings {
       exclude[Problem]("*mima.plugin.SbtMima.*"),
       exclude[Problem]("scala.tools.nsc.mima*"),
       exclude[DirectMissingMethodProblem]("*mima.lib.analyze.method.MethodChecker.hasMatchingCtorSig"),
+      // now inherits Plugins result type instead of (accidental) JvmPlugin
+      exclude[MemberProblem]("*mima.plugin.MimaPlugin.requires"),
     ),
   )
 }
