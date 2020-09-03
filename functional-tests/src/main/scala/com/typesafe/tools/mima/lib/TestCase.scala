@@ -1,6 +1,7 @@
 package com.typesafe.tools.mima.lib
 
-import java.net.URI
+import java.io.{ ByteArrayOutputStream, PrintStream }
+import java.net.{ URI, URLClassLoader }
 import javax.tools._
 
 import scala.collection.JavaConverters._
@@ -62,8 +63,31 @@ final class TestCase(val baseDir: Directory, val scalaCompiler: ScalaCompiler, v
     else Failure(new Exception(s"javac failed; ${infos.size} messages:\n  ${infos.mkString("\n  ")}"))
   }
 
+  def runMain(outLib: Directory): Try[Unit] = {
+    val cp = List(outLib, outApp).map(_.jfile) ++ scalaJars
+    val cl = new URLClassLoader(cp.map(_.toURI.toURL).toArray, null)
+    val meth = cl.loadClass("App").getMethod("main", classOf[Array[String]])
+
+    val printStream = new PrintStream(new ByteArrayOutputStream(), /* autoflush = */ true, "UTF-8")
+    val savedOut = System.out
+    val savedErr = System.err
+    try {
+      System.setOut(printStream)
+      System.setErr(printStream)
+      Console.withErr(printStream) {
+        Console.withOut(printStream) {
+          Try(meth.invoke(null, new Array[String](0)): Unit)
+        }
+      }
+    } finally {
+      System.setOut(savedOut)
+      System.setErr(savedErr)
+      printStream.close()
+    }
+  }
+
   def versionedFile(path: Path) = {
-    val p    = path.toFile
+    val p    = baseDir.resolve(path).toFile
     val p211 = (p.parent / (s"${p.stripExtension}-2.11")).addExtension(p.extension).toFile
     val p212 = (p.parent / (s"${p.stripExtension}-2.12")).addExtension(p.extension).toFile
     scalaBinaryVersion match {

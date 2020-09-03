@@ -14,7 +14,7 @@ object CollectProblemsTest {
   def testCollectProblems(testCase: TestCase) = for {
     () <- testCase.compileThem
     problems = collectProblems(testCase.outV1.jfile, testCase.outV2.jfile)
-    expected = readOracleFile(testCase.versionedFile(testCase.baseDir / "problems.txt").jfile)
+    expected = readOracleFile(testCase.versionedFile("problems.txt").jfile)
     () <- diffProblems(problems, expected)
   } yield ()
 
