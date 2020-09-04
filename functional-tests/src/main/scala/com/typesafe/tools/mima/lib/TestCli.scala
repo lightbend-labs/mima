@@ -5,12 +5,13 @@ import javax.tools._
 import scala.annotation.tailrec
 import scala.reflect.io.Directory
 import scala.util.Try
+import scala.util.{ Properties => StdLibProps }
 
 object TestCli {
   val scala211 = "2.11.12"
   val scala212 = "2.12.11"
   val scala213 = "2.13.2"
-  val hostScalaVersion = scala.util.Properties.versionNumberString
+  val hostScalaVersion = StdLibProps.scalaPropOrNone("maven.version.number").get
   val allScalaVersions = List(scala211, scala212, scala213)
   val testsDir = Directory("functional-tests/src/test")
 
