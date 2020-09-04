@@ -1,20 +1,26 @@
 package com.typesafe.tools.mima.lib
 
+import scala.reflect.io.{ Directory, Path }
 import scala.util.{ Failure, Success, Try }
 
-/** Test running the App, using library v2. */
+/** Test running the App, using library v1 or v2. */
 object AppRunTest {
-  def main(args: Array[String]): Unit = TestCli.argsToTests(args.toList, testAppRun).unsafeRunTest()
+  def testAppRun(testCase: TestCase, direction: Direction): Try[Unit] = {
+    testAppRun1(testCase, direction.lhs(testCase), direction.rhs(testCase), direction.oracleFile)
+  }
 
-  def testAppRun(testCase: TestCase): Try[Unit] = for {
-    () <- testCase.compileThem
-    pending = testCase.versionedFile("testAppRun.pending").exists
-    emptyPT = testCase.blankFile(testCase.versionedFile("problems.txt"))
-    () <- testCase.runMain(testCase.outV1) // expect at least v1 to pass, even in the "pending" case
-    () <- testCase.runMain(testCase.outV2) match {
-      case Failure(t)  if !pending &&  emptyPT => Failure(t)
-      case Success(()) if !pending && !emptyPT => Failure(new Exception("expected running App to fail"))
-      case _                                   => Success(())
+  def testAppRun1(testCase: TestCase, v1: Directory, v2: Directory, oracleFile: Path): Try[Unit] = for {
+    () <- testCase.compileBoth
+    pending  = testCase.versionedFile("testAppRun.pending").exists
+    expectOk = testCase.blankFile(testCase.versionedFile(oracleFile))
+  //() <- testCase.compileApp(v2)      // compile app with v2
+  //() <- testCase.runMain(v2)         // sanity check 1: run app with v2
+    () <- testCase.compileApp(v1)      // recompile app with v1
+    () <- testCase.runMain(v1)         // sanity check 2: run app with v1
+    () <- testCase.runMain(v2) match { // test: run app, compiled with v1, with v2
+      case Failure(t)  if !pending &&  expectOk => Failure(t)
+      case Success(()) if !pending && !expectOk => Failure(new Exception("expected running App to fail"))
+      case _                                    => Success(())
     }
   } yield ()
 }

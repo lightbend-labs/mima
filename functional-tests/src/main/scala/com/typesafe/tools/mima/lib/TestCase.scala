@@ -1,6 +1,6 @@
 package com.typesafe.tools.mima.lib
 
-import java.io.{ ByteArrayOutputStream, File, PrintStream }
+import java.io.{ ByteArrayOutputStream, PrintStream }
 import java.net.{ URI, URLClassLoader }
 import javax.tools._
 
@@ -24,15 +24,13 @@ final class TestCase(val baseDir: Directory, val scalaCompiler: ScalaCompiler, v
   val outV2  = (baseDir / s"target/scala-$scalaBinaryVersion/v2-classes").toDirectory
   val outApp = (baseDir / s"target/scala-$scalaBinaryVersion/app-classes").toDirectory
 
-  lazy val compileThem: Try[Unit] = for {
-    () <- compileV1()
-    () <- compileV2()
-    () <- compileApp(outV1)
+  lazy val compileBoth: Try[Unit]   = for (() <- compileV1(); () <- compileV2()) yield ()
+  def compileV1(): Try[Unit]        = compileDir(srcV1, Nil, outV1)
+  def compileV2(): Try[Unit]        = compileDir(srcV2, Nil, outV2)
+  def compileApp(outLib: Directory) = for {
+    () <- compileBoth
+    () <- compileDir(srcApp, List(outLib), outApp)
   } yield ()
-
-  def compileV1()                   = compileDir(srcV1, Nil, outV1)
-  def compileV2()                   = compileDir(srcV2, Nil, outV2)
-  def compileApp(outLib: Directory) = compileDir(srcApp, List(outLib), outApp)
 
   def compileDir(srcDir: Directory, cp: List[Directory], out: Directory): Try[Unit] = for {
     () <- Try(recreateDir(out))
