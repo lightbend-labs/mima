@@ -15,13 +15,13 @@ object TestCli {
   val allScalaVersions = List(scala211, scala212, scala213)
   val testsDir = Directory("functional-tests/src/test")
 
-  def argsToTests(argv: List[String], runTestCase: TestCase => Try[Unit]): Tests =
-    Tests(fromArgs(argv).map(testCaseToTest1(_, runTestCase)))
+  def argsToTests(args: List[String], runTestCase: TestCase => Try[Unit]): Tests =
+    Tests(fromArgs(args).map(testCaseToTest1(_, runTestCase)))
 
   def testCaseToTest1(tc: TestCase, runTestCase: TestCase => Try[Unit]): Test1 =
     Test(s"${tc.scalaBinaryVersion} / ${tc.name}", runTestCase(tc))
 
-  def fromArgs(argv: List[String]): List[TestCase] = fromConf(go(argv, Conf(Nil, Nil)))
+  def fromArgs(args: List[String]): List[TestCase] = fromConf(go(args, Conf(Nil, Nil)))
 
   @tailrec def postProcessConf(conf: Conf): Conf = conf match {
     case Conf(Nil, _) => postProcessConf(conf.copy(scalaVersions = List(hostScalaVersion)))
@@ -31,12 +31,14 @@ object TestCli {
 
   def fromConf(conf: Conf): List[TestCase] = {
     val conf1 = postProcessConf(conf)
-    val javaCompiler = ToolProvider.getSystemJavaCompiler
+    val javaCompiler = getJavaCompiler
     for {
       sc <- conf1.scalaVersions.map(new ScalaCompiler(_))
       dir <- conf1.dirs
     } yield new TestCase(dir, sc, javaCompiler)
   }
+
+  def getJavaCompiler = ToolProvider.getSystemJavaCompiler
 
   def allTestDirs() = testsDir.dirs.filter(_.files.exists(_.name == "problems.txt")).toList.sortBy(_.path)
 

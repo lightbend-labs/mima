@@ -1,12 +1,12 @@
 package com.typesafe.tools.mima.lib
 
-import java.io.{ ByteArrayOutputStream, PrintStream }
+import java.io.{ ByteArrayOutputStream, File, PrintStream }
 import java.net.{ URI, URLClassLoader }
 import javax.tools._
 
 import scala.collection.JavaConverters._
 import scala.collection.mutable
-import scala.reflect.internal.util.{ BatchSourceFile, SourceFile }
+import scala.reflect.internal.util.BatchSourceFile
 import scala.reflect.io.{ Directory, Path, PlainFile }
 import scala.util.{ Failure, Success, Try }
 
@@ -25,32 +25,36 @@ final class TestCase(val baseDir: Directory, val scalaCompiler: ScalaCompiler, v
   val outApp = (baseDir / s"target/scala-$scalaBinaryVersion/app-classes").toDirectory
 
   lazy val compileThem: Try[Unit] = for {
-    () <- Try(List(outV1, outV2, outApp).foreach(recreateDir(_)))
-    () <- compileDir(srcV1,  outV1)
-    () <- compileDir(srcApp, outApp)
-    () <- compileDir(srcV2,  outV2)  // run after App, to make sure App links to v1
+    () <- compileV1()
+    () <- compileV2()
+    () <- compileApp(outV1)
   } yield ()
 
-  def compileDir(srcDir: Directory, out: Directory): Try[Unit] = {
-    val sourceFiles = srcDir.files.map(f => new BatchSourceFile(new PlainFile(f))).toList
-    for {
-      () <- compileScala(sourceFiles, out)
-      () <- compileJava(sourceFiles.filter(_.isJava), out)
-    } yield ()
-  }
+  def compileV1()                   = compileDir(srcV1, Nil, outV1)
+  def compileV2()                   = compileDir(srcV2, Nil, outV2)
+  def compileApp(outLib: Directory) = compileDir(srcApp, List(outLib), outApp)
 
-  def compileScala(sourceFiles: List[SourceFile], out: Directory): Try[Unit] = {
+  def compileDir(srcDir: Directory, cp: List[Directory], out: Directory): Try[Unit] = for {
+    () <- Try(recreateDir(out))
+    () <- compileScala(srcDir, cp, out)
+    () <- compileJava(srcDir, cp, out)
+  } yield ()
+
+  def compileScala(srcDir: Directory, cp: List[Directory], out: Directory): Try[Unit] = {
+    val sourceFiles = lsSrcs(srcDir)
     if (sourceFiles.forall(_.isJava)) return Success(())
     val bootcp = ClassPath.join(scalaJars.map(_.getPath))
+    val cpOpt  = if (cp.isEmpty) Nil else List("-cp", ClassPath.join(cp.map(_.path)))
     val paths = sourceFiles.map(_.path)
-    val args = "-bootclasspath" :: bootcp :: "-classpath" :: s"$outV1" :: "-d" :: s"$out" :: paths
+    val args = "-bootclasspath" :: bootcp :: cpOpt ::: "-d" :: s"$out" :: paths
     scalaCompiler.compile(args)
   }
 
-  def compileJava(sourceFiles: List[SourceFile], out: Directory): Try[Unit] = {
+  def compileJava(srcDir: Directory, cp: List[Directory], out: Directory): Try[Unit] = {
+    val sourceFiles = lsSrcs(srcDir, _.hasExtension("java"))
     if (sourceFiles.isEmpty) return Success(())
-    val cp = ClassPath.join((scalaJars :+ outV1.jfile).map(_.getPath))
-    val opts = List("-classpath", cp, "-d", s"$out").asJava
+    val cpStr = ClassPath.join((scalaJars ++ cp.map(_.jfile)).map(_.getPath))
+    val opts = List("-classpath", cpStr, "-d", s"$out").asJava
     val units = sourceFiles.map { sf =>
       new SimpleJavaFileObject(new URI(s"string:///${sf.path}"), JavaFileObject.Kind.SOURCE) {
         override def getCharContent(ignoreEncodingErrors: Boolean) = sf.content
@@ -86,6 +90,12 @@ final class TestCase(val baseDir: Directory, val scalaCompiler: ScalaCompiler, v
     }
   }
 
+  def lsSrcs(dir: Directory, cond: Path => Boolean = _.hasExtension("scala", "java")) = {
+    dir.walkFilter(cond).map(f => new BatchSourceFile(new PlainFile(f))).toList.sortBy(_.path)
+  }
+
+  def blankFile(p: Path): Boolean = p.toFile.lines().forall(_.startsWith("#"))
+
   def versionedFile(path: Path) = {
     val p    = baseDir.resolve(path).toFile
     val p211 = (p.parent / (s"${p.stripExtension}-2.11")).addExtension(p.extension).toFile
@@ -97,10 +107,11 @@ final class TestCase(val baseDir: Directory, val scalaCompiler: ScalaCompiler, v
     }
   }
 
-  def recreateDir(dir: Directory) = {
+  def recreateDir(dir: Directory): Unit = {
     if (dir.exists)
       assert(dir.deleteRecursively(), s"failed to delete $dir")
     dir.createDirectory()
+    ()
   }
 
   override def toString = s"TestCase(baseDir=${baseDir.name}, scalaVersion=${scalaCompiler.version})"
