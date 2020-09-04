@@ -29,6 +29,8 @@ private[analyze] object MethodChecker {
     } else {
       if (oldmeth.owner.hasStaticImpl(oldmeth))
         checkStaticImplMethod(oldmeth, newclazz)
+      else if (oldmeth.owner.hasMixinForwarder(oldmeth))
+        checkStaticMixinForwarderMethod(oldmeth, newclazz)
       else
         checkExisting1Impl(oldmeth, newclazz, _.lookupMethods(oldmeth))
     }
@@ -73,6 +75,19 @@ private[analyze] object MethodChecker {
       } else {
         // otherwise we check all the concrete trait methods and report
         // the missing or incompatible method.
+        val methsLookup = (_: ClassInfo).lookupConcreteTraitMethods(oldmeth)
+        Some(missingOrIncompatible(oldmeth, methsLookup(newclazz).toList, methsLookup))
+      }
+    }
+  }
+
+  private def checkStaticMixinForwarderMethod(oldmeth: MethodInfo, newclazz: ClassInfo) = {
+    if (newclazz.hasMixinForwarder(oldmeth)) {
+      None // then it's ok, the method it is still there
+    } else {
+      if (newclazz.allTraits.exists(_.hasMixinForwarder(oldmeth))) {
+        Some(NewMixinForwarderProblem(oldmeth))
+      } else {
         val methsLookup = (_: ClassInfo).lookupConcreteTraitMethods(oldmeth)
         Some(missingOrIncompatible(oldmeth, methsLookup(newclazz).toList, methsLookup))
       }

@@ -13,7 +13,10 @@ object CollectProblemsTest {
     () <- testCase.compileBoth
     problems = collectProblems(direction.lhs(testCase).jfile, direction.rhs(testCase).jfile)
     expected = readOracleFile(testCase.versionedFile(direction.oracleFile).jfile)
-    () <- diffProblems(problems, expected)
+    () <- direction match {
+      case Backwards => diffProblems(problems, expected)
+      case Forwards  => diffProblems(problems, expected, "other")
+    }
   } yield ()
 
   val mimaLib: MiMaLib = new MiMaLib(cp = Nil)

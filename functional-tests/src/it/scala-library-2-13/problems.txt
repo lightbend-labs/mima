@@ -1,0 +1,1 @@
+in new version, classes mixing scala.collection.MapView need be recompiled to wire to the new static mixin forwarder method all super calls to method className()java.lang.String
