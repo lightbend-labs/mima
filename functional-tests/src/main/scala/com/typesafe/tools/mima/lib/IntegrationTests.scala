@@ -2,16 +2,18 @@ package com.typesafe.tools.mima.lib
 
 import java.io.File
 
-import com.typesafe.config.ConfigFactory
-import com.typesafe.tools.mima.core.{ Problem, ProblemFilters }
-import coursier._
-
 import scala.collection.JavaConverters._
 import scala.reflect.io.Directory
 import scala.util.Try
 
+import com.typesafe.config.ConfigFactory
+import com.typesafe.tools.mima.core.{ Problem, ProblemFilters }
+import coursier._
+import munit.GenericTest
+
 object IntegrationTests {
-  def main(args: Array[String]): Unit = fromArgs(args.toList).unsafeRunTest()
+  def main(args: Array[String]): Unit       = fromArgs(args.toList).unsafeRunTest()
+  def munitTests(): List[GenericTest[Unit]] = fromArgs(Nil).munitTests
 
   def fromArgs(args: List[String]): Tests = {
     val dirs = Directory("functional-tests/src/it").dirs.filter(args match {
