@@ -23,15 +23,16 @@ object Test {
     }
   }
 
-  if (System.out != Console.out) {
-    System.out.println(" System.out identity ##: " + System.identityHashCode(System.out))
-    System.out.println("Console.out identity ##: " + System.identityHashCode(scala.Console.out))
-    System.out.println("cwd: " + new java.io.File("").getAbsoluteFile)
+  implicit class TestOps(private val t: Test) extends AnyVal {
+    def tests: List[Test1] = t match {
+      case t1: Test1    => List(t1)
+      case Tests(tests) => tests
+    }
   }
 }
 
 sealed trait Test {
-  def assert(): Unit   = run().get
+  def unsafeRunTest(): Unit = run().get
 
   def run(): Try[Unit] = this match {
     case Test1(l, a) => Test.run1(l, a)
@@ -39,10 +40,10 @@ sealed trait Test {
   }
 
   override def toString = this match {
-    case Test1(l, _)  => s"Test($l)"
-    case Tests(tests) => s"Tests(${tests.mkString(", ")})"
+    case Test1(label, _) => s"Test($label)"
+    case Tests(tests)    => s"Tests(${tests.mkString("[", ", ", "]")})"
   }
 }
 
 case class Test1(label: String, action: () => Unit) extends Test
-case class Tests(tests: List[Test1]) extends Test
+case class Tests(tests: List[Test1])                extends Test

@@ -1,13 +1,10 @@
 package com.typesafe.tools.mima
 package plugin
 
-import sbt._
-import sbt.Keys._
-import com.typesafe.tools.mima.core.{ IncompatibleSignatureProblem, ProblemFilters }
+import sbt._, Keys._
 
 /** MiMa's sbt plugin. */
 object MimaPlugin extends AutoPlugin {
-  override def requires = plugins.JvmPlugin
   override def trigger = allRequirements
 
   object autoImport extends MimaKeys
@@ -73,28 +70,28 @@ object MimaPlugin extends AutoPlugin {
   def mimaDefaultSettings: Seq[Setting[_]] = globalSettings ++ buildSettings ++ projectSettings
 
   private def binaryIssueFilters = Def.task {
-    val noSigs = ProblemFilters.exclude[IncompatibleSignatureProblem]("*")
+    val noSigs = core.ProblemFilters.exclude[core.IncompatibleSignatureProblem]("*")
     mimaBinaryIssueFilters.value ++ (if (mimaReportSignatureProblems.value) Nil else Seq(noSigs))
   }
 
   // Allows reuse between mimaFindBinaryIssues and mimaReportBinaryIssues
   // without blowing up the Akka build's heap
   private def binaryIssuesIterator = Def.task {
-    val s = streams.value
-    val previousClassfiles = mimaPreviousClassfiles.value
-    val currentClassfiles = mimaCurrentClassfiles.value
-    val cp = (fullClasspath in mimaFindBinaryIssues).value
+    val log = streams.value.log
+    val prevClassfiles = mimaPreviousClassfiles.value
+    val currClassfiles = mimaCurrentClassfiles.value
+    val cp = (mimaFindBinaryIssues / fullClasspath).value
     val sv = scalaVersion.value
 
-    if (previousClassfiles eq NoPreviousClassfiles) {
+    if (prevClassfiles eq NoPreviousClassfiles) {
       val msg = "mimaPreviousArtifacts not set, not analyzing binary compatibility"
-      if (mimaFailOnNoPrevious.value) sys.error(msg) else s.log.info(s"${name.value}: $msg")
-    } else if (previousClassfiles.isEmpty) {
-      s.log.info(s"${name.value}: mimaPreviousArtifacts is empty, not analyzing binary compatibility.")
+      if (mimaFailOnNoPrevious.value) sys.error(msg) else log.info(s"${name.value}: $msg")
+    } else if (prevClassfiles.isEmpty) {
+      log.info(s"${name.value}: mimaPreviousArtifacts is empty, not analyzing binary compatibility.")
     }
 
-    previousClassfiles.iterator.map { case (moduleId, prevClassfiles) =>
-      moduleId -> SbtMima.runMima(prevClassfiles, currentClassfiles, cp, mimaCheckDirection.value, sv, s.log)
+    prevClassfiles.iterator.map { case (moduleId, prevClassfiles) =>
+      moduleId -> SbtMima.runMima(prevClassfiles, currClassfiles, cp, mimaCheckDirection.value, sv, log)
     }
   }
 
@@ -126,5 +123,4 @@ object MimaPlugin extends AutoPlugin {
 
     override def apply(key: K) = throw new NoSuchElementException(s"key not found: $key")
   }
-
 }

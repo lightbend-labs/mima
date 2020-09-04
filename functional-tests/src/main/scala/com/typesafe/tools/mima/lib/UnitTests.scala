@@ -4,9 +4,9 @@ import scala.reflect.io.Path
 import scala.util.{ Failure, Success, Try }
 
 object UnitTests {
-  def main(args: Array[String]): Unit = TestCase.argsToTests(args.toList, runTestCase).assert()
+  def main(args: Array[String]): Unit = TestCli.argsToTests(args.toList, runTestCase).unsafeRunTest()
 
-  def runTestCase(testCase: TestCase) = for {
+  def runTestCase(testCase: TestCase): Try[Unit] = for {
     () <- testNameCheck(testCase)
     () <- CollectProblemsTest.testCollectProblems(testCase)
     () <- AppRunTest.testAppRun(testCase)
