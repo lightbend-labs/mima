@@ -169,7 +169,7 @@ private[mima] sealed abstract class ClassInfo(val owner: PackageInfo) extends In
     else superClass.allInterfaces ++ interfaces ++ interfaces.flatMap(_.allInterfaces)
   }
 
-  /** Does this implementation class have a static implementation of given method `m`? */
+  /** Does this class's impl class have a static implementation of the given method `m`? */
   final def hasStaticImpl(m: MethodInfo): Boolean = {
     implClass match {
       case _: SyntheticClassInfo   => false

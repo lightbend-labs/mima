@@ -73,6 +73,8 @@ val functionalTests = Project("functional-tests", file("functional-tests"))
     testFrameworks += new TestFramework("munit.Framework"),
     //Test / run / fork := true,
     //Test / run / forkOptions := (Test / run / forkOptions).value.withWorkingDirectory((ThisBuild / baseDirectory).value),
+    // Test / testOnly / watchTriggers += baseDirectory.value.toGlob / "src" / "test" / **,
+    // ^ disabled b/c of "Build triggered by [..]/target/scala-2.12/v2-classes."
     testFunctional := (Test / test).value,
     Defaults.itSettings,
     mimaFailOnNoPrevious := false,

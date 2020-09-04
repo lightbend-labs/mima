@@ -11,7 +11,7 @@ import scala.util.{ Failure, Success, Try }
 object CollectProblemsTest {
   def main(args: Array[String]): Unit = TestCli.argsToTests(args.toList, testCollectProblems).unsafeRunTest()
 
-  def testCollectProblems(testCase: TestCase) = for {
+  def testCollectProblems(testCase: TestCase): Try[Unit] = for {
     () <- testCase.compileThem
     problems = collectProblems(testCase.outV1.jfile, testCase.outV2.jfile)
     expected = readOracleFile(testCase.versionedFile("problems.txt").jfile)
@@ -26,26 +26,26 @@ object CollectProblemsTest {
     Files.lines(oracleFile.toPath).iterator.asScala.filter(!_.startsWith("#")).toList
   }
 
-  def diffProblems(problems: List[Problem], expected: List[String]): Try[Unit] = {
+  def diffProblems(problems: List[Problem], expected: List[String], v: String = "new"): Try[Unit] = {
     // diff between the oracle and the collected problems
-    val unexpected = problems.filter(p => !expected.contains(p.description("new")))
-    val unreported = expected.diff(problems.map(_.description("new")))
+    val unexpected = problems.filter(p => !expected.contains(p.description(v)))
+    val unreported = expected.diff(problems.map(_.description(v)))
 
-    val msg = new StringBuilder
+    val msg = new StringBuilder("\n")
     def pp(start: String, lines: List[String]) = {
       if (lines.isEmpty) ()
       else lines.sorted.distinct.addString(msg, s"$start (${lines.size}):\n  - ", "\n  - ", "\n")
     }
     pp("The following problem(s) were expected but not reported", unreported)
-    pp("The following problem(s) were reported but not expected", unexpected.map(_.description("new")))
+    pp("The following problem(s) were reported but not expected", unexpected.map(_.description(v)))
     pp("Filter with:", unexpected.flatMap(_.howToFilter))
     pp("Or filter with:", unexpected.flatMap(p => p.matchName.map { matchName =>
       s"{ matchName=$dq$matchName$dq , problemName=${p.getClass.getSimpleName} }"
     }))
 
     msg.mkString match {
-      case ""  => Success(())
-      case msg => Failure(new Exception(msg))
+      case "\n" => Success(())
+      case msg  => Failure(new Exception(msg))
     }
   }
 
