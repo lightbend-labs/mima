@@ -2,8 +2,10 @@ package com.typesafe.tools.mima.lib
 
 import scala.util.{ Failure, Success, Try }
 
+import munit.{ GenericTest, Location }
+
 object Test {
-  def apply(label: String, action: => Unit): Test1 = Test1(label, () => action)
+  def apply(label: String, action: => Try[Unit]): Test1 = Test1(label, () => action)
 
   def pass = s"${Console.GREEN}\u2713${Console.RESET}" // check mark (green)
   def fail = s"${Console.RED}\u2717${Console.RESET}"   // cross mark (red)
@@ -16,8 +18,8 @@ object Test {
     }
   }
 
-  def run1(label: String, action: () => Unit): Try[Unit] = {
-    Try(action()) match {
+  def run1(label: String, action: () => Try[Unit]): Try[Unit] = {
+    action() match {
       case res @ Success(()) => println(s"+ $pass  $label"); res
       case res @ Failure(ex) => println(s"- $fail  $label: $ex"); res
     }
@@ -28,6 +30,10 @@ object Test {
       case t1: Test1    => List(t1)
       case Tests(tests) => tests
     }
+
+    def munitTests: List[GenericTest[Unit]] = for {
+      test <- t.tests
+    } yield new GenericTest(test.label, () => test.unsafeRunTest(), Set.empty, Location.empty)
   }
 }
 
@@ -45,5 +51,5 @@ sealed trait Test {
   }
 }
 
-case class Test1(label: String, action: () => Unit) extends Test
-case class Tests(tests: List[Test1])                extends Test
+case class Test1(label: String, action: () => Try[Unit]) extends Test
+case class Tests(tests: List[Test1])                     extends Test
