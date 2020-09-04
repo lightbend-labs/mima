@@ -16,7 +16,10 @@ object TestCli {
   val testsDir = Directory("functional-tests/src/test")
 
   def argsToTests(args: List[String], runTestCase: TestCase => Try[Unit]): Tests =
-    Tests(fromArgs(args).map(testCaseToTest1(_, runTestCase)))
+    testCasesToTests(fromArgs(args), runTestCase)
+
+  def testCasesToTests(testCases: List[TestCase], runTestCase: TestCase => Try[Unit]): Tests =
+    Tests(testCases.map(testCaseToTest1(_, runTestCase)))
 
   def testCaseToTest1(tc: TestCase, runTestCase: TestCase => Try[Unit]): Test1 =
     Test(s"${tc.scalaBinaryVersion} / ${tc.name}", runTestCase(tc))
@@ -25,7 +28,7 @@ object TestCli {
 
   @tailrec def postProcessConf(conf: Conf): Conf = conf match {
     case Conf(Nil, _) => postProcessConf(conf.copy(scalaVersions = List(hostScalaVersion)))
-    case Conf(_, Nil) => postProcessConf(conf.copy(dirs = allTestDirs()))
+    case Conf(_, Nil) => postProcessConf(conf.copy(dirs = allTestDirs().ensuring(_.nonEmpty)))
     case _            => conf
   }
 
@@ -40,7 +43,9 @@ object TestCli {
 
   def getJavaCompiler = ToolProvider.getSystemJavaCompiler
 
-  def allTestDirs() = testsDir.dirs.filter(_.files.exists(_.name == "problems.txt")).toList.sortBy(_.path)
+  def allTestDirs() = testsDir.dirs.filter(_.files.exists { f =>
+    f.name == Backwards.oracleFile || f.name == Forwards.oracleFile
+  }).toList.sortBy(_.path)
 
   final case class Conf(scalaVersions: List[String], dirs: List[Directory])
 

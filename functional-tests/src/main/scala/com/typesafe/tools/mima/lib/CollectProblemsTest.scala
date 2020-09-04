@@ -9,12 +9,10 @@ import scala.collection.JavaConverters._
 import scala.util.{ Failure, Success, Try }
 
 object CollectProblemsTest {
-  def main(args: Array[String]): Unit = TestCli.argsToTests(args.toList, testCollectProblems).unsafeRunTest()
-
-  def testCollectProblems(testCase: TestCase): Try[Unit] = for {
-    () <- testCase.compileThem
-    problems = collectProblems(testCase.outV1.jfile, testCase.outV2.jfile)
-    expected = readOracleFile(testCase.versionedFile("problems.txt").jfile)
+  def testCollectProblems(testCase: TestCase, direction: Direction): Try[Unit] = for {
+    () <- testCase.compileBoth
+    problems = collectProblems(direction.lhs(testCase).jfile, direction.rhs(testCase).jfile)
+    expected = readOracleFile(testCase.versionedFile(direction.oracleFile).jfile)
     () <- diffProblems(problems, expected)
   } yield ()
 
