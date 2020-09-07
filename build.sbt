@@ -77,6 +77,8 @@ val functionalTests = Project("functional-tests", file("functional-tests"))
     // ^ disabled b/c of "Build triggered by [..]/target/scala-2.12/v2-classes."
     testFunctional := (Test / test).value,
     Defaults.itSettings,
+               Test / mainClass := Some("com.typesafe.tools.mima.lib.UnitTests"),
+    IntegrationTest / mainClass := Some("com.typesafe.tools.mima.lib.IntegrationTests"),
     mimaFailOnNoPrevious := false,
     skip in publish := true,
   )
