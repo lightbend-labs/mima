@@ -1,0 +1,1 @@
+in other version, classes mixing B need be recompiled to wire to the new static mixin forwarder method all super calls to method n()java.lang.String

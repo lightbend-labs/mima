@@ -45,6 +45,7 @@ sealed abstract class Problem extends ProblemRef {
     case DirectAbstractMethodProblem(ref)                 => s"${ref.methodString} does not have a correspondent in $affectedVersion version"
     case ReversedAbstractMethodProblem(ref)               => s"in $affectedVersion version there is ${ref.methodString}, which does not have a correspondent"
     case UpdateForwarderBodyProblem(ref)                  => s"in $affectedVersion version, classes mixing ${ref.owner.fullName} needs to update body of ${ref.shortMethodString}"
+    case NewMixinForwarderProblem(ref)                    => s"in $affectedVersion version, classes mixing ${ref.owner.fullName} need be recompiled to wire to the new static mixin forwarder method all super calls to ${ref.shortMethodString}"
     case InheritedNewAbstractMethodProblem(absmeth, ref)  => s"${absmeth.methodString} is inherited by class ${ref.owner.bytecodeName} in $affectedVersion version."
   }
 }
@@ -84,4 +85,5 @@ sealed abstract class AbstractMethodProblem(memb: MemberInfo)                   
 final case class DirectAbstractMethodProblem(newmeth: MethodInfo)                             extends AbstractMethodProblem(newmeth)
 final case class ReversedAbstractMethodProblem(newmeth: MethodInfo)                           extends MemberProblem(newmeth)
 final case class UpdateForwarderBodyProblem(oldmeth: MethodInfo)                              extends MemberProblem(oldmeth)
+final case class NewMixinForwarderProblem(oldmeth: MethodInfo)                                extends MemberProblem(oldmeth)
 final case class InheritedNewAbstractMethodProblem(absmeth: MethodInfo, newmeth: MethodInfo)  extends AbstractMethodProblem(newmeth)

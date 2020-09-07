@@ -175,22 +175,36 @@ private[mima] sealed abstract class ClassInfo(val owner: PackageInfo) extends In
       case _: SyntheticClassInfo   => false
       case impl: ConcreteClassInfo =>
         assert(impl.isImplClass, impl)
-        impl.methods.get(m.bytecodeName).exists(im => hasImplSig(im.descriptor, m.descriptor))
+        impl.methods.get(m.bytecodeName).exists { im =>
+          val isig = im.descriptor
+          val tsig = m.descriptor
+          assert(isig(0) == '(' && isig(1) == 'L' && tsig(0) == '(', s"isig=[$isig] tsig=[$tsig]")
+          hasMatchingSig(isig, tsig)
+        }
     }
   }
 
-  // Does `isig` correspond to `tsig` if seen as the signature of the static
-  // implementation method of a trait method with signature `tsig`?
-  private def hasImplSig(isig: String, tsig: String): Boolean = {
-    assert(isig(0) == '(' && isig(1) == 'L' && tsig(0) == '(')
-    val ilen = isig.length
+  /** Does the given method have a static mixin forwarder? */
+  final def hasMixinForwarder(m: MethodInfo): Boolean = {
+    methods.get(m.bytecodeName + "$").exists { fm =>
+      val fsig = fm.descriptor
+      val tsig = m.descriptor
+      assert(fsig(0) == '(' && tsig(0) == '(', s"fsig=[$fsig] tsig=[$tsig]")
+      hasMatchingSig(fsig, tsig)
+    }
+  }
+
+  // Does `sig` correspond to `tsig` if seen as the signature of the static
+  // implementation method or the mixin forwarder method of a trait method with signature `tsig`?
+  private def hasMatchingSig(sig: String, tsig: String): Boolean = {
+    val ilen = sig.length
     val tlen = tsig.length
     var i = 2
-    while (isig(i) != ';')
+    while (sig(i) != ';')
       i += 1
     i += 1
     var j = 1
-    while (i < ilen && j < tlen && isig(i) == tsig(j)) {
+    while (i < ilen && j < tlen && sig(i) == tsig(j)) {
       i += 1
       j += 1
     }
