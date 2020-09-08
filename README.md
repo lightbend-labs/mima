@@ -1,7 +1,6 @@
 # MiMa
 
-MiMa (previously "The Migration Manager for Scala") is a tool for
-diagnosing [binary incompatibilities][] for Scala libraries.
+MiMa (for "Migration Manager") is a tool for identifying [binary incompatibilities][] in Scala libraries.
 
 [binary incompatibilities]: https://docs.scala-lang.org/overviews/core/binary-compatibility-for-library-authors.html
 
@@ -10,8 +9,8 @@ It's pronounced _MEE-ma_.
 ## What it is?
 
 MiMa can report binary modifications that may
-lead the JVM throwing a ``java.lang.LinkageError`` (or one of its subtypes,
-like ``AbstractMethodError``) at runtime. Linkage errors are usually the
+cause the JVM to throw a `java.lang.LinkageError` (or one of its subtypes,
+like `AbstractMethodError`) at runtime. Linkage errors are usually the
 consequence of modifications in classes/members signature.
 
 MiMa compares all classfiles of two released libraries and reports all source
@@ -38,7 +37,7 @@ source compatibility.
 
 ## Usage
 
-MiMa's sbt plugin supports sbt 1.x only.  Use v0.3.0 for sbt 0.13.x.
+MiMa's sbt plugin supports sbt 1.x only.  (Use v0.3.0 for sbt 0.13.x.)
 
 To use it add the following to your `project/plugins.sbt` file:
 
@@ -89,7 +88,7 @@ mimaBinaryIssueFilters ++= Seq(
 ### IncompatibleSignatureProblem
 
 Most MiMa checks (`DirectMissingMethod`, `IncompatibleResultType`,
-`IncompatibleMethType`, etc) are against the method `descriptor`, which
+`IncompatibleMethType`, etc) are against the "method descriptor", which
 is the "raw" type signature, without any information about generic parameters.
 
 The `IncompatibleSignature` check compares the `Signature`, which includes the
@@ -116,9 +115,10 @@ with something like:
 
 ```scala
 mimaPreviousArtifacts := {
-  if (CrossVersion.partialVersion(scalaVersion.value) == Some((2, 13))) Set.empty else {
+  if (CrossVersion.partialVersion(scalaVersion.value) == Some((2, 13)))
+    Set.empty
+  else
     Set("com.example" %% "my-library" % "1.2.3")
-  }
 }
 ```
 
@@ -128,15 +128,16 @@ or perhaps using some of sbt 1.2's new API:
 import sbt.librarymanagement.{ SemanticSelector, VersionNumber }
 
 mimaPreviousArtifacts := {
-  if (VersionNumber(scalaVersion.value).matchesSemVer(SemanticSelector(">=2.13"))) Set.empty else {
+  if (VersionNumber(scalaVersion.value).matchesSemVer(SemanticSelector(">=2.13")))
+    Set.empty
+  else
     Set("com.example" %% "my-library" % "1.2.3")
-  }
 }
 ```
 
 ## Make mimaReportBinaryIssues not fail
 
-The setting `mimaFailOnNoPrevious` (introduced in v0.4.0) defaults to `true` and will make
+The setting `mimaFailOnNoPrevious` defaults to `true` and will make
 `mimaReportBinaryIssues` fail if `mimaPreviousArtifacts` hasn't been set.
 
 To make `mimaReportBinaryIssues` not fail you may want to do one of the following:
@@ -144,17 +145,18 @@ To make `mimaReportBinaryIssues` not fail you may want to do one of the followin
 * set `mimaPreviousArtifacts` on all the projects that should be checking their binary compatibility
 * avoid calling `mimaPreviousArtifacts` when binary compatibility checking isn't needed
 * set `mimaFailOnNoPrevious := false` on specific projects that want to opt-out (alternatively `disablePlugins(MimaPlugin)`)
-* set `mimaFailOnNoPrevious in ThisBuild := false`, which disables it build-wide, effectively reverting back to the previous behaviour
+* set `ThisBuild / mimaFailOnNoPrevious := false`, which disables it build-wide, effectively reverting back to the previous behaviour
 
 ## Setting mimaPreviousArtifacts when name contains a "."
 
 To refer to the project name in `mimaPreviousArtifacts`, use `moduleName` rather
 than `name`, like
+
 ```scala
 mimaPreviousArtifacts := Set(organization.value %% moduleName.value % "0.1.0")
 ```
 
 Unlike `name`, `moduleName` escapes characters like `.`, and is the name
 actually used by `publish` and `publishLocal` to publish your project. It's
-also the value your users should use when adding a dependency towards your
-project.
+also the value your users should use when adding your project to their
+dependencies.
