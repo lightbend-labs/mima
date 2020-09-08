@@ -6,7 +6,8 @@ import scala.util.{ Failure, Success, Try }
 /** Test running the App, using library v1 or v2. */
 object AppRunTest {
   def testAppRun(testCase: TestCase, direction: Direction): Try[Unit] = {
-    testAppRun1(testCase, direction.lhs(testCase), direction.rhs(testCase), direction.oracleFile)
+    val (lhs, rhs) = direction.ordered(testCase.outV1, testCase.outV2)
+    testAppRun1(testCase, lhs, rhs, direction.oracleFile)
   }
 
   def testAppRun1(testCase: TestCase, v1: Directory, v2: Directory, oracleFile: Path): Try[Unit] = for {

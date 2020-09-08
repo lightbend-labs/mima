@@ -11,26 +11,31 @@ import scala.util.{ Failure, Success, Try }
 object CollectProblemsTest {
   def testCollectProblems(testCase: TestCase, direction: Direction): Try[Unit] = for {
     () <- testCase.compileBoth
-    problems = collectProblems(direction.lhs(testCase).jfile, direction.rhs(testCase).jfile)
+    problems = collectProblems(testCase.outV1.jfile, testCase.outV2.jfile, direction)
     expected = readOracleFile(testCase.versionedFile(direction.oracleFile).jfile)
-    () <- direction match {
-      case Backwards => diffProblems(problems, expected)
-      case Forwards  => diffProblems(problems, expected, "other")
-    }
+    () <- diffProblems(problems, expected, direction)
   } yield ()
 
   val mimaLib: MiMaLib = new MiMaLib(cp = Nil)
 
-  def collectProblems(v1: File, v2: File): List[Problem] = mimaLib.collectProblems(v1, v2)
+  def collectProblems(v1: File, v2: File, direction: Direction): List[Problem] = {
+    val (lhs, rhs) = direction.ordered(v1, v2)
+    mimaLib.collectProblems(lhs, rhs)
+  }
 
   def readOracleFile(oracleFile: File): List[String] = {
     Files.lines(oracleFile.toPath).iterator.asScala.filter(!_.startsWith("#")).toList
   }
 
-  def diffProblems(problems: List[Problem], expected: List[String], v: String = "new"): Try[Unit] = {
+  def diffProblems(problems: List[Problem], expected: List[String], direction: Direction): Try[Unit] = {
+    val affectedVersion = direction match {
+      case Backwards => "new"
+      case Forwards  => "other"
+    }
+
     // diff between the oracle and the collected problems
-    val unexpected = problems.filter(p => !expected.contains(p.description(v)))
-    val unreported = expected.diff(problems.map(_.description(v)))
+    val unexpected = problems.filter(p => !expected.contains(p.description(affectedVersion)))
+    val unreported = expected.diff(problems.map(_.description(affectedVersion)))
 
     val msg = new StringBuilder("\n")
     def pp(start: String, lines: List[String]) = {
@@ -38,7 +43,7 @@ object CollectProblemsTest {
       else lines.sorted.distinct.addString(msg, s"$start (${lines.size}):\n  - ", "\n  - ", "\n")
     }
     pp("The following problem(s) were expected but not reported", unreported)
-    pp("The following problem(s) were reported but not expected", unexpected.map(_.description(v)))
+    pp("The following problem(s) were reported but not expected", unexpected.map(_.description(affectedVersion)))
     pp("Filter with:", unexpected.flatMap(_.howToFilter))
     pp("Or filter with:", unexpected.flatMap(p => p.matchName.map { matchName =>
       s"{ matchName=$dq$matchName$dq , problemName=${p.getClass.getSimpleName} }"

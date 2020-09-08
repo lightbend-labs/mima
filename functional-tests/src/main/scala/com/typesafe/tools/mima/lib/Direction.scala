@@ -1,13 +1,9 @@
 package com.typesafe.tools.mima.lib
 
 sealed trait Direction {
-  def lhs(testCase: TestCase) = this match {
-    case Backwards => testCase.outV1
-    case Forwards  => testCase.outV2
-  }
-  def rhs(testCase: TestCase) = this match {
-    case Backwards => testCase.outV2
-    case Forwards  => testCase.outV1
+  def ordered[A](v1: A, v2: A) = this match {
+    case Backwards => (v1, v2)
+    case Forwards  => (v2, v1)
   }
   def oracleFile = this match {
     case Backwards => "problems.txt"

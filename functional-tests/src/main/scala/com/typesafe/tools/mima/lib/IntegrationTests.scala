@@ -31,9 +31,8 @@ object IntegrationTests {
       v1 <- getArtifact(groupId, artifactId, conf.getString("v1"))
       v2 <- getArtifact(groupId, artifactId, conf.getString("v2"))
       problemFilter <- getProblemFilter(baseDir.jfile)
-      problems = CollectProblemsTest.collectProblems(v1, v2).filter(problemFilter)
-      expected = CollectProblemsTest.readOracleFile((baseDir / "problems.txt").jfile)
-      () <- CollectProblemsTest.diffProblems(problems, expected)
+      () <- testCollectProblems(baseDir, problemFilter, v1, v2, Backwards)
+    //() <- testCollectProblems(baseDir, problemFilter, v1, v2, Forwards)
     } yield ()
   }
 
@@ -50,5 +49,11 @@ object IntegrationTests {
     val filters = for (conf <- config.getConfigList("filter.problems").asScala)
       yield ProblemFilters.exclude(conf.getString("problemName"), conf.getString("matchName"))
     (p: Problem) => filters.forall(filter => filter(p))
+  }
+
+  def testCollectProblems(baseDir: Directory, problemFilter: Problem => Boolean, v1: File, v2: File, direction: Direction): Try[Unit] = {
+    val problems = CollectProblemsTest.collectProblems(v1, v2, direction).filter(problemFilter)
+    val expected = CollectProblemsTest.readOracleFile((baseDir / direction.oracleFile).jfile)
+    CollectProblemsTest.diffProblems(problems, expected, direction)
   }
 }
