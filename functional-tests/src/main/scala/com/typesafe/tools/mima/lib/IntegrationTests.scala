@@ -37,7 +37,10 @@ object IntegrationTests {
   }
 
   def getArtifact(groupId: String, artifactId: String, version: String): Try[(File, Seq[File])] = {
-    val dep = Dependency(Module(Organization(groupId), ModuleName(artifactId)), version)
+    fetchArtifact(Dependency(Module(Organization(groupId), ModuleName(artifactId)), version))
+  }
+
+  def fetchArtifact(dep: Dependency): Try[(File, Seq[File])] = {
     Coursier.fetch(dep) match {
       case Nil               => Failure(sys.error(s"Could not resolve artifact: $dep"))
       case Seq(jar, cp @ _*) => Success((jar, cp))
@@ -57,5 +60,24 @@ object IntegrationTests {
     val problems = CollectProblemsTest.collectProblems(cp, v1, v2, direction).filter(problemFilter)
     val expected = CollectProblemsTest.readOracleFile((baseDir / direction.oracleFile).jfile)
     CollectProblemsTest.diffProblems(problems, expected, direction)
+  }
+}
+
+object CompareJars {
+  def main(args: Array[String]): Unit = args.toList match {
+    case Seq(groupId, artifactId, version1, version2, attrStrs @ _*) =>
+      val direction = Backwards
+      val attrs = attrStrs.map { s => val Array(k, v) = s.split('='); k -> v }.toMap
+      val module = Module(Organization(groupId), ModuleName(artifactId)).withAttributes(attrs)
+      val tri = for {
+        (v1,  _) <- IntegrationTests.fetchArtifact(Dependency(module, version1))
+        (v2, cp) <- IntegrationTests.fetchArtifact(Dependency(module, version2))
+        problems = CollectProblemsTest.collectProblems(cp, v1, v2, direction)
+        () <- CollectProblemsTest.diffProblems(problems, Nil, direction)
+      } yield ()
+      tri match {
+        case Success(())  =>
+        case Failure(exc) => System.err.println(s"$exc"); throw new Exception("fail")
+      }
   }
 }
