@@ -11,16 +11,14 @@ import scala.util.{ Failure, Success, Try }
 object CollectProblemsTest {
   def testCollectProblems(testCase: TestCase, direction: Direction): Try[Unit] = for {
     () <- testCase.compileBoth
-    problems = collectProblems(testCase.outV1.jfile, testCase.outV2.jfile, direction)
+    problems = collectProblems(cp = Nil, testCase.outV1.jfile, testCase.outV2.jfile, direction)
     expected = readOracleFile(testCase.versionedFile(direction.oracleFile).jfile)
     () <- diffProblems(problems, expected, direction)
   } yield ()
 
-  val mimaLib: MiMaLib = new MiMaLib(cp = Nil)
-
-  def collectProblems(v1: File, v2: File, direction: Direction): List[Problem] = {
+  def collectProblems(cp: Seq[File], v1: File, v2: File, direction: Direction): List[Problem] = {
     val (lhs, rhs) = direction.ordered(v1, v2)
-    mimaLib.collectProblems(lhs, rhs)
+    new MiMaLib(cp).collectProblems(lhs, rhs)
   }
 
   def readOracleFile(oracleFile: File): List[String] = {

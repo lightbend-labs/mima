@@ -4,7 +4,7 @@ import java.io.File
 
 import scala.collection.JavaConverters._
 import scala.reflect.io.Directory
-import scala.util.Try
+import scala.util.{ Failure, Success, Try }
 
 import com.typesafe.config.ConfigFactory
 import com.typesafe.tools.mima.core.{ Problem, ProblemFilters }
@@ -28,18 +28,20 @@ object IntegrationTests {
     val groupId    = conf.getString("groupId")
     val artifactId = conf.getString("artifactId")
     for {
-      v1 <- getArtifact(groupId, artifactId, conf.getString("v1"))
-      v2 <- getArtifact(groupId, artifactId, conf.getString("v2"))
+      (v1,  _) <- getArtifact(groupId, artifactId, conf.getString("v1"))
+      (v2, cp) <- getArtifact(groupId, artifactId, conf.getString("v2"))
       problemFilter <- getProblemFilter(baseDir.jfile)
-      () <- testCollectProblems(baseDir, problemFilter, v1, v2, Backwards)
-    //() <- testCollectProblems(baseDir, problemFilter, v1, v2, Forwards)
+      () <- testCollectProblems(baseDir, problemFilter, cp, v1, v2, Backwards)
+    //() <- testCollectProblems(baseDir, problemFilter, cp, v1, v2, Forwards)
     } yield ()
   }
 
-  def getArtifact(groupId: String, artifactId: String, version: String): Try[File] = {
+  def getArtifact(groupId: String, artifactId: String, version: String): Try[(File, Seq[File])] = {
     val dep = Dependency(Module(Organization(groupId), ModuleName(artifactId)), version)
-    val allFiles = Coursier.fetch(dep.withTransitive(false))
-    Try(allFiles.headOption.getOrElse(sys.error(s"Could not resolve artifact: $dep")))
+    Coursier.fetch(dep) match {
+      case Nil               => Failure(sys.error(s"Could not resolve artifact: $dep"))
+      case Seq(jar, cp @ _*) => Success((jar, cp))
+    }
   }
 
   def getProblemFilter(baseDir: File): Try[Problem => Boolean] = Try {
@@ -51,8 +53,8 @@ object IntegrationTests {
     (p: Problem) => filters.forall(filter => filter(p))
   }
 
-  def testCollectProblems(baseDir: Directory, problemFilter: Problem => Boolean, v1: File, v2: File, direction: Direction): Try[Unit] = {
-    val problems = CollectProblemsTest.collectProblems(v1, v2, direction).filter(problemFilter)
+  def testCollectProblems(baseDir: Directory, problemFilter: Problem => Boolean, cp: Seq[File], v1: File, v2: File, direction: Direction): Try[Unit] = {
+    val problems = CollectProblemsTest.collectProblems(cp, v1, v2, direction).filter(problemFilter)
     val expected = CollectProblemsTest.readOracleFile((baseDir / direction.oracleFile).jfile)
     CollectProblemsTest.diffProblems(problems, expected, direction)
   }
