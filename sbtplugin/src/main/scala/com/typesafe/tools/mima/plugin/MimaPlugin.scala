@@ -35,14 +35,7 @@ object MimaPlugin extends AutoPlugin {
         )
       }
     },
-    mimaDependencyResolution := (Def.taskDyn {
-      SbtMima.csrConfigurationKeyOpt match {
-        case None =>
-          SbtMima.ivyDependencyResolution
-        case Some(csrConfiguration) =>
-          SbtMima.csrDependencyResolution(csrConfiguration)
-      }
-    }).value,
+    mimaDependencyResolution := dependencyResolution.value,
     mimaPreviousClassfiles := {
       val depRes = mimaDependencyResolution.value
       val taskStreams = streams.value
