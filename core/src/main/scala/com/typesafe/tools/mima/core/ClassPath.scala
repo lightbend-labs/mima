@@ -47,7 +47,12 @@ private[mima] object ClassPath {
   private def javaBootCp            = expandCp(System.getProperty("sun.boot.class.path", ""))
 
   import scala.collection.JavaConverters._
-  private def list(p: Path)      = Files.newDirectoryStream(p).asScala.toStream.sortBy(_.toString)
+  private def list(p: Path)      = {
+    val stream = Files.newDirectoryStream(p)
+    val list = stream.asScala.toStream.sortBy(_.toString)
+    stream.close()
+    list
+  }
   private def listDir(p: Path)   = if (Files.isDirectory(p)) list(p) else Stream.empty
   private def readLink(p: Path)  = if (Files.isSymbolicLink(p)) Files.readSymbolicLink(p) else p
   private def rootPath(p: Path)  = FileSystems.newFileSystem(p, null).getPath("/")
