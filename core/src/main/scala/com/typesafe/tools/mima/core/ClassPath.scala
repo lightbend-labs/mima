@@ -2,6 +2,8 @@ package com.typesafe.tools.mima.core
 
 import java.nio.file._
 
+import scala.collection.JavaConverters._
+
 private object AbsFile {
   def apply(p: Path): AbsFile = {
     val name = p.getFileName.toString.stripPrefix("/")
@@ -11,7 +13,9 @@ private object AbsFile {
 }
 
 private[core] final case class AbsFile(name: String)(path: String, bytes: () => Array[Byte]) {
-  // Not just Path b/c Path#equals uses FS (AbstractFile didn't) breaking `distinct`.
+  // Not defined as a simple wrapper of java.nio.file.Path, because Path#equals uses its FileSystem,
+  // differently to scala-reflect's AbstractFile, which breaks things like `distinct`.
+
   def toByteArray       = bytes()
   override def toString = path
 }
@@ -46,13 +50,7 @@ private[mima] object ClassPath {
   private def expandCp(cp: String)  = split(cp).flatMap(s => fromJarOrDir(new java.io.File(s)))
   private def javaBootCp            = expandCp(System.getProperty("sun.boot.class.path", ""))
 
-  import scala.collection.JavaConverters._
-  private def list(p: Path)      = {
-    val stream = Files.newDirectoryStream(p)
-    val list = stream.asScala.toStream.sortBy(_.toString)
-    stream.close()
-    list
-  }
+  private def list(p: Path)      = andClose(Files.newDirectoryStream(p))(_.asScala.toStream.sortBy(_.toString))
   private def listDir(p: Path)   = if (Files.isDirectory(p)) list(p) else Stream.empty
   private def readLink(p: Path)  = if (Files.isSymbolicLink(p)) Files.readSymbolicLink(p) else p
   private def rootPath(p: Path)  = FileSystems.newFileSystem(p, null).getPath("/")
@@ -95,4 +93,6 @@ private[mima] object ClassPath {
     def  classes(pkg: String) = aggregates.flatMap(_.classes(pkg)).distinct
     def asClassPathString     = join(aggregates.map(_.asClassPathString).distinct)
   }
+
+  private def andClose[A <: AutoCloseable, B](xs: A)(f: A => B): B = try f(xs) finally xs.close()
 }
