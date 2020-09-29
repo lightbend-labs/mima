@@ -34,7 +34,7 @@ object SbtMima {
   private def sanityCheckScalaVersion(scalaVersion: String) = {
     scalaVersion.take(5) match {
       case "2.11." | "2.12." | "2.13." => () // ok
-      case _ => throw new IllegalArgumentException(s"MiMa supports Scala 2.10-2.13, not $scalaVersion")
+      case _ => throw new IllegalArgumentException(s"MiMa supports Scala 2.11-2.13, not $scalaVersion")
     }
   }
 
