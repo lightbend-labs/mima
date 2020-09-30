@@ -53,7 +53,7 @@ private[mima] object ClassPath {
   private def list(p: Path)      = andClose(Files.newDirectoryStream(p))(_.asScala.toStream.sortBy(_.toString))
   private def listDir(p: Path)   = if (Files.isDirectory(p)) list(p) else Stream.empty
   private def readLink(p: Path)  = if (Files.isSymbolicLink(p)) Files.readSymbolicLink(p) else p
-  private def rootPath(p: Path)  = FileSystems.newFileSystem(p, null).getPath("/")
+  private def rootPath(p: Path)  = FileSystems.newFileSystem(p, null: ClassLoader).getPath("/")
   private def isClass(p: Path)   = p.getFileName.toString.endsWith(".class") && Files.isRegularFile(p)
   private def isPackage(p: Path) = p.getFileName.toString.stripSuffix("/") match {
     case "META-INF" | "" => false
