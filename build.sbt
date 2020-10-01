@@ -68,7 +68,7 @@ val functionalTests = Project("functional-tests", file("functional-tests"))
   .configs(IntegrationTest)
   .settings(
     libraryDependencies += "com.typesafe" % "config" % "1.4.0",
-    libraryDependencies += "io.get-coursier" %% "coursier" % "2.0.0-RC6-26",
+    libraryDependencies += "io.get-coursier" %% "coursier" % "2.0.0-RC6-27",
     libraryDependencies += munit,
     testFrameworks += new TestFramework("munit.Framework"),
     //Test / run / fork := true,
