@@ -10,7 +10,7 @@ import com.typesafe.tools.mima.plugin.MimaPlugin.autoImport._
 
 object MimaSettings {
   // clear out mimaBinaryIssueFilters when changing this
-  val mimaPreviousVersion = "0.8.0"
+  val mimaPreviousVersion = "0.8.1"
 
   val mimaSettings = Def.settings (
     mimaPreviousArtifacts := Set(pluginProjectID.value.withRevision(mimaPreviousVersion)
@@ -24,9 +24,6 @@ object MimaSettings {
       // * com.typesafe.tools.mima.core.ProblemFilters
       // * com.typesafe.tools.mima.core.*Problem
       // * com.typesafe.tools.mima.core.util.log.Logging
-      exclude[DirectMissingMethodProblem]("*.SbtMima.csrConfigurationKeyOpt"),
-      exclude[DirectMissingMethodProblem]("*.SbtMima.csrDependencyResolution"),
-      exclude[DirectMissingMethodProblem]("*.SbtMima.ivyDependencyResolution"),
     ),
   )
 }
