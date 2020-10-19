@@ -42,7 +42,7 @@ MiMa's sbt plugin supports sbt 1.x only.  (Use v0.3.0 for sbt 0.13.x.)
 To use it add the following to your `project/plugins.sbt` file:
 
 ```
-addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.8.0")
+addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "0.8.1")
 ```
 
 Add the following to your `build.sbt` file:
