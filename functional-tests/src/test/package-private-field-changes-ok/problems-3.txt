@@ -1,0 +1,1 @@
+method bar()Int in class foo.Foo has a different result type in new version, where it is java.lang.String rather than Int

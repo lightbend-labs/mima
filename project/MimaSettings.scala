@@ -24,6 +24,9 @@ object MimaSettings {
       // * com.typesafe.tools.mima.core.ProblemFilters
       // * com.typesafe.tools.mima.core.*Problem
       // * com.typesafe.tools.mima.core.util.log.Logging
+      exclude[DirectMissingMethodProblem]("*mima.core.BufferReader*"),
+      exclude[DirectMissingMethodProblem]("*mima.core.*Class*"),
+      exclude[DirectMissingMethodProblem]("*mima.lib.analyze.*"),
     ),
   )
 }

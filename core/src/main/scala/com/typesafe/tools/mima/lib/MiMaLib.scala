@@ -16,31 +16,13 @@ final class MiMaLib(cp: Seq[File], log: Logging = ConsoleLogging) {
     for (pkgName <- cp.packages(ClassPath.RootPackage)) {
       pkg.packages(pkgName) = new ConcretePackageInfo(pkg, cp, pkgName, defs)
     }
-    log.debug(s"added packages to <root>: ${pkg.packages.keys.mkString(", ")}")
+    log.debug(s"adding packages from $dirOrJar: ${pkg.packages.keys.mkString(", ")}")
     pkg
   }
 
-  private def comparePackages(oldpkg: PackageInfo, newpkg: PackageInfo): List[Problem] = {
-    for {
-      oldclazz <- oldpkg.accessibleClasses.toList
-      _ = log.verbose(s"Analyzing $oldclazz")
-      problem <- newpkg.classes.get(oldclazz.bytecodeName) match {
-        case Some(newclazz) => Analyzer.analyze(oldclazz, newclazz)
-        case None           =>
-          // if it is missing a trait implementation class, then no error should be reported
-          // since there should be already errors, i.e., missing methods...
-          if (oldclazz.isImplClass) Nil
-          else List(MissingClassProblem(oldclazz))
-      }
-    } yield {
-      log.debug(s"Problem: ${problem.description("new")}")
-      problem
-    }
-  }
-
   private def traversePackages(oldpkg: PackageInfo, newpkg: PackageInfo): List[Problem] = {
-    log.verbose(s"Traversing $oldpkg")
-    comparePackages(oldpkg, newpkg) ++ oldpkg.packages.valuesIterator.flatMap { p =>
+    log.verbose(s"traversing $oldpkg")
+    Analyzer.analyze(oldpkg, newpkg, log) ++ oldpkg.packages.values.toSeq.sortBy(_.name).flatMap { p =>
       val q = newpkg.packages.getOrElse(p.name, NoPackageInfo)
       traversePackages(p, q)
     }

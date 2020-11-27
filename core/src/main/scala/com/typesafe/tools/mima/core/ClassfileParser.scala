@@ -16,7 +16,7 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
     clazz._interfaces = parseInterfaces()
     clazz._fields     = parseMembers[FieldInfo](clazz)
     clazz._methods    = parseMembers[MethodInfo](clazz)
-    parseAttributes(clazz)
+    parseClassAttributes(clazz)
   }
 
   private def parseSuperClass(clazz: ClassInfo, flags: Int): ClassInfo = {
@@ -31,87 +31,153 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
   }
 
   private def parseMembers[A <: MemberInfo : MkMember](clazz: ClassInfo): Members[A] = {
-    val members = {
-      for {
-        _ <- 0.until(in.nextChar).iterator
-        flags = in.nextChar
-        if !isPrivate(flags) || {
-          in.skip(4)
-          for (_ <- 0 until in.nextChar) {
-            in.skip(2)
-            in.skip(in.nextInt)
-          }
-          false
-        }
-      } yield parseMember[A](clazz, flags)
-    }.toList
-    new Members[A](members)
+    val members = for {
+      _ <- 0.until(in.nextChar).iterator
+      flags = in.nextChar
+      _ = if (isPrivate(flags)) { in.skip(4); parseAttributes(_ => ()) }
+      if !isPrivate(flags)
+    } yield parseMember[A](clazz, flags)
+    new Members(members.toList)
   }
 
   private def parseMember[A <: MemberInfo : MkMember](clazz: ClassInfo, flags: Int): A = {
-    val name = pool.getName(in.nextChar)
+    val name       = pool.getName(in.nextChar)
     val descriptor = pool.getExternalName(in.nextChar)
-    val memberInfo = implicitly[MkMember[A]].make(clazz, name, flags, descriptor)
-    parseAttributes(memberInfo)
-    memberInfo
+    val member     = implicitly[MkMember[A]].make(clazz, name, flags, descriptor)
+    parseMemberAttributes(member)
+    member
   }
 
-  private def parseAttributes(c: ClassInfo): Unit = {
+  private def parseClassAttributes(clazz: ClassInfo) = {
+    var isScala = false
+    var runtimeAnnotStart = -1
+    parseAttributes {
+      case RuntimeAnnotationATTR => runtimeAnnotStart = in.bp
+      case ScalaSignatureATTR    => isScala    = true
+      case EnclosingMethodATTR   => clazz._isLocalClass = true
+      case InnerClassesATTR      => clazz._innerClasses = parseInnerClasses(clazz)
+      case _                     =>
+    }
+    if (isScala) {
+      val end = in.bp
+      in.bp = runtimeAnnotStart
+      parsePickle(clazz)
+      in.bp = end
+    }
+  }
+
+  private def parseMemberAttributes(member: MemberInfo) = {
+    parseAttributes {
+      case DeprecatedATTR => member.isDeprecated = true
+      case SignatureATTR  => member.signature = Signature(pool.getName(in.nextChar))
+      case _              =>
+    }
+  }
+
+  private def parseAttributes(processAttr: String => Unit) = {
     for (_ <- 0 until in.nextChar) {
-      val attrIndex = in.nextChar
+      val attrIdx = in.nextChar
       val attrLen = in.nextInt
       val attrEnd = in.bp + attrLen
-      pool.getName(attrIndex) match {
-        case "EnclosingMethod" => c._isLocalClass = true
-        case "InnerClasses"    => c._innerClasses = for {
-          _ <- 0 until in.nextChar
-          (innerIndex, outerIndex, innerNameIndex) = (in.nextChar, in.nextChar, in.nextChar)
-          _ = in.skip(2)
-          if innerIndex != 0 && outerIndex != 0 && innerNameIndex != 0
-          className = pool.getClassName(innerIndex)
-          // an inner class lists itself in InnerClasses
-          _ = if (className == c.bytecodeName) c._isTopLevel = false
-          if pool.getClassName(outerIndex) == c.bytecodeName
-        } yield className
-        case _                 => ()
-      }
+      processAttr(pool.getName(attrIdx))
       in.bp = attrEnd
     }
   }
 
-  private def parseAttributes(m: MemberInfo): Unit = {
-    for (_ <- 0 until in.nextChar) {
-      val attrIndex = in.nextChar
-      val attrLen = in.nextInt
-      val attrEnd = in.bp + attrLen
-      pool.getName(attrIndex) match {
-        case "Deprecated" => m.isDeprecated = true
-        case "Signature"  => m.signature = Signature(pool.getName(in.nextChar))
-        case _            => ()
+  private def parseInnerClasses(c: ClassInfo) = {
+    val innerClasses = for {
+      _ <- 0 until in.nextChar
+      (innerIndex, outerIndex, innerNameIndex) = (in.nextChar, in.nextChar, in.nextChar)
+      _ = in.skip(2) // inner class flags
+      if innerIndex != 0 && outerIndex != 0 && innerNameIndex != 0
+      if pool.getClassName(outerIndex) == c.bytecodeName
+    } yield pool.getClassName(innerIndex)
+    if (innerClasses.contains(c.bytecodeName))
+      c._isTopLevel = false // an inner class lists itself in InnerClasses
+    innerClasses
+  }
+
+  private def parsePickle(clazz: ClassInfo) = {
+    def parseScalaSigBytes()     = {
+      in.acceptByte(STRING_TAG, s" for ${clazz.description}")
+      pool.getBytes(in.nextChar, in.bp)
+    }
+
+    def parseScalaLongSigBytes() = {
+      in.acceptByte(ARRAY_TAG, s" for ${clazz.description}")
+      val entries = for (_ <- 0 until in.nextChar) yield {
+        in.acceptByte(STRING_TAG, s" for ${clazz.description}")
+        in.nextChar.toInt
       }
-      in.bp = attrEnd
+      pool.getBytes(entries.toList, in.bp)
+    }
+
+    def checkScalaSigAnnotArg() = {
+      in.acceptChar(1, s" (ScalaSignature's arguments)")
+      val name = pool.getName(in.nextChar)
+      assert(name == "bytes", s"ScalaSignature argument has name $name")
+    }
+
+    def skipAnnotArg(): Unit = in.nextByte match {
+      case   BOOL_TAG |   BYTE_TAG => in.skip(2)
+      case   CHAR_TAG |  SHORT_TAG => in.skip(2)
+      case    INT_TAG |   LONG_TAG => in.skip(2)
+      case  FLOAT_TAG | DOUBLE_TAG => in.skip(2)
+      case STRING_TAG |  CLASS_TAG => in.skip(2)
+      case                ENUM_TAG => in.skip(4)
+      case               ARRAY_TAG => for (_ <- 0 until in.nextChar) skipAnnotArg()
+      case          ANNOTATION_TAG => in.skip(2); /* type */ skipAnnotArgs()
+    }
+
+    def skipAnnotArgs() = for (_ <- 0 until in.nextChar) { in.skip(2); skipAnnotArg() }
+
+    val numAnnots = in.nextChar
+    var i = 0
+    var bytes: Array[Byte] = null
+    while (i < numAnnots && bytes == null) {
+      pool.getExternalName(in.nextChar) match {
+        case ScalaSignatureAnnot     => checkScalaSigAnnotArg(); bytes = parseScalaSigBytes()
+        case ScalaLongSignatureAnnot => checkScalaSigAnnotArg(); bytes = parseScalaLongSigBytes()
+        case _                       => skipAnnotArgs()
+      }
+      i += 1
+    }
+    if (bytes != null) {
+      val pb = new PickleBuffer(bytes)
+      MimaUnpickler.unpickleClass(pb, clazz, in.path)
     }
   }
+
+  private final val ScalaSignatureAnnot     = "Lscala.reflect.ScalaSignature;"
+  private final val ScalaLongSignatureAnnot = "Lscala.reflect.ScalaLongSignature;"
+
+  private final val DeprecatedATTR        = "Deprecated"
+  private final val EnclosingMethodATTR   = "EnclosingMethod"
+  private final val InnerClassesATTR      = "InnerClasses"
+  private final val RuntimeAnnotationATTR = "RuntimeVisibleAnnotations"
+  private final val ScalaSignatureATTR    = "ScalaSig"
+  private final val SignatureATTR         = "Signature"
 }
 
 object ClassfileParser {
   private[core] def parseInPlace(clazz: ClassInfo, file: AbsFile): Unit = {
-    val in = new BufferReader(file.toByteArray)
-    parseHeader(in, file.toString())
+    val in = new BufferReader(file.toByteArray, file.toString)
+    parseHeader(in, file.toString)
     val pool = ConstantPool.parseNew(clazz.owner.definitions, in)
     val parser = new ClassfileParser(in, pool)
     parser.parseClass(clazz)
   }
 
-  @inline def isPublic(flags: Int)     = 0 != (flags & JAVA_ACC_PUBLIC)
-  @inline def isPrivate(flags: Int)    = 0 != (flags & JAVA_ACC_PRIVATE)
-  @inline def isProtected(flags: Int)  = 0 != (flags & JAVA_ACC_PROTECTED)
-  @inline def isStatic(flags: Int)     = 0 != (flags & JAVA_ACC_STATIC)
-  @inline def isFinal(flags: Int)      = 0 != (flags & JAVA_ACC_FINAL)
-  @inline def isInterface(flags: Int)  = 0 != (flags & JAVA_ACC_INTERFACE)
-  @inline def isDeferred(flags: Int)   = 0 != (flags & JAVA_ACC_ABSTRACT)
-  @inline def isSynthetic(flags: Int)  = 0 != (flags & JAVA_ACC_SYNTHETIC)
-  @inline def isAnnotation(flags: Int) = 0 != (flags & JAVA_ACC_ANNOTATION)
+  def isPublic(flags: Int)     = 0 != (flags & JAVA_ACC_PUBLIC)
+  def isPrivate(flags: Int)    = 0 != (flags & JAVA_ACC_PRIVATE)
+  def isProtected(flags: Int)  = 0 != (flags & JAVA_ACC_PROTECTED)
+  def isStatic(flags: Int)     = 0 != (flags & JAVA_ACC_STATIC)
+  def isFinal(flags: Int)      = 0 != (flags & JAVA_ACC_FINAL)
+  def isBridge(flags: Int)     = 0 != (flags & JAVA_ACC_BRIDGE)
+  def isInterface(flags: Int)  = 0 != (flags & JAVA_ACC_INTERFACE)
+  def isDeferred(flags: Int)   = 0 != (flags & JAVA_ACC_ABSTRACT)
+  def isSynthetic(flags: Int)  = 0 != (flags & JAVA_ACC_SYNTHETIC)
+  def isAnnotation(flags: Int) = 0 != (flags & JAVA_ACC_ANNOTATION)
 
   private def parseHeader(in: BufferReader, file: String) = {
     val magic = in.nextInt

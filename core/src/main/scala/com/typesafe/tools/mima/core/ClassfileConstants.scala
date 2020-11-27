@@ -8,6 +8,7 @@ private[core] object ClassfileConstants {
   final val JAVA_ACC_PROTECTED    = 0x0004
   final val JAVA_ACC_STATIC       = 0x0008
   final val JAVA_ACC_FINAL        = 0x0010
+  final val JAVA_ACC_BRIDGE       = 0x0040
   final val JAVA_ACC_INTERFACE    = 0x0200
   final val JAVA_ACC_ABSTRACT     = 0x0400
   final val JAVA_ACC_SYNTHETIC    = 0x1000
@@ -43,4 +44,8 @@ private[core] object ClassfileConstants {
   final val VOID_TAG       = 'V'
   final val OBJECT_TAG     = 'L'
   final val ANNOTATION_TAG = '@'
+
+  final val STRING_TAG = 's'
+  final val ENUM_TAG   = 'e'
+  final val CLASS_TAG  = 'c'
 }

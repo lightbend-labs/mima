@@ -38,13 +38,11 @@ private[core] final class ConcreteClassInfo(owner: PackageInfo, val file: AbsFil
   private var loaded: Boolean = false
 
   protected def afterLoading[A](x: => A) = {
-    if (!loaded)
-      try {
-        ConsoleLogging.verbose(s"parsing $file")
-        ClassfileParser.parseInPlace(this, file)
-      } finally {
-        loaded = true
-      }
+    if (!loaded) {
+      loaded = true
+      ConsoleLogging.verbose(s"parsing $file")
+      ClassfileParser.parseInPlace(this, file)
+    }
     x
   }
 }
@@ -60,10 +58,14 @@ private[mima] sealed abstract class ClassInfo(val owner: PackageInfo) extends In
   final var _fields: Members[FieldInfo]   = NoMembers
   final var _methods: Members[MethodInfo] = NoMembers
   final var _flags: Int                   = 0
+  final var _scopedPrivate: Boolean       = false
   final var _implClass: ClassInfo         = NoClass
+  final var _moduleClass: ClassInfo       = NoClass
+  final var _module: ClassInfo            = NoClass
 
   protected def afterLoading[A](x: => A): A
 
+  final def forceLoad: this.type         = afterLoading(this)
   final def innerClasses: Seq[String]    = afterLoading(_innerClasses)
   final def isLocalClass: Boolean        = afterLoading(_isLocalClass)
   final def isTopLevel: Boolean          = afterLoading(_isTopLevel)
@@ -72,20 +74,23 @@ private[mima] sealed abstract class ClassInfo(val owner: PackageInfo) extends In
   final def fields: Members[FieldInfo]   = afterLoading(_fields)
   final def methods: Members[MethodInfo] = afterLoading(_methods)
   final def flags: Int                   = afterLoading(_flags)
+  final def isScopedPrivate: Boolean     = afterLoading(_scopedPrivate)
   final def implClass: ClassInfo         = { owner.setImplClasses; _implClass } // returns NoClass if this is not a trait
+  final def moduleClass: ClassInfo       = { owner.setModules; if (_moduleClass == NoClass) this else _moduleClass }
+  final def module: ClassInfo            = { owner.setModules; if (_module      == NoClass) this else _module      }
 
-  final def isTrait: Boolean     = implClass ne NoClass // trait with some concrete methods or fields
-  final def isModule: Boolean    = bytecodeName.endsWith("$") // super scuffed
-  final def isImplClass: Boolean = bytecodeName.endsWith("$class")
-  final def isInterface: Boolean = ClassfileParser.isInterface(flags) // java interface or trait w/o impl methods
-  final def isClass: Boolean     = !isTrait && !isInterface // class, object or trait's impl class
+  final def isTrait: Boolean          = implClass ne NoClass // trait with some concrete methods or fields
+  final def isModuleClass: Boolean    = bytecodeName.endsWith("$") // super scuffed
+  final def isImplClass: Boolean      = bytecodeName.endsWith("$class")
+  final def isInterface: Boolean      = ClassfileParser.isInterface(flags) // java interface or trait w/o impl methods
+  final def isClass: Boolean          = !isTrait && !isInterface // class, object or trait's impl class
 
   final def accessModifier: String    = if (isProtected) "protected" else if (isPrivate) "private" else ""
-  final def declarationPrefix: String = if (isModule) "object" else if (isTrait) "trait" else if (isInterface) "interface" else "class"
+  final def declarationPrefix: String = if (isModuleClass) "object" else if (isTrait) "trait" else if (isInterface) "interface" else "class"
   final lazy val fullName: String     = if (owner.isRoot) bytecodeName else s"${owner.fullName}.$bytecodeName"
-  final def formattedFullName: String = formatClassName(if (isModule) fullName.init else fullName)
+  final def formattedFullName: String = formatClassName(if (isModuleClass) fullName.init else fullName)
   final def description: String       = s"$declarationPrefix $formattedFullName"
-  final def classString: String       = s"$accessModifier $declarationPrefix $formattedFullName".trim
+  final def classString: String       = s"$accessModifier $description".trim
 
   lazy val superClasses: Set[ClassInfo] = {
     if (this == ClassInfo.ObjectClass) Set.empty
