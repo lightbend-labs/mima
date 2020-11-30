@@ -1,0 +1,1 @@
+in other version, classes mixing B needs to update body of method n()java.lang.String
