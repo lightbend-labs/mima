@@ -1,9 +1,9 @@
 package com.typesafe.tools.mima.lib
 
-import munit._
+//import munit._
 
-class UnitTestSuite extends Suite {
-  type TestValue = Unit
-
-  def munitTests() = UnitTests.munitTests
-}
+class UnitTestSuite // extends Suite {
+//  type TestValue = Unit
+//
+//  def munitTests() = UnitTests.munitTests
+//}
