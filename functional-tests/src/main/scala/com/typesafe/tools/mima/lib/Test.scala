@@ -14,7 +14,7 @@ object Test {
     tests.iterator.map(_.run()).foldLeft(Try(())) {
       case (res @ Failure(e1), Failure(e2)) => e1.addSuppressed(e2); res
       case (res @ Failure(_), _)            => res
-      case (res, _)                         => res
+      case (_, res)                         => res
     }
   }
 
