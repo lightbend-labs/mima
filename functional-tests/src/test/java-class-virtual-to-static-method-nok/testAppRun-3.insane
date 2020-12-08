@@ -1,0 +1,4 @@
+# In Scala 3 `new a.Nested` throws:
+#     Caused by: java.lang.NoSuchMethodError: A$Nested: method 'void <init>()' not found
+#         at App$.main(App.scala:7)
+# https://github.com/lampepfl/dotty/issues/10838

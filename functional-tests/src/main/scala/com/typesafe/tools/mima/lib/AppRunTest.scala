@@ -13,11 +13,15 @@ object AppRunTest {
   def testAppRun1(testCase: TestCase, v1: Directory, v2: Directory, oracleFile: Path): Try[Unit] = for {
     () <- testCase.compileBoth
     pending  = testCase.versionedFile("testAppRun.pending").exists
+    insane   = testCase.versionedFile("testAppRun.insane").exists
     expectOk = testCase.blankFile(testCase.versionedFile(oracleFile))
   //() <- testCase.compileApp(v2)      // compile app with v2
   //() <- testCase.runMain(v2)         // sanity check 1: run app with v2
     () <- testCase.compileApp(v1)      // recompile app with v1
-    () <- testCase.runMain(v1)         // sanity check 2: run app with v1
+    () <- testCase.runMain(v1) match { // sanity check 2: run app with v1
+      case Failure(t) if !insane => Failure(new Exception("Sanity runMain check failed", t, true, false) {})
+      case _                     => Success(())
+    }
     () <- testCase.runMain(v2) match { // test: run app, compiled with v1, with v2
       case Failure(t)  if !pending &&  expectOk => Failure(t)
       case Success(()) if !pending && !expectOk => Failure(new Exception("expected running App to fail"))

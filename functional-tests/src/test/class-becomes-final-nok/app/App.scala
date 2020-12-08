@@ -1,5 +1,6 @@
 object App {
   def main(args: Array[String]): Unit = {
-    println(new A { def baz = 2 }.baz)
+    object a extends A { def baz = 2 }
+    println(a.baz)
   }
 }

@@ -1,0 +1,4 @@
+# Scalac 3 doesn't have the generic signature fix.
+# So MiMa can't spot the problem, which is why problems-3.txt is empty.
+# The App correctly fails but the empty problems-3.txt implies it should succeed.  So mark pending.
+# https://github.com/lampepfl/dotty/issues/10846

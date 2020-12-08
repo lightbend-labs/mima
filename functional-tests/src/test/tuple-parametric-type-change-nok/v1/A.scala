@@ -1,3 +1,3 @@
 class A {
-  def foo(): (String,Int) = ("",0)
+  def foo: (String,Int) = ("",0)
 }
