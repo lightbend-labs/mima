@@ -1,5 +1,5 @@
 abstract class A extends B {
-  def foo: Unit
+  def foo(): Unit
 }
 
 trait B {

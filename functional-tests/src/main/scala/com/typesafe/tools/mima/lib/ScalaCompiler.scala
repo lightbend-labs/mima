@@ -7,7 +7,10 @@ import scala.util.{ Failure, Success, Try }
 import coursier._
 
 final class ScalaCompiler(val version: String) {
-  val jars = Coursier.fetch(Dependency(mod"org.scala-lang:scala-compiler", version))
+  val isScala3 = version.startsWith("3.")
+
+  val name = if (isScala3) ModuleName(s"scala3-compiler_$version") else name"scala-compiler"
+  val jars = Coursier.fetch(Dependency(Module(org"org.scala-lang", name), version))
 
   val classLoader = new URLClassLoader(jars.toArray.map(_.toURI.toURL), parentClassLoader())
 
@@ -17,7 +20,8 @@ final class ScalaCompiler(val version: String) {
 
   def compile(args: Seq[String]): Try[Unit] = {
     import scala.language.reflectiveCalls
-    val cls = classLoader.loadClass("scala.tools.nsc.Main$")
+    val clsName = if (isScala3) "dotty.tools.dotc.Main$" else "scala.tools.nsc.Main$"
+    val cls = classLoader.loadClass(clsName)
     type Main     = { def process(args: Array[String]): Any; def reporter: Reporter }
     type Reporter = { def hasErrors: Boolean }
     val m = cls.getField("MODULE$").get(null).asInstanceOf[Main]
@@ -25,8 +29,9 @@ final class ScalaCompiler(val version: String) {
       val success = m.process(args.toArray) match {
         case b: Boolean => b
         case null       => !m.reporter.hasErrors // nsc 2.11
+        case x          => !x.asInstanceOf[Reporter].hasErrors // dotc
       }
       if (success) Success(()) else Failure(new Exception("scalac failed"))
-    }
+    }.flatten
   }
 }

@@ -1,0 +1,4 @@
+in new version, classes mixing B need be recompiled to wire to the new static mixin forwarder method all super calls to method foo()Int
+# missing:
+#     synthetic static method $init$(B)Unit in interface B does not have a correspondent in new version
+# https://github.com/lampepfl/dotty/issues/10839

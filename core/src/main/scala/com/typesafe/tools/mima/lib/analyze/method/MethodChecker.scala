@@ -13,9 +13,10 @@ private[analyze] object MethodChecker {
 
   /** Analyze incompatibilities that may derive from new methods in `newclazz`. */
   private def checkNew(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
-    (if (newclazz.isClass) Nil else checkEmulatedConcreteMethodsProblems(oldclazz, newclazz)) :::
-      checkDeferredMethodsProblems(oldclazz, newclazz) :::
-      checkInheritedNewAbstractMethodProblems(oldclazz, newclazz)
+    val problems1 = if (newclazz.isClass) Nil else checkEmulatedConcreteMethodsProblems(oldclazz, newclazz)
+    val problems2 = checkDeferredMethodsProblems(oldclazz, newclazz)
+    val problems3 = checkInheritedNewAbstractMethodProblems(oldclazz, newclazz)
+    problems1 ::: problems2 ::: problems3
   }
 
   private def checkExisting1(oldmeth: MethodInfo, newclazz: ClassInfo): Option[Problem] = {
@@ -138,11 +139,9 @@ private[analyze] object MethodChecker {
     for {
       newmeth <- newclazz.deferredMethods.iterator
       problem <- oldclazz.lookupMethods(newmeth).find(_.descriptor == newmeth.descriptor) match {
-        case None          => Some(ReversedMissingMethodProblem(newmeth))
-        case Some(oldmeth) =>
-          if (newclazz.isClass && oldmeth.isConcrete)
-            Some(ReversedAbstractMethodProblem(newmeth))
-          else None
+        case None                                                    => Some(ReversedMissingMethodProblem(newmeth))
+        case Some(oldmeth) if newclazz.isClass && oldmeth.isConcrete => Some(ReversedAbstractMethodProblem(newmeth))
+        case Some(_)                                                 => None
       }
     } yield problem
   }.toList

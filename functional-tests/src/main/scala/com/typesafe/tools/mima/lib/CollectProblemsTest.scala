@@ -31,27 +31,24 @@ object CollectProblemsTest {
       case Forwards  => "other"
     }
 
-    // diff between the oracle and the collected problems
-    val unexpected = problems.filter(p => !expected.contains(p.description(affectedVersion)))
-    val unreported = expected.diff(problems.map(_.description(affectedVersion)))
+    val reported = problems.map(_.description(affectedVersion))
 
     val msg = new StringBuilder("\n")
-    def pp(start: String, lines: List[String]) = {
-      if (lines.isEmpty) ()
-      else lines.sorted.distinct.addString(msg, s"$start (${lines.size}):\n  - ", "\n  - ", "\n")
-    }
-    pp("The following problem(s) were expected but not reported", unreported)
-    pp("The following problem(s) were reported but not expected", unexpected.map(_.description(affectedVersion)))
-    pp("Filter with:", unexpected.flatMap(_.howToFilter))
-    pp("Or filter with:", unexpected.flatMap(p => p.matchName.map { matchName =>
-      s"{ matchName=$dq$matchName$dq , problemName=${p.getClass.getSimpleName} }"
-    }))
+    def pp(start: String, lines: List[String]) =
+      if (lines.nonEmpty) {
+        msg.append(s"$start (${lines.size}):")
+        lines.sorted.distinct.map("\n  - " + _).foreach(msg.append(_))
+        msg.append("\n")
+      }
+
+    pp("The following problem(s) were expected but not reported", expected.diff(reported))
+    pp("The following problem(s) were reported but not expected", reported.diff(expected))
 
     msg.mkString match {
       case "\n" => Success(())
-      case msg  => Failure(new Exception(msg))
+      case msg  =>
+        Console.err.println(msg)
+        Failure(new Exception("CollectProblemsTest failure"))
     }
   }
-
-  private final val dq = '"' // scala/bug#6476 -.-
 }

@@ -1,0 +1,7 @@
+class A was concrete; is declared abstract in new version
+method apply()A in object A does not have a correspondent in new version
+static method apply()A in class A does not have a correspondent in new version
+the type hierarchy of object A is different in new version. Missing types {scala.deriving.Mirror$Product}
+method fromProduct(scala.Product)A in object A does not have a correspondent in new version
+static method fromProduct(scala.Product)A in class A does not have a correspondent in new version
+# the last 2 are not present in Scala 2

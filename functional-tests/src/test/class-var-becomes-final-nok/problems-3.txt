@@ -1,0 +1,5 @@
+# missing:
+#     method foo()Int in class A is declared final in new version
+#     method foo_=(Int)Unit in class A is declared final in new version
+# not a critical case IMO
+# https://github.com/lampepfl/dotty/issues/10835

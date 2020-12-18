@@ -1,4 +1,7 @@
 trait A {
-  def foo = 2
   val bar = 3
+}
+
+object UseA {
+  def useA(a: A): Unit = println(a.bar + 1)
 }

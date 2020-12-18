@@ -1,0 +1,3 @@
+static method create(Array[java.lang.String])java.lang.String in class A has a different generic signature in new version, where it is ([Ljava/lang/String;)Ljava/lang/String; rather than <missing>. See https://github.com/lightbend/mima#incompatiblesignatureproblem
+# Scala 3 adds a method signature when it isn't required
+# https://github.com/lampepfl/dotty/issues/10837

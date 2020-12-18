@@ -1,0 +1,4 @@
+# In Scala 2 none of these changes are present.  Positive progress IMO.
+method apply()A in object A does not have a correspondent in new version
+static method apply()A in class A does not have a correspondent in new version
+method copy()A in class A does not have a correspondent in new version

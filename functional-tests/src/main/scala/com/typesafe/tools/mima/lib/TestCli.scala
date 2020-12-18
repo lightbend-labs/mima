@@ -9,10 +9,11 @@ import scala.util.{ Properties => StdLibProps }
 
 object TestCli {
   val scala211 = "2.11.12"
-  val scala212 = "2.12.11"
-  val scala213 = "2.13.2"
+  val scala212 = "2.12.12"
+  val scala213 = "2.13.4"
+  val scala3   = "3.0.0-M3"
   val hostScalaVersion = StdLibProps.scalaPropOrNone("maven.version.number").get
-  val allScalaVersions = List(scala211, scala212, scala213)
+  val allScalaVersions = List(scala211, scala212, scala213, scala3)
   val testsDir = Directory("functional-tests/src/test")
 
   def argsToTests(args: List[String], runTestCase: TestCase => Try[Unit]): Tests =
@@ -24,7 +25,7 @@ object TestCli {
   def testCaseToTest1(tc: TestCase, runTestCase: TestCase => Try[Unit]): Test1 =
     Test(s"${tc.scalaBinaryVersion} / ${tc.name}", runTestCase(tc))
 
-  def fromArgs(args: List[String]): List[TestCase] = fromConf(go(args, Conf(Nil, Nil)))
+  def fromArgs(args: List[String]): List[TestCase] = fromConf(readArgs(args, Conf(Nil, Nil)))
 
   @tailrec def postProcessConf(conf: Conf): Conf = conf match {
     case Conf(Nil, _) => postProcessConf(conf.copy(scalaVersions = List(hostScalaVersion)))
@@ -49,13 +50,14 @@ object TestCli {
 
   final case class Conf(scalaVersions: List[String], dirs: List[Directory])
 
-  @tailrec private def go(argv: List[String], conf: Conf): Conf = argv match {
-    case "-213" :: xs                  => go(xs, conf.copy(scalaVersions = scala213 :: conf.scalaVersions))
-    case "-212" :: xs                  => go(xs, conf.copy(scalaVersions = scala212 :: conf.scalaVersions))
-    case "-211" :: xs                  => go(xs, conf.copy(scalaVersions = scala211 :: conf.scalaVersions))
-    case "--scala-version" :: sv :: xs => go(xs, conf.copy(scalaVersions = sv :: conf.scalaVersions))
-    case "--cross" :: xs               => go(xs, conf.copy(scalaVersions = List(scala211, scala212, scala213)))
-    case s :: xs                       => go(xs, conf.copy(dirs = testDirs(s) ::: conf.dirs))
+  @tailrec private def readArgs(args: List[String], conf: Conf): Conf = args match {
+    case "-3"   :: xs                  => readArgs(xs, conf.copy(scalaVersions = scala3   :: conf.scalaVersions))
+    case "-213" :: xs                  => readArgs(xs, conf.copy(scalaVersions = scala213 :: conf.scalaVersions))
+    case "-212" :: xs                  => readArgs(xs, conf.copy(scalaVersions = scala212 :: conf.scalaVersions))
+    case "-211" :: xs                  => readArgs(xs, conf.copy(scalaVersions = scala211 :: conf.scalaVersions))
+    case "--scala-version" :: sv :: xs => readArgs(xs, conf.copy(scalaVersions = sv       :: conf.scalaVersions))
+    case "--cross" :: xs               => readArgs(xs, conf.copy(scalaVersions = allScalaVersions))
+    case s :: xs                       => readArgs(xs, conf.copy(dirs = testDirs(s) ::: conf.dirs))
     case Nil                           => conf
   }
 

@@ -1,0 +1,7 @@
+object A#B does not have a correspondent in new version
+object A#B#C does not have a correspondent in new version
+static field B in object A does not have a correspondent in new version
+# in Scala 2 that field problem isn't emitted
+# because the field never existed in the first place
+# put different: Scala 3 adds a static final A$.B field
+# which LGTM as it allows easier access for Java users to nested objects

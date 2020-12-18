@@ -1,3 +1,5 @@
-trait A {
-  def foo = 3
+trait A
+
+object UseA {
+  def useA(a: A): Unit = ()
 }

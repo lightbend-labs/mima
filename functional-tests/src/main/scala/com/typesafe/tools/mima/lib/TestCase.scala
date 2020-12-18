@@ -4,6 +4,7 @@ import java.io.{ ByteArrayOutputStream, PrintStream }
 import java.net.{ URI, URLClassLoader }
 import javax.tools._
 
+import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.reflect.internal.util.BatchSourceFile
@@ -14,7 +15,7 @@ import com.typesafe.tools.mima.core.ClassPath
 
 final class TestCase(val baseDir: Directory, val scalaCompiler: ScalaCompiler, val javaCompiler: JavaCompiler) {
   def name               = baseDir.name
-  def scalaBinaryVersion = scalaCompiler.version.take(4)
+  def scalaBinaryVersion = if (scalaCompiler.isScala3) "3" else scalaCompiler.version.take(4)
   def scalaJars          = scalaCompiler.jars
 
   val srcV1  = (baseDir / "v1").toDirectory
@@ -42,7 +43,7 @@ final class TestCase(val baseDir: Directory, val scalaCompiler: ScalaCompiler, v
     val sourceFiles = lsSrcs(srcDir)
     if (sourceFiles.forall(_.isJava)) return Success(())
     val bootcp = ClassPath.join(scalaJars.map(_.getPath))
-    val cpOpt  = if (cp.isEmpty) Nil else List("-cp", ClassPath.join(cp.map(_.path)))
+    val cpOpt  = if (cp.isEmpty) Nil else List("-classpath", ClassPath.join(cp.map(_.path)))
     val paths = sourceFiles.map(_.path)
     val args = "-bootclasspath" :: bootcp :: cpOpt ::: "-d" :: s"$out" :: paths
     scalaCompiler.compile(args)
@@ -78,7 +79,16 @@ final class TestCase(val baseDir: Directory, val scalaCompiler: ScalaCompiler, v
       System.setErr(printStream)
       Console.withErr(printStream) {
         Console.withOut(printStream) {
-          Try(meth.invoke(null, new Array[String](0)): Unit)
+          try {
+            meth.invoke(null, new Array[String](0))
+            Success(())
+          } catch {
+            case e: VirtualMachineError                 => throw e
+            case e: ThreadDeath                         => throw e
+            case e: InterruptedException                => throw e
+            case e: scala.util.control.ControlThrowable => throw e // don't rethrow LinkageError
+            case e: Throwable                           => Failure(rootCause(e))
+          }
         }
       }
     } finally {
@@ -98,9 +108,11 @@ final class TestCase(val baseDir: Directory, val scalaCompiler: ScalaCompiler, v
     val p    = baseDir.resolve(path).toFile
     val p211 = (p.parent / (s"${p.stripExtension}-2.11")).addExtension(p.extension).toFile
     val p212 = (p.parent / (s"${p.stripExtension}-2.12")).addExtension(p.extension).toFile
+    val p3   = (p.parent / (s"${p.stripExtension}-3"   )).addExtension(p.extension).toFile
     scalaBinaryVersion match {
       case "2.11" => if (p211.exists) p211 else if (p212.exists) p212 else p
       case "2.12" => if (p212.exists) p212 else p
+      case "3"    => if (p3.exists)   p3   else p
       case _      => p
     }
   }
@@ -110,6 +122,16 @@ final class TestCase(val baseDir: Directory, val scalaCompiler: ScalaCompiler, v
       assert(dir.deleteRecursively(), s"failed to delete $dir")
     dir.createDirectory()
     ()
+  }
+
+  @tailrec private def rootCause(x: Throwable): Throwable = x match {
+    case _: ExceptionInInitializerError |
+         _: java.lang.reflect.InvocationTargetException |
+         _: java.lang.reflect.UndeclaredThrowableException |
+         _: java.util.concurrent.ExecutionException
+        if x.getCause != null =>
+      rootCause(x.getCause)
+    case _ => x
   }
 
   override def toString = s"TestCase(baseDir=${baseDir.name}, scalaVersion=${scalaCompiler.version})"

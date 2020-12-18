@@ -1,0 +1,4 @@
+method contains(NodeImpl)Boolean in class Tree's type is different in new version, where it is (Node)Boolean instead of (NodeImpl)Boolean
+method this()Unit in class Tree has a different generic signature in new version, where it is <T::LNode;>()V rather than <T:LNodeImpl;>()V. See https://github.com/lightbend/mima#incompatiblesignatureproblem
+# that last one doesn't emit for Scala 2
+# https://github.com/lampepfl/dotty/issues/10834

@@ -32,11 +32,14 @@ object SbtMima {
   }
 
   private def sanityCheckScalaVersion(scalaVersion: String) = {
-    scalaVersion.take(5) match {
-      case "2.11." | "2.12." | "2.13." => () // ok
-      case _ => throw new IllegalArgumentException(s"MiMa supports Scala 2.11-2.13, not $scalaVersion")
+    scalaBinaryVersion(scalaVersion) match {
+      case "2.11" | "2.12" | "2.13" | "3" => () // ok
+      case _ => throw new IllegalArgumentException(s"MiMa supports Scala 2.11, 2.12, 2.13 and 3, not $scalaVersion")
     }
   }
+
+  private def scalaBinaryVersion(version: String) =
+    if (version.startsWith("3.")) "3" else version.take(4)
 
   /** Reports binary compatibility errors for a module. */
   def reportModuleErrors(

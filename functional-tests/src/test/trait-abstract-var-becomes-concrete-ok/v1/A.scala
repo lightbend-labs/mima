@@ -3,5 +3,5 @@ trait A {
 }
 
 abstract class B extends A {
-  override var foo = 2
+  var foo = 2
 }
