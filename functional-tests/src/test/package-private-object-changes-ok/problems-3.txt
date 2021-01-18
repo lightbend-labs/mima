@@ -1,0 +1,2 @@
+method bar(Int)Int in object foo.Foo does not have a correspondent in new version
+static method bar(Int)Int in class foo.Foo does not have a correspondent in new version

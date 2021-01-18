@@ -1,0 +1,1 @@
+method bar(Int,Int)Int in class foo.Foo does not have a correspondent in other version

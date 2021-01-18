@@ -9,7 +9,7 @@ class Signature(private val signature: String) {
     signature.headOption match {
       case None | Some('(') => signature
       case _ =>
-        val (formalTypeParameters, rest) = FormalTypeParameter.parseList(signature.drop(1))
+        val (formalTypeParameters, _) = FormalTypeParameter.parseList(signature.drop(1))
         val replacements = formalTypeParameters.map(_.identifier).zipWithIndex
         replacements.foldLeft(signature) { case (sig, (from, to)) =>
           sig
@@ -40,35 +40,37 @@ object Signature {
   val none = Signature("")
 
   case class FormalTypeParameter(identifier: String, bound: String)
+
   object FormalTypeParameter {
-    def parseList(in: String, listSoFar: List[FormalTypeParameter] = Nil): (List[FormalTypeParameter], String) = {
+    @tailrec def parseList(in: String, acc: List[FormalTypeParameter] = Nil): (List[FormalTypeParameter], String) = {
       in(0) match {
-        case '>' => (listSoFar, in.drop(1))
-        case o => {
+        case '>' => (acc, in.drop(1))
+        case _   => {
           val (next, rest) = parseOne(in)
-          parseList(rest, listSoFar :+ next)
+          parseList(rest, acc :+ next)
         }
       }
     }
+
     def parseOne(in: String): (FormalTypeParameter, String) = {
       val identifier = in.takeWhile(_ != ':')
       val boundAndRest = in.dropWhile(_ != ':').drop(1)
       val (bound, rest) = splitBoundAndRest(boundAndRest)
       (FormalTypeParameter(identifier, bound), rest)
     }
-    @tailrec
-    private def splitBoundAndRest(in: String, boundSoFar: String = "", depth: Int = 0): (String, String) = {
+
+    @tailrec private def splitBoundAndRest(in: String, boundSoFar: String = "", depth: Int = 0): (String, String) = {
       if (depth > 0) {
         in(0) match {
           case '>' => splitBoundAndRest(in.drop(1), boundSoFar + '>', depth - 1)
           case '<' => splitBoundAndRest(in.drop(1), boundSoFar + '<', depth + 1)
-          case o => splitBoundAndRest(in.drop(1), boundSoFar + o, depth)
+          case o   => splitBoundAndRest(in.drop(1), boundSoFar + o, depth)
         }
       } else {
         in(0) match {
           case '<' => splitBoundAndRest(in.drop(1), boundSoFar + '<', depth + 1)
           case ';' => (boundSoFar, in.drop(1))
-          case o => splitBoundAndRest(in.drop(1), boundSoFar + o, depth)
+          case o   => splitBoundAndRest(in.drop(1), boundSoFar + o, depth)
         }
       }
     }

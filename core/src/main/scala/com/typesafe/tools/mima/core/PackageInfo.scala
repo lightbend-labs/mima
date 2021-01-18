@@ -68,23 +68,21 @@ sealed abstract class PackageInfo {
   }
 
   final lazy val accessibleClasses: Set[ClassInfo] = {
-    // Fixed point iteration for finding all accessible classes.
-    @tailrec
-    def accessibleClassesUnder(prefix: Set[ClassInfo], found: Set[ClassInfo]): Set[ClassInfo] = {
-      val vclasses = (classes.valuesIterator.filter(isAccessible(_, prefix))).toSet
-      if (vclasses.isEmpty) found
-      else accessibleClassesUnder(vclasses, vclasses.union(found))
+    @tailrec def loop(found: Set[ClassInfo], prefix: Set[ClassInfo]): Set[ClassInfo] = {
+      val accessibleClasses = classes.valuesIterator.filter(isAccessible(_, prefix)).toSet
+      if (accessibleClasses.isEmpty) found
+      else loop(accessibleClasses ++ found, accessibleClasses)
     }
 
-    def isAccessible(clazz: ClassInfo, prefix: Set[ClassInfo]) = {
-      def isReachable = {
-        if (prefix.isEmpty) clazz.isTopLevel && !clazz.decodedName.contains("$$")
-        else prefix.exists(_.innerClasses.contains(clazz.bytecodeName))
-      }
-      clazz.isPublic && !clazz.isLocalClass && !clazz.isSynthetic && isReachable
+    def isAccessible(clazz: ClassInfo, prefix: Set[ClassInfo]) =
+      clazz.isPublic && !clazz.isLocalClass && !clazz.isSynthetic && isReachable(clazz, prefix)
+
+    def isReachable(clazz: ClassInfo, prefix: Set[ClassInfo]) = {
+      if (prefix.isEmpty) clazz.isTopLevel && !clazz.decodedName.contains("$$")
+      else prefix.exists(_.innerClasses.contains(clazz.bytecodeName))
     }
 
-    accessibleClassesUnder(Set.empty, Set.empty)
+    loop(Set.empty, Set.empty)
   }
 
   // Used to make sure trait classes have their impl class field set
@@ -95,6 +93,18 @@ sealed abstract class PackageInfo {
       traitClass <- classes.get(name.stripSuffix("$class"))
     } {
       traitClass._implClass = clazz
+    }
+  }
+
+  // TODO: Foo contains pickle, so if parse Foo$ before should be able to set this then
+  final lazy val setModules: Unit = {
+    for {
+      (name, clazz) <- classes.iterator
+      if clazz.isModuleClass
+      module <- classes.get(name.init)
+    } {
+      clazz._module       = module
+      module._moduleClass = clazz
     }
   }
 

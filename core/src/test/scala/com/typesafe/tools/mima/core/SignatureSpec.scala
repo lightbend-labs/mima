@@ -32,13 +32,13 @@ final class SignatureSpec extends munit.FunSuite {
   }
 
   test("The signature parser should parse a signature with generic bounds that themselves have generics") {
-    val (types, rest) = Signature.FormalTypeParameter.parseList(
-      "T:Ljava/lang/Object;U:Lscala/collection/immutable/List<TT;>;>(TT;Lscala/collection/immutable/List<TU;>;)Lscala/Option<TT;>;>")
+    import Signature.FormalTypeParameter
+    val rest = "(TT;Lscala/collection/immutable/List<TU;>;)Lscala/Option<TT;>;>"
+    val orig = s"T:Ljava/lang/Object;U:Lscala/collection/immutable/List<TT;>;>$rest"
+    val (types, obtRest) = FormalTypeParameter.parseList(orig)
     assertEquals(types.length, 2)
-    assertEquals(types(0).identifier, "T")
-    assertEquals(types(0).bound, "Ljava/lang/Object")
-    assertEquals(types(1).identifier, "U")
-    assertEquals(types(1).bound, "Lscala/collection/immutable/List<TT;>")
-    assertEquals(rest, "(TT;Lscala/collection/immutable/List<TU;>;)Lscala/Option<TT;>;>")
+    assertEquals(types(0), FormalTypeParameter("T", "Ljava/lang/Object"))
+    assertEquals(types(1), FormalTypeParameter("U", "Lscala/collection/immutable/List<TT;>"))
+    assertEquals(obtRest, rest)
   }
 }

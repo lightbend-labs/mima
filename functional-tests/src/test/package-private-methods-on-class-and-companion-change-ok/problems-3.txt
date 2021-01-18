@@ -1,0 +1,5 @@
+method bar(Int)Int in class foo.Foo does not have a correspondent in new version
+method baz(Int)Int in object foo.Foo does not have a correspondent in new version
+method qux(Int)Int in class foo.Foo does not have a correspondent in new version
+method qux(Int)Int in object foo.Foo does not have a correspondent in new version
+static method baz(Int)Int in class foo.Foo does not have a correspondent in new version

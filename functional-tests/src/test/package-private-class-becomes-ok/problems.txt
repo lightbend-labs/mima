@@ -1,0 +1,3 @@
+# Package private is a Scala construct, it doesn't fail in the JVM.
+# Users could legitimately use it, not expecting MiMa problems from it.
+# We just ignore package private classes/methods/fields.
