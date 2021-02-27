@@ -1,5 +1,5 @@
 language: scala
-scala: 2.12.11
+scala: 2.12.13
 script: "sbt test mimaReportBinaryIssues 'set sbtplugin/scriptedSbt := \"1.2.8\"' 'scripted sbt-mima-plugin/minimal' IntegrationTest/test"
 jdk:
 - openjdk8
