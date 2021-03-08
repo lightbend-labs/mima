@@ -1,5 +1,12 @@
 language: scala
 scala: 2.12.13
+
+before_install:
+  - |
+    curl -Ls https://git.io/sbt -o sbt || travis_terminate 1
+    chmod 0755 sbt || travis_terminate 1
+    sudo mv sbt /usr/local/bin/sbt || travis_terminate 1
+
 script: "sbt test mimaReportBinaryIssues 'set sbtplugin/scriptedSbt := \"1.2.8\"' 'scripted sbt-mima-plugin/minimal' IntegrationTest/test"
 jdk:
 - openjdk8
