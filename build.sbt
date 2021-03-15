@@ -29,7 +29,7 @@ val root = project.in(file(".")).settings(
   name := "mima",
   crossScalaVersions := Nil,
   mimaFailOnNoPrevious := false,
-  skip in publish := true,
+  publish / skip := true,
 )
 aggregateProjects(core, sbtplugin, functionalTests)
 
@@ -56,7 +56,7 @@ val core = project.settings(
 val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core).settings(
   name := "sbt-mima-plugin",
   // drop the previous value to drop running Test/compile
-  scriptedDependencies := Def.task(()).dependsOn(publishLocal, publishLocal in core).value,
+  scriptedDependencies := Def.task(()).dependsOn(publishLocal, core / publishLocal).value,
   scriptedLaunchOpts += s"-Dplugin.version=${version.value}",
   scriptedLaunchOpts += s"-Dsbt.boot.directory=${file(sys.props("user.home")) / ".sbt" / "boot"}",
   MimaSettings.mimaSettings,
@@ -80,5 +80,5 @@ val functionalTests = Project("functional-tests", file("functional-tests"))
                Test / mainClass := Some("com.typesafe.tools.mima.lib.UnitTests"),
     IntegrationTest / mainClass := Some("com.typesafe.tools.mima.lib.IntegrationTests"),
     mimaFailOnNoPrevious := false,
-    skip in publish := true,
+    publish / skip := true,
   )
