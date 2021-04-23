@@ -2,6 +2,7 @@ package com.typesafe.tools.mima.core
 
 import scala.annotation.tailrec
 import scala.collection.mutable
+import scala.collection.compat._
 
 sealed class SyntheticPackageInfo(val owner: PackageInfo, val name: String) extends PackageInfo {
   def definitions   = owner.definitions
@@ -23,10 +24,12 @@ sealed class ConcretePackageInfo(val owner: PackageInfo, cp: ClassPath, pkg: Str
   def name        = pkg.split('.').last
   def definitions = defs
 
-  lazy val packages =
-    cp.packages(pkg).map { p =>
-      p.stripPrefix(s"$pkg.") -> new ConcretePackageInfo(this, cp, p, defs)
-    }.to[({type M[_] = mutable.Map[String, PackageInfo]})#M]
+  lazy val packages: mutable.Map[String, PackageInfo] =
+    mutable.Map.from(
+      cp.packages(pkg).map { p =>
+        p.stripPrefix(s"$pkg.") -> new ConcretePackageInfo(this, cp, p, defs)
+      }
+    )
 
   lazy val classes =
     cp.classes(pkg).map { f =>
