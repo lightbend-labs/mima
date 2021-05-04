@@ -25,6 +25,8 @@ commands += Command.command("testStaging") { state =>
   prep ::: "mimaReportBinaryIssues" :: state
 }
 
+val supportedScalaVersions = Seq("2.12.13", "2.13.5")
+
 val root = project.in(file(".")).settings(
   name := "mima",
   crossScalaVersions := Nil,
@@ -34,9 +36,12 @@ val root = project.in(file(".")).settings(
 aggregateProjects(core, sbtplugin, functionalTests)
 
 val munit = "org.scalameta" %% "munit" % "0.7.25"
+val scalaCollectionCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.4.3"
 
 val core = project.settings(
   name := "mima-core",
+  crossScalaVersions := supportedScalaVersions,
+  libraryDependencies += scalaCollectionCompat,
   libraryDependencies += munit % Test,
   testFrameworks += new TestFramework("munit.Framework"),
   MimaSettings.mimaSettings,
@@ -56,7 +61,7 @@ val core = project.settings(
 val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core).settings(
   name := "sbt-mima-plugin",
   // drop the previous value to drop running Test/compile
-  scriptedDependencies := Def.task(()).dependsOn(publishLocal, publishLocal in core).value,
+  scriptedDependencies := Def.task(()).dependsOn(publishLocal, core / publishLocal).value,
   scriptedLaunchOpts += s"-Dplugin.version=${version.value}",
   scriptedLaunchOpts += s"-Dsbt.boot.directory=${file(sys.props("user.home")) / ".sbt" / "boot"}",
   MimaSettings.mimaSettings,
@@ -67,6 +72,7 @@ val functionalTests = Project("functional-tests", file("functional-tests"))
   .dependsOn(core)
   .configs(IntegrationTest)
   .settings(
+    crossScalaVersions := supportedScalaVersions,
     libraryDependencies += "com.typesafe" % "config" % "1.4.1",
     libraryDependencies += "io.get-coursier" %% "coursier" % "2.0.16",
     libraryDependencies += munit,
