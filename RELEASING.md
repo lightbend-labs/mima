@@ -41,7 +41,7 @@ See the [prerequisites](#prerequisites) if this is your first release.
 [repo1/list]: https://repo1.maven.org/maven2/com/typesafe/mima-core_2.12/0.5.0/
 [sonatype/guide]: https://central.sonatype.org/pages/releasing-the-deployment.html
 [sonatype/staging-repos]: https://oss.sonatype.org/#stagingRepositories
-[travis-ci]: https://travis-ci.org/lightbend/mima
+[travis-ci]: https://travis-ci.com/github/lightbend/mima
 
 You are done!
 

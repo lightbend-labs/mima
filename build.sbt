@@ -25,13 +25,13 @@ commands += Command.command("testStaging") { state =>
   prep ::: "mimaReportBinaryIssues" :: state
 }
 
-val supportedScalaVersions = Seq("2.12.13", "2.13.5")
+val scala213 = "2.13.5"
 
 val root = project.in(file(".")).settings(
   name := "mima",
   crossScalaVersions := Nil,
   mimaFailOnNoPrevious := false,
-  skip in publish := true,
+  publish / skip := true,
 )
 aggregateProjects(core, sbtplugin, functionalTests)
 
@@ -40,7 +40,7 @@ val scalaCollectionCompat = "org.scala-lang.modules" %% "scala-collection-compat
 
 val core = project.settings(
   name := "mima-core",
-  crossScalaVersions := supportedScalaVersions,
+  crossScalaVersions += scala213,
   libraryDependencies += scalaCollectionCompat,
   libraryDependencies += munit % Test,
   testFrameworks += new TestFramework("munit.Framework"),
@@ -72,7 +72,7 @@ val functionalTests = Project("functional-tests", file("functional-tests"))
   .dependsOn(core)
   .configs(IntegrationTest)
   .settings(
-    crossScalaVersions := supportedScalaVersions,
+    crossScalaVersions += scala213,
     libraryDependencies += "com.typesafe" % "config" % "1.4.1",
     libraryDependencies += "io.get-coursier" %% "coursier" % "2.0.16",
     libraryDependencies += munit,
@@ -86,5 +86,5 @@ val functionalTests = Project("functional-tests", file("functional-tests"))
                Test / mainClass := Some("com.typesafe.tools.mima.lib.UnitTests"),
     IntegrationTest / mainClass := Some("com.typesafe.tools.mima.lib.IntegrationTests"),
     mimaFailOnNoPrevious := false,
-    skip in publish := true,
+    publish / skip := true,
   )
