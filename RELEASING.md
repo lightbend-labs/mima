@@ -29,7 +29,7 @@ See the [prerequisites](#prerequisites) if this is your first release.
 * [ ] Run `git push --follow-tags` to push the tag.
 * [ ] [Find and hit "Publish Release"][releases/list] on the draft GitHub release.
 
-[compare/view]:    https://github.com/lightbend/mima/compare/0.4.0...master
+[compare/view]:    https://github.com/lightbend/mima/compare/0.9.0...main
 [issues/new]:      https://github.com/lightbend/mima/issues/new
 [milestones/list]: https://github.com/lightbend/mima/milestones?direction=asc
 [milestones/new]:  https://github.com/lightbend/mima/milestones/new
@@ -37,7 +37,7 @@ See the [prerequisites](#prerequisites) if this is your first release.
 [releases/list]:   https://github.com/lightbend/mima/releases
 [releases/new]:    https://github.com/lightbend/mima/releases/new
 
-[RELEASING.md]: https://raw.githubusercontent.com/lightbend/mima/master/RELEASING.md
+[RELEASING.md]: https://raw.githubusercontent.com/lightbend/mima/main/RELEASING.md
 [repo1/list]: https://repo1.maven.org/maven2/com/typesafe/mima-core_2.12/0.5.0/
 [sonatype/guide]: https://central.sonatype.org/pages/releasing-the-deployment.html
 [sonatype/staging-repos]: https://oss.sonatype.org/#stagingRepositories
