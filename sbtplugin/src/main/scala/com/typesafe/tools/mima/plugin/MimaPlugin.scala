@@ -44,7 +44,7 @@ object MimaPlugin extends AutoPlugin {
         case previousArtifacts =>
           previousArtifacts.iterator.map { m =>
             val moduleId = CrossVersion(m, scalaModuleInfo.value) match {
-              case Some(f) => m.withName(f(m.name))
+              case Some(f) => m.withName(f(m.name)).withCrossVersion(CrossVersion.disabled)
               case None    => m
             }
             moduleId -> SbtMima.getPreviousArtifact(moduleId, depRes, taskStreams)
