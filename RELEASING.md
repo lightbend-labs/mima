@@ -18,10 +18,11 @@ See the [prerequisites](#prerequisites) if this is your first release.
 * [ ] In sbt run `reload` and `show version` to verify the version.
 * [ ] In sbt run `clean`, particularly if you've recently bumped `scalaVersion`.
 * [ ] In sbt run `publishSigned`. You should start seeing "published mima-.. to https://oss.sonatype.org/service/local/staging/deploy/maven2/..".
+* [ ] In sbt run `++2.13.5 core/publishSigned`, using the right 2.13 version.
 * [ ] [Find and close][sonatype/staging-repos] your staging repository.  (See Sonatype's [Releasing the Deployment][sonatype/guide] guide.)
 * [ ] In `plugins.sbt` update `sbt-mima-plugins`.
 * [ ] In `project/MimaSettings.scala` update `mimaPreviousVersion` & clear out `mimaBinaryIssueFilters`.
-* [ ] In sbt run `testStaging` **WITHOUT** `reload`ing first (`testStaging` add staging resolvers & then runs `reload`).
+* [ ] In sbt run `testStaging` **WITHOUT** `reload`ing first (`testStaging` adds the staging resolvers & runs `reload`).
 * [ ] Run `git commit -am 'Update sbt-mima-plugin to 0.x.y` and PR it (`hub pull-request`).
 * [ ] [Find and release][sonatype/staging-repos] your staging repository.
 * [ ] [Close][milestones/list] the milestone.
