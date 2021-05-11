@@ -2,7 +2,6 @@ package com.typesafe.tools.mima.core
 
 import scala.annotation.tailrec
 import scala.collection.mutable
-import scala.collection.compat._
 
 sealed class SyntheticPackageInfo(val owner: PackageInfo, val name: String) extends PackageInfo {
   def definitions   = owner.definitions
@@ -25,11 +24,12 @@ sealed class ConcretePackageInfo(val owner: PackageInfo, cp: ClassPath, pkg: Str
   def definitions = defs
 
   lazy val packages: mutable.Map[String, PackageInfo] =
-    mutable.Map.from(
+    // this way of building the map cross-compiles on 2.12 and 2.13 without
+    // needing to bring in scala-collection-compat
+    mutable.Map() ++
       cp.packages(pkg).map { p =>
         p.stripPrefix(s"$pkg.") -> new ConcretePackageInfo(this, cp, p, defs)
       }
-    )
 
   lazy val classes =
     cp.classes(pkg).map { f =>

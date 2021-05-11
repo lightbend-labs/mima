@@ -36,12 +36,10 @@ val root = project.in(file(".")).settings(
 aggregateProjects(core, sbtplugin, functionalTests)
 
 val munit = "org.scalameta" %% "munit" % "0.7.25"
-val scalaCollectionCompat = "org.scala-lang.modules" %% "scala-collection-compat" % "2.4.3"
 
 val core = project.settings(
   name := "mima-core",
   crossScalaVersions += scala213,
-  libraryDependencies += scalaCollectionCompat,
   libraryDependencies += munit % Test,
   testFrameworks += new TestFramework("munit.Framework"),
   MimaSettings.mimaSettings,
