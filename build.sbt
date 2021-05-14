@@ -35,7 +35,7 @@ val root = project.in(file(".")).settings(
 )
 aggregateProjects(core, sbtplugin, functionalTests)
 
-val munit = "org.scalameta" %% "munit" % "0.7.25"
+val munit = "org.scalameta" %% "munit" % "0.7.26"
 
 val core = project.settings(
   name := "mima-core",
