@@ -10,7 +10,7 @@ import scala.util.{ Properties => StdLibProps }
 object TestCli {
   val scala211 = "2.11.12"
   val scala212 = "2.12.13"
-  val scala213 = "2.13.5"
+  val scala213 = "2.13.6"
   val scala3   = "3.0.0-RC3"
   val hostScalaVersion = StdLibProps.scalaPropOrNone("maven.version.number").get
   val allScalaVersions = List(scala211, scala212, scala213, scala3)
