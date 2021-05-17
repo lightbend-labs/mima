@@ -25,7 +25,7 @@ commands += Command.command("testStaging") { state =>
   prep ::: "mimaReportBinaryIssues" :: state
 }
 
-val scala213 = "2.13.5"
+val scala213 = "2.13.6"
 
 val root = project.in(file(".")).settings(
   name := "mima",
