@@ -4,7 +4,6 @@ final class PickleBuffer(val bytes: Array[Byte]) {
   var readIndex = 0
 
   def readByte(): Int = { val x = bytes(readIndex).toInt; readIndex += 1; x }
-  def lastByte(): Int = bytes(readIndex - 1).toInt
 
   /** Read a natural number in big endian format, base 128. All but the last digits have bit 0x80 set. */
   def readNat(): Int = readLongNat().toInt
@@ -32,11 +31,11 @@ final class PickleBuffer(val bytes: Array[Byte]) {
   }
 
   def createIndex: Array[Int] = {
-    runAtIndex(0) {
+    atIndex(0) {
       readNat(); readNat() // discard version
       0.until(readNat()).iterator.map { _ =>
         val idx = readIndex
-        val tag = readByte()
+        readByte() // tag
         val len = readNat()
         readIndex += len
         idx
@@ -49,7 +48,7 @@ final class PickleBuffer(val bytes: Array[Byte]) {
    */
   def toIndexedSeq: IndexedSeq[(Int, Array[Byte])] = {
     for (idx <- createIndex) yield {
-      runAtIndex(idx) {
+      atIndex(idx) {
         val tag = readByte()
         val len = readNat()
         tag -> bytes.slice(readIndex, readIndex + len)
@@ -57,7 +56,7 @@ final class PickleBuffer(val bytes: Array[Byte]) {
     }
   }
 
-  def runAtIndex[T](i: Int)(body: => T): T = {
+  def atIndex[T](i: Int)(body: => T): T = {
     val saved = readIndex
     readIndex = i
     try body finally readIndex = saved

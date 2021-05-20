@@ -133,8 +133,8 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
 
     val numAnnots = in.nextChar
     var i = 0
-    var bytes: Array[Byte] = null
-    while (i < numAnnots && bytes == null) {
+    var bytes = new Array[Byte](0)
+    while (i < numAnnots && bytes.length == 0) {
       pool.getExternalName(in.nextChar) match {
         case ScalaSignatureAnnot     => checkScalaSigAnnotArg(); bytes = parseScalaSigBytes()
         case ScalaLongSignatureAnnot => checkScalaSigAnnotArg(); bytes = parseScalaLongSigBytes()
@@ -142,10 +142,7 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
       }
       i += 1
     }
-    if (bytes != null) {
-      val pb = new PickleBuffer(bytes)
-      MimaUnpickler.unpickleClass(pb, clazz, in.path)
-    }
+    MimaUnpickler.unpickleClass(new PickleBuffer(bytes), clazz, in.path)
   }
 
   private final val ScalaSignatureAnnot     = "Lscala.reflect.ScalaSignature;"
