@@ -3,7 +3,9 @@ package com.typesafe.tools.mima.core
 import PickleFormat._
 
 object MimaUnpickler {
-  def unpickleClass(buf: PickleBuffer, clazz: ClassInfo, path: String) = {
+  def unpickleClass(buf: PickleBuffer, clazz: ClassInfo, path: String): Unit = {
+    if (buf.bytes.length == 0) return
+
     buf.readNat(); buf.readNat() // major, minor version
 
     val index    = buf.createIndex
@@ -18,7 +20,7 @@ object MimaUnpickler {
 
     // SymbolInfo = name_Ref owner_Ref flags_LongNat [privateWithin_Ref] info_Ref
     def readSymbol(): SymbolInfo = {
-      val tag   = buf.lastByte()
+      val tag   = buf.readByte()
       val end   = buf.readNat() + buf.readIndex
       val name  = entries.nameAt(buf.readNat())
       val owner = buf.readNat()
@@ -32,7 +34,7 @@ object MimaUnpickler {
     def symbolToClass(symbolInfo: SymbolInfo) = {
       if (symbolInfo.name == REFINE_CLASS_NAME) {
         // eg: CLASSsym 4: 89(<refinement>) 0 0[] 87
-        // The UnPickler in the compiler also excludes these with "isRefinementSymbolEntry"
+        // Nsc's UnPickler also excludes these with "isRefinementSymbolEntry"
         NoClass
       } else if (symbolInfo.name == "<local child>") {
         // Predef$$less$colon$less$<local child>
@@ -60,12 +62,21 @@ object MimaUnpickler {
       methods.iterator
         .filter(!_.isParam)
         .filter(_.name != "<init>") // TODO support package private constructors
-        .toSeq.groupBy(_.name).foreach { case (name, overloads) =>
-          val methods = clazz.methods.get(name).filter(!_.isBridge).toList
-          if (methods.nonEmpty && overloads.exists(_.isScopedPrivate)) {
-            assert(overloads.size == methods.size, s"method overloads mismatch; bytecode=$methods pickle=$overloads for ${clazz.description}")
-            methods.zip(overloads).foreach { case (method, symbolInfo) =>
-              method.scopedPrivate = symbolInfo.isScopedPrivate
+        .toSeq.groupBy(_.name).foreach { case (name, pickleMethods) =>
+          val bytecodeMethods = clazz.methods.get(name).filter(!_.isBridge).toList
+          // #630 one way this happens with mixins:
+          //    trait Foo { def bar(x: Int): Int = x }
+          //    class Bar extends Foo { private[foo] def bar: String = "" }
+          // during pickling Bar only contains the package private bar()String
+          // but later in the backend the classfile gets a copy of bar(Int)Int
+          // so the "bar" method in the pickle doesn't know which bytecode method it's about
+          // the proper way to fix this involves unpickling the types in the pickle,
+          // then implementing the rules of erasure, so that you can then match the pickle
+          // types with the erased types.  Meanwhile we'll just ignore them, worst case users
+          // need to add a filter like they have for years.
+          if (pickleMethods.size == bytecodeMethods.size && pickleMethods.exists(_.isScopedPrivate)) {
+            bytecodeMethods.zip(pickleMethods).foreach { case (bytecodeMeth, pickleMeth) =>
+              bytecodeMeth.scopedPrivate = pickleMeth.isScopedPrivate
             }
           }
       }
@@ -73,10 +84,15 @@ object MimaUnpickler {
 
 
     for (num <- index.indices) {
-      buf.runAtIndex(index(num)) {
+      buf.atIndex(index(num)) {
         val tag = buf.readByte()
-        if (tag == CLASSsym || tag == MODULEsym || tag == VALsym)
-          syms(num) = readSymbol()
+        buf.readIndex -= 1
+        tag match {
+          case  CLASSsym => syms(num) = readSymbol()
+          case MODULEsym => syms(num) = readSymbol()
+          case    VALsym => syms(num) = readSymbol()
+          case _         =>
+        }
       }
     }
 
@@ -87,18 +103,15 @@ object MimaUnpickler {
       val clazz = classes(num)
       if (clsSym.isScopedPrivate)
         clazz.module._scopedPrivate = true
-      val methods = methSyms.collect { case (sym, _) if sym.owner == num => sym }
-      doMethods(clazz, methods.toList)
+      val methods = methSyms.collect { case (sym, _) if sym.owner == num => sym }.toList
+      doMethods(clazz, methods)
     }
   }
 
   final case class SymbolInfo(tag: Int, name: String, owner: Int, flags: Long, isScopedPrivate: Boolean) {
     def hasFlag(flag: Long): Boolean = (flags & flag) != 0L
     def isModuleOrModuleClass        = hasFlag(Flags.MODULE_PKL)
-    def isModuleClass                = isModuleOrModuleClass && tag == CLASSsym
-    def isModule                     = isModuleOrModuleClass && tag == MODULEsym
     def isParam                      = hasFlag(Flags.PARAM)
-    def mcmc                         = if (isModuleClass) "MC" else if (isModule) "M" else "C"
     override def toString = s"SymbolInfo(${tag2string(tag)}, $name, owner=$owner, isScopedPrivate=$isScopedPrivate)"
   }
 
