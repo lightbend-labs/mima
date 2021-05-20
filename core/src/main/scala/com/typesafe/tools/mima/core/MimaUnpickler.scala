@@ -44,9 +44,10 @@ object MimaUnpickler {
         def withOwner(cls: ClassInfo) = {
           val nme1 = cls.bytecodeName
           val nme2 = symbolInfo.name
+          val nme3 = if (nme2.startsWith(nme1)) nme2.substring(nme2.lastIndexOf('$') + 1) else nme2
           val conc = if (nme1.endsWith("$")) "" else "$"
           val suff = if (symbolInfo.isModuleOrModuleClass) "$" else ""
-          val name = nme1 + conc + nme2 + suff
+          val name = nme1 + conc + nme3 + suff
           clazz.owner.classes(name)
         }
         val fallback = if (symbolInfo.isModuleOrModuleClass) clazz.moduleClass else clazz
