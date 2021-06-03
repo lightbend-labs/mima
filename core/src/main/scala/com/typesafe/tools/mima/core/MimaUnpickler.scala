@@ -31,30 +31,29 @@ object MimaUnpickler {
       SymbolInfo(tag, name, owner, flags, isScopedPrivate)
     }
 
-    def symbolToClass(symbolInfo: SymbolInfo) = {
+    def symbolToClass(symbolInfo: SymbolInfo): ClassInfo = {
       if (symbolInfo.name == REFINE_CLASS_NAME) {
         // eg: CLASSsym 4: 89(<refinement>) 0 0[] 87
         // Nsc's UnPickler also excludes these with "isRefinementSymbolEntry"
         NoClass
-      } else if (symbolInfo.name == "<local child>") {
+      } else if (symbolInfo.name == LOCAL_CHILD) {
         // Predef$$less$colon$less$<local child>
         NoClass
       } else {
-        val own = classes(symbolInfo.owner)
-        def withOwner(cls: ClassInfo) = {
-          val nme1 = cls.bytecodeName
-          val nme2 = symbolInfo.name
-          val nme3 = if (nme2.startsWith(nme1)) nme2.substring(nme2.lastIndexOf('$') + 1) else nme2
-          val conc = if (nme1.endsWith("$")) "" else "$"
-          val suff = if (symbolInfo.isModuleOrModuleClass) "$" else ""
-          val name = nme1 + conc + nme3 + suff
-          clazz.owner.classes(name)
-        }
         val fallback = if (symbolInfo.isModuleOrModuleClass) clazz.moduleClass else clazz
-        own match {
-          case null if symbolInfo.owner == 0 => withOwner(fallback)
+        def lookup(cls: ClassInfo) = {
+          val clsName   = cls.bytecodeName
+          val separator = if (clsName.endsWith("$")) "" else "$"
+          val name0     = symbolInfo.name
+          val name      = if (name0.startsWith(clsName)) name0.substring(name0.lastIndexOf('$') + 1) else name0
+          val suffix    = if (symbolInfo.isModuleOrModuleClass) "$" else ""
+          val newName   = clsName + separator + name + suffix
+          clazz.owner.classes.getOrElse(newName, NoClass)
+        }
+        classes(symbolInfo.owner) match {
+          case null if symbolInfo.owner == 0 => lookup(fallback)
           case null                          => fallback
-          case cls                           => withOwner(cls)
+          case cls                           => lookup(cls)
         }
       }
     }
@@ -62,27 +61,30 @@ object MimaUnpickler {
     def doMethods(clazz: ClassInfo, methods: List[SymbolInfo]) = {
       methods.iterator
         .filter(!_.isParam)
-        .filter(_.name != "<init>") // TODO support package private constructors
+        .filter(_.name != CONSTRUCTOR) // TODO support package private constructors
         .toSeq.groupBy(_.name).foreach { case (name, pickleMethods) =>
-          val bytecodeMethods = clazz.methods.get(name).filter(!_.isBridge).toList
-          // #630 one way this happens with mixins:
-          //    trait Foo { def bar(x: Int): Int = x }
-          //    class Bar extends Foo { private[foo] def bar: String = "" }
-          // during pickling Bar only contains the package private bar()String
-          // but later in the backend the classfile gets a copy of bar(Int)Int
-          // so the "bar" method in the pickle doesn't know which bytecode method it's about
-          // the proper way to fix this involves unpickling the types in the pickle,
-          // then implementing the rules of erasure, so that you can then match the pickle
-          // types with the erased types.  Meanwhile we'll just ignore them, worst case users
-          // need to add a filter like they have for years.
-          if (pickleMethods.size == bytecodeMethods.size && pickleMethods.exists(_.isScopedPrivate)) {
-            bytecodeMethods.zip(pickleMethods).foreach { case (bytecodeMeth, pickleMeth) =>
-              bytecodeMeth.scopedPrivate = pickleMeth.isScopedPrivate
-            }
-          }
+          doMethodOverloads(clazz, name, pickleMethods)
       }
     }
 
+    def doMethodOverloads(clazz: ClassInfo, name: String, pickleMethods: Seq[SymbolInfo]) = {
+      val bytecodeMethods = clazz.methods.get(name).filter(!_.isBridge).toList
+      // #630 one way this happens with mixins:
+      //    trait Foo { def bar(x: Int): Int = x }
+      //    class Bar extends Foo { private[foo] def bar: String = "" }
+      // during pickling Bar only contains the package private bar()String
+      // but later in the backend the classfile gets a copy of bar(Int)Int
+      // so the "bar" method in the pickle doesn't know which bytecode method it's about
+      // the proper way to fix this involves unpickling the types in the pickle,
+      // then implementing the rules of erasure, so that you can then match the pickle
+      // types with the erased types.  Meanwhile we'll just ignore them, worst case users
+      // need to add a filter like they have for years.
+      if (pickleMethods.size == bytecodeMethods.size && pickleMethods.exists(_.isScopedPrivate)) {
+        bytecodeMethods.zip(pickleMethods).foreach { case (bytecodeMeth, pickleMeth) =>
+          bytecodeMeth.scopedPrivate = pickleMeth.isScopedPrivate
+        }
+      }
+    }
 
     for (num <- index.indices) {
       buf.atIndex(index(num)) {
@@ -157,5 +159,7 @@ object MimaUnpickler {
     final val PARAM      = 1L << 13
   }
 
+  final val CONSTRUCTOR       = "<init>"
+  final val LOCAL_CHILD       = "<local child>"
   final val REFINE_CLASS_NAME = "<refinement>"
 }
