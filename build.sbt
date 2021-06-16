@@ -45,7 +45,7 @@ val core = project.settings(
   MimaSettings.mimaSettings,
   apiMappings ++= {
     // WORKAROUND https://github.com/scala/bug/issues/9311
-    // from https://stackoverflow.com/a/31322970/463761
+    // from here: https://stackoverflow.com/a/31322970/463761
     sys.props.get("sun.boot.class.path").toList
       .flatMap(_.split(java.io.File.pathSeparator))
       .collectFirst { case str if str.endsWith(java.io.File.separator + "rt.jar") =>
