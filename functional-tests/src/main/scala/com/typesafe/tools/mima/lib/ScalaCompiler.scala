@@ -9,7 +9,7 @@ import coursier._
 final class ScalaCompiler(val version: String) {
   val isScala3 = version.startsWith("3.")
 
-  val name = if (isScala3) ModuleName(s"scala3-compiler_$version") else name"scala-compiler"
+  val name = if (isScala3) ModuleName(s"scala3-compiler_3") else name"scala-compiler"
   val jars = Coursier.fetch(Dependency(Module(org"org.scala-lang", name), version))
 
   val classLoader = new URLClassLoader(jars.toArray.map(_.toURI.toURL), parentClassLoader())

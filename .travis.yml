@@ -14,10 +14,10 @@ jdk:
 
 jobs:
   include:
-  - { name: testFunctional 2.11, script: sbt "functional-tests/runMain com.typesafe.tools.mima.lib.UnitTests -211" }
-  - { name: testFunctional 2.12, script: sbt "functional-tests/runMain com.typesafe.tools.mima.lib.UnitTests -212" }
-  - { name: testFunctional 2.13, script: sbt "functional-tests/runMain com.typesafe.tools.mima.lib.UnitTests -213" }
-  - { name: testFunctional 3,    script: sbt "functional-tests/runMain com.typesafe.tools.mima.lib.UnitTests -3"   }
+  - { name: testFunctional 2.11, script: sbt "functional-tests/runMain com.typesafe.tools.mima.lib.UnitTests -2.11" }
+  - { name: testFunctional 2.12, script: sbt "functional-tests/runMain com.typesafe.tools.mima.lib.UnitTests -2.12" }
+  - { name: testFunctional 2.13, script: sbt "functional-tests/runMain com.typesafe.tools.mima.lib.UnitTests -2.13" }
+  - { name: testFunctional 3,    script: sbt "functional-tests/runMain com.typesafe.tools.mima.lib.UnitTests -3"    }
   - { name: scripted 1/2, script: sbt "scripted sbt-mima-plugin/*1of2" }
   - { name: scripted 2/2, script: sbt "scripted sbt-mima-plugin/*2of2" }
 
