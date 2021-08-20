@@ -12,7 +12,7 @@ private object AbsFile {
   }
 }
 
-private[core] final case class AbsFile(name: String)(path: String, bytes: () => Array[Byte]) {
+private[core] final case class AbsFile(name: String)(val path: String, bytes: () => Array[Byte]) {
   // Not defined as a simple wrapper of java.nio.file.Path, because Path#equals uses its FileSystem,
   // differently to scala-reflect's AbstractFile, which breaks things like `distinct`.
 

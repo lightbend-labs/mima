@@ -2,8 +2,7 @@ package com.typesafe.tools.mima.core
 
 object PickleFormat {
 
-  /***************************************************
-   * Symbol table attribute format:
+  /** Symbol table attribute format:
    *   Symtab         = nentries_Nat {Entry}
    *
    *         NameInfo     = <character sequence of length len_Nat in UTF-8 format>
@@ -15,8 +14,9 @@ object PickleFormat {
    *   ConstAnnotArg      = Constant | AnnotInfo | AnnotArgArray
    *
    *   len is remaining length after `len`.
-   *
-   *   Entry = \
+   */
+
+  /** Entry = \
    *     1 TERMNAME len_Nat NameInfo
    *   | 2 TYPENAME len_Nat NameInfo
    *   |
@@ -66,8 +66,9 @@ object PickleFormat {
    *   | 44 ANNOTARGARRAY    len_Nat {constAnnotArg_Ref}
    *   | 47 DEBRUIJNINDEXtpe len_Nat          level_Nat    index_Nat   // deprecated
    *   | 48   EXISTENTIALtpe len_Nat           type_Ref  {symbol_Ref}
-   *   |
-   *   | 49 TREE len_Nat
+   */
+
+  /**  | 49 TREE len_Nat
    *   |    1           EMPTYtree
    *   |    2         PACKAGEtree type_Ref      sym_Ref        mods_Ref  name_Ref      {tree_Ref}
    *   |    3           CLASStree type_Ref      sym_Ref        mods_Ref  name_Ref       tree_Ref {tree_Ref}
@@ -138,15 +139,15 @@ object PickleFormat {
   // tpe
   final val             NOtpe = 11
   final val       NOPREFIXtpe = 12
-  final val         THIStpe   = 13
+  final val           THIStpe = 13
   final val         SINGLEtpe = 14
-  final val      CONSTANTtpe  = 15
-  final val      TYPEREFtpe   = 16
-  final val      TYPEBOUNDStpe= 17
-  final val      REFINEDtpe   = 18
+  final val       CONSTANTtpe = 15
+  final val        TYPEREFtpe = 16
+  final val     TYPEBOUNDStpe = 17
+  final val        REFINEDtpe = 18
   final val      CLASSINFOtpe = 19
-  final val      METHODtpe    = 20
-  final val      POLYtpe      = 21
+  final val         METHODtpe = 20
+  final val           POLYtpe = 21
   final val IMPLICITMETHODtpe = 22    // no longer generated
 
   // literal

@@ -17,6 +17,7 @@ private[core] sealed class BytesReader(buf: Array[Byte]) {
   final def getFloat(idx: Int): Float   = intBitsToFloat(getInt(idx))
   final def getDouble(idx: Int): Double = longBitsToDouble(getLong(idx))
 
+//final def getString(idx: Int, len: Int): String = new java.io.DataInputStream(new java.io.ByteArrayInputStream(buf, idx, len)).readUTF
   final def getString(idx: Int, len: Int): String = new String(buf, idx, len, StandardCharsets.UTF_8)
 
   final def getBytes(idx: Int, bytes: Array[Byte]): Unit = System.arraycopy(buf, idx, bytes, 0, bytes.length)
@@ -26,6 +27,7 @@ private[core] sealed class BytesReader(buf: Array[Byte]) {
 private[core] final class BufferReader(buf: Array[Byte], val path: String) extends BytesReader(buf) {
   /** the buffer pointer */
   var bp: Int = 0
+  def pos = bp
 
   def nextByte: Byte = { val b = getByte(bp); bp += 1; b }
   def nextChar: Char = { val c = getChar(bp); bp += 2; c } // Char = unsigned 2-bytes, aka u16
@@ -35,4 +37,10 @@ private[core] final class BufferReader(buf: Array[Byte], val path: String) exten
   def acceptChar(exp: Char, ctx: => String = "") = { val obt = nextChar; assert(obt == exp, s"Expected $exp, obtained $obt$ctx"); obt }
 
   def skip(n: Int): Unit = bp += n
+
+  def atIndex[T](i: Int)(body: => T): T = {
+    val saved = bp
+    bp = i
+    try body finally bp = saved
+  }
 }

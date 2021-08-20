@@ -17,10 +17,10 @@ object Test {
       val failureNames = failures.map { case ((t1, _)) => t1.name }
       println("Failures:")
       failureNames.foreach(name => println(s"* $name"))
-      println(s"functional-tests/Test/run ${failureNames.mkString(" ")}")
+      println(s"Run: functional-tests/Test/run ${failureNames.mkString(" ")}")
     }
     failures.foldLeft(Try(())) {
-      case (res @ Failure(e1), (_, Failure(e2))) => e1.addSuppressed(e2); res
+      case (res @ Failure(e1), (_, Failure(e2))) => if (e1 != e2) e1.addSuppressed(e2); res
       case (res @ Failure(_), _)                 => res
       case (_, (_, res))                         => res
     }

@@ -15,6 +15,7 @@ object Analyzer {
       // if it is missing a trait implementation class, then no error should be reported
       // since there should be already errors, i.e., missing methods...
       if !oldclazz.isImplClass
+      if !oldclazz.isExperimental
       problem <- newpkg.classes.get(oldclazz.bytecodeName) match {
         case Some(newclazz) => analyze(oldclazz, newclazz, log)
         case None           => List(MissingClassProblem(oldclazz))

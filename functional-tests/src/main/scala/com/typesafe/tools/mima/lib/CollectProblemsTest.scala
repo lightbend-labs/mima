@@ -48,7 +48,7 @@ object CollectProblemsTest {
       case "\n" => Success(())
       case msg  =>
         Console.err.println(msg)
-        Failure(new Exception("CollectProblemsTest failure"))
+        Failure(new Exception("CollectProblemsTest failure", null, false, false) {})
     }
   }
 }
