@@ -52,9 +52,9 @@ object TestCli {
 
   @tailrec private def readArgs(args: List[String], conf: Conf): Conf = args match {
     case "-3"   :: xs                  => readArgs(xs, conf.copy(scalaVersions = scala3   :: conf.scalaVersions))
-    case "-213" :: xs                  => readArgs(xs, conf.copy(scalaVersions = scala213 :: conf.scalaVersions))
-    case "-212" :: xs                  => readArgs(xs, conf.copy(scalaVersions = scala212 :: conf.scalaVersions))
-    case "-211" :: xs                  => readArgs(xs, conf.copy(scalaVersions = scala211 :: conf.scalaVersions))
+    case "-2.13" :: xs                 => readArgs(xs, conf.copy(scalaVersions = scala213 :: conf.scalaVersions))
+    case "-2.12" :: xs                 => readArgs(xs, conf.copy(scalaVersions = scala212 :: conf.scalaVersions))
+    case "-2.11" :: xs                 => readArgs(xs, conf.copy(scalaVersions = scala211 :: conf.scalaVersions))
     case "--scala-version" :: sv :: xs => readArgs(xs, conf.copy(scalaVersions = sv       :: conf.scalaVersions))
     case "--cross" :: xs               => readArgs(xs, conf.copy(scalaVersions = allScalaVersions))
     case s :: xs                       => readArgs(xs, conf.copy(dirs = testDirs(s) ::: conf.dirs))
