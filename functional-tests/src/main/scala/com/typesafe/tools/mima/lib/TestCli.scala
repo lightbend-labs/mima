@@ -11,7 +11,7 @@ object TestCli {
   val scala211 = "2.11.12"
   val scala212 = "2.12.14"
   val scala213 = "2.13.6"
-  val scala3   = "3.0.0-RC3"
+  val scala3   = "3.0.1"
   val hostScalaVersion = StdLibProps.scalaPropOrNone("maven.version.number").get
   val allScalaVersions = List(scala211, scala212, scala213, scala3)
   val testsDir = Directory("functional-tests/src/test")
