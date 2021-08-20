@@ -1,8 +1,10 @@
+name: ci
+
 on:
   pull_request:
   push:
     branches: ['main']
-    tags: ['v[0-9]']
+    tags: ['[0-9]']
 
 jobs:
   build:
@@ -17,7 +19,7 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
       - uses: coursier/cache-action@v6
-      - run: "sbt test mimaReportBinaryIssues 'set sbtplugin/scriptedSbt := \"1.2.8\"' 'scripted sbt-mima-plugin/minimal' IntegrationTest/test"
+      - run: "sbt test mimaReportBinaryIssues 'set sbtplugin/scriptedSbt := \"1.2.8\"' 'scripted sbt-mima-plugin/minimal'"
   testFunctional:
     needs: build
     strategy:
@@ -42,3 +44,11 @@ jobs:
       - uses: olafurpg/setup-scala@v13
       - uses: coursier/cache-action@v6
       - run: sbt "scripted sbt-mima-plugin/*${{ matrix.scripted }}"
+  testIntegration:
+    needs: build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v2
+      - uses: olafurpg/setup-scala@v13
+      - uses: coursier/cache-action@v6
+      - run: sbt IntegrationTest/test
