@@ -1,7 +1,7 @@
 package com.typesafe.tools.mima.core
 
 import java.io.IOException
-import java.nio.file.Paths
+import java.nio.file.Files
 
 import ClassfileConstants._
 
@@ -145,10 +145,9 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
 
   private def parseTasty(clazz: ClassInfo) = {
     // TODO: sanity check UUIDs
-    // TODO: read from jars
-    val path  = pool.file.path.stripSuffix(".class") + ".tasty"
-    val bytes = AbsFile(Paths.get(path)).toByteArray
-    TastyUnpickler.unpickleClass(new TastyReader(bytes), clazz, path)
+    val tpath = pool.file.jpath.resolveSibling(pool.file.name.stripSuffix(".class") + ".tasty")
+    val bytes = Files.readAllBytes(tpath)
+    TastyUnpickler.unpickleClass(new TastyReader(bytes), clazz, tpath.toString)
   }
 
   private final val ScalaSignatureAnnot     = "Lscala.reflect.ScalaSignature;"
@@ -165,7 +164,7 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
 
 object ClassfileParser {
   private[core] def parseInPlace(clazz: ClassInfo, file: AbsFile): Unit = {
-    val in = new BufferReader(file.toByteArray, file)
+    val in = new BufferReader(file)
     parseHeader(in, file)
     val pool = ConstantPool.parseNew(clazz.owner.definitions, in)
     val parser = new ClassfileParser(in, pool)

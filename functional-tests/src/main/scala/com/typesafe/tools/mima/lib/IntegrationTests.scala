@@ -65,19 +65,24 @@ object IntegrationTests {
 
 object CompareJars {
   def main(args: Array[String]): Unit = args.toList match {
+    case Seq(file) => runTry(compare(new File(file), new File(file), Nil))
     case Seq(groupId, artifactId, version1, version2, attrStrs @ _*) =>
-      val direction = Backwards
       val attrs = attrStrs.map { s => val Array(k, v) = s.split('='); k -> v }.toMap
       val module = Module(Organization(groupId), ModuleName(artifactId)).withAttributes(attrs)
-      val tri = for {
-        (v1,  _) <- IntegrationTests.fetchArtifact(Dependency(module, version1))
+      runTry(for {
+        (v1, _)  <- IntegrationTests.fetchArtifact(Dependency(module, version1))
         (v2, cp) <- IntegrationTests.fetchArtifact(Dependency(module, version2))
-        problems = CollectProblemsTest.collectProblems(cp, v1, v2, direction)
-        () <- CollectProblemsTest.diffProblems(problems, Nil, direction)
-      } yield ()
-      tri match {
-        case Success(())  =>
-        case Failure(exc) => System.err.println(s"$exc"); throw new Exception("fail")
-      }
+        ()       <- compare(v1, v2, cp)
+      } yield ())
+  }
+
+  def compare(v1: File, v2: File, cp: Seq[File], direction: Direction = Backwards): Try[Unit] = {
+    val problems = CollectProblemsTest.collectProblems(cp, v1, v2, direction)
+    CollectProblemsTest.diffProblems(problems, Nil, direction)
+  }
+
+  def runTry(tri: Try[Unit]) = tri match {
+    case Success(())  =>
+    case Failure(exc) => System.err.println(s"$exc"); throw new Exception("fail")
   }
 }

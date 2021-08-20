@@ -4,19 +4,13 @@ import java.nio.file._
 
 import scala.collection.JavaConverters._
 
-private object AbsFile {
-  def apply(p: Path): AbsFile = {
-    val name = p.getFileName.toString.stripPrefix("/")
-    val path = p.toString.stripPrefix("/")
-    AbsFile(name)(path, () => Files.readAllBytes(p))
-  }
-}
-
-private[core] final case class AbsFile(name: String)(val path: String, bytes: () => Array[Byte]) {
+private[core] final case class AbsFile(name: String)(val jpath: Path) {
   // Not defined as a simple wrapper of java.nio.file.Path, because Path#equals uses its FileSystem,
   // differently to scala-reflect's AbstractFile, which breaks things like `distinct`.
+  def this(path: Path) = this(path.getFileName.toString.stripPrefix("/"))(path)
 
-  def toByteArray       = bytes()
+  val path              = jpath.toString.stripPrefix("/")
+  def toByteArray       = Files.readAllBytes(jpath)
   override def toString = path
 }
 
@@ -74,7 +68,7 @@ private[mima] object ClassPath {
 
   private final case class JrtCp(fs: FileSystem) extends ClassPath {
     def packages(pkg: String) = packageToModules.keys.toStream.filter(pkgContains(pkg, _)).sorted
-    def  classes(pkg: String) = packageToModules(pkg).flatMap(pkgClasses(_, pkg)).sortBy(_.toString).map(AbsFile(_))
+    def  classes(pkg: String) = packageToModules(pkg).flatMap(pkgClasses(_, pkg)).sortBy(_.toString).map(new AbsFile(_))
     def asClassPathString     = fs.toString
 
     private val packageToModules = listDir(fs.getPath("/packages"))
@@ -84,7 +78,7 @@ private[mima] object ClassPath {
 
   private final case class PathCp(src: Path)(root: Path) extends ClassPath {
     def packages(pkg: String) = listDir(pkgResolve(root, pkg)).filter(isPackage).map(pkgEntry(pkg, _))
-    def  classes(pkg: String) = listDir(pkgResolve(root, pkg)).filter(isClass).map(AbsFile(_))
+    def  classes(pkg: String) = listDir(pkgResolve(root, pkg)).filter(isClass).map(new AbsFile(_))
     def asClassPathString     = src.toString
   }
 

@@ -27,7 +27,7 @@ private[core] sealed abstract class BytesReader(buf: Array[Byte]) {
 }
 
 /** A BytesReader which also holds a mutable pointer to where it will read next. */
-private[core] final class BufferReader(buf: Array[Byte], val file: AbsFile) extends BytesReader(buf) {
+private[core] final class BufferReader(val file: AbsFile) extends BytesReader(file.toByteArray) {
   /** the buffer pointer */
   var bp: Int = 0
   def pos = bp
