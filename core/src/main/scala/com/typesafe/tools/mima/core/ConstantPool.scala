@@ -40,6 +40,8 @@ private[core]
 final class ConstantPool private (definitions: Definitions, in: BytesReader, starts: Array[Int]) {
   import ConstantPool._, ClassInfo.ObjectClass
 
+  def file: AbsFile = in.file
+
   private val length       = starts.length
   private val values       = new Array[AnyRef](length)
   private val internalized = new Array[String](length)
@@ -73,33 +75,28 @@ final class ConstantPool private (definitions: Definitions, in: BytesReader, sta
 
   def getSuperClass(index: Int): ClassInfo = if (index == 0) ObjectClass else getClassInfo(index)
 
-  def getBytes(index: Int, pos: Int): Array[Byte] = {
-    if (index <= 0 || length <= index) errorBadIndex(index, pos: Int)
+  def getBytes(index: Int): Array[Byte] = {
+    if (index <= 0 || length <= index) errorBadIndex(index, in.pos)
     else values(index) match {
       case xs: Array[Byte] => xs
-      case _ =>
-        val start = firstExpecting(index, CONSTANT_UTF8)
-        val len = in.getChar(start).toInt
-        val bytes = new Array[Byte](len)
-        in.getBytes(start + 2, bytes)
-        recordAtIndex(getSubArray(bytes), index)
+      case _               => recordAtIndex(getSubArray(readBytes(index)), index)
     }
   }
 
-  def getBytes(indices: List[Int], pos: Int): Array[Byte] = {
-    val head = indices.head
-    values(head) match {
+  def getBytes(indices: List[Int]): Array[Byte] = {
+    for (index <- indices) if (index <= 0 || length <= index) errorBadIndex(index, in.pos)
+    val index = indices.head
+    values(index) match {
       case xs: Array[Byte] => xs
-      case _               =>
-        val arr: Array[Byte] = indices.toArray.flatMap { index =>
-          if (index <= 0 || length <= index) errorBadIndex(index, pos)
-          val start  = firstExpecting(index, CONSTANT_UTF8)
-          val result = new Array[Byte](in.getChar(start).toInt)
-          in.getBytes(start + 2, result)
-          result
-        }
-        recordAtIndex(getSubArray(arr), head)
+      case _               => recordAtIndex(getSubArray(indices.flatMap(readBytes).toArray), index)
     }
+  }
+
+  private def readBytes(index: Int) = {
+    val start = firstExpecting(index, CONSTANT_UTF8)
+    val bytes = new Array[Byte](in.getChar(start).toInt)
+    in.getBytes(start + 2, bytes)
+    bytes
   }
 
   private def indexedOrUpdate[A <: AnyRef, R <: A](arr: Array[A], index: Int)(mk: => R): R = {

@@ -5,7 +5,10 @@ import java.lang.Double.longBitsToDouble
 import java.nio.charset.StandardCharsets
 
 /** Reads and interprets the bytes in a class file byte-buffer. */
-private[core] sealed class BytesReader(buf: Array[Byte]) {
+private[core] sealed abstract class BytesReader(buf: Array[Byte]) {
+  def pos: Int
+  def file: AbsFile
+
   final def getByte(idx: Int): Byte = buf(idx)
   final def getChar(idx: Int): Char = (((buf(idx) & 0xff) << 8) + (buf(idx + 1) & 0xff)).toChar
 
@@ -24,7 +27,7 @@ private[core] sealed class BytesReader(buf: Array[Byte]) {
 }
 
 /** A BytesReader which also holds a mutable pointer to where it will read next. */
-private[core] final class BufferReader(buf: Array[Byte], val path: String) extends BytesReader(buf) {
+private[core] final class BufferReader(buf: Array[Byte], val file: AbsFile) extends BytesReader(buf) {
   /** the buffer pointer */
   var bp: Int = 0
   def pos = bp
