@@ -36,6 +36,9 @@ private[mima] final class FieldInfo(owner: ClassInfo, bytecodeName: String, flag
 private[mima] final class MethodInfo(owner: ClassInfo, bytecodeName: String, flags: Int, descriptor: String)
     extends MemberInfo(owner, bytecodeName, flags, descriptor)
 {
+  final var _experimental  = false
+  final def isExperimental = _experimental
+
   def methodString: String      = s"$shortMethodString in ${owner.classString}"
   def shortMethodString: String = {
     val prefix = if (hasSyntheticName) if (isExtensionMethod) "extension " else "synthetic " else ""

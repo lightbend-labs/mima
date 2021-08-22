@@ -7,17 +7,17 @@ object TastyPrinter {
   def printPickle(in: TastyReader, path: String): Unit = {
     println(s"unpickling $path")
 
-    val header = readHeader(in)
-    printHeader(header)
+    //val header =
+      readHeader(in)
+    //printHeader(header)
 
     val names = readNames(in)
-    printNames(names)
+    //printNames(names)
 
-    val sectionReaders = readSectionReaders(in, names)
-    printTrees(sectionReaders)
+    printAllTrees(getTreeReader(in, names), names)
   }
 
-  private def printHeader(header: Header) = {
+  def printHeader(header: Header) = {
     val (h1, h2, h3, h4)                     = header.header
     val (versionMaj, versionMin, versionExp) = header.version
     println(s"Header:  ${List(h1, h2, h3, h4).map(_.toHexString.toUpperCase).mkString(" ")}")
@@ -26,20 +26,15 @@ object TastyPrinter {
     println(s"UUID:    ${header.uuid.toString.toUpperCase}")
   }
 
-  private def printNames(names: Names) = {
+  def printNames(names: Names) = {
     println("Names:")
     for ((name, idx) <- names.zipWithIndex)
       println(s"${nameStr(f"$idx%4d")}: ${name.debug}")
   }
 
-  private def printTrees(sectionReaders: SectionReaders) = {
-    print("Trees:")
-    sectionReaders.doTrees(printAllTrees)
-  }
-
-  private def printAllTrees(in: TastyReader, names: Names) = {
+  def printAllTrees(in: TastyReader, names: Names) = {
     import in._
-    print(s" start=${startAddr.index} base=$base current=${currentAddr.index} end=${endAddr.index}; ${endAddr.index - startAddr.index} bytes of AST")
+    print(s"Trees: start=${startAddr.index} base=$base current=${currentAddr.index} end=${endAddr.index}; ${endAddr.index - startAddr.index} bytes of AST")
 
     var indent      = 0
     def newLine()   = print(s"\n ${treeStr(f"${index(currentAddr) - index(startAddr)}%5d")}:" + " " * indent)

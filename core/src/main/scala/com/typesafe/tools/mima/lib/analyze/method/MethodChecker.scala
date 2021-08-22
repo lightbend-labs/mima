@@ -20,7 +20,7 @@ private[analyze] object MethodChecker {
   }
 
   private def checkExisting1(oldmeth: MethodInfo, newclazz: ClassInfo): Option[Problem] = {
-    if (oldmeth.nonAccessible)
+    if (oldmeth.nonAccessible || oldmeth.isExperimental)
       None
     else if (newclazz.isClass) {
       if (oldmeth.isDeferred)

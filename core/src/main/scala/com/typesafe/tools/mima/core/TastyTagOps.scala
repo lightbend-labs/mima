@@ -202,8 +202,9 @@ object TastyTagOps {
     case MATCHtype      => "MATCHtype"
     case MATCHtpt       => "MATCHtpt"
     case MATCHCASEtype  => "MATCHCASEtype"
+    case HOLE           => "HOLE"
 
-    case HOLE => "HOLE"
+    case tag => s"BadTag($tag)"
   }
 
   sealed abstract class AstCategory(val range: Range.Inclusive)

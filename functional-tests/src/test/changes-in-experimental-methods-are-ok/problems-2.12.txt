@@ -1,0 +1,2 @@
+# Haven't implemented the ScalaSig unpickling part, only TASTy
+method foo()Int in class pkg1.pkg2.Foo does not have a correspondent in new version
