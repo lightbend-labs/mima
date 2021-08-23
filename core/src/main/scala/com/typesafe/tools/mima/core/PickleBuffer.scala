@@ -4,6 +4,7 @@ final class PickleBuffer(val bytes: Array[Byte]) {
   var readIndex = 0
 
   def readByte(): Int = { val x = bytes(readIndex).toInt; readIndex += 1; x }
+  def nextByte(): Int = bytes(readIndex + 1).toInt
 
   /** Read a natural number in big endian format, base 128. All but the last digits have bit 0x80 set. */
   def readNat(): Int = readLongNat().toInt
@@ -30,6 +31,8 @@ final class PickleBuffer(val bytes: Array[Byte]) {
     x << leading >> leading
   }
 
+  /** The indices in the bytes array where each consecutive entry starts.
+   *  The length of the array is the number of entries in the pickle bytes. */
   def createIndex: Array[Int] = {
     atIndex(0) {
       readNat(); readNat() // discard version
@@ -43,22 +46,11 @@ final class PickleBuffer(val bytes: Array[Byte]) {
     }
   }
 
-  /** Returns the buffer as a sequence of (Int, Array[Byte]) representing
-   *  (tag, data) of the individual entries.  Saves and restores buffer state.
-   */
-  def toIndexedSeq: IndexedSeq[(Int, Array[Byte])] = {
-    for (idx <- createIndex) yield {
-      atIndex(idx) {
-        val tag = readByte()
-        val len = readNat()
-        tag -> bytes.slice(readIndex, readIndex + len)
-      }
-    }
-  }
-
   def atIndex[T](i: Int)(body: => T): T = {
     val saved = readIndex
     readIndex = i
     try body finally readIndex = saved
   }
+
+  def assertEnd(end: Int) = assert(readIndex == end, s"Expected at end=$end but readIndex=$readIndex")
 }

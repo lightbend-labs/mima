@@ -5,7 +5,10 @@ import java.lang.Double.longBitsToDouble
 import java.nio.charset.StandardCharsets
 
 /** Reads and interprets the bytes in a class file byte-buffer. */
-private[core] sealed class BytesReader(buf: Array[Byte]) {
+private[core] sealed abstract class BytesReader(buf: Array[Byte]) {
+  def pos: Int
+  def file: AbsFile
+
   final def getByte(idx: Int): Byte = buf(idx)
   final def getChar(idx: Int): Char = (((buf(idx) & 0xff) << 8) + (buf(idx + 1) & 0xff)).toChar
 
@@ -17,15 +20,17 @@ private[core] sealed class BytesReader(buf: Array[Byte]) {
   final def getFloat(idx: Int): Float   = intBitsToFloat(getInt(idx))
   final def getDouble(idx: Int): Double = longBitsToDouble(getLong(idx))
 
+//final def getString(idx: Int, len: Int): String = new java.io.DataInputStream(new java.io.ByteArrayInputStream(buf, idx, len)).readUTF
   final def getString(idx: Int, len: Int): String = new String(buf, idx, len, StandardCharsets.UTF_8)
 
   final def getBytes(idx: Int, bytes: Array[Byte]): Unit = System.arraycopy(buf, idx, bytes, 0, bytes.length)
 }
 
 /** A BytesReader which also holds a mutable pointer to where it will read next. */
-private[core] final class BufferReader(buf: Array[Byte], val path: String) extends BytesReader(buf) {
+private[core] final class BufferReader(val file: AbsFile) extends BytesReader(file.toByteArray) {
   /** the buffer pointer */
   var bp: Int = 0
+  def pos = bp
 
   def nextByte: Byte = { val b = getByte(bp); bp += 1; b }
   def nextChar: Char = { val c = getChar(bp); bp += 2; c } // Char = unsigned 2-bytes, aka u16
@@ -35,4 +40,10 @@ private[core] final class BufferReader(buf: Array[Byte], val path: String) exten
   def acceptChar(exp: Char, ctx: => String = "") = { val obt = nextChar; assert(obt == exp, s"Expected $exp, obtained $obt$ctx"); obt }
 
   def skip(n: Int): Unit = bp += n
+
+  def atIndex[T](i: Int)(body: => T): T = {
+    val saved = bp
+    bp = i
+    try body finally bp = saved
+  }
 }

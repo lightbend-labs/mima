@@ -23,7 +23,7 @@ object AppRunTest {
       case _                     => Success(())
     }
     () <- testCase.runMain(v2) match { // test: run app, compiled with v1, with v2
-      case Failure(t) if !pending && expectOk   => Failure(t)
+      case Failure(t)  if !pending &&  expectOk => Failure(t)
       case Success(()) if !pending && !expectOk => Failure(new Exception("expected running App to fail"))
       case _                                    => Success(())
     }

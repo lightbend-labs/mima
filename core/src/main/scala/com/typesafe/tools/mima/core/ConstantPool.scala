@@ -12,18 +12,15 @@ private[core] object ConstantPool {
       starts(i) = in.bp
       i += 1
       (in.nextByte.toInt: @switch) match {
-        case CONSTANT_UTF8 | CONSTANT_UNICODE       => in.skip(in.nextChar)
-        case CONSTANT_CLASS | CONSTANT_STRING
-           | CONSTANT_METHODTYPE
-           | CONSTANT_MODULE | CONSTANT_PACKAGE     => in.skip(2)
-        case CONSTANT_METHODHANDLE                  => in.skip(3)
-        case CONSTANT_INTEGER | CONSTANT_FLOAT
-           | CONSTANT_FIELDREF | CONSTANT_METHODREF
-           | CONSTANT_INTFMETHODREF
-           | CONSTANT_NAMEANDTYPE
-           | CONSTANT_INVOKEDYNAMIC                 => in.skip(4)
-        case CONSTANT_LONG | CONSTANT_DOUBLE        => in.skip(8); i += 1
-        case tag                                    => errorBadTag(tag, in.bp - 1)
+        case CONSTANT_UTF8 | CONSTANT_UNICODE                                => in.skip(in.nextChar)
+        case CONSTANT_CLASS | CONSTANT_STRING | CONSTANT_METHODTYPE          => in.skip(2)
+        case CONSTANT_MODULE | CONSTANT_PACKAGE                              => in.skip(2)
+        case CONSTANT_METHODHANDLE                                           => in.skip(3)
+        case CONSTANT_FIELDREF | CONSTANT_METHODREF | CONSTANT_INTFMETHODREF => in.skip(4)
+        case CONSTANT_NAMEANDTYPE | CONSTANT_INTEGER | CONSTANT_FLOAT        => in.skip(4)
+        case CONSTANT_INVOKEDYNAMIC                                          => in.skip(4)
+        case CONSTANT_LONG | CONSTANT_DOUBLE                                 => in.skip(8); i += 1
+        case tag                                                             => errorBadTag(tag, in.bp - 1)
       }
     }
     new ConstantPool(definitions, in, starts)
@@ -42,6 +39,8 @@ private[core] object ConstantPool {
 private[core]
 final class ConstantPool private (definitions: Definitions, in: BytesReader, starts: Array[Int]) {
   import ConstantPool._, ClassInfo.ObjectClass
+
+  def file: AbsFile = in.file
 
   private val length       = starts.length
   private val values       = new Array[AnyRef](length)
@@ -76,33 +75,28 @@ final class ConstantPool private (definitions: Definitions, in: BytesReader, sta
 
   def getSuperClass(index: Int): ClassInfo = if (index == 0) ObjectClass else getClassInfo(index)
 
-  def getBytes(index: Int, pos: Int): Array[Byte] = {
-    if (index <= 0 || length <= index) errorBadIndex(index, pos: Int)
+  def getBytes(index: Int): Array[Byte] = {
+    if (index <= 0 || length <= index) errorBadIndex(index, in.pos)
     else values(index) match {
       case xs: Array[Byte] => xs
-      case _ =>
-        val start = firstExpecting(index, CONSTANT_UTF8)
-        val len = in.getChar(start).toInt
-        val bytes = new Array[Byte](len)
-        in.getBytes(start + 2, bytes)
-        recordAtIndex(getSubArray(bytes), index)
+      case _               => recordAtIndex(getSubArray(readBytes(index)), index)
     }
   }
 
-  def getBytes(indices: List[Int], pos: Int): Array[Byte] = {
-    val head = indices.head
-    values(head) match {
+  def getBytes(indices: List[Int]): Array[Byte] = {
+    for (index <- indices) if (index <= 0 || length <= index) errorBadIndex(index, in.pos)
+    val index = indices.head
+    values(index) match {
       case xs: Array[Byte] => xs
-      case _               =>
-        val arr: Array[Byte] = indices.toArray.flatMap { index =>
-          if (index <= 0 || length <= index) errorBadIndex(index, pos)
-          val start  = firstExpecting(index, CONSTANT_UTF8)
-          val result = new Array[Byte](in.getChar(start).toInt)
-          in.getBytes(start + 2, result)
-          result
-        }
-        recordAtIndex(getSubArray(arr), head)
+      case _               => recordAtIndex(getSubArray(indices.flatMap(readBytes).toArray), index)
     }
+  }
+
+  private def readBytes(index: Int) = {
+    val start = firstExpecting(index, CONSTANT_UTF8)
+    val bytes = new Array[Byte](in.getChar(start).toInt)
+    in.getBytes(start + 2, bytes)
+    bytes
   }
 
   private def indexedOrUpdate[A <: AnyRef, R <: A](arr: Array[A], index: Int)(mk: => R): R = {
@@ -120,7 +114,7 @@ final class ConstantPool private (definitions: Definitions, in: BytesReader, sta
     val start = starts(index)
     val tag = in.getByte(start).toInt
     if (tag == expectedTag) start + 1
-    else ConstantPool.errorBadTag(tag, start)
+    else errorBadTag(tag, start)
   }
 
   private def getSubArray(bytes: Array[Byte]): Array[Byte] = {

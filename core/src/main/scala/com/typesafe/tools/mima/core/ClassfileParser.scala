@@ -1,6 +1,7 @@
 package com.typesafe.tools.mima.core
 
 import java.io.IOException
+import java.nio.file.Files
 
 import ClassfileConstants._
 
@@ -56,14 +57,11 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
       case ScalaSignatureATTR    => isScala    = true
       case EnclosingMethodATTR   => clazz._isLocalClass = true
       case InnerClassesATTR      => clazz._innerClasses = parseInnerClasses(clazz)
+      case TASTYATTR             => parseTasty(clazz)
       case _                     =>
     }
-    if (isScala) {
-      val end = in.bp
-      in.bp = runtimeAnnotStart
-      parsePickle(clazz)
-      in.bp = end
-    }
+    if (isScala)
+      in.atIndex(runtimeAnnotStart)(parsePickle(clazz))
   }
 
   private def parseMemberAttributes(member: MemberInfo) = {
@@ -100,7 +98,7 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
   private def parsePickle(clazz: ClassInfo) = {
     def parseScalaSigBytes()     = {
       in.acceptByte(STRING_TAG, s" for ${clazz.description}")
-      pool.getBytes(in.nextChar, in.bp)
+      pool.getBytes(in.nextChar)
     }
 
     def parseScalaLongSigBytes() = {
@@ -109,7 +107,7 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
         in.acceptByte(STRING_TAG, s" for ${clazz.description}")
         in.nextChar.toInt
       }
-      pool.getBytes(entries.toList, in.bp)
+      pool.getBytes(entries.toList)
     }
 
     def checkScalaSigAnnotArg() = {
@@ -142,7 +140,14 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
       }
       i += 1
     }
-    MimaUnpickler.unpickleClass(new PickleBuffer(bytes), clazz, in.path)
+    MimaUnpickler.unpickleClass(new PickleBuffer(bytes), clazz, in.file.path)
+  }
+
+  private def parseTasty(clazz: ClassInfo) = {
+    // TODO: sanity check UUIDs
+    val tpath = pool.file.jpath.resolveSibling(pool.file.name.stripSuffix(".class") + ".tasty")
+    val bytes = Files.readAllBytes(tpath)
+    TastyUnpickler.unpickleClass(new TastyReader(bytes), clazz, tpath.toString)
   }
 
   private final val ScalaSignatureAnnot     = "Lscala.reflect.ScalaSignature;"
@@ -154,12 +159,13 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
   private final val RuntimeAnnotationATTR = "RuntimeVisibleAnnotations"
   private final val ScalaSignatureATTR    = "ScalaSig"
   private final val SignatureATTR         = "Signature"
+  private final val TASTYATTR             = "TASTY"
 }
 
 object ClassfileParser {
   private[core] def parseInPlace(clazz: ClassInfo, file: AbsFile): Unit = {
-    val in = new BufferReader(file.toByteArray, file.toString)
-    parseHeader(in, file.toString)
+    val in = new BufferReader(file)
+    parseHeader(in, file)
     val pool = ConstantPool.parseNew(clazz.owner.definitions, in)
     val parser = new ClassfileParser(in, pool)
     parser.parseClass(clazz)
@@ -176,7 +182,7 @@ object ClassfileParser {
   def isSynthetic(flags: Int)  = 0 != (flags & JAVA_ACC_SYNTHETIC)
   def isAnnotation(flags: Int) = 0 != (flags & JAVA_ACC_ANNOTATION)
 
-  private def parseHeader(in: BufferReader, file: String) = {
+  private def parseHeader(in: BufferReader, file: AbsFile) = {
     val magic = in.nextInt
     if (magic != JAVA_MAGIC)
       throw new IOException(

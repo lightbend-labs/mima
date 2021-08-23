@@ -108,10 +108,12 @@ final class TestCase(val baseDir: Directory, val scalaCompiler: ScalaCompiler, v
     val p    = baseDir.resolve(path).toFile
     val p211 = (p.parent / (s"${p.stripExtension}-2.11")).addExtension(p.extension).toFile
     val p212 = (p.parent / (s"${p.stripExtension}-2.12")).addExtension(p.extension).toFile
+    val p213 = (p.parent / (s"${p.stripExtension}-2.13")).addExtension(p.extension).toFile
     val p3   = (p.parent / (s"${p.stripExtension}-3"   )).addExtension(p.extension).toFile
     scalaBinaryVersion match {
       case "2.11" => if (p211.exists) p211 else if (p212.exists) p212 else p
       case "2.12" => if (p212.exists) p212 else p
+      case "2.13" => if (p213.exists) p213 else if (p212.exists) p212 else p
       case "3"    => if (p3.exists)   p3   else p
       case _      => p
     }

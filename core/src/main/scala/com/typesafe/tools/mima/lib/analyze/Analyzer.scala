@@ -7,7 +7,7 @@ import com.typesafe.tools.mima.lib.analyze.method.MethodChecker
 import com.typesafe.tools.mima.lib.analyze.template.TemplateChecker
 
 object Analyzer {
-  def analyze(oldpkg: PackageInfo, newpkg: PackageInfo, log: Logging): List[Problem] = {
+  def analyze(oldpkg: PackageInfo, newpkg: PackageInfo, log: Logging, excludeAnnots: List[AnnotInfo]): List[Problem] = {
     for {
       oldclazz <- oldpkg.accessibleClasses.toList.sortBy(_.bytecodeName)
       _ = log.verbose(s"analyzing $oldclazz")
@@ -15,8 +15,9 @@ object Analyzer {
       // if it is missing a trait implementation class, then no error should be reported
       // since there should be already errors, i.e., missing methods...
       if !oldclazz.isImplClass
+      if !excludeAnnots.exists(oldclazz.annotations.contains)
       problem <- newpkg.classes.get(oldclazz.bytecodeName) match {
-        case Some(newclazz) => analyze(oldclazz, newclazz, log)
+        case Some(newclazz) => analyze(oldclazz, newclazz, log, excludeAnnots)
         case None           => List(MissingClassProblem(oldclazz))
       }
     } yield {
@@ -25,7 +26,7 @@ object Analyzer {
     }
   }
 
-  def analyze(oldclazz: ClassInfo, newclazz: ClassInfo, log: Logging): List[Problem] = {
+  def analyze(oldclazz: ClassInfo, newclazz: ClassInfo, log: Logging, excludeAnnots: List[AnnotInfo]): List[Problem] = {
     if ((if (newclazz.isModuleClass) newclazz.module else newclazz).isScopedPrivate) Nil
     else {
       TemplateChecker.check(oldclazz, newclazz) match {
@@ -36,7 +37,7 @@ object Analyzer {
         case maybeProblem =>
           maybeProblem.toList :::
             FieldChecker.check(oldclazz, newclazz) :::
-            MethodChecker.check(oldclazz, newclazz)
+            MethodChecker.check(oldclazz, newclazz, excludeAnnots)
       }
     }
   }

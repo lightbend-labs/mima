@@ -11,6 +11,7 @@ class MimaKeys {
 
   final val mimaPreviousArtifacts       = settingKey[Set[ModuleID]]("Previous released artifacts used to test binary compatibility.")
   final val mimaReportBinaryIssues      = taskKey[Unit]("Logs all binary incompatibilities to the sbt console/logs.")
+  final val mimaExcludeAnnotations      = settingKey[Seq[String]]("The fully-qualified class names of annotations that exclude problems")
   final val mimaBinaryIssueFilters      = taskKey[Seq[ProblemFilter]]("Filters to apply to binary issues found. Applies both to backward and forward binary compatibility checking.")
   final val mimaFailOnProblem           = settingKey[Boolean]("if true, fail the build on binary incompatibility detection.")
   final val mimaFailOnNoPrevious        = settingKey[Boolean]("if true, fail the build if no previous artifacts are set.")

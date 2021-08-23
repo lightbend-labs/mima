@@ -20,21 +20,21 @@ final class MiMaLib(cp: Seq[File], log: Logging = ConsoleLogging) {
     pkg
   }
 
-  private def traversePackages(oldpkg: PackageInfo, newpkg: PackageInfo): List[Problem] = {
+  private def traversePackages(oldpkg: PackageInfo, newpkg: PackageInfo, excludeAnnots: List[AnnotInfo]): List[Problem] = {
     log.verbose(s"traversing $oldpkg")
-    Analyzer.analyze(oldpkg, newpkg, log) ++ oldpkg.packages.values.toSeq.sortBy(_.name).flatMap { p =>
+    Analyzer.analyze(oldpkg, newpkg, log, excludeAnnots) ++ oldpkg.packages.values.toSeq.sortBy(_.name).flatMap { p =>
       val q = newpkg.packages.getOrElse(p.name, NoPackageInfo)
-      traversePackages(p, q)
+      traversePackages(p, q, excludeAnnots)
     }
   }
 
   /** Return a list of problems for the two versions of the library. */
-  def collectProblems(oldJarOrDir: File, newJarOrDir: File): List[Problem] = {
+  def collectProblems(oldJarOrDir: File, newJarOrDir: File, excludeAnnots: List[String]): List[Problem] = {
     val oldPackage = createPackage(oldJarOrDir)
     val newPackage = createPackage(newJarOrDir)
     log.debug(s"[old version in: ${oldPackage.definitions}]")
     log.debug(s"[new version in: ${newPackage.definitions}]")
     log.debug(s"classpath: ${classpath.asClassPathString}")
-    traversePackages(oldPackage, newPackage)
+    traversePackages(oldPackage, newPackage, excludeAnnots.map(AnnotInfo(_)))
   }
 }

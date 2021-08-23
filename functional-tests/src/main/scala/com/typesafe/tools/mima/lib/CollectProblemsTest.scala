@@ -18,7 +18,7 @@ object CollectProblemsTest {
 
   def collectProblems(cp: Seq[File], v1: File, v2: File, direction: Direction): List[Problem] = {
     val (lhs, rhs) = direction.ordered(v1, v2)
-    new MiMaLib(cp).collectProblems(lhs, rhs)
+    new MiMaLib(cp).collectProblems(lhs, rhs, excludeAnnots)
   }
 
   def readOracleFile(oracleFile: File): List[String] = {
@@ -48,7 +48,9 @@ object CollectProblemsTest {
       case "\n" => Success(())
       case msg  =>
         Console.err.println(msg)
-        Failure(new Exception("CollectProblemsTest failure"))
+        Failure(new Exception("CollectProblemsTest failure", null, false, false) {})
     }
   }
+
+  private val excludeAnnots = List("mima.annotation.exclude")
 }

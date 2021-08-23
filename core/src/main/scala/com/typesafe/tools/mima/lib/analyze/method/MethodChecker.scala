@@ -3,24 +3,24 @@ package com.typesafe.tools.mima.lib.analyze.method
 import com.typesafe.tools.mima.core._
 
 private[analyze] object MethodChecker {
-  def check(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] =
-    checkExisting(oldclazz, newclazz) ::: checkNew(oldclazz, newclazz)
+  def check(oldclazz: ClassInfo, newclazz: ClassInfo, excludeAnnots: List[AnnotInfo]): List[Problem] =
+    checkExisting(oldclazz, newclazz, excludeAnnots) ::: checkNew(oldclazz, newclazz, excludeAnnots)
 
   /** Analyze incompatibilities that may derive from changes in existing methods. */
-  private def checkExisting(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
-    for (oldmeth <- oldclazz.methods.value; problem <- checkExisting1(oldmeth, newclazz)) yield problem
+  private def checkExisting(oldclazz: ClassInfo, newclazz: ClassInfo, excludeAnnots: List[AnnotInfo]): List[Problem] = {
+    for (oldmeth <- oldclazz.methods.value; problem <- checkExisting1(oldmeth, newclazz, excludeAnnots)) yield problem
   }
 
   /** Analyze incompatibilities that may derive from new methods in `newclazz`. */
-  private def checkNew(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
+  private def checkNew(oldclazz: ClassInfo, newclazz: ClassInfo, excludeAnnots: List[AnnotInfo]): List[Problem] = {
     val problems1 = if (newclazz.isClass) Nil else checkEmulatedConcreteMethodsProblems(oldclazz, newclazz)
-    val problems2 = checkDeferredMethodsProblems(oldclazz, newclazz)
-    val problems3 = checkInheritedNewAbstractMethodProblems(oldclazz, newclazz)
+    val problems2 = checkDeferredMethodsProblems(oldclazz, newclazz, excludeAnnots)
+    val problems3 = checkInheritedNewAbstractMethodProblems(oldclazz, newclazz, excludeAnnots)
     problems1 ::: problems2 ::: problems3
   }
 
-  private def checkExisting1(oldmeth: MethodInfo, newclazz: ClassInfo): Option[Problem] = {
-    if (oldmeth.nonAccessible)
+  private def checkExisting1(oldmeth: MethodInfo, newclazz: ClassInfo, excludeAnnots: List[AnnotInfo]): Option[Problem] = {
+    if (oldmeth.nonAccessible || excludeAnnots.exists(oldmeth.annotations.contains))
       None
     else if (newclazz.isClass) {
       if (oldmeth.isDeferred)
@@ -135,9 +135,10 @@ private[analyze] object MethodChecker {
     } yield problem
   }.toList
 
-  private def checkDeferredMethodsProblems(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
+  private def checkDeferredMethodsProblems(oldclazz: ClassInfo, newclazz: ClassInfo, excludeAnnots: List[AnnotInfo]): List[Problem] = {
     for {
       newmeth <- newclazz.deferredMethods.iterator
+      if !excludeAnnots.exists(newmeth.annotations.contains)
       problem <- oldclazz.lookupMethods(newmeth).find(_.descriptor == newmeth.descriptor) match {
         case None                                                    => Some(ReversedMissingMethodProblem(newmeth))
         case Some(oldmeth) if newclazz.isClass && oldmeth.isConcrete => Some(ReversedAbstractMethodProblem(newmeth))
@@ -146,7 +147,7 @@ private[analyze] object MethodChecker {
     } yield problem
   }.toList
 
-  private def checkInheritedNewAbstractMethodProblems(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
+  private def checkInheritedNewAbstractMethodProblems(oldclazz: ClassInfo, newclazz: ClassInfo, excludeAnnots: List[AnnotInfo]): List[Problem] = {
     def allInheritedTypes(clazz: ClassInfo) = clazz.superClasses ++ clazz.allInterfaces
     val diffInheritedTypes = allInheritedTypes(newclazz).diff(allInheritedTypes(oldclazz))
 
@@ -158,6 +159,7 @@ private[analyze] object MethodChecker {
       newInheritedType <- diffInheritedTypes.iterator
       // if `newInheritedType` is a trait, then the trait's concrete methods should be counted as deferred methods
       newDeferredMethod <- newInheritedType.deferredMethodsInBytecode
+      if !excludeAnnots.exists(newDeferredMethod.annotations.contains)
       // checks that the newDeferredMethod did not already exist in one of the oldclazz supertypes
       if noInheritedMatchingMethod(oldclazz, newDeferredMethod)(_ => true) &&
           // checks that no concrete implementation of the newDeferredMethod is provided by one of the newclazz supertypes
