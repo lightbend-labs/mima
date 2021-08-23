@@ -9,8 +9,8 @@ final class TastyReader(val bytes: Array[Byte], start: Int, end: Int, val base: 
 
   private[this] var bp: Int = start
 
-  def fork                           = new TastyReader(bytes, bp, end, base)
-  def forkAt(start: Addr, end: Addr) = new TastyReader(bytes, index(start), index(end), base)
+  def fork                = new TastyReader(bytes, bp, end, base)
+  def forkAt(start: Addr) = new TastyReader(bytes, index(start), end, base)
 
   def addr(idx: Int): Addr   = Addr(idx - base)
   def index(addr: Addr): Int = addr.index + base

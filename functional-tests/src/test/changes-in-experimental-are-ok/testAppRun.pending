@@ -1,2 +1,0 @@
-# The change is breaking, but the problem is suppressed by the annotation
-# This is here to not make the app run test fail

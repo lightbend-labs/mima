@@ -5,5 +5,10 @@ import scala.annotation.experimental2
 
 @experimental2
 class Foo {
-  def bar = 2
+  def foo = "1"
+}
+
+@annotation.experimental2
+class Bar {
+  def foo = "1"
 }

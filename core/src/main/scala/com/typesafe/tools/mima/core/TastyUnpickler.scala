@@ -64,7 +64,7 @@ object TastyUnpickler {
     }
   }
 
-  def unpickleTree(in: TastyReader, names: Names) = {
+  def unpickleTree(in: TastyReader, names: Names): Tree = {
     import in._
 
     def readName()         = names(readNat())
@@ -72,6 +72,7 @@ object TastyUnpickler {
     def readTypeRefPkg()   = TypeRefPkg(readName())                                 // fullyQualified_NameRef         -- A reference to a package member with given fully qualified name
     def readTypeRef()      = TypeRef(name = readName(), qual = readType())          // NameRef qual_Type              -- A reference `qual.name` to a non-local member
     def readAnnot()        = { readEnd(); Annot(readType(), skipTree(readByte())) } // tycon_Type fullAnnotation_Tree -- An annotation, given (class) type of constructor, and full application tree
+    def readSharedType()   = unpickleTree(forkAt(readAddr()), names).asInstanceOf[Type]
 
     def readPath() = readByte() match {
       case TERMREFpkg => readTypeRefPkg()
@@ -81,6 +82,7 @@ object TastyUnpickler {
     def readType(): Type = readByte() match {
       case TYPEREF    => readTypeRef()
       case TERMREFpkg => readTypeRefPkg()
+      case SHAREDtype => readSharedType()
       case tag        => skipTree(tag); UnknownType(tag)
     }
 
@@ -509,7 +511,7 @@ object TastyUnpickler {
       case PACKAGE    => readEnd(); readNames(packageName)
       case TERMREFpkg => readNames(readName())
       case TYPEREFpkg => readNames(readName())
-      case SHAREDtype => val r = forkAt(readAddr(), endAddr); r.readByte(); readNames(readName(r))
+      case SHAREDtype => val r = forkAt(readAddr()); r.readByte(); readNames(readName(r))
       case t          => skipTreeTagged(in, t); readNames(packageName)
     }
     readNames(nme.Empty)
