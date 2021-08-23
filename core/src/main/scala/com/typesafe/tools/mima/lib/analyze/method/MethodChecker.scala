@@ -138,6 +138,7 @@ private[analyze] object MethodChecker {
   private def checkDeferredMethodsProblems(oldclazz: ClassInfo, newclazz: ClassInfo): List[Problem] = {
     for {
       newmeth <- newclazz.deferredMethods.iterator
+      if !newmeth.isExperimental
       problem <- oldclazz.lookupMethods(newmeth).find(_.descriptor == newmeth.descriptor) match {
         case None                                                    => Some(ReversedMissingMethodProblem(newmeth))
         case Some(oldmeth) if newclazz.isClass && oldmeth.isConcrete => Some(ReversedAbstractMethodProblem(newmeth))
@@ -158,6 +159,7 @@ private[analyze] object MethodChecker {
       newInheritedType <- diffInheritedTypes.iterator
       // if `newInheritedType` is a trait, then the trait's concrete methods should be counted as deferred methods
       newDeferredMethod <- newInheritedType.deferredMethodsInBytecode
+      if !newDeferredMethod.isExperimental
       // checks that the newDeferredMethod did not already exist in one of the oldclazz supertypes
       if noInheritedMatchingMethod(oldclazz, newDeferredMethod)(_ => true) &&
           // checks that no concrete implementation of the newDeferredMethod is provided by one of the newclazz supertypes

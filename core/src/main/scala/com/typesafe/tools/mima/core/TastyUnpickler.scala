@@ -200,7 +200,7 @@ object TastyUnpickler {
 
   final case class ClsDef(name: TypeName, template: Template, annots: List[Annot]) extends Tree { def show = s"${annots.map("" + _ + " ").mkString}class $name$template" }
   final case class Template(meths: List[DefDef]) extends Tree { def show = s"${meths.map("\n  " + _).mkString}" }
-  final case class DefDef(name: Name, annots: List[Annot] = Nil) extends Tree { def show = s"${annots.map("" + _ + " ").mkString} def $name" }
+  final case class DefDef(name: Name, annots: List[Annot] = Nil) extends Tree { def show = s"${annots.map("" + _ + " ").mkString}def $name" }
 
   sealed trait Type extends Tree
   final case class UnknownType(tag: Int)           extends Type { def show = s"UnknownType(${astTagToString(tag)})" }
