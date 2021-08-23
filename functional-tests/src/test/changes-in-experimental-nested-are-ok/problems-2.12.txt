@@ -1,2 +1,2 @@
 # Haven't implemented the ScalaSig unpickling part, only TASTy
-abstract method errorAndAbort(java.lang.String)scala.runtime.Nothing# in interface pkg1.pkg2.Quotes#reflectModule#reportModule is present only in new version
+abstract method errorAndAbort(java.lang.String)scala.runtime.Nothing# in interface mima.pkg2.Quotes#reflectModule#reportModule is present only in new version

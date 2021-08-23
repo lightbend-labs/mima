@@ -7,7 +7,7 @@ object MimaUnpickler {
     if (buf.bytes.length == 0) return
 
     val doPrint = false
-    //val doPrint = path.contains("v1") && !path.contains("experimental.class") && !path.contains("experimental2.class")
+    //val doPrint = path.contains("v1") && !path.contains("exclude.class")
     if (doPrint) {
       println(s"unpickling $path")
       PicklePrinter.printPickle(buf)
@@ -215,8 +215,7 @@ object MimaUnpickler {
           case TypeRefInfo(_, sym, Nil) => s"$sym"
           case _                        => "?"
         }
-        cls._experimental |= annotName == "scala.annotation.experimental"
-        cls._experimental |= annotName == "scala.annotation.experimental2"
+        cls._annotations :+= AnnotInfo(annotName)
       }
     }
   }

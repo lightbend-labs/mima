@@ -1,4 +1,4 @@
-package pkg1
+package mima
 package pkg2
 
 trait Quotes {

@@ -1,14 +1,14 @@
-package pkg1
+package mima
 package pkg2
 
-import scala.annotation.experimental2
+import mima.annotation.exclude
 
-@experimental2
+@exclude
 class Foo {
   def foo = "1"
 }
 
-@annotation.experimental2
+@annotation.exclude
 class Bar {
   def foo = "1"
 }

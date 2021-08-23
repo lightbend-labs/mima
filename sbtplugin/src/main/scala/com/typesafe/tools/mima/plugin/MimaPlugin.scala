@@ -12,6 +12,7 @@ object MimaPlugin extends AutoPlugin {
 
   override def globalSettings: Seq[Def.Setting[_]] = Seq(
     mimaPreviousArtifacts := NoPreviousArtifacts,
+    mimaExcludeAnnotations := Nil,
     mimaBinaryIssueFilters := Nil,
     mimaFailOnProblem := true,
     mimaFailOnNoPrevious := true,
@@ -51,12 +52,12 @@ object MimaPlugin extends AutoPlugin {
           }.toMap
       }
     },
-    mimaCurrentClassfiles := (classDirectory in Compile).value,
+    mimaCurrentClassfiles := (Compile / classDirectory).value,
     mimaFindBinaryIssues := binaryIssuesIterator.value.toMap,
-    fullClasspath in mimaFindBinaryIssues := (fullClasspath in Compile).value,
+    mimaFindBinaryIssues / fullClasspath := (Compile / fullClasspath).value,
     mimaBackwardIssueFilters := SbtMima.issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:backward[s]?|both)\\.excludes".r, streams.value),
     mimaForwardIssueFilters := SbtMima.issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:forward[s]?|both)\\.excludes".r, streams.value),
-    mimaFiltersDirectory := (sourceDirectory in Compile).value / "mima-filters",
+    mimaFiltersDirectory := (Compile / sourceDirectory).value / "mima-filters",
   )
 
   @deprecated("Switch to enablePlugins(MimaPlugin)", "0.7.0")
@@ -75,6 +76,7 @@ object MimaPlugin extends AutoPlugin {
     val currClassfiles = mimaCurrentClassfiles.value
     val cp = (mimaFindBinaryIssues / fullClasspath).value
     val sv = scalaVersion.value
+    val excludeAnnots = mimaExcludeAnnotations.value.toList
 
     if (prevClassfiles eq NoPreviousClassfiles) {
       val msg = "mimaPreviousArtifacts not set, not analyzing binary compatibility"
@@ -84,7 +86,7 @@ object MimaPlugin extends AutoPlugin {
     }
 
     prevClassfiles.iterator.map { case (moduleId, prevClassfiles) =>
-      moduleId -> SbtMima.runMima(prevClassfiles, currClassfiles, cp, mimaCheckDirection.value, sv, log)
+      moduleId -> SbtMima.runMima(prevClassfiles, currClassfiles, cp, mimaCheckDirection.value, sv, log, excludeAnnots)
     }
   }
 

@@ -18,11 +18,11 @@ import scala.util.matching._
 object SbtMima {
   /** Runs MiMa and returns a two lists of potential binary incompatibilities,
       the first for backward compatibility checking, and the second for forward checking. */
-  def runMima(prev: File, curr: File, cp: Classpath, dir: String, scalaVersion: String, logger: Logger): (List[Problem], List[Problem]) = {
+  def runMima(prev: File, curr: File, cp: Classpath, dir: String, scalaVersion: String, logger: Logger, excludeAnnots: List[String]): (List[Problem], List[Problem]) = {
     sanityCheckScalaVersion(scalaVersion)
     val mimaLib = new MiMaLib(Attributed.data(cp), new SbtLogger(logger))
-    def checkBC = mimaLib.collectProblems(prev, curr)
-    def checkFC = mimaLib.collectProblems(curr, prev)
+    def checkBC = mimaLib.collectProblems(prev, curr, excludeAnnots)
+    def checkFC = mimaLib.collectProblems(curr, prev, excludeAnnots)
     dir match {
        case "backward" | "backwards" => (checkBC, Nil)
        case "forward" | "forwards"   => (Nil, checkFC)

@@ -1,14 +1,14 @@
-package pkg1
+package mima
 package pkg2
 
-import scala.annotation.experimental2
+import mima.annotation.exclude
 
 trait Quotes {
   val reflect: reflectModule
   trait reflectModule {
     val report: reportModule
     trait reportModule {
-      @experimental2
+      @exclude
       def errorAndAbort(msg: String): Nothing
     }
   }

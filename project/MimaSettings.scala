@@ -26,6 +26,9 @@ object MimaSettings {
       // * com.typesafe.tools.mima.core.util.log.Logging
       exclude[Problem]("*mima.core.Pickle*"),
       exclude[Problem]("*mima.core.*pickle*"),
+      exclude[Problem]("*mima.lib.MiMaLib.*"),
+      exclude[Problem]("*mima.lib.analyze.Analyzer.*"),
+      exclude[Problem]("*mima.plugin.SbtMima.*"),
     ),
   )
 }

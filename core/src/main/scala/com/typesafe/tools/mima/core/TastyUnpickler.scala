@@ -9,44 +9,40 @@ import TastyFormat._, NameTags._, TastyTagOps._, TastyRefs._
 
 object TastyUnpickler {
   def unpickleClass(in: TastyReader, clazz: ClassInfo, path: String): Unit = {
-    //val doPrint = false
-    //val doPrint = path.contains("v1") && !path.contains("experimental2.tasty")
+    val doPrint = false
+    //val doPrint = path.contains("v1") && !path.contains("exclude.tasty")
     //if (doPrint) TastyPrinter.printClassNames(in.fork, path)
-    //if (doPrint) TastyPrinter.printPickle(in.fork, path)
-    unpickle(in, clazz, path)
-  }
+    if (doPrint) TastyPrinter.printPickle(in.fork, path)
 
-  def unpickle(in: TastyReader, clazz: ClassInfo, path: String): Unit = {
     readHeader(in)
     val names = readNames(in)
     val tree  = unpickleTree(getTreeReader(in, names), names)
 
-    object trav extends Traverser {
+    copyAnnotations(tree, clazz)
+  }
+
+  def copyAnnotations(tree: Tree, clazz: ClassInfo): Unit = {
+    new Traverser {
       var pkgNames = List.empty[Name]
       var clsNames = List.empty[Name]
 
-      def dropHead[A](xs: List[A], head: A) = xs match {
-        case `head` :: ys => ys
-        case x :: _       => throw new AssertionError(s"assertion failed: Expected head=$head but it was $x")
-        case _            => throw new AssertionError(s"assertion failed: Expected head=$head but list was empty")
-      }
-
       override def traversePkg(pkg: Pkg): Unit = {
-        val pkgName = pkg.path match {
-          case TypeRefPkg(fullyQual) => fullyQual
-          case p: UnknownPath        => SimpleName(p.show)
-        }
-        pkgNames ::= pkgName
+        pkgNames ::= getPkgName(pkg)
         super.traversePkg(pkg)
-        pkgNames = dropHead(pkgNames, pkgName)
+        pkgNames = pkgNames.tail
       }
 
       override def traverseClsDef(clsDef: ClsDef): Unit = {
         forEachClass(clsDef, pkgNames, clsNames)
         clsNames ::= clsDef.name
         super.traverseClsDef(clsDef)
-        clsNames = dropHead(clsNames, clsDef.name)
+        clsNames = clsNames.tail
       }
+    }.traverse(tree)
+
+    def getPkgName(pkg: Pkg) = pkg.path match {
+      case TypeRefPkg(fullyQual) => fullyQual
+      case p: UnknownPath        => SimpleName(p.show)
     }
 
     def forEachClass(clsDef: ClsDef, pkgNames: List[Name], clsNames: List[Name]): Unit = {
@@ -55,22 +51,16 @@ object TastyUnpickler {
         val clsName = (clsDef.name :: clsNames).reverseIterator.mkString("$")
         val cls = clazz.owner.classes.getOrElse(clsName, NoClass)
         if (cls != NoClass) {
-          cls._experimental |= clsDef.annots.exists(_.tycon.toString == "scala.annotation.experimental")
-          cls._experimental |= clsDef.annots.exists(_.tycon.toString == "scala.annotation.experimental2")
+          cls._annotations ++= clsDef.annots.map(annot => AnnotInfo(annot.tycon.toString))
 
           for (defDef <- clsDef.template.meths) {
-            val isExperimental =
-              defDef.annots.exists(_.tycon.toString == "scala.annotation.experimental") ||
-              defDef.annots.exists(_.tycon.toString == "scala.annotation.experimental2")
-            if (isExperimental)
-              for (meth <- cls.lookupClassMethods(new MethodInfo(cls, defDef.name.source, 0, "()V")))
-                meth._experimental = true
+            val annots = defDef.annots.map(annot => AnnotInfo(annot.tycon.toString))
+            for (meth <- cls.lookupClassMethods(new MethodInfo(cls, defDef.name.source, 0, "()V")))
+              meth._annotations ++= annots
           }
         }
       }
     }
-
-    trav.traverse(tree)
   }
 
   def unpickleTree(in: TastyReader, names: Names): Tree = {
@@ -219,7 +209,7 @@ object TastyUnpickler {
 
   sealed trait Path extends Type
   final case class UnknownPath(tag: Int)       extends Path { def show = s"UnknownPath(${astTagToString(tag)})" }
-  final case class TypeRefPkg(fullyQual: Name) extends Path { def show = s"$fullyQual" }
+  final case class TypeRefPkg(fullyQual: Name) extends Path { def show = s"$fullyQual"                          }
 
   final case class Annot(tycon: Type, fullAnnotation: Tree) extends Tree { def show = s"@$tycon" }
 
@@ -320,16 +310,16 @@ object TastyUnpickler {
 
     val name = tag match {
       case UTF8           => val start = currentAddr; goto(end); SimpleName(new String(bytes.slice(start.index, end.index), "UTF-8"))
-      case QUALIFIED      => QualifiedName(readName(),         PathSep, readName().asSimpleName)
-      case EXPANDED       => QualifiedName(readName(),     ExpandedSep, readName().asSimpleName)
-      case EXPANDPREFIX   => QualifiedName(readName(), ExpandPrefixSep, readName().asSimpleName)
+      case QUALIFIED      => QualifiedName(readName(),         Name.PathSep, readName().asSimpleName)
+      case EXPANDED       => QualifiedName(readName(),     Name.ExpandedSep, readName().asSimpleName)
+      case EXPANDPREFIX   => QualifiedName(readName(), Name.ExpandPrefixSep, readName().asSimpleName)
 
-      case UNIQUE         => UniqueName(sep = readName().asSimpleName, num = readNat(), qual = ifBefore(end)(readName(), Empty))
+      case UNIQUE         => UniqueName(sep = readName().asSimpleName, num = readNat(), qual = ifBefore(end)(readName(), Name.Empty))
       case DEFAULTGETTER  => DefaultName(readName(), readNat())
 
-      case SUPERACCESSOR  => PrefixName(SuperPrefix, readName())
-      case INLINEACCESSOR => PrefixName(InlinePrefix, readName())
-      case BODYRETAINER   => SuffixName(readName(), BodyRetainerSuffix)
+      case SUPERACCESSOR  => PrefixName( Name.SuperPrefix, readName())
+      case INLINEACCESSOR => PrefixName(Name.InlinePrefix, readName())
+      case BODYRETAINER   => SuffixName(readName(), Name.BodyRetainerSuffix)
       case OBJECTCLASS    => ObjectName(readName())
 
       case SIGNED         => val name = readName(); readSignedRest(name, name)
@@ -375,14 +365,16 @@ object TastyUnpickler {
 
   final case class SignedName(qual: Name, sig: MethodSignature[ErasedTypeRef], target: Name) extends Name
 
-  val Empty              = SimpleName("")
-  val PathSep            = SimpleName(".")
-  val ExpandedSep        = SimpleName("$$")
-  val ExpandPrefixSep    = SimpleName("$")
-  val InlinePrefix       = SimpleName("inline$")
-  val SuperPrefix        = SimpleName("super$")
-  val BodyRetainerSuffix = SimpleName("$retainedBody")
-  val Constructor        = SimpleName("<init>")
+  object Name {
+    val Empty              = SimpleName("")
+    val PathSep            = SimpleName(".")
+    val ExpandedSep        = SimpleName("$$")
+    val ExpandPrefixSep    = SimpleName("$")
+    val InlinePrefix       = SimpleName("inline$")
+    val SuperPrefix        = SimpleName("super$")
+    val BodyRetainerSuffix = SimpleName("$retainedBody")
+    val Constructor        = SimpleName("<init>")
+  }
 
   object nme {
     def NoSymbol = SimpleName("NoSymbol")
@@ -416,7 +408,7 @@ object TastyUnpickler {
 
     def apply(tname: Name): ErasedTypeRef = {
       def name(qual: Name, tname: SimpleName, isModule: Boolean) = {
-        val qualified = if (qual == Empty) tname else QualifiedName(qual, PathSep, tname)
+        val qualified = if (qual == Name.Empty) tname else QualifiedName(qual, Name.PathSep, tname)
         if (isModule) ObjectName(qualified) else qualified
       }
       def specialised(qual: Name, terminal: String, isModule: Boolean, arrayDims: Int = 0): ErasedTypeRef = terminal match {
@@ -424,10 +416,10 @@ object TastyUnpickler {
         case clazz             => ErasedTypeRef(name(qual, SimpleName(clazz), isModule).toTypeName, arrayDims)
       }
       def transform(name: Name, isModule: Boolean = false): ErasedTypeRef = name match {
-        case ObjectName(classKind)             => transform(classKind, isModule = true)
-        case SimpleName(raw)                   => specialised(Empty, raw, isModule) // unqualified in the <empty> package
-        case QualifiedName(path, PathSep, sel) => specialised(path, sel.raw, isModule)
-        case _                                 => throw new AssertionError(s"Unexpected erased type ref ${name.debug}")
+        case ObjectName(classKind)                  => transform(classKind, isModule = true)
+        case SimpleName(raw)                        => specialised(Name.Empty, raw, isModule) // unqualified in the <empty> package
+        case QualifiedName(path, Name.PathSep, sel) => specialised(path, sel.raw, isModule)
+        case _                                      => throw new AssertionError(s"Unexpected erased type ref ${name.debug}")
       }
       transform(tname.toTermName)
     }
@@ -447,7 +439,7 @@ object TastyUnpickler {
 
   object SourceEncoder extends StringBuilderEncoder {
     def traverse(sb: StringBuilder, name: Name): StringBuilder = name match {
-      case Constructor                   => sb
+      case Name.Constructor              => sb
       case SimpleName(raw)               => sb ++= raw
       case ObjectName(base)              => traverse(sb, base)
       case TypeName(base)                => traverse(sb, base)
