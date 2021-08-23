@@ -9,7 +9,7 @@ import TastyFormat._, NameTags._, TastyTagOps._, TastyRefs._
 
 object TastyUnpickler {
   def unpickleClass(in: TastyReader, clazz: ClassInfo, path: String): Unit = {
-    val doPrint = false
+    //val doPrint = false
     //val doPrint = path.contains("v1") && !path.contains("experimental2.tasty")
     //if (doPrint) TastyPrinter.printClassNames(in.fork, path)
     //if (doPrint) TastyPrinter.printPickle(in.fork, path)
@@ -23,7 +23,13 @@ object TastyUnpickler {
 
     object trav extends Traverser {
       var pkgNames = List.empty[Name]
-      val classes  = new mutable.ListBuffer[(Name, ClsDef)]
+      var clsNames = List.empty[Name]
+
+      def dropHead[A](xs: List[A], head: A) = xs match {
+        case `head` :: ys => ys
+        case x :: _       => throw new AssertionError(s"assertion failed: Expected head=$head but it was $x")
+        case _            => throw new AssertionError(s"assertion failed: Expected head=$head but list was empty")
+      }
 
       override def traversePkg(pkg: Pkg): Unit = {
         val pkgName = pkg.path match {
@@ -32,21 +38,22 @@ object TastyUnpickler {
         }
         pkgNames ::= pkgName
         super.traversePkg(pkg)
-        pkgNames match {
-          case n :: ns => pkgNames = ns.ensuring(n == pkgName, s"last=$n pkgName=$pkgName")
-          case _       => assert(false, s"Expected $pkgName as last pkg name, was empty")
-        }
+        pkgNames = dropHead(pkgNames, pkgName)
       }
 
       override def traverseClsDef(clsDef: ClsDef): Unit = {
-        classes += ((pkgNames.headOption.getOrElse(nme.Empty), clsDef))
+        forEachClass(clsDef, pkgNames, clsNames)
+        clsNames ::= clsDef.name
         super.traverseClsDef(clsDef)
+        clsNames = dropHead(clsNames, clsDef.name)
       }
     }
-    trav.traverse(tree)
-    trav.classes.toList.foreach { case (pkgName, clsDef) =>
+
+    def forEachClass(clsDef: ClsDef, pkgNames: List[Name], clsNames: List[Name]): Unit = {
+      val pkgName = pkgNames.headOption.getOrElse(nme.Empty)
       if (pkgName.source == clazz.owner.fullName) {
-        val cls = clazz.owner.classes.getOrElse(clsDef.name.source, NoClass)
+        val clsName = (clsDef.name :: clsNames).reverseIterator.mkString("$")
+        val cls = clazz.owner.classes.getOrElse(clsName, NoClass)
         if (cls != NoClass) {
           cls._experimental |= clsDef.annots.exists(_.tycon.toString == "scala.annotation.experimental")
           cls._experimental |= clsDef.annots.exists(_.tycon.toString == "scala.annotation.experimental2")
@@ -62,6 +69,8 @@ object TastyUnpickler {
         }
       }
     }
+
+    trav.traverse(tree)
   }
 
   def unpickleTree(in: TastyReader, names: Names): Tree = {
@@ -108,7 +117,7 @@ object TastyUnpickler {
           DefDef(name, annots)
         }
 
-        def readTemplate() = {
+        def readTemplate(): Template = {
           // TypeParam* TermParam* parent_Term* Self? Stat*              -- [typeparams] paramss extends parents { self => stats }, where Stat* always starts with the primary constructor.
           // TypeParam = TYPEPARAM   Length NameRef type_Term Modifier*  -- modifiers name bounds
           // TermParam = PARAM       Length NameRef type_Term Modifier*  -- modifiers name : type.
@@ -121,12 +130,14 @@ object TastyUnpickler {
           while (nextByte == PARAM || nextByte == EMPTYCLAUSE || nextByte == SPLITCLAUSE) skipTree(readByte()) // tparams
           while (nextByte != SELFDEF && nextByte != DEFDEF)                               skipTree(readByte()) // parents
           if (nextByte == SELFDEF) skipTree(readByte())                                                        // self
+          val classes = new ListBuffer[ClsDef]
           val meths = new ListBuffer[DefDef]
           doUntil(end)(readByte match {
-            case DEFDEF => meths += readDefDef()
-            case tag    => skipTree(tag)
+            case TYPEDEF => readTypeDef() match { case clsDef: ClsDef => classes += clsDef case _ => }
+            case  DEFDEF => meths += readDefDef()
+            case tag     => skipTree(tag)
           })
-          Template(meths.toList)
+          Template(classes.toList, meths.toList)
         }
 
         def readClassDef(name: Name, end: Addr) = ClsDef(name.toTypeName, readTemplate(), readAnnotsInMods(end)) // NameRef Template Modifier* -- modifiers class name template
@@ -199,7 +210,7 @@ object TastyUnpickler {
   final case class Pkg(path: Path, trees: List[Tree]) extends Tree { def show = s"package $path${trees.map("\n  " + _).mkString}" }
 
   final case class ClsDef(name: TypeName, template: Template, annots: List[Annot]) extends Tree { def show = s"${annots.map("" + _ + " ").mkString}class $name$template" }
-  final case class Template(meths: List[DefDef]) extends Tree { def show = s"${meths.map("\n  " + _).mkString}" }
+  final case class Template(classes: List[ClsDef], meths: List[DefDef]) extends Tree { def show = s"${(classes ::: meths).map("\n  " + _).mkString}" }
   final case class DefDef(name: Name, annots: List[Annot] = Nil) extends Tree { def show = s"${annots.map("" + _ + " ").mkString}def $name" }
 
   sealed trait Type extends Tree
@@ -225,14 +236,11 @@ object TastyUnpickler {
 
     def traverseName(name: Name) = ()
 
-    def traverseTrees(trees: List[Tree])    = trees.foreach(traverse)
-    def traverseAnnots(annots: List[Annot]) = annots.foreach(traverse)
-
-    def traversePkg(pkg: Pkg)               = { traverse(pkg.path); traverseTrees(pkg.trees) }
-    def traverseClsDef(clsDef: ClsDef)      = { traverseName(clsDef.name); traverseAnnots(clsDef.annots) }
-    def traverseTemplate(tmpl: Template)    = { traverseTrees(tmpl.meths) }
-    def traverseDefDef(defDef: DefDef)      = { traverseName(defDef.name); traverseAnnots(defDef.annots) }
-    def traverseAnnot(annot: Annot)         = { traverse(annot.tycon); traverse(annot.fullAnnotation) }
+    def traversePkg(pkg: Pkg)               = { val Pkg(path, trees) = pkg; traverse(path); trees.foreach(traverse) }
+    def traverseClsDef(clsDef: ClsDef)      = { val ClsDef(name, tmpl, annots) = clsDef; traverseName(name); traverseTemplate(tmpl); annots.foreach(traverse) }
+    def traverseTemplate(tmpl: Template)    = { val Template(classes, meths) = tmpl; classes.foreach(traverse); meths.foreach(traverse) }
+    def traverseDefDef(defDef: DefDef)      = { val DefDef(name, annots) = defDef; traverseName(name); annots.foreach(traverse) }
+    def traverseAnnot(annot: Annot)         = { val Annot(tycon, fullAnnotation) = annot; traverse(tycon); traverse(fullAnnotation) }
 
     def traversePath(path: Path) = path match {
       case TypeRefPkg(fullyQual) => traverseName(fullyQual)
