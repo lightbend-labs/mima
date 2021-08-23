@@ -13,7 +13,7 @@ object TastyUnpickler {
     //val doPrint = path.contains("v1") && !path.contains("experimental2.tasty")
     //if (doPrint) TastyPrinter.printClassNames(in.fork, path)
     //if (doPrint) TastyPrinter.printPickle(in.fork, path)
-    if (doPrint) unpickle(in, clazz, path)
+    unpickle(in, clazz, path)
   }
 
   def unpickle(in: TastyReader, clazz: ClassInfo, path: String): Unit = {
