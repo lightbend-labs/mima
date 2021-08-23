@@ -9,10 +9,10 @@ import TastyFormat._, NameTags._, TastyTagOps._, TastyRefs._
 
 object TastyUnpickler {
   def unpickleClass(in: TastyReader, clazz: ClassInfo, path: String): Unit = {
-    //val doPrint = false
-    val doPrint = path.contains("v1") && !path.contains("experimental2.tasty")
+    val doPrint = false
+    //val doPrint = path.contains("v1") && !path.contains("experimental2.tasty")
+    //if (doPrint) TastyPrinter.printClassNames(in.fork, path)
     //if (doPrint) TastyPrinter.printPickle(in.fork, path)
-    //doClassNames(in.fork, path)
     if (doPrint) unpickle(in, clazz, path)
   }
 
@@ -494,26 +494,5 @@ object TastyUnpickler {
   trait ShowSelf extends Any {
     def show: String
     override def toString = show
-  }
-
-  def doClassNames(in: TastyReader, path: String): Unit = {
-    readHeader(in)
-    val names      = readNames(in)
-    val (pkg, nme) = unpicklePkgAndClsName(getTreeReader(in, names), names)
-    println(s"$path -> ${pkg.source}.${nme.source}")
-  }
-
-  def unpicklePkgAndClsName(in: TastyReader, names: Names): (Name, Name) = {
-    import in._
-    def readName(r: TastyReader = in) = names(r.readNat())
-    def readNames(packageName: Name): (Name, Name) = readByte() match {
-      case TYPEDEF    => readEnd(); (packageName, readName())
-      case PACKAGE    => readEnd(); readNames(packageName)
-      case TERMREFpkg => readNames(readName())
-      case TYPEREFpkg => readNames(readName())
-      case SHAREDtype => val r = forkAt(readAddr()); r.readByte(); readNames(readName(r))
-      case t          => skipTreeTagged(in, t); readNames(packageName)
-    }
-    readNames(nme.Empty)
   }
 }

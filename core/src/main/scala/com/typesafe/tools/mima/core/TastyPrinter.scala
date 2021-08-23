@@ -117,6 +117,27 @@ object TastyPrinter {
     println()
   }
 
+  def printClassNames(in: TastyReader, path: String): Unit = {
+    readHeader(in)
+    val names      = readNames(in)
+    val (pkg, nme) = unpicklePkgAndClsName(getTreeReader(in, names), names)
+    println(s"${lengthStr(path)} -> ${treeStr(pkg.source)}.${nameStr(nme.source)}")
+  }
+
+  private def unpicklePkgAndClsName(in: TastyReader, names: Names): (Name, Name) = {
+    import in._
+    def readName(r: TastyReader = in) = names(r.readNat())
+    def readNames(packageName: Name): (Name, Name) = readByte() match {
+      case TYPEDEF    => readEnd(); (packageName, readName())
+      case PACKAGE    => readEnd(); readNames(packageName)
+      case TERMREFpkg => readNames(readName())
+      case TYPEREFpkg => readNames(readName())
+      case SHAREDtype => val r = forkAt(readAddr()); r.readByte(); readNames(readName(r))
+      case t          => skipTreeTagged(in, t); readNames(packageName)
+    }
+    readNames(nme.Empty)
+  }
+
   private def nameStr(str: String)   = Console.MAGENTA + str + Console.RESET
   private def treeStr(str: String)   = Console.YELLOW  + str + Console.RESET
   private def lengthStr(str: String) = Console.CYAN    + str + Console.RESET
