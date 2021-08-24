@@ -10,7 +10,7 @@ See the [prerequisites](#prerequisites) if this is your first release.
 
 ## Release checklist
 
-* [ ] [Check Travis CI][travis-ci] passes against the latest Scala versions.
+* [ ] [Check CI][ci] passes against the latest Scala versions.
 * [ ] [Create a new milestone][milestones/new] for the release you are about to perform, if one [doesn't exist][milestones/list].
 * [ ] [Draft a new release][releases/new] for the release, by [comparing changes][compare/view].
 * [ ] Bump the version in the `README.md` and `git commit -am 'Release 0.x.y`.
@@ -43,14 +43,14 @@ See the [prerequisites](#prerequisites) if this is your first release.
 [repo1/list]: https://repo1.maven.org/maven2/com/typesafe/mima-core_2.12/0.5.0/
 [sonatype/guide]: https://central.sonatype.org/pages/releasing-the-deployment.html
 [sonatype/staging-repos]: https://oss.sonatype.org/#stagingRepositories
-[travis-ci]: https://travis-ci.com/github/lightbend/mima
+[ci]: https://github.com/lightbend/mima/actions/workflows/ci.yml
 
 You are done!
 
 ## Prerequisites
 
 * repo push rights
-* publishing crendentials for Sonatype, typically in `~/.sbt/1.0/credentials.sbt`:
+* publishing credentials for Sonatype, typically in `~/.sbt/1.0/credentials.sbt`:
 
 ```scala
     credentials += Credentials("Sonatype Nexus Repository Manager", "oss.sonatype.org", <username>, <password>)
