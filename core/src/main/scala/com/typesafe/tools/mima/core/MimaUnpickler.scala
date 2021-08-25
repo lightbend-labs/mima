@@ -72,11 +72,11 @@ object MimaUnpickler {
 
     def readSymbol(tag: Int): SymbolInfo = {
       // SymbolInfo = name_Ref owner_Ref flags_LongNat [privateWithin_Ref] info_Ref
-      val end   = readEnd()
       if (tag == NONEsym) {
         buf.readIndex = readEnd()
         return NoSymbol
       }
+      val end   = readEnd()
       val name  = readNameRef()
       val owner = readSymRef()
       val flags = buf.readLongNat()
