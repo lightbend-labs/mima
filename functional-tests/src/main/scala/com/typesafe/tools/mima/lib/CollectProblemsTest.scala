@@ -21,12 +21,12 @@ object CollectProblemsTest {
   } yield ()
 
   def collectAndDiff(cp: Seq[File], v1: File, v2: File)(
-      expected: List[String]       = Nil,
-      problemFilter: ProblemFilter = _ => true,
-      excludeAnnots: List[String]  = Nil,
-      direction: Direction         = Backwards,
+      expected: List[String]              = Nil,
+      problemFilters: List[ProblemFilter] = Nil,
+      excludeAnnots: List[String]         = Nil,
+      direction: Direction                = Backwards,
   ): Try[Unit] = {
-    val problems = new MiMaLib(cp).collectProblems(v1, v2, excludeAnnots).filter(problemFilter)
+    val problems = new MiMaLib(cp).collectProblems(v1, v2, excludeAnnots).filter(problemFilters.foldAll)
     val affectedVersion = direction match {
       case Backwards => "new"
       case Forwards  => "other"
@@ -58,4 +58,9 @@ object CollectProblemsTest {
   }
 
   private val excludeAnnots = List("mima.annotation.exclude")
+
+  implicit class PredicatesOps[A](private val ps: Iterable[A => Boolean]) extends AnyVal {
+    def foldAll: A => Boolean = (x: A) => ps.forall(p => p(x))
+    def foldAny: A => Boolean = (x: A) => ps.exists(p => p(x))
+  }
 }
