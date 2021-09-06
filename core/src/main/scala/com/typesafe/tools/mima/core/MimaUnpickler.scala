@@ -279,11 +279,12 @@ object MimaUnpickler {
     var idx = 0
     var res = 0L
     var b   = 0L
-    do {
+    while({
       b    = data(idx).toLong
       idx += 1
       res  = (res << 7) + (b & 0x7f)
-    } while ((b & 0x80) != 0L)
+      (b & 0x80) != 0L
+    }) ()
     res.toInt
   }
 

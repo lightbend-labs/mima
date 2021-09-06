@@ -19,7 +19,7 @@ jobs:
         with:
           java-version: ${{ matrix.java }}
       - uses: coursier/cache-action@v6
-      - run: "sbt test mimaReportBinaryIssues 'set sbtplugin/scriptedSbt := \"1.2.8\"' 'scripted sbt-mima-plugin/minimal'"
+      - run: "sbt +test mimaReportBinaryIssues 'set sbtplugin/scriptedSbt := \"1.2.8\"' 'scripted sbt-mima-plugin/minimal'"
   testFunctional:
     needs: build
     strategy:

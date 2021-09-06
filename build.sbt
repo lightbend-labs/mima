@@ -26,6 +26,7 @@ commands += Command.command("testStaging") { state =>
 }
 
 val scala213 = "2.13.6"
+val scala3 = "3.0.2"
 
 val root = project.in(file(".")).settings(
   name := "mima",
@@ -39,7 +40,7 @@ val munit = "org.scalameta" %% "munit" % "0.7.29"
 
 val core = project.settings(
   name := "mima-core",
-  crossScalaVersions += scala213,
+  crossScalaVersions ++= Seq(scala213, scala3),
   libraryDependencies += munit % Test,
   testFrameworks += new TestFramework("munit.Framework"),
   MimaSettings.mimaSettings,

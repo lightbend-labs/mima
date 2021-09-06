@@ -122,7 +122,7 @@ object TastyUnpickler {
           if (nextByte == SELFDEF) skipTree(readByte())                                                        // self
           val classes = new ListBuffer[ClsDef]
           val meths = new ListBuffer[DefDef]
-          doUntil(end)(readByte match {
+          doUntil(end)(readByte() match {
             case TYPEDEF => readTypeDef() match { case clsDef: ClsDef => classes += clsDef case _ => }
             case  DEFDEF => meths += readDefDef()
             case tag     => skipTree(tag)
@@ -354,7 +354,7 @@ object TastyUnpickler {
 
   final case class SimpleName(raw: String)                                                   extends Name
   final case class ObjectName(base: Name)                                                    extends Name
-  final case class TypeName private (base: Name)                                             extends Name
+  final case class TypeName private[TastyUnpickler] (base: Name)                             extends Name
   final case class QualifiedName(qual: Name, sep: SimpleName, sel: SimpleName)               extends Name
 
   final case class UniqueName(qual: Name, sep: SimpleName, num: Int)                         extends Name
