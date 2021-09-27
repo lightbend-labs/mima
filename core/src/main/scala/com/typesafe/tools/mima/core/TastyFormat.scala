@@ -30,13 +30,13 @@ object TastyFormat {
    *   Name           = UTF8              Length UTF8-CodePoint*
    *                    QUALIFIED         Length qualified_NameRef selector_NameRef               -- A.B
    *                    EXPANDED          Length qualified_NameRef selector_NameRef               -- A$$B, semantically a NameKinds.ExpandedName
-   *                    EXPANDPREFIX      Length qualified_NameRef selector_NameRef               -- A$B, prefix of expanded name, see NamedKinds.ExpandPrefixName
+   *                    EXPANDPREFIX      Length qualified_NameRef selector_NameRef               -- A\$B, prefix of expanded name, see NamedKinds.ExpandPrefixName
    *
    *                    UNIQUE            Length separator_NameRef uniqid_Nat underlying_NameRef? -- Unique name A<separator><number>
    *                    DEFAULTGETTER     Length underlying_NameRef index_Nat                     -- DefaultGetter$<number>
    *
-   *                    SUPERACCESSOR     Length underlying_NameRef                               -- super$A
-   *                    INLINEACCESSOR    Length underlying_NameRef                               -- inline$A
+   *                    SUPERACCESSOR     Length underlying_NameRef                               -- super\$A
+   *                    INLINEACCESSOR    Length underlying_NameRef                               -- inline\$A
    *                    OBJECTCLASS       Length underlying_NameRef                               -- A$  (name of the module class for module A)
    *
    *                    SIGNED            Length original_NameRef resultSig_NameRef ParamSig*     -- name + signature

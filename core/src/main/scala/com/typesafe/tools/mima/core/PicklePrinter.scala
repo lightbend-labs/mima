@@ -141,7 +141,7 @@ object PicklePrinter {
   /** Returns the buffer as a sequence of (Int, Array[Byte]) representing
    *  (tag, data) of the individual entries.  Saves and restores buffer state.
    */
-  private def toIndexedSeq(buf: PickleBuffer): IndexedSeq[(Int, Array[Byte])] = {
+  private def toIndexedSeq(buf: PickleBuffer): IndexedSeq[(Int, Array[Byte])] = (
     for (idx <- buf.createIndex) yield {
       buf.atIndex(idx) {
         val tag = buf.readByte()
@@ -149,5 +149,5 @@ object PicklePrinter {
         tag -> buf.bytes.slice(buf.readIndex, buf.readIndex + len)
       }
     }
-  }
+  ).toIndexedSeq
 }

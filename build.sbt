@@ -11,7 +11,7 @@ inThisBuild(Seq(
   ),
   scmInfo := Some(ScmInfo(url("https://github.com/lightbend/mima"), "scm:git:git@github.com:lightbend/mima.git")),
   dynverVTagPrefix := false,
-  scalacOptions := Seq("-feature", "-deprecation", "-Xlint"),
+  scalacOptions ++= Seq("-feature", "-Xsource:3", "-Xlint", "-Wconf:cat=deprecation&msg=Stream|JavaConverters:s"),
   resolvers ++= (if (isStaging) List(stagingResolver) else Nil),
   publishTo := Some(if (isSnapshot.value) Opts.resolver.sonatypeSnapshots else Opts.resolver.sonatypeStaging),
 ))

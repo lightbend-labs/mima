@@ -42,7 +42,7 @@ object MimaUnpickler {
     }
 
     def readEnd(): Int              = buf.readNat() + buf.readIndex
-    def readNameRef(): Name         = at(buf.readNat(), readName)
+    def readNameRef(): Name         = at(buf.readNat(), () => readName())
     def readSymRef(): SymInfo       = at(buf.readNat(), () => readSym(buf.readByte()))
     def readSymbolRef(): SymbolInfo = at(buf.readNat(), () => readSymbol(buf.readByte()))
     def readTypeRef(): TypeInfo     = at(buf.readNat(), () => readType())
@@ -136,7 +136,7 @@ object MimaUnpickler {
       }
     }
 
-    for (num <- index.indices) at(num, readEntry)
+    for (num <- index.indices) at(num, () => readEntry())
 
     if (doPrint) {
       entries.iterator.zipWithIndex.filter(_._1 != null).foreach { case (entry, num) =>
