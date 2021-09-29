@@ -11,7 +11,7 @@ private[analyze] object FieldChecker {
     if (oldfld.nonAccessible) None else {
       val newflds = newclazz.lookupClassFields(oldfld)
       if (newflds.hasNext) {
-        val newfld = newflds.next
+        val newfld = newflds.next()
         if (!newfld.isPublic) Some(InaccessibleFieldProblem(newfld))
         else if (oldfld.descriptor != newfld.descriptor) Some(IncompatibleFieldTypeProblem(oldfld, newfld))
         else if (oldfld.isStatic && !newfld.isStatic) Some(StaticVirtualMemberProblem(oldfld))
