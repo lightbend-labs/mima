@@ -11,15 +11,16 @@ jobs:
     strategy:
       fail-fast: false
       matrix:
-        java: [adopt@1.8, adopt@1.11]
+        java: [8, 11, 17]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: olafurpg/setup-scala@v13
+      - uses: actions/setup-java@v2
         with:
-          java-version: ${{ matrix.java }}
+          distribution: temurin
+          java-version: ${{matrix.java}}
       - uses: coursier/cache-action@v6
-      - run: "sbt +test mimaReportBinaryIssues 'set sbtplugin/scriptedSbt := \"1.2.8\"' 'scripted sbt-mima-plugin/minimal'"
+      - run: "sbt +test mimaReportBinaryIssues 'set sbtplugin/scriptedSbt := \"1.5.5\"' 'scripted sbt-mima-plugin/minimal'"
   testFunctional:
     needs: build
     strategy:
@@ -29,7 +30,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: olafurpg/setup-scala@v13
+      - uses: actions/setup-java@v2
+        with:
+          distribution: temurin
+          java-version: 8
       - uses: coursier/cache-action@v6
       - run: sbt "functional-tests/runMain com.typesafe.tools.mima.lib.UnitTests -${{ matrix.scala }}"
   testScripted:
@@ -41,7 +45,10 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: olafurpg/setup-scala@v13
+      - uses: actions/setup-java@v2
+        with:
+          distribution: temurin
+          java-version: 8
       - uses: coursier/cache-action@v6
       - run: sbt "scripted sbt-mima-plugin/*${{ matrix.scripted }}"
   testIntegration:
@@ -49,6 +56,9 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v2
-      - uses: olafurpg/setup-scala@v13
+      - uses: actions/setup-java@v2
+        with:
+          distribution: temurin
+          java-version: 8
       - uses: coursier/cache-action@v6
       - run: sbt IntegrationTest/test
