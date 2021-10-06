@@ -1,7 +1,0 @@
-method source()scala.Tuple2 in class OptionPane has a different generic signature in new version, where it is ()Lscala/Tuple2<LMyPane<TA;>;Ljava/lang/String;>; rather than ()Lscala/Tuple2<Ljava/lang/String;Ljava/lang/String;>;. See https://github.com/lightbend/mima#incompatiblesignatureproblem
-method show()java.lang.String in class OptionPane does not have a correspondent in new version
-method this(scala.Tuple2)Unit in class OptionPane has a different generic signature in new version, where it is <A:Ljava/lang/Object;>(Lscala/Tuple2<LMyPane<TA;>;Ljava/lang/String;>;)V rather than (Lscala/Tuple2<Ljava/lang/String;Ljava/lang/String;>;)V. See https://github.com/lightbend/mima#incompatiblesignatureproblem
-# In Scala 2 it's:
-# ... where it is (Lscala/Tuple2<LMyPane<TA;>;Ljava/lang/String;>;)V rather than ...
-# note there's no new type parameter
-# https://github.com/lampepfl/dotty/issues/10834

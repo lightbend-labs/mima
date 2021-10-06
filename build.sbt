@@ -11,6 +11,7 @@ inThisBuild(Seq(
   ),
   scmInfo := Some(ScmInfo(url("https://github.com/lightbend/mima"), "scm:git:git@github.com:lightbend/mima.git")),
   dynverVTagPrefix := false,
+  scalaVersion := scala212,
   scalacOptions ++= Seq("-feature", "-Xsource:3", "-Xlint", "-Wconf:cat=deprecation&msg=Stream|JavaConverters:s"),
   resolvers ++= (if (isStaging) List(stagingResolver) else Nil),
   publishTo := Some(if (isSnapshot.value) Opts.resolver.sonatypeSnapshots else Opts.resolver.sonatypeStaging),
@@ -25,6 +26,8 @@ commands += Command.command("testStaging") { state =>
   prep ::: "mimaReportBinaryIssues" :: state
 }
 
+// Keep in sync with TestCli
+val scala212 = "2.12.15"
 val scala213 = "2.13.6"
 val scala3 = "3.0.2"
 
