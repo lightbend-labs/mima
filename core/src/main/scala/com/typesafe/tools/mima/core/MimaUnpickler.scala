@@ -18,9 +18,9 @@ object MimaUnpickler {
     val index    = buf.createIndex
     val entries  = new Array[Entry](index.length)
     val classes  = new scala.collection.mutable.HashMap[SymInfo, ClassInfo]
-    def   nnSyms = entries.iterator.collect { case s: SymbolInfo => s }
-    def defnSyms = nnSyms.filter(sym => sym.tag == CLASSsym || sym.tag == MODULEsym)
-    def methSyms = nnSyms.filter(sym => sym.tag == VALsym)
+    def     syms = entries.iterator.collect { case s: SymbolInfo => s }
+    def defnSyms = syms.filter(sym => sym.tag == CLASSsym || sym.tag == MODULEsym)
+    def methSyms = syms.filter(sym => sym.tag == VALsym)
 
     def until[T](end: Int, op: () => T): List[T] =
       if (buf.readIndex == end) Nil else op() :: until(end, op)
@@ -177,7 +177,7 @@ object MimaUnpickler {
         .filter(_.name.value != CONSTRUCTOR) // TODO support package private constructors
         .toSeq.groupBy(_.name).foreach { case (name, pickleMethods) =>
           doMethodOverloads(clazz, name, pickleMethods)
-      }
+        }
     }
 
     def doMethodOverloads(clazz: ClassInfo, name: Name, pickleMethods: Seq[SymbolInfo]) = {

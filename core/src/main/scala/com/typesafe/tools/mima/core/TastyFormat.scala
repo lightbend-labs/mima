@@ -173,7 +173,7 @@ object TastyFormat {
    *                    ANNOTATEDtype Length underlying_Type annotation_Term            -- underlying @ annotation
    *                          ANDtype Length left_Type right_Type                       -- left & right
    *                           ORtype Length left_Type right_Type                       -- lefgt | right
-   *                   MATCHtype      Length bound_Type sel_Type case_Type*             -- sel match {cases} with optional upper `bound`
+   *                        MATCHtype Length bound_Type sel_Type case_Type*             -- sel match {cases} with optional upper `bound`
    *                   MATCHCASEtype  Length pat_type rhs_Type                          -- match cases are MATCHCASEtypes or TYPELAMBDAtypes over MATCHCASEtypes
    *                   BIND           Length boundName_NameRef bounds_Type Modifier*    -- boundName @ bounds,  for type-variables defined in a type pattern
    *                       BYNAMEtype        underlying_Type                            -- => underlying
@@ -181,7 +181,6 @@ object TastyFormat {
    *                         POLYtype Length result_Type TypesNames                     -- A polymorphic method type `[TypesNames]result`, used in refinements
    *                       METHODtype Length result_Type TypesNames Modifier*           -- A method type `(Modifier* TypesNames)result`, needed for refinements, with optional modifiers for the parameters
    *                   TYPELAMBDAtype Length result_Type TypesNames                     -- A type lambda `[TypesNames] => result`
-   *                       SHAREDtype        type_ASTRef                                -- link to previously serialized type
    *   TypesNames    = TypeName*
    *   TypeName      = typeOrBounds_ASTRef paramName_NameRef                            -- (`termName`: `type`)  or  (`typeName` `bounds`)
    *
