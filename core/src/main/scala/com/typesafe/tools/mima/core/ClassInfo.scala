@@ -87,7 +87,8 @@ private[mima] sealed abstract class ClassInfo(val owner: PackageInfo) extends In
   final def isInterface: Boolean      = ClassfileParser.isInterface(flags) // java interface or trait w/o impl methods
   final def isClass: Boolean          = !isTrait && !isInterface // class, object or trait's impl class
 
-  final def accessModifier: String    = if (isProtected) "protected" else if (isPrivate) "private" else ""
+  final def scopedPrivateSuff: String = if (isScopedPrivate) "[..]" else ""
+  final def accessModifier: String    = if (isProtected) s"protected$scopedPrivateSuff" else if (isPrivate) s"private$scopedPrivateSuff" else ""
   final def declarationPrefix: String = if (isModuleClass) "object" else if (isTrait) "trait" else if (isInterface) "interface" else "class"
   final lazy val fullName: String     = if (owner.isRoot) bytecodeName else s"${owner.fullName}.$bytecodeName"
   final def formattedFullName: String = formatClassName(if (isModuleClass) fullName.init else fullName)

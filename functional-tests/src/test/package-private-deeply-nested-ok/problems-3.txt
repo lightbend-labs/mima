@@ -1,17 +1,5 @@
-method go11()Int in object foo.l1.x has a different result type in new version, where it is java.lang.String rather than Int
-method go12()Int in class foo.l1.x has a different result type in new version, where it is java.lang.String rather than Int
-method go21()Int in object foo.l2a.x#y has a different result type in new version, where it is java.lang.String rather than Int
-method go22()Int in class foo.l2a.x#y has a different result type in new version, where it is java.lang.String rather than Int
-method go23()Int in object foo.l2b.x#y has a different result type in new version, where it is java.lang.String rather than Int
-method go24()Int in class foo.l2b.x#y has a different result type in new version, where it is java.lang.String rather than Int
-method go31()Int in object foo.l3a.x#y#z has a different result type in new version, where it is java.lang.String rather than Int
-method go32()Int in class foo.l3a.x#y#z has a different result type in new version, where it is java.lang.String rather than Int
-method go33()Int in object foo.l3b.x#y#z has a different result type in new version, where it is java.lang.String rather than Int
-method go34()Int in class foo.l3b.x#y#z has a different result type in new version, where it is java.lang.String rather than Int
-method go35()Int in object foo.l3c.x#y#z has a different result type in new version, where it is java.lang.String rather than Int
-method go36()Int in class foo.l3c.x#y#z has a different result type in new version, where it is java.lang.String rather than Int
-method go37()Int in object foo.l3d.x#y#z has a different result type in new version, where it is java.lang.String rather than Int
-method go38()Int in class foo.l3d.x#y#z has a different result type in new version, where it is java.lang.String rather than Int
+# privateWithin isn't honoured in static method emission in Scala 3
+# https://github.com/lampepfl/dotty/issues/10842
 static method go11()Int in class foo.l1.x has a different result type in new version, where it is java.lang.String rather than Int
 static method go21()Int in class foo.l2a.x#y has a different result type in new version, where it is java.lang.String rather than Int
 static method go31()Int in class foo.l3a.x#y#z has a different result type in new version, where it is java.lang.String rather than Int

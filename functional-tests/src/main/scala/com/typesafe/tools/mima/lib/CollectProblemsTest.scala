@@ -6,7 +6,7 @@ import java.nio.file.Files
 import com.typesafe.tools.mima.core.ProblemFilter
 
 import scala.collection.JavaConverters._
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 object CollectProblemsTest {
   def testCollectProblems(testCase: TestCase, direction: Direction): Try[Unit] = for {
@@ -35,15 +35,20 @@ object CollectProblemsTest {
     val reported = problems.map(_.description(affectedVersion))
 
     val msg = new StringBuilder("\n")
-    def pp(start: String, lines: List[String]) =
+    import scala.io.AnsiColor._
+    final case class DiffType(sign: Char, colour: String)
+    val add = DiffType('+', GREEN)
+    val del = DiffType('-', RED)
+
+    def pp(start: String, dt: DiffType, lines: List[String]) =
       if (lines.nonEmpty) {
         msg.append(s"$start (${lines.size}):")
-        lines.sorted.distinct.map("\n  - " + _).foreach(msg.append(_))
+        lines.sorted.distinct.map("\n" + dt.colour + dt.sign + _ + RESET).foreach(msg.append)
         msg.append("\n")
       }
 
-    pp("The following problem(s) were expected but not reported", expected.diff(reported))
-    pp("The following problem(s) were reported but not expected", reported.diff(expected))
+    pp("The following problem(s) were expected but not reported", del, expected.diff(reported))
+    pp("The following problem(s) were reported but not expected", add, reported.diff(expected))
 
     msg.mkString match {
       case "\n" => Success(())
