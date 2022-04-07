@@ -1,14 +1,15 @@
 package com.typesafe.tools.mima
 package plugin
 
-import sbt._, Keys._
+import sbt.*, Keys.*
+import core.*
 
 /** MiMa's sbt plugin. */
 object MimaPlugin extends AutoPlugin {
   override def trigger = allRequirements
 
   object autoImport extends MimaKeys
-  import autoImport._
+  import autoImport.*
 
   override def globalSettings: Seq[Def.Setting[_]] = Seq(
     mimaPreviousArtifacts := NoPreviousArtifacts,
@@ -38,19 +39,7 @@ object MimaPlugin extends AutoPlugin {
     },
     mimaDependencyResolution := dependencyResolution.value,
     mimaPreviousClassfiles := {
-      val depRes = mimaDependencyResolution.value
-      val taskStreams = streams.value
-      mimaPreviousArtifacts.value match {
-        case _: NoPreviousArtifacts.type => NoPreviousClassfiles
-        case previousArtifacts =>
-          previousArtifacts.iterator.map { m =>
-            val moduleId = CrossVersion(m, scalaModuleInfo.value) match {
-              case Some(f) => m.withName(f(m.name)).withCrossVersion(CrossVersion.disabled)
-              case None    => m
-            }
-            moduleId -> SbtMima.getPreviousArtifact(moduleId, depRes, taskStreams)
-          }.toMap
-      }
+      artifactsToClassfiles.value.toClassfiles(mimaPreviousArtifacts.value)
     },
     mimaCurrentClassfiles := (Compile / classDirectory).value,
     mimaFindBinaryIssues := binaryIssuesIterator.value.toMap,
@@ -63,31 +52,64 @@ object MimaPlugin extends AutoPlugin {
   @deprecated("Switch to enablePlugins(MimaPlugin)", "0.7.0")
   def mimaDefaultSettings: Seq[Setting[_]] = globalSettings ++ buildSettings ++ projectSettings
 
-  private def binaryIssueFilters = Def.task {
-    val noSigs = core.ProblemFilters.exclude[core.IncompatibleSignatureProblem]("*")
+  trait ArtifactsToClassfiles {
+    def toClassfiles(previousArtifacts: Set[ModuleID]): Map[ModuleID, File]
+  }
+
+  trait BinaryIssuesFinder {
+    def runMima(prevClassFiles: Map[ModuleID, File], checkDirection: String)
+    : Iterator[(ModuleID, (List[Problem], List[Problem]))]
+  }
+
+  val artifactsToClassfiles: Def.Initialize[Task[ArtifactsToClassfiles]] = Def.task {
+    val depRes = mimaDependencyResolution.value
+    val taskStreams = streams.value
+    val smi = scalaModuleInfo.value
+    previousArtifacts => previousArtifacts match {
+      case _: NoPreviousArtifacts.type => NoPreviousClassfiles
+      case previousArtifacts =>
+        previousArtifacts.iterator.map { m =>
+          val moduleId = CrossVersion(m, smi) match {
+            case Some(f) => m.withName(f(m.name)).withCrossVersion(CrossVersion.disabled)
+            case None => m
+          }
+          moduleId -> SbtMima.getPreviousArtifact(moduleId, depRes, taskStreams)
+        }.toMap
+    }
+  }
+
+  val binaryIssuesFinder: Def.Initialize[Task[BinaryIssuesFinder]] = Def.task {
+    val log = streams.value.log
+    val currClassfiles = mimaCurrentClassfiles.value
+    val cp = (mimaFindBinaryIssues / fullClasspath).value
+    val sv = scalaVersion.value
+    val excludeAnnots = mimaExcludeAnnotations.value.toList
+    val failOnNoPrevious = mimaFailOnNoPrevious.value
+    val projName = name.value
+
+    (prevClassfiles, checkDirection) => {
+      if (prevClassfiles eq NoPreviousClassfiles) {
+        val msg = "mimaPreviousArtifacts not set, not analyzing binary compatibility"
+        if (failOnNoPrevious) sys.error(msg) else log.info(s"$projName: $msg")
+      } else if (prevClassfiles.isEmpty) {
+        log.info(s"$projName: mimaPreviousArtifacts is empty, not analyzing binary compatibility.")
+      }
+
+      prevClassfiles.iterator.map { case (moduleId, prevClassfiles) =>
+        moduleId -> SbtMima.runMima(prevClassfiles, currClassfiles, cp, checkDirection, sv, log, excludeAnnots)
+      }
+    }
+  }
+
+  private val binaryIssueFilters = Def.task {
+    val noSigs = ProblemFilters.exclude[IncompatibleSignatureProblem]("*")
     mimaBinaryIssueFilters.value ++ (if (mimaReportSignatureProblems.value) Nil else Seq(noSigs))
   }
 
   // Allows reuse between mimaFindBinaryIssues and mimaReportBinaryIssues
   // without blowing up the Akka build's heap
-  private def binaryIssuesIterator = Def.task {
-    val log = streams.value.log
-    val prevClassfiles = mimaPreviousClassfiles.value
-    val currClassfiles = mimaCurrentClassfiles.value
-    val cp = (mimaFindBinaryIssues / fullClasspath).value
-    val sv = scalaVersion.value
-    val excludeAnnots = mimaExcludeAnnotations.value.toList
-
-    if (prevClassfiles eq NoPreviousClassfiles) {
-      val msg = "mimaPreviousArtifacts not set, not analyzing binary compatibility"
-      if (mimaFailOnNoPrevious.value) sys.error(msg) else log.info(s"${name.value}: $msg")
-    } else if (prevClassfiles.isEmpty) {
-      log.info(s"${name.value}: mimaPreviousArtifacts is empty, not analyzing binary compatibility.")
-    }
-
-    prevClassfiles.iterator.map { case (moduleId, prevClassfiles) =>
-      moduleId -> SbtMima.runMima(prevClassfiles, currClassfiles, cp, mimaCheckDirection.value, sv, log, excludeAnnots)
-    }
+  private val binaryIssuesIterator = Def.task {
+    binaryIssuesFinder.value.runMima(mimaPreviousClassfiles.value, mimaCheckDirection.value)
   }
 
   // Used to differentiate unset mimaPreviousArtifacts from empty mimaPreviousArtifacts
