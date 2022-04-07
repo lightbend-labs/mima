@@ -1,0 +1,1 @@
+method foo()Int in class B has a different generic signature in new version, where it is <missing> rather than ()I. See https://github.com/lightbend/mima#incompatiblesignatureproblem
