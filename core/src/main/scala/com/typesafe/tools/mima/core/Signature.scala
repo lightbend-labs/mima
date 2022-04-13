@@ -20,9 +20,18 @@ class Signature(private val signature: String) {
   }
 
   def matches(newer: Signature, isConstructor: Boolean): Boolean = {
-    return (signature == newer.signature) ||
-      (isConstructor && hasMatchingCtorSig(newer.signature)) ||
-      canonicalized == newer.canonicalized
+    // If the signature is identical obviously it matches
+    (signature == newer.signature) ||
+    // Consider missing signatures identical to non-generic ones.
+    // This is particularly helpful because between Scala 3.1.1 and 3.1.2 the compiler
+    // started emitting signatures for non-generic methods. Incompatibilities for those
+    // will be caught through mismatching descriptors anyway.
+    (signature == "" && newer.signature.indexOf('<') == -1) ||
+    (newer.signature == "" && signature.indexOf('<') == -1) ||
+    // Special rules for constructors
+    (isConstructor && hasMatchingCtorSig(newer.signature)) ||
+    // Also match when the signature only differs in the name of a type parameter
+    canonicalized == newer.canonicalized
   }
  
   // Special case for scala#7975
