@@ -1,8 +1,8 @@
 package foo
 
 class Foo {
-  private[foo] def bar(x: Int)    = x
-               def bar(x: String) = x
+  private[foo] def bar(x: Int) = x
+  def bar(x: String)           = x
 }
 
 object Lib {

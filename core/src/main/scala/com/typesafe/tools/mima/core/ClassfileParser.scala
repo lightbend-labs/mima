@@ -15,33 +15,31 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
 
     clazz._superClass = parseSuperClass(clazz, flags)
     clazz._interfaces = parseInterfaces()
-    clazz._fields     = parseMembers[FieldInfo](clazz)
-    clazz._methods    = parseMembers[MethodInfo](clazz)
+    clazz._fields = parseMembers[FieldInfo](clazz)
+    clazz._methods = parseMembers[MethodInfo](clazz)
     parseClassAttributes(clazz)
   }
 
-  private def parseSuperClass(clazz: ClassInfo, flags: Int): ClassInfo = {
+  private def parseSuperClass(clazz: ClassInfo, flags: Int): ClassInfo =
     if (isAnnotation(flags)) {
       in.skip(2)
       clazz.owner.definitions.AnnotationClass
     } else pool.getSuperClass(in.nextChar)
-  }
 
-  private def parseInterfaces(): List[ClassInfo] = {
+  private def parseInterfaces(): List[ClassInfo] =
     List.fill(in.nextChar)(pool.getSuperClass(in.nextChar))
-  }
 
-  private def parseMembers[A <: MemberInfo : MkMember](clazz: ClassInfo): Members[A] = {
+  private def parseMembers[A <: MemberInfo: MkMember](clazz: ClassInfo): Members[A] = {
     val members = for {
       _ <- 0.until(in.nextChar).iterator
       flags = in.nextChar
-      _ = if (isPrivate(flags)) { in.skip(4); parseAttributes(_ => ()) }
+      _     = if (isPrivate(flags)) { in.skip(4); parseAttributes(_ => ()) }
       if !isPrivate(flags)
     } yield parseMember[A](clazz, flags)
     new Members(members.toList)
   }
 
-  private def parseMember[A <: MemberInfo : MkMember](clazz: ClassInfo, flags: Int): A = {
+  private def parseMember[A <: MemberInfo: MkMember](clazz: ClassInfo, flags: Int): A = {
     val name       = pool.getName(in.nextChar)
     val descriptor = pool.getExternalName(in.nextChar)
     val member     = implicitly[MkMember[A]].make(clazz, name, flags, descriptor)
@@ -50,11 +48,11 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
   }
 
   private def parseClassAttributes(clazz: ClassInfo) = {
-    var isScala = false
+    var isScala           = false
     var runtimeAnnotStart = -1
     parseAttributes {
       case RuntimeAnnotationATTR => runtimeAnnotStart = in.bp
-      case ScalaSignatureATTR    => isScala    = true
+      case ScalaSignatureATTR    => isScala = true
       case EnclosingMethodATTR   => clazz._isLocalClass = true
       case InnerClassesATTR      => clazz._innerClasses = parseInnerClasses(clazz)
       case TASTYATTR             => parseTasty(clazz)
@@ -64,15 +62,14 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
       in.atIndex(runtimeAnnotStart)(parsePickle(clazz))
   }
 
-  private def parseMemberAttributes(member: MemberInfo) = {
+  private def parseMemberAttributes(member: MemberInfo) =
     parseAttributes {
       case DeprecatedATTR => member.isDeprecated = true
       case SignatureATTR  => member.signature = Signature(pool.getName(in.nextChar))
       case _              =>
     }
-  }
 
-  private def parseAttributes(processAttr: String => Unit) = {
+  private def parseAttributes(processAttr: String => Unit) =
     for (_ <- 0 until in.nextChar) {
       val attrIdx = in.nextChar
       val attrLen = in.nextInt
@@ -80,13 +77,12 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
       processAttr(pool.getName(attrIdx))
       in.bp = attrEnd
     }
-  }
 
   private def parseInnerClasses(c: ClassInfo) = {
     val innerClasses = for {
       _ <- 0 until in.nextChar
       (innerIndex, outerIndex, innerNameIndex) = (in.nextChar, in.nextChar, in.nextChar)
-      _ = in.skip(2) // inner class flags
+      _                                        = in.skip(2) // inner class flags
       if innerIndex != 0 && outerIndex != 0 && innerNameIndex != 0
       if pool.getClassName(outerIndex) == c.bytecodeName
     } yield pool.getClassName(innerIndex)
@@ -96,7 +92,7 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
   }
 
   private def parsePickle(clazz: ClassInfo) = {
-    def parseScalaSigBytes()     = {
+    def parseScalaSigBytes() = {
       in.acceptByte(STRING_TAG, s" for ${clazz.description}")
       pool.getBytes(in.nextChar)
     }
@@ -117,21 +113,23 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
     }
 
     def skipAnnotArg(): Unit = in.nextByte match {
-      case   BOOL_TAG |   BYTE_TAG => in.skip(2)
-      case   CHAR_TAG |  SHORT_TAG => in.skip(2)
-      case    INT_TAG |   LONG_TAG => in.skip(2)
-      case  FLOAT_TAG | DOUBLE_TAG => in.skip(2)
-      case STRING_TAG |  CLASS_TAG => in.skip(2)
-      case                ENUM_TAG => in.skip(4)
-      case               ARRAY_TAG => for (_ <- 0 until in.nextChar) skipAnnotArg()
-      case          ANNOTATION_TAG => in.skip(2); /* type */ skipAnnotArgs()
+      case BOOL_TAG | BYTE_TAG    => in.skip(2)
+      case CHAR_TAG | SHORT_TAG   => in.skip(2)
+      case INT_TAG | LONG_TAG     => in.skip(2)
+      case FLOAT_TAG | DOUBLE_TAG => in.skip(2)
+      case STRING_TAG | CLASS_TAG => in.skip(2)
+      case ENUM_TAG               => in.skip(4)
+      case ARRAY_TAG              => for (_ <- 0 until in.nextChar) skipAnnotArg()
+      case ANNOTATION_TAG =>
+        in.skip(2); /* type */
+        skipAnnotArgs()
     }
 
     def skipAnnotArgs() = for (_ <- 0 until in.nextChar) { in.skip(2); skipAnnotArg() }
 
     val numAnnots = in.nextChar
-    var i = 0
-    var bytes = new Array[Byte](0)
+    var i         = 0
+    var bytes     = new Array[Byte](0)
     while (i < numAnnots && bytes.length == 0) {
       pool.getExternalName(in.nextChar) match {
         case ScalaSignatureAnnot     => checkScalaSigAnnotArg(); bytes = parseScalaSigBytes()
@@ -150,23 +148,23 @@ final class ClassfileParser private (in: BufferReader, pool: ConstantPool) {
     TastyUnpickler.unpickleClass(new TastyReader(bytes), clazz, tpath.toString)
   }
 
-  private final val ScalaSignatureAnnot     = "Lscala.reflect.ScalaSignature;"
-  private final val ScalaLongSignatureAnnot = "Lscala.reflect.ScalaLongSignature;"
+  final private val ScalaSignatureAnnot     = "Lscala.reflect.ScalaSignature;"
+  final private val ScalaLongSignatureAnnot = "Lscala.reflect.ScalaLongSignature;"
 
-  private final val DeprecatedATTR        = "Deprecated"
-  private final val EnclosingMethodATTR   = "EnclosingMethod"
-  private final val InnerClassesATTR      = "InnerClasses"
-  private final val RuntimeAnnotationATTR = "RuntimeVisibleAnnotations"
-  private final val ScalaSignatureATTR    = "ScalaSig"
-  private final val SignatureATTR         = "Signature"
-  private final val TASTYATTR             = "TASTY"
+  final private val DeprecatedATTR        = "Deprecated"
+  final private val EnclosingMethodATTR   = "EnclosingMethod"
+  final private val InnerClassesATTR      = "InnerClasses"
+  final private val RuntimeAnnotationATTR = "RuntimeVisibleAnnotations"
+  final private val ScalaSignatureATTR    = "ScalaSig"
+  final private val SignatureATTR         = "Signature"
+  final private val TASTYATTR             = "TASTY"
 }
 
 object ClassfileParser {
   private[core] def parseInPlace(clazz: ClassInfo, file: AbsFile): Unit = {
     val in = new BufferReader(file)
     parseHeader(in, file)
-    val pool = ConstantPool.parseNew(clazz.owner.definitions, in)
+    val pool   = ConstantPool.parseNew(clazz.owner.definitions, in)
     val parser = new ClassfileParser(in, pool)
     parser.parseClass(clazz)
   }
@@ -187,7 +185,8 @@ object ClassfileParser {
     if (magic != JAVA_MAGIC)
       throw new IOException(
         s"class file '$file' has wrong magic number 0x${magic.toHexString}, " +
-            s"should be 0x${JAVA_MAGIC.toHexString}")
+          s"should be 0x${JAVA_MAGIC.toHexString}"
+      )
     in.skip(2) // minorVersion
     in.skip(2) // majorVersion
   }
@@ -196,6 +195,6 @@ object ClassfileParser {
     def make(owner: ClassInfo, bytecodeName: String, flags: Int, descriptor: String): A
   }
 
-  private implicit def mkFieldInfo: MkMember[FieldInfo]   = new FieldInfo(_, _, _, _)
-  private implicit def mkMethodInfo: MkMember[MethodInfo] = new MethodInfo(_, _, _, _)
+  implicit private def mkFieldInfo: MkMember[FieldInfo]   = new FieldInfo(_, _, _, _)
+  implicit private def mkMethodInfo: MkMember[MethodInfo] = new MethodInfo(_, _, _, _)
 }

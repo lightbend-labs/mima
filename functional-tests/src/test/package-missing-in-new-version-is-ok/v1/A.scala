@@ -4,5 +4,4 @@ package me {
   }
 }
 
-package you {
-}
+package you {}

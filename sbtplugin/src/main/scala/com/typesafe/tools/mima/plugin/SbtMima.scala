@@ -6,8 +6,8 @@ import java.io.File
 import com.typesafe.tools.mima.core._
 import com.typesafe.tools.mima.lib.MiMaLib
 import sbt._
-import sbt.Keys.{ Classpath, TaskStreams }
-import sbt.librarymanagement.{ UpdateLogging => _, _ }
+import sbt.Keys.{Classpath, TaskStreams}
+import sbt.librarymanagement.{UpdateLogging => _, _}
 
 import scala.io.Source
 import scala.collection.mutable
@@ -16,27 +16,37 @@ import scala.util.control.NonFatal
 import scala.util.matching._
 
 object SbtMima {
-  /** Runs MiMa and returns a two lists of potential binary incompatibilities,
-      the first for backward compatibility checking, and the second for forward checking. */
-  def runMima(prev: File, curr: File, cp: Classpath, dir: String, scalaVersion: String, logger: Logger, excludeAnnots: List[String]): (List[Problem], List[Problem]) = {
+
+  /**
+   * Runs MiMa and returns a two lists of potential binary incompatibilities, the first for backward compatibility
+   * checking, and the second for forward checking.
+   */
+  def runMima(
+      prev: File,
+      curr: File,
+      cp: Classpath,
+      dir: String,
+      scalaVersion: String,
+      logger: Logger,
+      excludeAnnots: List[String]
+  ): (List[Problem], List[Problem]) = {
     sanityCheckScalaVersion(scalaVersion)
     val mimaLib = new MiMaLib(Attributed.data(cp), new SbtLogger(logger))
     def checkBC = mimaLib.collectProblems(prev, curr, excludeAnnots)
     def checkFC = mimaLib.collectProblems(curr, prev, excludeAnnots)
     dir match {
-       case "backward" | "backwards" => (checkBC, Nil)
-       case "forward" | "forwards"   => (Nil, checkFC)
-       case "both"                   => (checkBC, checkFC)
-       case _                        => (Nil, Nil)
+      case "backward" | "backwards" => (checkBC, Nil)
+      case "forward" | "forwards"   => (Nil, checkFC)
+      case "both"                   => (checkBC, checkFC)
+      case _                        => (Nil, Nil)
     }
   }
 
-  private def sanityCheckScalaVersion(scalaVersion: String) = {
+  private def sanityCheckScalaVersion(scalaVersion: String) =
     scalaBinaryVersion(scalaVersion) match {
       case "2.11" | "2.12" | "2.13" | "3" => () // ok
       case _ => throw new IllegalArgumentException(s"MiMa supports Scala 2.11, 2.12, 2.13 and 3, not $scalaVersion")
     }
-  }
 
   private def scalaBinaryVersion(version: String) =
     if (version.startsWith("3.")) "3" else version.take(4)
@@ -51,18 +61,17 @@ object SbtMima {
       backwardFilters: Map[String, Seq[ProblemFilter]],
       forwardFilters: Map[String, Seq[ProblemFilter]],
       logger: Logger,
-      projectName: String,
+      projectName: String
   ): Unit = {
     // filters * found is n-squared, it's fixable in principle by special-casing known
     // filter types or something, not worth it most likely...
     val log = new SbtLogger(logger)
 
-    def isReported(versionedFilters: Map[String, Seq[ProblemFilter]])(problem: Problem) = {
+    def isReported(versionedFilters: Map[String, Seq[ProblemFilter]])(problem: Problem) =
       ProblemReporting.isReported(module.revision, filters, versionedFilters)(problem)
-    }
 
     def pretty(affected: String)(p: Problem): String = {
-      val desc = p.description(affected)
+      val desc        = p.description(affected)
       val howToFilter = p.howToFilter.fold("")(s => s"\n   filter with: $s")
       s" * $desc$howToFilter"
     }
@@ -70,15 +79,15 @@ object SbtMima {
     val backErrors = backward.filter(isReported(backwardFilters))
     val forwErrors = forward.filter(isReported(forwardFilters))
 
-    val count = backErrors.size + forwErrors.size
-    val doLog = if (count == 0) log.verbose(_) else if (failOnProblem) log.error(_) else log.warn(_)
+    val count                  = backErrors.size + forwErrors.size
+    val doLog                  = if (count == 0) log.verbose(_) else if (failOnProblem) log.error(_) else log.warn(_)
     def logResult(msg: String) = doLog(s"$projectName: $msg")
 
     if (count == 0) {
       logResult(s"Binary compatibility check against $module passed.")
     } else {
       val filteredCount = backward.size + forward.size - count
-      val filteredNote = if (filteredCount > 0) s" (filtered $filteredCount)" else ""
+      val filteredNote  = if (filteredCount > 0) s" (filtered $filteredCount)" else ""
       val msg = s"Failed binary compatibility check against $module! Found $count potential problems$filteredNote"
 
       logResult(msg)
@@ -93,8 +102,8 @@ object SbtMima {
   /** Resolves an artifact representing the previous abstract binary interface for testing. */
   def getPreviousArtifact(m: ModuleID, depRes: DependencyResolution, s: TaskStreams): File = {
     val module = depRes.wrapDependencyInModule(m)
-    val uc = UpdateConfiguration().withLogging(UpdateLogging.DownloadOnly)
-    val uwc = UnresolvedWarningConfiguration()
+    val uc     = UpdateConfiguration().withLogging(UpdateLogging.DownloadOnly)
+    val uwc    = UnresolvedWarningConfiguration()
     val report = depRes.update(module, uc, uwc, s.log).left.map(_.resolveException).toTry.get
     val jars = for {
       config <- report.configurations.iterator
@@ -104,7 +113,7 @@ object SbtMima {
       if artifact.classifier.isEmpty
     } yield file
     jars.toList match {
-      case Nil             => sys.error(s"Could not resolve previous ABI: $m")
+      case Nil => sys.error(s"Could not resolve previous ABI: $m")
       case jar :: moreJars =>
         if (moreJars.nonEmpty)
           s.log.debug(s"Returning $jar and ignoring $moreJars for $m")
@@ -112,30 +121,34 @@ object SbtMima {
     }
   }
 
-  def issueFiltersFromFiles(filtersDirectory: File, fileExtension: Regex, s: TaskStreams): Map[String, Seq[ProblemFilter]] = {
+  def issueFiltersFromFiles(
+      filtersDirectory: File,
+      fileExtension: Regex,
+      s: TaskStreams
+  ): Map[String, Seq[ProblemFilter]] = {
     val ExclusionPattern = """ProblemFilters\.exclude\[([^\]]+)\]\("([^"]+)"\)""".r
     val mappings = mutable.HashMap.empty[String, Seq[ProblemFilter]].withDefault(_ => new ListBuffer[ProblemFilter])
     val failures = new ListBuffer[String]
 
     def parseOneFile(file: File): Seq[ProblemFilter] = {
       val filters = new ListBuffer[ProblemFilter]
-      val source = Source.fromFile(file)
-      try {
+      val source  = Source.fromFile(file)
+      try
         for {
           (rawText, line) <- source.getLines().zipWithIndex
           if !rawText.startsWith("#")
           text = rawText.trim
           if text != ""
-        } {
+        }
           text match {
             case ExclusionPattern(className, target) =>
-              try filters += ProblemFilters.exclude(className, target) catch {
+              try filters += ProblemFilters.exclude(className, target)
+              catch {
                 case NonFatal(t) => failures += s"Error while parsing $file, line $line: ${t.getMessage}"
               }
             case _ => failures += s"Couldn't parse $file, line $line: '$text'"
           }
-        }
-      } catch {
+      catch {
         case NonFatal(t) => failures += s"Couldn't load '$file': ${t.getMessage}"
       } finally source.close()
       filters

@@ -2,7 +2,7 @@ package foo
 
 class Foo {
   private[foo] def bar(x: Int, y: Int) = x + y
-               def bar(x: String)      = x
+  def bar(x: String)                   = x
 }
 
 object Lib {

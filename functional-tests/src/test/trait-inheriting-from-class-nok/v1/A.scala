@@ -1,5 +1,5 @@
 trait A {
-  def bar = 2
+  def bar         = 2
   def foo(a: Int) = 2
 }
 

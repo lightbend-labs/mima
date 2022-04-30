@@ -12,7 +12,7 @@ private[core] object Type {
   val unitType    = ValueType("Unit")
 }
 
-private[core] sealed abstract class Type {
+sealed abstract private[core] class Type {
   def resultType: Type = throw new UnsupportedOperationException
 
   final override def toString = this match {
@@ -23,7 +23,7 @@ private[core] sealed abstract class Type {
   }
 }
 
-private[core] final case class ValueType(name: String)                                           extends Type
-private[core] final case class ClassType(private val clazz: ClassInfo)                           extends Type
-private[core] final case class ArrayType(elemType: Type)                                         extends Type
-private[core] final case class MethodType(paramTypes: List[Type], override val resultType: Type) extends Type
+final private[core] case class ValueType(name: String) extends Type
+final private[core] case class ClassType(private val clazz: ClassInfo) extends Type
+final private[core] case class ArrayType(elemType: Type) extends Type
+final private[core] case class MethodType(paramTypes: List[Type], override val resultType: Type) extends Type

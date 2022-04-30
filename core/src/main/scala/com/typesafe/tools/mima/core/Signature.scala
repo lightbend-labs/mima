@@ -5,21 +5,21 @@ import scala.annotation.tailrec
 class Signature(private val signature: String) {
   import Signature._
 
-  lazy val canonicalized = {
+  lazy val canonicalized =
     signature.headOption match {
       case None | Some('(') => signature
       case _ =>
         val (formalTypeParameters, _) = FormalTypeParameter.parseList(signature.drop(1))
-        val replacements = formalTypeParameters.map(_.identifier).zipWithIndex
+        val replacements              = formalTypeParameters.map(_.identifier).zipWithIndex
         replacements.foldLeft(signature) { case (sig, (from, to)) =>
           sig
             .replace(s"<${from}:", s"<__${to}__:")
             .replace(s";${from}:", s";__${to}__:")
-            .replace(s"T${from};", s"__${to}__") }
+            .replace(s"T${from};", s"__${to}__")
+        }
     }
-  }
 
-  def matches(newer: Signature, isConstructor: Boolean): Boolean = {
+  def matches(newer: Signature, isConstructor: Boolean): Boolean =
     // If the signature is identical obviously it matches
     (signature == newer.signature) ||
     // Consider missing signatures identical to non-generic ones.
@@ -32,8 +32,7 @@ class Signature(private val signature: String) {
     (isConstructor && hasMatchingCtorSig(newer.signature)) ||
     // Also match when the signature only differs in the name of a type parameter
     canonicalized == newer.canonicalized
-  }
- 
+
   // Special case for scala#7975
   private def hasMatchingCtorSig(newer: String): Boolean =
     newer.isEmpty || // ignore losing signature on constructors
@@ -51,24 +50,22 @@ object Signature {
   case class FormalTypeParameter(identifier: String, bound: String)
 
   object FormalTypeParameter {
-    @tailrec def parseList(in: String, acc: List[FormalTypeParameter] = Nil): (List[FormalTypeParameter], String) = {
+    @tailrec def parseList(in: String, acc: List[FormalTypeParameter] = Nil): (List[FormalTypeParameter], String) =
       in(0) match {
         case '>' => (acc, in.drop(1))
-        case _   => {
+        case _ =>
           val (next, rest) = parseOne(in)
           parseList(rest, acc :+ next)
-        }
       }
-    }
 
     def parseOne(in: String): (FormalTypeParameter, String) = {
-      val identifier = in.takeWhile(_ != ':')
-      val boundAndRest = in.dropWhile(_ != ':').drop(1)
+      val identifier    = in.takeWhile(_ != ':')
+      val boundAndRest  = in.dropWhile(_ != ':').drop(1)
       val (bound, rest) = splitBoundAndRest(boundAndRest)
       (FormalTypeParameter(identifier, bound), rest)
     }
 
-    @tailrec private def splitBoundAndRest(in: String, boundSoFar: String = "", depth: Int = 0): (String, String) = {
+    @tailrec private def splitBoundAndRest(in: String, boundSoFar: String = "", depth: Int = 0): (String, String) =
       if (depth > 0) {
         in(0) match {
           case '>' => splitBoundAndRest(in.drop(1), boundSoFar + '>', depth - 1)
@@ -82,6 +79,5 @@ object Signature {
           case o   => splitBoundAndRest(in.drop(1), boundSoFar + o, depth)
         }
       }
-    }
   }
 }

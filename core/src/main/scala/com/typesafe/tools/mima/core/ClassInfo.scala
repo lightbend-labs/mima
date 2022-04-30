@@ -7,14 +7,14 @@ import com.typesafe.tools.mima.core.util.log.ConsoleLogging
 private[core] object ClassInfo {
   def formatClassName(str: String) = NameTransformer.decode(str).replace('$', '#')
 
-  /** We assume there can be only one java.lang.Object class,
-   *  and that comes from the configuration class path.
+  /**
+   * We assume there can be only one java.lang.Object class, and that comes from the configuration class path.
    */
   lazy val ObjectClass = new Definitions(ClassPath.base).ObjectClass
 }
 
 /** A placeholder class info for a class that is not found on the classpath or in a given package. */
-private[core] sealed class SyntheticClassInfo(owner: PackageInfo, val bytecodeName: String) extends ClassInfo(owner) {
+sealed private[core] class SyntheticClassInfo(owner: PackageInfo, val bytecodeName: String) extends ClassInfo(owner) {
   final protected def afterLoading[A](x: => A): A = x
 
   override lazy val superClasses        = Set(ClassInfo.ObjectClass)
@@ -31,7 +31,7 @@ private[core] object NoClass extends SyntheticClassInfo(NoPackageInfo, "<noclass
 }
 
 /** A class for which we have the classfile. */
-private[core] final class ConcreteClassInfo(owner: PackageInfo, val file: AbsFile) extends ClassInfo(owner) {
+final private[core] class ConcreteClassInfo(owner: PackageInfo, val file: AbsFile) extends ClassInfo(owner) {
   def bytecodeName                  = file.name.stripSuffix(".class")
   override def canEqual(other: Any) = other.isInstanceOf[ConcreteClassInfo]
 
@@ -47,7 +47,7 @@ private[core] final class ConcreteClassInfo(owner: PackageInfo, val file: AbsFil
   }
 }
 
-private[mima] sealed abstract class ClassInfo(val owner: PackageInfo) extends InfoLike with Equals {
+sealed abstract private[mima] class ClassInfo(val owner: PackageInfo) extends InfoLike with Equals {
   import ClassInfo._
 
   final var _innerClasses: Seq[String]    = Nil
@@ -77,28 +77,29 @@ private[mima] sealed abstract class ClassInfo(val owner: PackageInfo) extends In
   final def flags: Int                   = afterLoading(_flags)
   final def isScopedPrivate: Boolean     = afterLoading(_scopedPrivate)
   final def annotations: List[AnnotInfo] = afterLoading(_annotations)
-  final def implClass: ClassInfo         = { owner.setImplClasses; _implClass } // returns NoClass if this is not a trait
-  final def moduleClass: ClassInfo       = { owner.setModules; if (_moduleClass == NoClass) this else _moduleClass }
-  final def module: ClassInfo            = { owner.setModules; if (_module      == NoClass) this else _module      }
+  final def implClass: ClassInfo   = { owner.setImplClasses; _implClass } // returns NoClass if this is not a trait
+  final def moduleClass: ClassInfo = { owner.setModules; if (_moduleClass == NoClass) this else _moduleClass }
+  final def module: ClassInfo      = { owner.setModules; if (_module == NoClass) this else _module }
 
-  final def isTrait: Boolean          = implClass ne NoClass // trait with some concrete methods or fields
-  final def isModuleClass: Boolean    = bytecodeName.endsWith("$") // super scuffed
-  final def isImplClass: Boolean      = bytecodeName.endsWith("$class")
-  final def isInterface: Boolean      = ClassfileParser.isInterface(flags) // java interface or trait w/o impl methods
-  final def isClass: Boolean          = !isTrait && !isInterface // class, object or trait's impl class
+  final def isTrait: Boolean       = implClass ne NoClass // trait with some concrete methods or fields
+  final def isModuleClass: Boolean = bytecodeName.endsWith("$") // super scuffed
+  final def isImplClass: Boolean   = bytecodeName.endsWith("$class")
+  final def isInterface: Boolean   = ClassfileParser.isInterface(flags) // java interface or trait w/o impl methods
+  final def isClass: Boolean       = !isTrait && !isInterface // class, object or trait's impl class
 
   final def scopedPrivateSuff: String = if (isScopedPrivate) "[..]" else ""
-  final def accessModifier: String    = if (isProtected) s"protected$scopedPrivateSuff" else if (isPrivate) s"private$scopedPrivateSuff" else ""
-  final def declarationPrefix: String = if (isModuleClass) "object" else if (isTrait) "trait" else if (isInterface) "interface" else "class"
+  final def accessModifier: String =
+    if (isProtected) s"protected$scopedPrivateSuff" else if (isPrivate) s"private$scopedPrivateSuff" else ""
+  final def declarationPrefix: String =
+    if (isModuleClass) "object" else if (isTrait) "trait" else if (isInterface) "interface" else "class"
   final lazy val fullName: String     = if (owner.isRoot) bytecodeName else s"${owner.fullName}.$bytecodeName"
   final def formattedFullName: String = formatClassName(if (isModuleClass) fullName.init else fullName)
   final def description: String       = s"$declarationPrefix $formattedFullName"
   final def classString: String       = s"$accessModifier $description".trim
 
-  lazy val superClasses: Set[ClassInfo] = {
+  lazy val superClasses: Set[ClassInfo] =
     if (this == ClassInfo.ObjectClass) Set.empty
     else superClass.superClasses + superClass
-  }
 
   private def thisAndSuperClasses = Iterator.single(this) ++ superClasses.iterator
 
@@ -123,16 +124,15 @@ private[mima] sealed abstract class ClassInfo(val owner: PackageInfo) extends In
     allTraits.iterator.flatMap(_.concreteMethods).filter(_.bytecodeName == method.bytecodeName)
 
   /** The concrete methods of this trait. */
-  final lazy val concreteMethods: List[MethodInfo] = {
+  final lazy val concreteMethods: List[MethodInfo] =
     if (isTrait) methods.value.filter(m => hasStaticImpl(m) || m.isConcrete)
     else methods.value.filter(_.isConcrete)
-  }
 
-  /** The subset of concrete methods of this trait that are abstract at the JVM level.
-    * This corresponds to the pre-Scala-2.12 trait encoding where all `concreteMethods`
-    * are `emulatedConcreteMethods`. In 2.12 most concrete trait methods are translated
-    * to concrete interface methods.
-    */
+  /**
+   * The subset of concrete methods of this trait that are abstract at the JVM level. This corresponds to the
+   * pre-Scala-2.12 trait encoding where all `concreteMethods` are `emulatedConcreteMethods`. In 2.12 most concrete
+   * trait methods are translated to concrete interface methods.
+   */
   final lazy val emulatedConcreteMethods: List[MethodInfo] = concreteMethods.filter(_.isDeferred)
 
   /** The deferred methods of this trait. */
@@ -144,21 +144,20 @@ private[mima] sealed abstract class ClassInfo(val owner: PackageInfo) extends In
   /** All deferred methods of this type as seen in the bytecode. */
   final def deferredMethodsInBytecode: List[MethodInfo] = if (isTrait) methods.value else deferredMethods
 
-  /** The inherited traits in the linearization of this class or trait,
-   *  except any traits inherited by its superclass.
-   *  Traits appear in linearization order of this class or trait.
+  /**
+   * The inherited traits in the linearization of this class or trait, except any traits inherited by its superclass.
+   * Traits appear in linearization order of this class or trait.
    */
   final lazy val directTraits: List[ClassInfo] = {
     val superClassTraits = superClass.allTraits
 
     // All traits in the transitive, reflexive inheritance closure of the given trait.
-    def traitClosure(t: ClassInfo): List[ClassInfo] = {
+    def traitClosure(t: ClassInfo): List[ClassInfo] =
       if (superClassTraits.contains(t)) Nil
       // traits with only abstract methods are presented as interfaces,
       // but nonetheless they should still be collected
       else if (t.isInterface) parentsClosure(t) :+ t
       else parentsClosure(t)
-    }
 
     def parentsClosure(c: ClassInfo) = c.interfaces.flatMap(traitClosure).distinct
 
@@ -166,21 +165,19 @@ private[mima] sealed abstract class ClassInfo(val owner: PackageInfo) extends In
   }
 
   /** All traits inherited directly or indirectly by this class. */
-  lazy val allTraits: Set[ClassInfo] = {
+  lazy val allTraits: Set[ClassInfo] =
     if (this == ClassInfo.ObjectClass) Set.empty
     else superClass.allTraits ++ directTraits
-  }
 
   /** All interfaces inherited directly or indirectly by this class. */
-  lazy val allInterfaces: Set[ClassInfo] = {
+  lazy val allInterfaces: Set[ClassInfo] =
     if (this == ClassInfo.ObjectClass) Set.empty
     else superClass.allInterfaces ++ interfaces ++ interfaces.flatMap(_.allInterfaces)
-  }
 
   /** Does this class's impl class have a static implementation of the given method `m`? */
-  final def hasStaticImpl(m: MethodInfo): Boolean = {
+  final def hasStaticImpl(m: MethodInfo): Boolean =
     implClass match {
-      case _: SyntheticClassInfo   => false
+      case _: SyntheticClassInfo => false
       case impl: ConcreteClassInfo =>
         assert(impl.isImplClass, impl)
         impl.methods.get(m.bytecodeName).exists { im =>
@@ -190,24 +187,22 @@ private[mima] sealed abstract class ClassInfo(val owner: PackageInfo) extends In
           hasMatchingSig(isig, tsig)
         }
     }
-  }
 
   /** Does the given method have a static mixin forwarder? */
-  final def hasMixinForwarder(m: MethodInfo): Boolean = {
+  final def hasMixinForwarder(m: MethodInfo): Boolean =
     methods.get(m.bytecodeName + "$").exists { fm =>
       val fsig = fm.descriptor
       val tsig = m.descriptor
       assert(fsig(0) == '(' && tsig(0) == '(', s"fsig=[$fsig] tsig=[$tsig]")
       hasMatchingSig(fsig, tsig)
     }
-  }
 
   // Does `sig` correspond to `tsig` if seen as the signature of the static
   // implementation method or the mixin forwarder method of a trait method with signature `tsig`?
   private def hasMatchingSig(sig: String, tsig: String): Boolean = {
     val ilen = sig.length
     val tlen = tsig.length
-    var i = 2
+    var i    = 2
     while (sig(i) != ';')
       i += 1
     i += 1

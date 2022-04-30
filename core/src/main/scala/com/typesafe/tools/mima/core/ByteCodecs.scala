@@ -1,27 +1,26 @@
 package com.typesafe.tools.mima.core
 
 /**
- * Helper methods to serialize a byte array as String
- * that can be written as "modified" UTF-8 to classfiles.
+ * Helper methods to serialize a byte array as String that can be written as "modified" UTF-8 to classfiles.
  *
- * Modified UTF-8 is the same as UTF-8, except for 0x00,
- * which is represented as the "overlong" 0xC0 0x80.
- * Constant strings in classfiles use this encoding.
+ * Modified UTF-8 is the same as UTF-8, except for 0x00, which is represented as the "overlong" 0xC0 0x80. Constant
+ * strings in classfiles use this encoding.
  *
  * Encoding (according to SID-10):
  *   - The 8-bit bytes are split into 7-bit bytes, e.g., 0xff 0x0f becomes 0x7f 0x1f 0x00
- *   - Every bit is incremented by 1 (modulo 0x80), in the example we get  0x00, 0x20 0x01
- *   - 0x00 is mapped to the overlong encoding, so we get                  0xC0 0x80 0x20 0x01
+ *   - Every bit is incremented by 1 (modulo 0x80), in the example we get 0x00, 0x20 0x01
+ *   - 0x00 is mapped to the overlong encoding, so we get 0xC0 0x80 0x20 0x01
  *
- * The +1 increment should reduce the number of (overlong) zeros in the resulting string,
- * as 0x7f is (hoped to be) more common than 0x00.
+ * The +1 increment should reduce the number of (overlong) zeros in the resulting string, as 0x7f is (hoped to be) more
+ * common than 0x00.
  */
 object ByteCodecs {
+
   /** Map 0xC0 0x80 to 0x00, then subtract 1 from each element. In-place. */
   def regenerateZero(src: Array[Byte]): Int = {
-    var i = 0
+    var i      = 0
     val srclen = src.length
-    var j = 0
+    var j      = 0
     while (i < srclen) {
       val in: Int = src(i) & 0xff
       if (in == 0xc0 && (src(i + 1) & 0xff) == 0x80) {
@@ -40,8 +39,8 @@ object ByteCodecs {
   }
 
   def decode7to8(src: Array[Byte], srclen: Int): Int = {
-    var i = 0
-    var j = 0
+    var i      = 0
+    var j      = 0
     val dstlen = (srclen * 7 + 7) / 8
     while (i + 7 < srclen) {
       var out: Int = src(i).toInt
@@ -110,14 +109,12 @@ object ByteCodecs {
    *
    * Sometimes returns (length+1) of the decoded array. Example:
    *
-   *   scala> val enc = scala.reflect.internal.pickling.ByteCodecs.encode(Array(1,2,3))
-   *   enc: Array[Byte] = Array(2, 5, 13, 1)
+   * scala> val enc = scala.reflect.internal.pickling.ByteCodecs.encode(Array(1,2,3)) enc: Array[Byte] = Array(2, 5, 13,
+   * 1)
    *
-   *   scala> scala.reflect.internal.pickling.ByteCodecs.decode(enc)
-   *   res43: Int = 4
+   * scala> scala.reflect.internal.pickling.ByteCodecs.decode(enc) res43: Int = 4
    *
-   *   scala> enc
-   *   res44: Array[Byte] = Array(1, 2, 3, 0)
+   * scala> enc res44: Array[Byte] = Array(1, 2, 3, 0)
    *
    * However, this does not always happen.
    */

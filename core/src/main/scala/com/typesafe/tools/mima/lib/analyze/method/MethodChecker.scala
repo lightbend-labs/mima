@@ -7,9 +7,8 @@ private[analyze] object MethodChecker {
     checkExisting(oldclazz, newclazz, excludeAnnots) ::: checkNew(oldclazz, newclazz, excludeAnnots)
 
   /** Analyze incompatibilities that may derive from changes in existing methods. */
-  private def checkExisting(oldclazz: ClassInfo, newclazz: ClassInfo, excludeAnnots: List[AnnotInfo]): List[Problem] = {
+  private def checkExisting(oldclazz: ClassInfo, newclazz: ClassInfo, excludeAnnots: List[AnnotInfo]): List[Problem] =
     for (oldmeth <- oldclazz.methods.value; problem <- checkExisting1(oldmeth, newclazz, excludeAnnots)) yield problem
-  }
 
   /** Analyze incompatibilities that may derive from new methods in `newclazz`. */
   private def checkNew(oldclazz: ClassInfo, newclazz: ClassInfo, excludeAnnots: List[AnnotInfo]): List[Problem] = {
@@ -19,7 +18,11 @@ private[analyze] object MethodChecker {
     problems1 ::: problems2 ::: problems3
   }
 
-  private def checkExisting1(oldmeth: MethodInfo, newclazz: ClassInfo, excludeAnnots: List[AnnotInfo]): Option[Problem] = {
+  private def checkExisting1(
+      oldmeth: MethodInfo,
+      newclazz: ClassInfo,
+      excludeAnnots: List[AnnotInfo]
+  ): Option[Problem] =
     if (oldmeth.nonAccessible || excludeAnnots.exists(oldmeth.annotations.contains))
       None
     else if (newclazz.isClass) {
@@ -35,9 +38,12 @@ private[analyze] object MethodChecker {
       else
         checkExisting1Impl(oldmeth, newclazz, _.lookupMethods(oldmeth))
     }
-  }
 
-  private def checkExisting1Impl(oldmeth: MethodInfo, newclazz: ClassInfo, methsLookup: ClassInfo => Iterator[MethodInfo]): Option[Problem] = {
+  private def checkExisting1Impl(
+      oldmeth: MethodInfo,
+      newclazz: ClassInfo,
+      methsLookup: ClassInfo => Iterator[MethodInfo]
+  ): Option[Problem] = {
     val newmeths = methsLookup(newclazz).filter(oldmeth.paramsCount == _.paramsCount).toList
     newmeths.find(newmeth => hasMatchingDescriptorAndSignature(oldmeth, newmeth)) match {
       case Some(newmeth) => checkExisting1v1(oldmeth, newmeth)
@@ -47,9 +53,9 @@ private[analyze] object MethodChecker {
 
   private def hasMatchingDescriptorAndSignature(oldmeth: MethodInfo, newmeth: MethodInfo): Boolean =
     oldmeth.descriptor == newmeth.descriptor &&
-      oldmeth.signature.matches(newmeth.signature, newmeth.bytecodeName == MemberInfo.ConstructorName)
+    oldmeth.signature.matches(newmeth.signature, newmeth.bytecodeName == MemberInfo.ConstructorName)
 
-  private def checkExisting1v1(oldmeth: MethodInfo, newmeth: MethodInfo) = {
+  private def checkExisting1v1(oldmeth: MethodInfo, newmeth: MethodInfo) =
     if (newmeth.isLessVisibleThan(oldmeth))
       Some(InaccessibleMethodProblem(newmeth))
     else if (oldmeth.nonFinal && newmeth.isFinal && oldmeth.owner.nonFinal)
@@ -62,9 +68,8 @@ private[analyze] object MethodChecker {
       Some(VirtualStaticMemberProblem(oldmeth))
     else
       None
-  }
 
-  private def checkStaticImplMethod(oldmeth: MethodInfo, newclazz: ClassInfo) = {
+  private def checkStaticImplMethod(oldmeth: MethodInfo, newclazz: ClassInfo) =
     if (newclazz.hasStaticImpl(oldmeth)) {
       None // then it's ok, the method it is still there
     } else {
@@ -80,9 +85,8 @@ private[analyze] object MethodChecker {
         Some(missingOrIncompatible(oldmeth, methsLookup(newclazz).toList, methsLookup))
       }
     }
-  }
 
-  private def checkStaticMixinForwarderMethod(oldmeth: MethodInfo, newclazz: ClassInfo) = {
+  private def checkStaticMixinForwarderMethod(oldmeth: MethodInfo, newclazz: ClassInfo) =
     if (newclazz.hasMixinForwarder(oldmeth)) {
       None // then it's ok, the method it is still there
     } else {
@@ -93,13 +97,16 @@ private[analyze] object MethodChecker {
         Some(missingOrIncompatible(oldmeth, methsLookup(newclazz).toList, methsLookup))
       }
     }
-  }
 
-  private def missingOrIncompatible(oldmeth: MethodInfo, newmeths: List[MethodInfo], methsLookup: ClassInfo => Iterator[MethodInfo]) = {
+  private def missingOrIncompatible(
+      oldmeth: MethodInfo,
+      newmeths: List[MethodInfo],
+      methsLookup: ClassInfo => Iterator[MethodInfo]
+  ) = {
     val newmethAndBridges = newmeths.filter(oldmeth.matchesType(_)) // _the_ corresponding new method + its bridges
     newmethAndBridges.find(_.tpe.resultType == oldmeth.tpe.resultType) match {
       case Some(newmeth) => IncompatibleSignatureProblem(oldmeth, newmeth)
-      case None          =>
+      case None =>
         val oldmethsDescriptors = methsLookup(oldmeth.owner).map(_.descriptor).toSet
         if (newmeths.forall(newmeth => oldmethsDescriptors.contains(newmeth.descriptor)))
           DirectMissingMethodProblem(oldmeth)
@@ -135,7 +142,11 @@ private[analyze] object MethodChecker {
     } yield problem
   }.toList
 
-  private def checkDeferredMethodsProblems(oldclazz: ClassInfo, newclazz: ClassInfo, excludeAnnots: List[AnnotInfo]): List[Problem] = {
+  private def checkDeferredMethodsProblems(
+      oldclazz: ClassInfo,
+      newclazz: ClassInfo,
+      excludeAnnots: List[AnnotInfo]
+  ): List[Problem] = {
     for {
       newmeth <- newclazz.deferredMethods.iterator
       if !excludeAnnots.exists(newmeth.annotations.contains)
@@ -147,13 +158,16 @@ private[analyze] object MethodChecker {
     } yield problem
   }.toList
 
-  private def checkInheritedNewAbstractMethodProblems(oldclazz: ClassInfo, newclazz: ClassInfo, excludeAnnots: List[AnnotInfo]): List[Problem] = {
+  private def checkInheritedNewAbstractMethodProblems(
+      oldclazz: ClassInfo,
+      newclazz: ClassInfo,
+      excludeAnnots: List[AnnotInfo]
+  ): List[Problem] = {
     def allInheritedTypes(clazz: ClassInfo) = clazz.superClasses ++ clazz.allInterfaces
-    val diffInheritedTypes = allInheritedTypes(newclazz).diff(allInheritedTypes(oldclazz))
+    val diffInheritedTypes                  = allInheritedTypes(newclazz).diff(allInheritedTypes(oldclazz))
 
-    def noInheritedMatchingMethod(clazz: ClassInfo, meth: MethodInfo)(p: MemberInfo => Boolean) = {
+    def noInheritedMatchingMethod(clazz: ClassInfo, meth: MethodInfo)(p: MemberInfo => Boolean) =
       !clazz.lookupMethods(meth).filter(_.matchesType(meth)).exists(m => m.owner != meth.owner && p(m))
-    }
 
     for {
       newInheritedType <- diffInheritedTypes.iterator
@@ -162,11 +176,12 @@ private[analyze] object MethodChecker {
       if !excludeAnnots.exists(newDeferredMethod.annotations.contains)
       // checks that the newDeferredMethod did not already exist in one of the oldclazz supertypes
       if noInheritedMatchingMethod(oldclazz, newDeferredMethod)(_ => true) &&
-          // checks that no concrete implementation of the newDeferredMethod is provided by one of the newclazz supertypes
-          noInheritedMatchingMethod(newclazz, newDeferredMethod)(_.isConcrete)
+      // checks that no concrete implementation of the newDeferredMethod is provided by one of the newclazz supertypes
+      noInheritedMatchingMethod(newclazz, newDeferredMethod)(_.isConcrete)
     } yield {
       // report a binary incompatibility as there is a new inherited abstract method, which can lead to a AbstractErrorMethod at runtime
-      val newmeth = new MethodInfo(newclazz, newDeferredMethod.bytecodeName, newDeferredMethod.flags, newDeferredMethod.descriptor)
+      val newmeth =
+        new MethodInfo(newclazz, newDeferredMethod.bytecodeName, newDeferredMethod.flags, newDeferredMethod.descriptor)
       InheritedNewAbstractMethodProblem(newDeferredMethod, newmeth)
     }
   }.toList

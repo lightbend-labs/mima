@@ -4,10 +4,10 @@ final class SignatureSpec extends munit.FunSuite {
   val promiseSig =
     "Lscala/concurrent/Promise<" +
       "Lscala/Function1<" +
-        "Lscala/concurrent/duration/FiniteDuration;" +
-        "Lscala/concurrent/Future<Lakka/http/scaladsl/Http$HttpTerminated;>;" +
+      "Lscala/concurrent/duration/FiniteDuration;" +
+      "Lscala/concurrent/Future<Lakka/http/scaladsl/Http$HttpTerminated;>;" +
       ">;" +
-    ">;"
+      ">;"
 
   val `signature_in_2.12.8` = Signature(s"(Lakka/http/impl/engine/server/GracefulTerminatorStage;$promiseSig)V")
   val `signature_in_2.12.9` = Signature(s"($promiseSig)V")
@@ -33,8 +33,8 @@ final class SignatureSpec extends munit.FunSuite {
 
   test("The signature parser should parse a signature with generic bounds that themselves have generics") {
     import Signature.FormalTypeParameter
-    val rest = "(TT;Lscala/collection/immutable/List<TU;>;)Lscala/Option<TT;>;>"
-    val orig = s"T:Ljava/lang/Object;U:Lscala/collection/immutable/List<TT;>;>$rest"
+    val rest             = "(TT;Lscala/collection/immutable/List<TU;>;)Lscala/Option<TT;>;>"
+    val orig             = s"T:Ljava/lang/Object;U:Lscala/collection/immutable/List<TT;>;>$rest"
     val (types, obtRest) = FormalTypeParameter.parseList(orig)
     assertEquals(types.length, 2)
     assertEquals(types(0), FormalTypeParameter("T", "Ljava/lang/Object"))

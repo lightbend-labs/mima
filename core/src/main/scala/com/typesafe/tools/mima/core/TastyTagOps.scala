@@ -43,7 +43,7 @@ object TastyTagOps {
     case ARTIFACT           => true
     case MUTABLE            => true
     case FIELDaccessor      => true
-    case  CASEaccessor      => true
+    case CASEaccessor       => true
     case COVARIANT          => true
     case CONTRAVARIANT      => true
     case HASDEFAULT         => true
@@ -58,16 +58,16 @@ object TastyTagOps {
     case INFIX              => true
     case INVISIBLE          => true
     case ANNOTATION         => true
-    case   PRIVATEqualified => true
+    case PRIVATEqualified   => true
     case PROTECTEDqualified => true
     case _                  => false
   }
 
   def astTagToString(tag: Int): String = tag match {
-    case  UNITconst    =>  "UNITconst"
+    case UNITconst     => "UNITconst"
     case FALSEconst    => "FALSEconst"
-    case  TRUEconst    =>  "TRUEconst"
-    case  NULLconst    =>  "NULLconst"
+    case TRUEconst     => "TRUEconst"
+    case NULLconst     => "NULLconst"
     case PRIVATE       => "PRIVATE"
     case PROTECTED     => "PROTECTED"
     case ABSTRACT      => "ABSTRACT"
@@ -91,7 +91,7 @@ object TastyTagOps {
     case ARTIFACT      => "ARTIFACT"
     case MUTABLE       => "MUTABLE"
     case FIELDaccessor => "FIELDaccessor"
-    case  CASEaccessor =>  "CASEaccessor"
+    case CASEaccessor  => "CASEaccessor"
     case COVARIANT     => "COVARIANT"
     case CONTRAVARIANT => "CONTRAVARIANT"
     case HASDEFAULT    => "HASDEFAULT"
@@ -115,12 +115,12 @@ object TastyTagOps {
     case TERMREFpkg    => "TERMREFpkg"
     case TYPEREFpkg    => "TYPEREFpkg"
     case RECthis       => "RECthis"
-    case   BYTEconst   =>   "BYTEconst"
-    case  SHORTconst   =>  "SHORTconst"
-    case   CHARconst   =>   "CHARconst"
-    case    INTconst   =>    "INTconst"
-    case   LONGconst   =>   "LONGconst"
-    case  FLOATconst   =>  "FLOATconst"
+    case BYTEconst     => "BYTEconst"
+    case SHORTconst    => "SHORTconst"
+    case CHARconst     => "CHARconst"
+    case INTconst      => "INTconst"
+    case LONGconst     => "LONGconst"
+    case FLOATconst    => "FLOATconst"
     case DOUBLEconst   => "DOUBLEconst"
     case STRINGconst   => "STRINGconst"
     case IMPORTED      => "IMPORTED"
@@ -134,7 +134,7 @@ object TastyTagOps {
     case NEW                => "NEW"
     case THROW              => "THROW"
     case IMPLICITarg        => "IMPLICITarg"
-    case   PRIVATEqualified =>   "PRIVATEqualified"
+    case PRIVATEqualified   => "PRIVATEqualified"
     case PROTECTEDqualified => "PROTECTEDqualified"
     case RECtype            => "RECtype"
     case SINGLETONtpt       => "SINGLETONtpt"
@@ -187,16 +187,16 @@ object TastyTagOps {
     case APPLIEDtpt     => "APPLIEDtpt"
     case TYPEBOUNDS     => "TYPEBOUNDS"
     case TYPEBOUNDStpt  => "TYPEBOUNDStpt"
-    case        ANDtype =>        "ANDtype"
-    case         ORtype =>         "ORtype"
-    case       POLYtype =>       "POLYtype"
+    case ANDtype        => "ANDtype"
+    case ORtype         => "ORtype"
+    case POLYtype       => "POLYtype"
     case TYPELAMBDAtype => "TYPELAMBDAtype"
-    case     LAMBDAtpt  =>     "LAMBDAtpt"
-    case      PARAMtype =>      "PARAMtype"
+    case LAMBDAtpt      => "LAMBDAtpt"
+    case PARAMtype      => "PARAMtype"
     case ANNOTATION     => "ANNOTATION"
     case TERMREFin      => "TERMREFin"
     case TYPEREFin      => "TYPEREFin"
-    case  SELECTin      =>  "SELECTin"
+    case SELECTin       => "SELECTin"
     case EXPORT         => "EXPORT"
     case METHODtype     => "METHODtype"
     case MATCHtype      => "MATCHtype"
@@ -209,10 +209,10 @@ object TastyTagOps {
 
   sealed abstract class AstCategory(val range: Range.Inclusive)
   case object AstCat1TagOnly extends AstCategory(AstCat1)
-  case object AstCat2Nat     extends AstCategory(AstCat2)
-  case object AstCat3AST     extends AstCategory(AstCat3)
-  case object AstCat4NatAST  extends AstCategory(AstCat4)
-  case object AstCat5Length  extends AstCategory(AstCat5)
-  val astCategories = List(AstCat1TagOnly, AstCat2Nat, AstCat3AST, AstCat4NatAST, AstCat5Length)
+  case object AstCat2Nat extends AstCategory(AstCat2)
+  case object AstCat3AST extends AstCategory(AstCat3)
+  case object AstCat4NatAST extends AstCategory(AstCat4)
+  case object AstCat5Length extends AstCategory(AstCat5)
+  val astCategories                      = List(AstCat1TagOnly, AstCat2Nat, AstCat3AST, AstCat4NatAST, AstCat5Length)
   def astCategory(tag: Int): AstCategory = astCategories.iterator.filter(_.range.contains(tag)).next()
 }

@@ -12,7 +12,7 @@ final class PickleBuffer(val bytes: Array[Byte]) {
   def readLongNat(): Long = {
     var b = 0L
     var x = 0L
-    while({
+    while ({
       b = readByte().toLong
       x = (x << 7) + (b & 0x7f)
       (b & 0x80) != 0L
@@ -32,25 +32,30 @@ final class PickleBuffer(val bytes: Array[Byte]) {
     x << leading >> leading
   }
 
-  /** The indices in the bytes array where each consecutive entry starts.
-   *  The length of the array is the number of entries in the pickle bytes. */
-  def createIndex: Array[Int] = {
+  /**
+   * The indices in the bytes array where each consecutive entry starts. The length of the array is the number of
+   * entries in the pickle bytes.
+   */
+  def createIndex: Array[Int] =
     atIndex(0) {
       readNat(); readNat() // discard version
-      0.until(readNat()).iterator.map { _ =>
-        val idx = readIndex
-        readByte() // tag
-        val len = readNat()
-        readIndex += len
-        idx
-      }.toArray
+      0.until(readNat())
+        .iterator
+        .map { _ =>
+          val idx = readIndex
+          readByte() // tag
+          val len = readNat()
+          readIndex += len
+          idx
+        }
+        .toArray
     }
-  }
 
   def atIndex[T](i: Int)(body: => T): T = {
     val saved = readIndex
     readIndex = i
-    try body finally readIndex = saved
+    try body
+    finally readIndex = saved
   }
 
   def assertEnd(end: Int) = assert(readIndex == end, s"Expected at end=$end but readIndex=$readIndex")

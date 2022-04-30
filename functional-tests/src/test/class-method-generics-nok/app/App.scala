@@ -1,6 +1,6 @@
 object App {
   def main(args: Array[String]): Unit = {
-    val api = new Api
+    val api  = new Api
     val cov2 = api.cov2[String]()
     println(cov2)
     println(api.con1(App))

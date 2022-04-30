@@ -3,12 +3,12 @@ scalacOptions ++= Seq(
   "-feature",
   "-Xfatal-warnings",
   "-Xlint",
-  "-Ywarn-unused:_,-imports",
+  "-Ywarn-unused:_,-imports"
 )
 
 // Useful to self-test releases
 val stagingResolver = "Sonatype OSS Staging" at "https://oss.sonatype.org/content/repositories/staging"
-def isStaging = sys.props.contains("mimabuild.staging")
+def isStaging       = sys.props.contains("mimabuild.staging")
 resolvers ++= (if (isStaging) List(stagingResolver) else Nil)
 
 addSbtPlugin("com.dwijnand"   % "sbt-dynver"      % "4.1.1")

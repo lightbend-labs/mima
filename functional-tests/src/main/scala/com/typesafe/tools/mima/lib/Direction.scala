@@ -11,4 +11,4 @@ sealed trait Direction {
   }
 }
 case object Backwards extends Direction
-case object  Forwards extends Direction
+case object Forwards extends Direction

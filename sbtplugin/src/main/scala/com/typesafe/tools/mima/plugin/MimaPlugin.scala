@@ -12,13 +12,13 @@ object MimaPlugin extends AutoPlugin {
   import autoImport.*
 
   override def globalSettings: Seq[Def.Setting[_]] = Seq(
-    mimaPreviousArtifacts := NoPreviousArtifacts,
-    mimaExcludeAnnotations := Nil,
-    mimaBinaryIssueFilters := Nil,
-    mimaFailOnProblem := true,
-    mimaFailOnNoPrevious := true,
+    mimaPreviousArtifacts       := NoPreviousArtifacts,
+    mimaExcludeAnnotations      := Nil,
+    mimaBinaryIssueFilters      := Nil,
+    mimaFailOnProblem           := true,
+    mimaFailOnNoPrevious        := true,
     mimaReportSignatureProblems := false,
-    mimaCheckDirection := "backward",
+    mimaCheckDirection          := "backward"
   )
 
   override def projectSettings: Seq[Def.Setting[_]] = Seq(
@@ -33,7 +33,7 @@ object MimaPlugin extends AutoPlugin {
           mimaBackwardIssueFilters.value,
           mimaForwardIssueFilters.value,
           streams.value.log,
-          name.value,
+          name.value
         )
       }
     },
@@ -41,12 +41,14 @@ object MimaPlugin extends AutoPlugin {
     mimaPreviousClassfiles := {
       artifactsToClassfiles.value.toClassfiles(mimaPreviousArtifacts.value)
     },
-    mimaCurrentClassfiles := (Compile / classDirectory).value,
-    mimaFindBinaryIssues := binaryIssuesIterator.value.toMap,
+    mimaCurrentClassfiles                := (Compile / classDirectory).value,
+    mimaFindBinaryIssues                 := binaryIssuesIterator.value.toMap,
     mimaFindBinaryIssues / fullClasspath := (Compile / fullClasspath).value,
-    mimaBackwardIssueFilters := SbtMima.issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:backward[s]?|both)\\.excludes".r, streams.value),
-    mimaForwardIssueFilters := SbtMima.issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:forward[s]?|both)\\.excludes".r, streams.value),
-    mimaFiltersDirectory := (Compile / sourceDirectory).value / "mima-filters",
+    mimaBackwardIssueFilters := SbtMima
+      .issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:backward[s]?|both)\\.excludes".r, streams.value),
+    mimaForwardIssueFilters := SbtMima
+      .issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:forward[s]?|both)\\.excludes".r, streams.value),
+    mimaFiltersDirectory := (Compile / sourceDirectory).value / "mima-filters"
   )
 
   @deprecated("Switch to enablePlugins(MimaPlugin)", "0.7.0")
@@ -57,35 +59,38 @@ object MimaPlugin extends AutoPlugin {
   }
 
   trait BinaryIssuesFinder {
-    def runMima(prevClassFiles: Map[ModuleID, File], checkDirection: String)
-    : Iterator[(ModuleID, (List[Problem], List[Problem]))]
+    def runMima(
+        prevClassFiles: Map[ModuleID, File],
+        checkDirection: String
+    ): Iterator[(ModuleID, (List[Problem], List[Problem]))]
   }
 
   val artifactsToClassfiles: Def.Initialize[Task[ArtifactsToClassfiles]] = Def.task {
-    val depRes = mimaDependencyResolution.value
+    val depRes      = mimaDependencyResolution.value
     val taskStreams = streams.value
-    val smi = scalaModuleInfo.value
-    previousArtifacts => previousArtifacts match {
-      case _: NoPreviousArtifacts.type => NoPreviousClassfiles
-      case previousArtifacts =>
-        previousArtifacts.iterator.map { m =>
-          val moduleId = CrossVersion(m, smi) match {
-            case Some(f) => m.withName(f(m.name)).withCrossVersion(CrossVersion.disabled)
-            case None => m
-          }
-          moduleId -> SbtMima.getPreviousArtifact(moduleId, depRes, taskStreams)
-        }.toMap
-    }
+    val smi         = scalaModuleInfo.value
+    previousArtifacts =>
+      previousArtifacts match {
+        case _: NoPreviousArtifacts.type => NoPreviousClassfiles
+        case previousArtifacts =>
+          previousArtifacts.iterator.map { m =>
+            val moduleId = CrossVersion(m, smi) match {
+              case Some(f) => m.withName(f(m.name)).withCrossVersion(CrossVersion.disabled)
+              case None    => m
+            }
+            moduleId -> SbtMima.getPreviousArtifact(moduleId, depRes, taskStreams)
+          }.toMap
+      }
   }
 
   val binaryIssuesFinder: Def.Initialize[Task[BinaryIssuesFinder]] = Def.task {
-    val log = streams.value.log
-    val currClassfiles = mimaCurrentClassfiles.value
-    val cp = (mimaFindBinaryIssues / fullClasspath).value
-    val sv = scalaVersion.value
-    val excludeAnnots = mimaExcludeAnnotations.value.toList
+    val log              = streams.value.log
+    val currClassfiles   = mimaCurrentClassfiles.value
+    val cp               = (mimaFindBinaryIssues / fullClasspath).value
+    val sv               = scalaVersion.value
+    val excludeAnnots    = mimaExcludeAnnotations.value.toList
     val failOnNoPrevious = mimaFailOnNoPrevious.value
-    val projName = name.value
+    val projName         = name.value
 
     (prevClassfiles, checkDirection) => {
       if (prevClassfiles eq NoPreviousClassfiles) {
@@ -116,22 +121,22 @@ object MimaPlugin extends AutoPlugin {
   private object NoPreviousArtifacts extends EmptySet[ModuleID]
   private object NoPreviousClassfiles extends EmptyMap[ModuleID, File]
 
-  private sealed class EmptySet[A] extends Set[A] {
+  sealed private class EmptySet[A] extends Set[A] {
     def iterator          = Iterator.empty
     def contains(elem: A) = false
-    def + (elem: A)       = Set(elem)
-    def - (elem: A)       = this
+    def +(elem: A)        = Set(elem)
+    def -(elem: A)        = this
 
     override def size                  = 0
     override def foreach[U](f: A => U) = ()
     override def toSet[B >: A]: Set[B] = this.asInstanceOf[Set[B]]
   }
 
-  private sealed class EmptyMap[K, V] extends Map[K, V] {
-    def get(key: K)              = None
-    def iterator                 = Iterator.empty
-    def + [V1 >: V](kv: (K, V1)) = updated(kv._1, kv._2)
-    def - (key: K)               = this
+  sealed private class EmptyMap[K, V] extends Map[K, V] {
+    def get(key: K)             = None
+    def iterator                = Iterator.empty
+    def +[V1 >: V](kv: (K, V1)) = updated(kv._1, kv._2)
+    def -(key: K)               = this
 
     override def size                                       = 0
     override def contains(key: K)                           = false

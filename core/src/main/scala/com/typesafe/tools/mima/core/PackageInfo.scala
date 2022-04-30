@@ -18,8 +18,7 @@ object NoPackageInfo extends PackageInfo {
 }
 
 sealed class ConcretePackageInfo(val owner: PackageInfo, cp: ClassPath, pkg: String, defs: Definitions)
-    extends PackageInfo
-{
+    extends PackageInfo {
   def name        = pkg.split('.').last
   def definitions = defs
 
@@ -32,18 +31,18 @@ sealed class ConcretePackageInfo(val owner: PackageInfo, cp: ClassPath, pkg: Str
       }
 
   lazy val classes =
-    cp.classes(pkg).map { f =>
-      val c = new ConcreteClassInfo(this, f)
-      c.bytecodeName -> c
-    }.toMap
+    cp.classes(pkg)
+      .map { f =>
+        val c = new ConcreteClassInfo(this, f)
+        c.bytecodeName -> c
+      }
+      .toMap
 }
 
 final private[core] class DefinitionsPackageInfo(defs: Definitions)
     extends ConcretePackageInfo(NoPackageInfo, defs.classPath, ClassPath.RootPackage, defs)
 
-final private[mima] class DefinitionsTargetPackageInfo(root: PackageInfo)
-    extends SyntheticPackageInfo(root, "<root>")
-{
+final private[mima] class DefinitionsTargetPackageInfo(root: PackageInfo) extends SyntheticPackageInfo(root, "<root>") {
   // Needed to fetch classes located in the root (empty package).
   override lazy val classes = root.classes
 }
@@ -56,11 +55,10 @@ sealed abstract class PackageInfo {
   def packages: mutable.Map[String, PackageInfo]
   def classes: Map[String, ClassInfo]
 
-  final def fullName: String = {
+  final def fullName: String =
     if (isRoot) "<root>"
     else if (owner.isRoot) name
     else s"${owner.fullName}.$name"
-  }
 
   final def isRoot: Boolean = this match {
     case NoPackageInfo                   => true
@@ -80,36 +78,32 @@ sealed abstract class PackageInfo {
     def isAccessible(clazz: ClassInfo, prefix: Set[ClassInfo]) =
       clazz.isPublic && !clazz.isLocalClass && !clazz.isSynthetic && isReachable(clazz, prefix)
 
-    def isReachable(clazz: ClassInfo, prefix: Set[ClassInfo]) = {
+    def isReachable(clazz: ClassInfo, prefix: Set[ClassInfo]) =
       if (prefix.isEmpty) clazz.isTopLevel && !clazz.decodedName.contains("$$")
       else prefix.exists(_.innerClasses.contains(clazz.bytecodeName))
-    }
 
     loop(Set.empty, Set.empty)
   }
 
   // Used to make sure trait classes have their impl class field set
-  final lazy val setImplClasses: Unit = {
+  final lazy val setImplClasses: Unit =
     for {
       (name, clazz) <- classes.iterator
       if clazz.isImplClass
       traitClass <- classes.get(name.stripSuffix("$class"))
-    } {
-      traitClass._implClass = clazz
     }
-  }
+      traitClass._implClass = clazz
 
   // TODO: Foo contains pickle, so if parse Foo$ before should be able to set this then
-  final lazy val setModules: Unit = {
+  final lazy val setModules: Unit =
     for {
       (name, clazz) <- classes.iterator
       if clazz.isModuleClass
       module <- classes.get(name.init)
     } {
-      clazz._module       = module
+      clazz._module = module
       module._moduleClass = clazz
     }
-  }
 
   final override def toString = s"package $fullName"
 }

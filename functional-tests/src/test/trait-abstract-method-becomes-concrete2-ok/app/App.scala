@@ -6,8 +6,8 @@ object App {
     println(a.bar)
     println(a.foo)
     println(aa1)
-    val b = new B
-    val ba: A = new B
+    val b       = new B
+    val ba: A   = new B
     val ba1: A1 = new B
     println(b.bar)
     println(b.foo)

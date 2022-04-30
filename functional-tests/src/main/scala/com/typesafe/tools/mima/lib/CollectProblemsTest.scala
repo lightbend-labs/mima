@@ -16,15 +16,15 @@ object CollectProblemsTest {
     () <- collectAndDiff(cp = Nil, v1.jfile, v2.jfile)(
       expected,
       excludeAnnots = excludeAnnots,
-      direction     = direction,
+      direction = direction
     )
   } yield ()
 
   def collectAndDiff(cp: Seq[File], v1: File, v2: File)(
-      expected: List[String]              = Nil,
+      expected: List[String] = Nil,
       problemFilters: List[ProblemFilter] = Nil,
-      excludeAnnots: List[String]         = Nil,
-      direction: Direction                = Backwards,
+      excludeAnnots: List[String] = Nil,
+      direction: Direction = Backwards
   ): Try[Unit] = {
     val problems = new MiMaLib(cp).collectProblems(v1, v2, excludeAnnots).filter(problemFilters.foldAll)
     val affectedVersion = direction match {
@@ -52,15 +52,14 @@ object CollectProblemsTest {
 
     msg.mkString match {
       case "\n" => Success(())
-      case msg  =>
+      case msg =>
         Console.err.println(msg)
         Failure(new Exception("CollectProblemsTest failure", null, false, false) {})
     }
   }
 
-  def readOracleFile(oracleFile: File): List[String] = {
+  def readOracleFile(oracleFile: File): List[String] =
     Files.lines(oracleFile.toPath).iterator.asScala.filter(!_.startsWith("#")).toList
-  }
 
   private val excludeAnnots = List("mima.annotation.exclude")
 

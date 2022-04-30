@@ -5,17 +5,17 @@ import javax.tools._
 import scala.annotation.tailrec
 import scala.reflect.io.Directory
 import scala.util.Try
-import scala.util.{ Properties => StdLibProps }
+import scala.util.{Properties => StdLibProps}
 
 object TestCli {
   // Keep in sync with build.sbt
-  val scala211 = "2.11.12"
-  val scala212 = "2.12.15"
-  val scala213 = "2.13.8"
-  val scala3   = "3.1.2"
+  val scala211         = "2.11.12"
+  val scala212         = "2.12.15"
+  val scala213         = "2.13.8"
+  val scala3           = "3.1.2"
   val hostScalaVersion = StdLibProps.scalaPropOrNone("maven.version.number").get
   val allScalaVersions = List(scala211, scala212, scala213, scala3)
-  val testsDir = Directory("functional-tests/src/test")
+  val testsDir         = Directory("functional-tests/src/test")
 
   def argsToTests(args: List[String], runTestCase: TestCase => Try[Unit]): Tests =
     testCasesToTests(fromArgs(args), runTestCase)
@@ -35,7 +35,7 @@ object TestCli {
   }
 
   def fromConf(conf: Conf): List[TestCase] = {
-    val conf1 = postProcessConf(conf)
+    val conf1        = postProcessConf(conf)
     val javaCompiler = getJavaCompiler
     for {
       sc <- conf1.scalaVersions.map(new ScalaCompiler(_))
@@ -45,30 +45,32 @@ object TestCli {
 
   def getJavaCompiler = ToolProvider.getSystemJavaCompiler
 
-  def allTestDirs() = testsDir.dirs.filter(_.files.exists { f =>
-    f.name == Backwards.oracleFile || f.name == Forwards.oracleFile
-  }).toList.sortBy(_.path)
+  def allTestDirs() = testsDir.dirs
+    .filter(_.files.exists { f =>
+      f.name == Backwards.oracleFile || f.name == Forwards.oracleFile
+    })
+    .toList
+    .sortBy(_.path)
 
   final case class Conf(scalaVersions: List[String], dirs: List[Directory])
 
   @tailrec private def readArgs(args: List[String], conf: Conf): Conf = args match {
-    case "-3"   :: xs                  => readArgs(xs, conf.copy(scalaVersions = conf.scalaVersions :+ scala3  ))
+    case "-3" :: xs                    => readArgs(xs, conf.copy(scalaVersions = conf.scalaVersions :+ scala3))
     case "-2.13" :: xs                 => readArgs(xs, conf.copy(scalaVersions = conf.scalaVersions :+ scala213))
     case "-2.12" :: xs                 => readArgs(xs, conf.copy(scalaVersions = conf.scalaVersions :+ scala212))
     case "-2.11" :: xs                 => readArgs(xs, conf.copy(scalaVersions = conf.scalaVersions :+ scala211))
-    case "--scala-version" :: sv :: xs => readArgs(xs, conf.copy(scalaVersions = conf.scalaVersions :+ sv      ))
+    case "--scala-version" :: sv :: xs => readArgs(xs, conf.copy(scalaVersions = conf.scalaVersions :+ sv))
     case "--cross" :: xs               => readArgs(xs, conf.copy(scalaVersions = allScalaVersions))
     case s :: xs                       => readArgs(xs, conf.copy(dirs = testDirs(s) ::: conf.dirs))
     case Nil                           => conf
   }
 
   /** All the directories in the tests directory whose name contain the given string `s`. */
-  def testDirs(s: String): List[Directory] = {
+  def testDirs(s: String): List[Directory] =
     testsDir.dirs.filter(_.name.contains(s)).toList.sortBy(_.path) match {
       case Nil  => sys.error(s"No such directory: ${testsDir / s}")
       case dirs => dirs
     }
-  }
 
   if (System.out != Console.out) {
     System.out.println(" System.out identity ##: " + System.identityHashCode(System.out))

@@ -3,7 +3,7 @@ package com.typesafe.tools.mima.lib.analyze.template
 import com.typesafe.tools.mima.core._
 
 private[analyze] object TemplateChecker {
-  def check(oldclazz: ClassInfo, newclazz: ClassInfo): Option[Problem] = {
+  def check(oldclazz: ClassInfo, newclazz: ClassInfo): Option[Problem] =
     if (oldclazz.isInterface != newclazz.isInterface)
       Some(IncompatibleTemplateDefProblem(oldclazz, newclazz))
     else if (newclazz.isLessVisibleThan(oldclazz))
@@ -16,7 +16,7 @@ private[analyze] object TemplateChecker {
       Some(CyclicTypeReferenceProblem(newclazz))
     else {
       val missingSuperClasses = oldclazz.superClasses.diff(newclazz.superClasses)
-      val missingInterfaces = oldclazz.allInterfaces.diff(newclazz.allInterfaces)
+      val missingInterfaces   = oldclazz.allInterfaces.diff(newclazz.allInterfaces)
       if (missingSuperClasses.nonEmpty)
         Some(MissingTypesProblem(newclazz, missingSuperClasses))
       else if (missingInterfaces.nonEmpty)
@@ -24,5 +24,4 @@ private[analyze] object TemplateChecker {
       else
         None
     }
-  }
 }

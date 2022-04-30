@@ -1,1 +1,1 @@
-class A { def f = { 0 } }
+class A { def f = 0 }

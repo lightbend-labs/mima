@@ -3,20 +3,21 @@ package com.typesafe.tools.mima.core
 import scala.annotation.tailrec
 import ClassfileConstants._
 
-/** This class holds together a root package and a classpath.
- *  It also offers definitions of commonly used classes, including java.lang.Object.
+/**
+ * This class holds together a root package and a classpath. It also offers definitions of commonly used classes,
+ * including java.lang.Object.
  *
- *  Each version of the input jar file has an instance of Definitions,
- *  used to resolve type names during classfile parsing.
+ * Each version of the input jar file has an instance of Definitions, used to resolve type names during classfile
+ * parsing.
  */
-private[mima] final class Definitions(val classPath: ClassPath) {
+final private[mima] class Definitions(val classPath: ClassPath) {
   lazy val root: PackageInfo          = new DefinitionsPackageInfo(this)
   lazy val ObjectClass: ClassInfo     = fromName("java.lang.Object")
   lazy val AnnotationClass: ClassInfo = fromName("java.lang.annotation.Annotation")
 
-  /** Return the class corresponding to the fully qualified name.
-   *  If there is no such class in the current classpath, a SyntheticClassInfo
-   *  and all necessary SyntheticPackageInfo are created along the way.
+  /**
+   * Return the class corresponding to the fully qualified name. If there is no such class in the current classpath, a
+   * SyntheticClassInfo and all necessary SyntheticPackageInfo are created along the way.
    */
   def fromName(name: String): ClassInfo = {
     @tailrec def loop(pkg: PackageInfo, parts: List[String]): ClassInfo = parts match {
@@ -27,8 +28,8 @@ private[mima] final class Definitions(val classPath: ClassPath) {
     loop(root, name.split("\\.").toList)
   }
 
-  /** Return the type corresponding to this descriptor.
-   *  Class names are resolved relative to the current classpath.
+  /**
+   * Return the type corresponding to this descriptor. Class names are resolved relative to the current classpath.
    */
   def fromDescriptor(descriptor: String): Type = {
     var in = 0
@@ -54,17 +55,16 @@ private[mima] final class Definitions(val classPath: ClassPath) {
     }
 
     def newClassType: ClassType = {
-      val end = descriptor.indexOf(';', in)
+      val end      = descriptor.indexOf(';', in)
       val fullName = descriptor.substring(in, end).replace('/', '.')
       in = end + 1
       ClassType(fromName(fullName))
     }
 
     def newMethodType: MethodType = {
-      def getParamTypes(): List[Type] = {
+      def getParamTypes(): List[Type] =
         if (descriptor(in) == ')') Nil
         else getType() :: getParamTypes()
-      }
       val params = getParamTypes()
       in += 1
       MethodType(params, getType())

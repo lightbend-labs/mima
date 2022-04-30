@@ -12,7 +12,6 @@ class C extends B {
 
 class D extends C
 
-
 abstract class AA {
   def bar(): AA
 }

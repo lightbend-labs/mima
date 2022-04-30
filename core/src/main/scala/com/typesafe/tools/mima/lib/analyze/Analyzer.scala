@@ -7,7 +7,7 @@ import com.typesafe.tools.mima.lib.analyze.method.MethodChecker
 import com.typesafe.tools.mima.lib.analyze.template.TemplateChecker
 
 object Analyzer {
-  def analyze(oldpkg: PackageInfo, newpkg: PackageInfo, log: Logging, excludeAnnots: List[AnnotInfo]): List[Problem] = {
+  def analyze(oldpkg: PackageInfo, newpkg: PackageInfo, log: Logging, excludeAnnots: List[AnnotInfo]): List[Problem] =
     for {
       oldclazz <- oldpkg.accessibleClasses.toList.sortBy(_.bytecodeName)
       _ = log.verbose(s"analyzing $oldclazz")
@@ -24,9 +24,8 @@ object Analyzer {
       log.debug(s"problem found: ${problem.description("new")}")
       problem
     }
-  }
 
-  def analyze(oldclazz: ClassInfo, newclazz: ClassInfo, log: Logging, excludeAnnots: List[AnnotInfo]): List[Problem] = {
+  def analyze(oldclazz: ClassInfo, newclazz: ClassInfo, log: Logging, excludeAnnots: List[AnnotInfo]): List[Problem] =
     if ((if (newclazz.isModuleClass) newclazz.module else newclazz).isScopedPrivate) Nil
     else {
       TemplateChecker.check(oldclazz, newclazz) match {
@@ -40,5 +39,4 @@ object Analyzer {
             MethodChecker.check(oldclazz, newclazz, excludeAnnots)
       }
     }
-  }
 }

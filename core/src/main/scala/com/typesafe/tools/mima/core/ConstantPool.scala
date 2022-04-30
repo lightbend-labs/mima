@@ -7,7 +7,7 @@ import ClassfileConstants._
 private[core] object ConstantPool {
   def parseNew(definitions: Definitions, in: BufferReader): ConstantPool = {
     val starts = new Array[Int](in.nextChar)
-    var i = 1
+    var i      = 1
     while (i < starts.length) {
       starts(i) = in.bp
       i += 1
@@ -36,8 +36,7 @@ private[core] object ConstantPool {
   private def abort(msg: String): Nothing = throw new RuntimeException(msg)
 }
 
-private[core]
-final class ConstantPool private (definitions: Definitions, in: BytesReader, starts: Array[Int]) {
+final private[core] class ConstantPool private (definitions: Definitions, in: BytesReader, starts: Array[Int]) {
   import ConstantPool._, ClassInfo.ObjectClass
 
   def file: AbsFile = in.file
@@ -47,19 +46,17 @@ final class ConstantPool private (definitions: Definitions, in: BytesReader, sta
   private val internalized = new Array[String](length)
 
   /** Return the name found at given index. */
-  def getName(index: Int): String = {
+  def getName(index: Int): String =
     indexedOrUpdate(values, index) {
       val start = firstExpecting(index, CONSTANT_UTF8)
       in.getString(start + 2, in.getChar(start))
     }
-  }
 
   /** Return the name found at given index in the constant pool, with '/' replaced by '.'. */
-  def getExternalName(index: Int): String = {
+  def getExternalName(index: Int): String =
     indexedOrUpdate(internalized, index) {
       getName(index).replace('/', '.')
     }
-  }
 
   /** Return the external name of the class info structure found at 'index'. */
   def getClassName(index: Int): String = {
@@ -67,21 +64,20 @@ final class ConstantPool private (definitions: Definitions, in: BytesReader, sta
     getExternalName(in.getChar(start))
   }
 
-  def getClassInfo(index: Int): ClassInfo = {
+  def getClassInfo(index: Int): ClassInfo =
     indexedOrUpdate(values, index) {
       definitions.fromName(getClassName(index))
     }
-  }
 
   def getSuperClass(index: Int): ClassInfo = if (index == 0) ObjectClass else getClassInfo(index)
 
-  def getBytes(index: Int): Array[Byte] = {
+  def getBytes(index: Int): Array[Byte] =
     if (index <= 0 || length <= index) errorBadIndex(index, in.pos)
-    else values(index) match {
-      case xs: Array[Byte] => xs
-      case _               => recordAtIndex(getSubArray(readBytes(index)), index)
-    }
-  }
+    else
+      values(index) match {
+        case xs: Array[Byte] => xs
+        case _               => recordAtIndex(getSubArray(readBytes(index)), index)
+      }
 
   def getBytes(indices: List[Int]): Array[Byte] = {
     for (index <- indices) if (index <= 0 || length <= index) errorBadIndex(index, in.pos)
@@ -112,7 +108,7 @@ final class ConstantPool private (definitions: Definitions, in: BytesReader, sta
 
   private def firstExpecting(index: Int, expectedTag: Int) = {
     val start = starts(index)
-    val tag = in.getByte(start).toInt
+    val tag   = in.getByte(start).toInt
     if (tag == expectedTag) start + 1
     else errorBadTag(tag, start)
   }

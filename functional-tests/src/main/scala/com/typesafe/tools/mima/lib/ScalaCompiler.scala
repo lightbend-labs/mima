@@ -2,7 +2,7 @@ package com.typesafe.tools.mima.lib
 
 import java.net.URLClassLoader
 
-import scala.util.{ Failure, Success, Try }
+import scala.util.{Failure, Success, Try}
 
 import coursier._
 
@@ -21,7 +21,7 @@ final class ScalaCompiler(val version: String) {
   def compile(args: Seq[String]): Try[Unit] = {
     import scala.language.reflectiveCalls
     val clsName = if (isScala3) "dotty.tools.dotc.Main$" else "scala.tools.nsc.Main$"
-    val cls = classLoader.loadClass(clsName)
+    val cls     = classLoader.loadClass(clsName)
     type Main     = { def process(args: Array[String]): Any; def reporter: Reporter }
     type Reporter = { def hasErrors: Boolean }
     val m = cls.getField("MODULE$").get(null).asInstanceOf[Main]

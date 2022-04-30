@@ -1,5 +1,4 @@
 final class A {
-  def foo: Int = {
+  def foo: Int =
     0
-  }
 }
