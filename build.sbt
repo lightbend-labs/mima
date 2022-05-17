@@ -58,7 +58,7 @@ val core = crossProject(JVMPlatform, NativePlatform).crossType(CrossType.Pure).s
       .toMap
   },
 
-)
+).nativeSettings(mimaPreviousArtifacts := Set.empty)
 
 val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core.jvm).settings(
   name := "sbt-mima-plugin",
