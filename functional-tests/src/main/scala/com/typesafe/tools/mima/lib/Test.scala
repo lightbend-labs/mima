@@ -1,8 +1,9 @@
 package com.typesafe.tools.mima.lib
 
+import scala.concurrent.Future
 import scala.util.{ Failure, Success, Try }
 
-import munit.{ GenericTest, Location }
+import munit.Location
 
 object Test {
   def apply(label: String, action: => Try[Unit]): Test1 = Test1(label, () => action)
@@ -59,9 +60,9 @@ object Test1 {
 
 object Tests {
   implicit class Ops(private val t: Tests) extends AnyVal {
-    def munitTests: List[GenericTest[Unit]] = for {
+    def munitTests: List[munit.Test] = for {
       test <- t.tests
-    } yield new GenericTest(test.label, () => test.unsafeRunTest(), Set.empty, Location.empty)
+    } yield new munit.Test(test.label, () => Future.successful(test.unsafeRunTest()), Set.empty, Location.empty)
   }
 }
 
