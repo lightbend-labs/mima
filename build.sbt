@@ -37,14 +37,14 @@ val root = project.in(file(".")).settings(
   mimaFailOnNoPrevious := false,
   publish / skip := true,
 )
-aggregateProjects(core, sbtplugin, functionalTests)
+aggregateProjects(core.jvm, core.native, sbtplugin, functionalTests)
 
-val munit = "org.scalameta" %% "munit" % "0.7.29"
+val munit = Def.setting("org.scalameta" %%% "munit" % "1.0.0-M4")
 
-val core = project.settings(
+val core = crossProject(JVMPlatform, NativePlatform).crossType(CrossType.Pure).settings(
   name := "mima-core",
   crossScalaVersions ++= Seq(scala213, scala3),
-  libraryDependencies += munit % Test,
+  libraryDependencies += munit.value % Test,
   testFrameworks += new TestFramework("munit.Framework"),
   MimaSettings.mimaSettings,
   apiMappings ++= {
@@ -58,12 +58,12 @@ val core = project.settings(
       .toMap
   },
 
-)
+).nativeSettings(mimaPreviousArtifacts := Set.empty)
 
-val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core).settings(
+val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core.jvm).settings(
   name := "sbt-mima-plugin",
   // drop the previous value to drop running Test/compile
-  scriptedDependencies := Def.task(()).dependsOn(publishLocal, core / publishLocal).value,
+  scriptedDependencies := Def.task(()).dependsOn(publishLocal, core.jvm / publishLocal).value,
   scriptedLaunchOpts += s"-Dplugin.version=${version.value}",
   scriptedLaunchOpts += s"-Dsbt.boot.directory=${file(sys.props("user.home")) / ".sbt" / "boot"}",
   MimaSettings.mimaSettings,
@@ -71,12 +71,12 @@ val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core).settings(
 
 val testFunctional = taskKey[Unit]("Run the functional test")
 val functionalTests = Project("functional-tests", file("functional-tests"))
-  .dependsOn(core)
+  .dependsOn(core.jvm)
   .configs(IntegrationTest)
   .settings(
     crossScalaVersions += scala213,
     libraryDependencies += "io.get-coursier" %% "coursier" % "2.0.16",
-    libraryDependencies += munit,
+    libraryDependencies += munit.value,
     testFrameworks += new TestFramework("munit.Framework"),
     //Test / run / fork := true,
     //Test / run / forkOptions := (Test / run / forkOptions).value.withWorkingDirectory((ThisBuild / baseDirectory).value),
