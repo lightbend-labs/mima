@@ -106,6 +106,24 @@ import com.typesafe.tools.mima.plugin.MimaKeys._
 ThisBuild / mimaReportSignatureProblems := true
 ```
 
+### Annotation-based exclusions
+
+The `mimaExcludeAnnotations` setting can be used to tell MiMa to
+ignore classes, objects, and methods that have a particular
+annotation.  Such an annotation might typically have "experimental" or
+"internal" in the name.
+
+The setting is a `Seq[String]` containing fully qualified annotation
+names.
+
+Example:
+
+```scala
+mimaExcludeAnnotations += "scala.annotation.experimental"
+```
+
+Caveat: `mimaExcludeAnnotations` is only implemented on Scala 3.
+
 ## Setting different mimaPreviousArtifacts
 
 From time to time you may need to set `mimaPreviousArtifacts` according to some conditions.  For
