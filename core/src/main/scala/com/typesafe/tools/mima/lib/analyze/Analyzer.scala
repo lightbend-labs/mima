@@ -15,6 +15,7 @@ object Analyzer {
       // if it is missing a trait implementation class, then no error should be reported
       // since there should be already errors, i.e., missing methods...
       if !oldclazz.isImplClass
+      if !(if (oldclazz.isModuleClass) oldclazz.module else oldclazz).isScopedPrivate
       if !excludeAnnots.exists(oldclazz.annotations.contains)
       problem <- newpkg.classes.get(oldclazz.bytecodeName) match {
         case Some(newclazz) => analyze(oldclazz, newclazz, log, excludeAnnots)
@@ -27,18 +28,15 @@ object Analyzer {
   }
 
   def analyze(oldclazz: ClassInfo, newclazz: ClassInfo, log: Logging, excludeAnnots: List[AnnotInfo]): List[Problem] = {
-    if ((if (oldclazz.isModuleClass) oldclazz.module else oldclazz).isScopedPrivate) Nil
-    else {
-      TemplateChecker.check(oldclazz, newclazz) match {
-        case p @ Some(_: IncompatibleTemplateDefProblem | _: CyclicTypeReferenceProblem) =>
-          // these implies major incompatibility, does not make sense to continue
-          p.toList
+    TemplateChecker.check(oldclazz, newclazz) match {
+      case p @ Some(_: IncompatibleTemplateDefProblem | _: CyclicTypeReferenceProblem) =>
+        // these implies major incompatibility, does not make sense to continue
+        p.toList
 
-        case maybeProblem =>
-          maybeProblem.toList :::
-            FieldChecker.check(oldclazz, newclazz) :::
-            MethodChecker.check(oldclazz, newclazz, excludeAnnots)
-      }
+      case maybeProblem =>
+        maybeProblem.toList :::
+          FieldChecker.check(oldclazz, newclazz) :::
+          MethodChecker.check(oldclazz, newclazz, excludeAnnots)
     }
   }
 }
