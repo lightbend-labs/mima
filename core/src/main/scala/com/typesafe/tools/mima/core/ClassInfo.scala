@@ -78,8 +78,8 @@ private[mima] sealed abstract class ClassInfo(val owner: PackageInfo) extends In
   final def isScopedPrivate: Boolean     = afterLoading(_scopedPrivate)
   final def annotations: List[AnnotInfo] = afterLoading(_annotations)
   final def implClass: ClassInfo         = { owner.setImplClasses; _implClass } // returns NoClass if this is not a trait
-  final def moduleClass: ClassInfo       = { owner.setModules; if (_moduleClass == NoClass) this else _moduleClass }
-  final def module: ClassInfo            = { owner.setModules; if (_module      == NoClass) this else _module      }
+  final def moduleClass: ClassInfo       = { owner.setModules; if (_moduleClass == NoClass || _moduleClass == null) this else _moduleClass }
+  final def module: ClassInfo            = { owner.setModules; if (_module      == NoClass || _module      == null) this else _module      }
 
   final def isTrait: Boolean          = implClass ne NoClass // trait with some concrete methods or fields
   final def isModuleClass: Boolean    = bytecodeName.endsWith("$") // super scuffed
@@ -94,6 +94,18 @@ private[mima] sealed abstract class ClassInfo(val owner: PackageInfo) extends In
   final def formattedFullName: String = formatClassName(if (isModuleClass) fullName.init else fullName)
   final def description: String       = s"$declarationPrefix $formattedFullName"
   final def classString: String       = s"$accessModifier $description".trim
+
+  def outerChain: Iterator[ClassInfo] = Iterator.iterate(this)(_.outer).takeWhile(_ != NoClass)
+
+  lazy val outer: ClassInfo = {
+    val idx = bytecodeName.stripSuffix("$").lastIndexOf('$')
+    if (idx != -1)  {
+      val outerName = bytecodeName.substring(0, idx)
+      owner.classes.getOrElse(outerName,
+        owner.classes.getOrElse(s"$outerName$$",
+          NoClass))
+    } else NoClass
+  }
 
   lazy val superClasses: Set[ClassInfo] = {
     if (this == ClassInfo.ObjectClass) Set.empty

@@ -3,11 +3,9 @@ package com.typesafe.tools.mima.lib
 import scala.reflect.io.Path
 import scala.util.{ Failure, Success, Try }
 
-import munit.GenericTest
-
 object UnitTests {
-  def main(args: Array[String]): Unit       = TestCli.argsToTests(args.toList, runTestCase).unsafeRunTest()
-  def munitTests(): List[GenericTest[Unit]] = TestCli.argsToTests(Nil, runTestCase).munitTests
+  def main(args: Array[String]): Unit = TestCli.argsToTests(args.toList, runTestCase).unsafeRunTest()
+  def munitTests(): List[munit.Test]  = TestCli.argsToTests(Nil, runTestCase).munitTests
 
   def runTestCase(testCase: TestCase): Try[Unit] = for {
     () <- runTestCaseIf(testCase, Backwards)

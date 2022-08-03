@@ -14,7 +14,7 @@ inThisBuild(Seq(
   scalaVersion := scala212,
   scalacOptions ++= Seq("-feature", "-Xsource:3", "-Xlint", "-Wconf:cat=deprecation&msg=Stream|JavaConverters:s"),
   resolvers ++= (if (isStaging) List(stagingResolver) else Nil),
-  publishTo := Some(if (isSnapshot.value) Opts.resolver.sonatypeSnapshots else Opts.resolver.sonatypeStaging),
+  publishTo := Some(if (isSnapshot.value) Opts.resolver.sonatypeOssSnapshots.head else Opts.resolver.sonatypeStaging),
 ))
 
 // Useful to self-test releases
