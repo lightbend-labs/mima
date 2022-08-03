@@ -15,7 +15,13 @@ object Analyzer {
       // if it is missing a trait implementation class, then no error should be reported
       // since there should be already errors, i.e., missing methods...
       if !oldclazz.isImplClass
-      if !excludeAnnots.exists(oldclazz.annotations.contains)
+      if !excludeAnnots.exists { annot =>
+        oldclazz.outerChain.exists { cls =>
+          cls.annotations.contains(annot) ||
+          cls.module.annotations.contains(annot) ||
+          cls.moduleClass.annotations.contains(annot)
+        }
+      }
       problem <- newpkg.classes.get(oldclazz.bytecodeName) match {
         case Some(newclazz) => analyze(oldclazz, newclazz, log, excludeAnnots)
         case None           => List(MissingClassProblem(oldclazz))
