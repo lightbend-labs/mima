@@ -42,13 +42,13 @@ MiMa's sbt plugin supports sbt 1.x only.  (Use v0.3.0 for sbt 0.13.x.)
 To use it add the following to your `project/plugins.sbt` file:
 
 ```
-addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "1.1.1")
+addSbtPlugin("com.typesafe" % "sbt-mima-plugin" % "<version>")
 ```
 
 Add the following to your `build.sbt` file:
 
 ```
-mimaPreviousArtifacts := Set("com.example" %% "my-library" % "1.2.3")
+mimaPreviousArtifacts := Set("com.example" %% "my-library" % "<version>")
 ```
 
 and run `mimaReportBinaryIssues` to see something like the following:
