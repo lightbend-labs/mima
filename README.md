@@ -15,7 +15,7 @@ consequence of modifications in classes/members signature.
 
 MiMa compares all classfiles of two released libraries and reports all source
 of incompatibilities that may lead to a linkage error. MiMa provides you, the
-library maintainer, with a tool that can greatly automates and simplifies the
+library maintainer, with a tool that can greatly automate and simplify the
 process of ensuring the release-to-release binary compatibility of your
 libraries.
 
@@ -34,6 +34,17 @@ Interestingly, this is not an issue intrinsic to the Scala language. In the
 Java language binary compatibility does not imply source compatibility as well.
 MiMa focuses on binary compatibility and currently provides no insight into
 source compatibility.
+
+### See also: TASTy-MiMa
+
+For Scala 3, in addition to binary compatible, TASTy compatibility becomes
+increasingly important. Another tool,
+[TASTy-MiMa](https://github.com/scalacenter/tasty-mima), is designed to
+automatically check TASTy compatibility in much the same way that MiMa checks
+binary compatibility.
+
+Keep in mind that TASTy-MiMa is still young, as of early 2023. It is likely to
+contain bugs.
 
 ## Usage
 
