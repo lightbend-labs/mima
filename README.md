@@ -48,6 +48,8 @@ contain bugs.
 
 ## Usage
 
+### SBT
+
 MiMa's sbt plugin supports sbt 1.x only.  (Use v0.3.0 for sbt 0.13.x.)
 
 To use it add the following to your `project/plugins.sbt` file:
@@ -73,6 +75,19 @@ and run `mimaReportBinaryIssues` to see something like the following:
 [error] {file:/home/jsuereth/project/personal/scala-arm/}scala-arm/*:mima-report-binary-issues: Binary compatibility check failed!
 [error] Total time: 15 s, completed May 18, 2012 11:32:29 AM
 ```
+
+### Mill
+
+A MiMa plugin for Mill is maintained at [lolgab/mill-mima](https://github.com/lolgab/mill-mima).
+
+To use it add the following to your `build.sc`:
+
+```scala
+import $ivy.`com.github.lolgab::mill-mima::x.y.z`
+import com.github.lolgab.mill.mima._
+```
+
+Please check [this page](https://github.com/lolgab/mill-mima) for further information.
 
 ## Filtering binary incompatibilities
 
