@@ -10,14 +10,21 @@ final class MiMaLib(cp: Seq[File], log: Logging = ConsoleLogging) {
   private val classpath = ClassPath.of(cp.flatMap(ClassPath.fromJarOrDir(_)) :+ ClassPath.base)
 
   private def createPackage(dirOrJar: File): PackageInfo = {
-    val cp = ClassPath.fromJarOrDir(dirOrJar).getOrElse(sys.error(s"not a directory or jar file: $dirOrJar"))
-    val defs = new Definitions(ClassPath.of(List(cp, classpath)))
-    val pkg = new DefinitionsTargetPackageInfo(defs.root)
-    for (pkgName <- cp.packages(ClassPath.RootPackage)) {
-      pkg.packages(pkgName) = new ConcretePackageInfo(pkg, cp, pkgName, defs)
+    ClassPath.fromJarOrDir(dirOrJar).fold(createEmptyPackage(dirOrJar)) { cp =>
+      val defs = new Definitions(ClassPath.of(List(cp, classpath)))
+      val pkg = new DefinitionsTargetPackageInfo(defs.root)
+      for (pkgName <- cp.packages(ClassPath.RootPackage)) {
+        pkg.packages(pkgName) = new ConcretePackageInfo(pkg, cp, pkgName, defs)
+      }
+      log.debug(s"adding packages from $dirOrJar: ${pkg.packages.keys.mkString(", ")}")
+      pkg
     }
-    log.debug(s"adding packages from $dirOrJar: ${pkg.packages.keys.mkString(", ")}")
-    pkg
+  }
+
+  private def createEmptyPackage(missingDirOrJar: File): PackageInfo = {
+    log.debug(s"not a directory or jar file: $missingDirOrJar.  This is normal for POM-only modules.  Proceeding with empty set of packages.")
+    val defs = new Definitions(ClassPath.base)
+    new DefinitionsTargetPackageInfo(defs.root)
   }
 
   private def traversePackages(oldpkg: PackageInfo, newpkg: PackageInfo, excludeAnnots: List[AnnotInfo]): List[Problem] = {
