@@ -11,6 +11,7 @@ inThisBuild(Seq(
   ),
   scmInfo := Some(ScmInfo(url("https://github.com/lightbend/mima"), "scm:git:git@github.com:lightbend/mima.git")),
   dynverVTagPrefix := false,
+  versionScheme := Some("early-semver"),
   scalaVersion := scala212,
   resolvers ++= (if (isStaging) List(stagingResolver) else Nil),
   publishTo := Some(if (isSnapshot.value) Opts.resolver.sonatypeOssSnapshots.head else Opts.resolver.sonatypeStaging),
