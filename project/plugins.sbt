@@ -13,7 +13,7 @@ resolvers ++= (if (isStaging) List(stagingResolver) else Nil)
 
 addSbtPlugin("com.dwijnand"   % "sbt-dynver"      % "4.1.1")
 addSbtPlugin("com.github.sbt" % "sbt-pgp"         % "2.2.1")
-addSbtPlugin("com.typesafe"   % "sbt-mima-plugin" % "1.1.1")
+addSbtPlugin("com.typesafe"   % "sbt-mima-plugin" % "1.1.2")
 
 addSbtPlugin("org.portable-scala" % "sbt-scala-native-crossproject" % "1.2.0")
 addSbtPlugin("org.scala-native" % "sbt-scala-native" % "0.4.12")
