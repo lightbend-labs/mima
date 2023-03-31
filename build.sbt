@@ -11,11 +11,18 @@ inThisBuild(Seq(
   ),
   scmInfo := Some(ScmInfo(url("https://github.com/lightbend/mima"), "scm:git:git@github.com:lightbend/mima.git")),
   dynverVTagPrefix := false,
+  versionScheme := Some("early-semver"),
   scalaVersion := scala212,
-  scalacOptions ++= Seq("-feature", "-Xsource:3", "-Xlint", "-Wconf:cat=deprecation&msg=Stream|JavaConverters:s"),
   resolvers ++= (if (isStaging) List(stagingResolver) else Nil),
   publishTo := Some(if (isSnapshot.value) Opts.resolver.sonatypeOssSnapshots.head else Opts.resolver.sonatypeStaging),
 ))
+
+def compilerOptions(scalaVersion: String): Seq[String] =
+  Seq("-feature", "-Wconf:cat=deprecation&msg=Stream|JavaConverters:s") ++
+  (CrossVersion.partialVersion(scalaVersion) match {
+    case Some((2, _)) => Seq("-Xsource:3", "-Xlint")
+    case _ => Seq()
+  })
 
 // Useful to self-test releases
 val stagingResolver = "Sonatype OSS Staging" at "https://oss.sonatype.org/content/repositories/staging"
@@ -44,6 +51,7 @@ val munit = Def.setting("org.scalameta" %%% "munit" % "1.0.0-M7")
 val core = crossProject(JVMPlatform, NativePlatform).crossType(CrossType.Pure).settings(
   name := "mima-core",
   crossScalaVersions ++= Seq(scala213, scala3),
+  scalacOptions ++= compilerOptions(scalaVersion.value),
   libraryDependencies += munit.value % Test,
   testFrameworks += new TestFramework("munit.Framework"),
   MimaSettings.mimaSettings,
@@ -62,6 +70,7 @@ val core = crossProject(JVMPlatform, NativePlatform).crossType(CrossType.Pure).s
 
 val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core.jvm).settings(
   name := "sbt-mima-plugin",
+  scalacOptions ++= compilerOptions(scalaVersion.value),
   // drop the previous value to drop running Test/compile
   scriptedDependencies := Def.task(()).dependsOn(publishLocal, core.jvm / publishLocal).value,
   scriptedLaunchOpts += s"-Dplugin.version=${version.value}",
@@ -79,6 +88,7 @@ val functionalTests = Project("functional-tests", file("functional-tests"))
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
     libraryDependencies += munit.value,
     testFrameworks += new TestFramework("munit.Framework"),
+    scalacOptions ++= compilerOptions(scalaVersion.value),
     //Test / run / fork := true,
     //Test / run / forkOptions := (Test / run / forkOptions).value.withWorkingDirectory((ThisBuild / baseDirectory).value),
     // Test / testOnly / watchTriggers += baseDirectory.value.toGlob / "src" / "test" / **,
