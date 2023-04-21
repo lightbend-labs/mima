@@ -84,7 +84,7 @@ val functionalTests = Project("functional-tests", file("functional-tests"))
   .configs(IntegrationTest)
   .settings(
     crossScalaVersions += scala213,
-    libraryDependencies += "io.get-coursier" %% "coursier" % "2.1.0",
+    libraryDependencies += "io.get-coursier" %% "coursier" % "2.1.2",
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
     libraryDependencies += munit.value,
     testFrameworks += new TestFramework("munit.Framework"),
