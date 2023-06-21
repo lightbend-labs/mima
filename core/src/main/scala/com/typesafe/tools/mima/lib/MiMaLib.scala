@@ -23,7 +23,7 @@ final class MiMaLib(cp: Seq[File], log: Logging = ConsoleLogging) {
 
   private def createEmptyPackage(missingDirOrJar: File): PackageInfo = {
     log.debug(s"not a directory or jar file: $missingDirOrJar.  This is normal for POM-only modules.  Proceeding with empty set of packages.")
-    val defs = new Definitions(ClassPath.base)
+    val defs = new Definitions(classpath)
     new DefinitionsTargetPackageInfo(defs.root)
   }
 

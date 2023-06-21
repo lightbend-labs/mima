@@ -1,0 +1,6 @@
+> set version := "1.0.0"
+> publishLocal
+
+> reload
+
+> mimaReportBinaryIssues
