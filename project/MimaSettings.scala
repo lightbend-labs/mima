@@ -10,7 +10,7 @@ import com.typesafe.tools.mima.plugin.MimaPlugin.autoImport._
 
 object MimaSettings {
   // clear out mimaBinaryIssueFilters when changing this
-  val mimaPreviousVersion = "1.1.2"
+  val mimaPreviousVersion = "1.1.3"
 
   val mimaSettings = Def.settings (
     mimaPreviousArtifacts := Set(pluginProjectID.value.withRevision(mimaPreviousVersion)
