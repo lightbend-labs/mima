@@ -174,7 +174,6 @@ object MimaUnpickler {
     def doMethods(clazz: ClassInfo, methods: List[SymbolInfo]) = {
       methods.iterator
         .filter(!_.isParam)
-        .filter(_.name.value != CONSTRUCTOR) // TODO support package private constructors
         .toSeq.groupBy(_.name).foreach { case (name, pickleMethods) =>
           doMethodOverloads(clazz, name, pickleMethods)
         }
