@@ -87,8 +87,7 @@ object MimaUnpickler {
       if (tag == CLASSsym && buf.readIndex != end) buf.readNat() // thistype_Ref
       buf.assertEnd(end)
       val isScopedPrivate = privateWithin != -1
-      val isClassPrivate = (flags & Flags.PRIVATE) != 0
-      SymbolInfo(tag, name, owner, flags, isScopedPrivate, isClassPrivate)
+      SymbolInfo(tag, name, owner, flags, isScopedPrivate)
     }
 
     def readExt(tag: Int): ExtInfo = {
@@ -259,12 +258,13 @@ object MimaUnpickler {
     }
   }
 
-  final case class SymbolInfo(tag: Int, name: Name, owner: SymInfo, flags: Long, isScopedPrivate: Boolean, isClassPrivate: Boolean) extends SymInfo {
+  final case class SymbolInfo(tag: Int, name: Name, owner: SymInfo, flags: Long, isScopedPrivate: Boolean) extends SymInfo {
     def hasFlag(flag: Long): Boolean = (flags & flag) != 0L
     def isModuleOrModuleClass        = hasFlag(Flags.MODULE_PKL)
     def isParam                      = hasFlag(Flags.PARAM)
+    def isClassPrivate               = hasFlag(Flags.PRIVATE)
   }
-  val NoSymbol: SymbolInfo = SymbolInfo(NONEsym, nme.NoSymbol, null, 0, false, false)
+  val NoSymbol: SymbolInfo = SymbolInfo(NONEsym, nme.NoSymbol, null, 0, false)
 
   final case class ExtInfo(tag: Int, name: Name, owner: SymInfo) extends SymInfo
 
