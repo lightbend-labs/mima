@@ -1,6 +1,6 @@
 package com.typesafe.tools.mima.core
 
-import PickleFormat._
+import com.typesafe.tools.mima.core.PickleFormat.*
 
 object MimaUnpickler {
   def unpickleClass(buf: PickleBuffer, clazz: ClassInfo, path: String): Unit = {
@@ -87,7 +87,8 @@ object MimaUnpickler {
       if (tag == CLASSsym && buf.readIndex != end) buf.readNat() // thistype_Ref
       buf.assertEnd(end)
       val isScopedPrivate = privateWithin != -1
-      SymbolInfo(tag, name, owner, flags, isScopedPrivate)
+      val isClassPrivate = (flags & Flags.PRIVATE) != 0
+      SymbolInfo(tag, name, owner, flags, isScopedPrivate, isClassPrivate)
     }
 
     def readExt(tag: Int): ExtInfo = {
@@ -191,9 +192,10 @@ object MimaUnpickler {
       // then implementing the rules of erasure, so that you can then match the pickle
       // types with the erased types.  Meanwhile we'll just ignore them, worst case users
       // need to add a filter like they have for years.
-      if (pickleMethods.size == bytecodeMethods.size && pickleMethods.exists(_.isScopedPrivate)) {
+      if (pickleMethods.size == bytecodeMethods.size && pickleMethods.exists(m => m.isScopedPrivate || m.isClassPrivate)) {
         bytecodeMethods.zip(pickleMethods).foreach { case (bytecodeMeth, pickleMeth) =>
           bytecodeMeth.scopedPrivate = pickleMeth.isScopedPrivate
+          bytecodeMeth.classPrivate = pickleMeth.isClassPrivate
         }
       }
     }
@@ -257,12 +259,12 @@ object MimaUnpickler {
     }
   }
 
-  final case class SymbolInfo(tag: Int, name: Name, owner: SymInfo, flags: Long, isScopedPrivate: Boolean) extends SymInfo {
+  final case class SymbolInfo(tag: Int, name: Name, owner: SymInfo, flags: Long, isScopedPrivate: Boolean, isClassPrivate: Boolean) extends SymInfo {
     def hasFlag(flag: Long): Boolean = (flags & flag) != 0L
     def isModuleOrModuleClass        = hasFlag(Flags.MODULE_PKL)
     def isParam                      = hasFlag(Flags.PARAM)
   }
-  val NoSymbol: SymbolInfo = SymbolInfo(NONEsym, nme.NoSymbol, null, 0, false)
+  val NoSymbol: SymbolInfo = SymbolInfo(NONEsym, nme.NoSymbol, null, 0, false, false)
 
   final case class ExtInfo(tag: Int, name: Name, owner: SymInfo) extends SymInfo
 
@@ -288,6 +290,7 @@ object MimaUnpickler {
   }
 
   object Flags {
+    final val PRIVATE    = 1L << 2
     final val MODULE_PKL = 1L << 10
     final val PARAM      = 1L << 13
   }

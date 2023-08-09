@@ -10,12 +10,14 @@ sealed abstract class MemberInfo(val owner: ClassInfo, val bytecodeName: String,
   final var isDeprecated: Boolean  = false
   final var signature: Signature   = Signature.none // Includes generics. 'descriptor' is the erased version.
   final var scopedPrivate: Boolean = false
+  final var classPrivate: Boolean = false
 
   def nonAccessible: Boolean
 
   final def fullName: String          = s"${owner.formattedFullName}.$decodedName"
   final def abstractPrefix            = if (isDeferred && !owner.isTrait) "abstract " else ""
-  final def scopedPrivatePrefix       = if (scopedPrivate) "private[..] " else ""
+  final def scopedPrivatePrefix       = "private[..] "
+  final def classPrivatePrefix        = "private "
   final def staticPrefix: String      = if (isStatic) "static " else ""
   final def tpe: Type                 = owner.owner.definitions.fromDescriptor(descriptor)
   final def hasSyntheticName: Boolean = decodedName.contains('$')
@@ -44,7 +46,16 @@ private[mima] final class MethodInfo(owner: ClassInfo, bytecodeName: String, fla
   def shortMethodString: String = {
     val prefix = if (hasSyntheticName) if (isExtensionMethod) "extension " else "synthetic " else ""
     val deprecated = if (isDeprecated) "deprecated " else ""
-    s"${scopedPrivatePrefix}${abstractPrefix}$prefix${deprecated}${staticPrefix}method $decodedName$tpe"
+
+    val privatePrefix = if (isScopedPrivate) {
+      scopedPrivatePrefix
+    } else if (isClassPrivate) {
+      classPrivatePrefix
+    } else {
+      ""
+    }
+
+    s"${privatePrefix}${abstractPrefix}$prefix${deprecated}${staticPrefix}method $decodedName$tpe"
   }
 
   lazy val paramsCount: Int = {
@@ -67,10 +78,12 @@ private[mima] final class MethodInfo(owner: ClassInfo, bytecodeName: String, fla
     decodedName.substring(0, i + 1).endsWith("$extension")
   }
   def nonAccessible: Boolean = {
-    !isPublic || isScopedPrivate || isSynthetic ||
+    !isPublic || isScopedPrivate || isClassPrivate || isSynthetic ||
       (hasSyntheticName && !(isExtensionMethod || isDefaultGetter || isTraitInit))
   }
   def isScopedPrivate: Boolean = scopedPrivate
+
+  def isClassPrivate: Boolean = classPrivate
 
   override def toString = s"def $bytecodeName: $descriptor"
 }
