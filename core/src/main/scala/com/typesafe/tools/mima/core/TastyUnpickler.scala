@@ -342,7 +342,7 @@ object TastyUnpickler {
     def traverseClsDef(clsDef: ClsDef)                     = { val ClsDef(name, tmpl, privateWithin, annots) = clsDef; traverseName(name); traverseTemplate(tmpl); traversePrivateWithin(privateWithin); annots.foreach(traverse) }
     def traverseTemplate(tmpl: Template)                   = { val Template(classes, fields, meths) = tmpl; classes.foreach(traverse); fields.foreach(traverse); meths.foreach(traverse) }
     def traverseValDef(valDef: ValDef)                     = { val ValDef(name, privateWithin, annots) = valDef; traverseName(name); traversePrivateWithin(privateWithin); annots.foreach(traverse) }
-    def traverseDefDef(defDef: DefDef)                     = { val DefDef(name, privateWithin, classPrivate, annots) = defDef; traverseName(name); traversePrivateWithin(privateWithin); annots.foreach(traverse) }
+    def traverseDefDef(defDef: DefDef)                     = { val DefDef(name, privateWithin, _, annots) = defDef; traverseName(name); traversePrivateWithin(privateWithin); annots.foreach(traverse) }
     def traversePrivateWithin(privateWithin: Option[Type]) = { privateWithin.foreach(traverseType) }
 
     //def traverseClassPrivate(classPrivate: Boolean)        =     { privateWithin.foreach(traverseType) }
