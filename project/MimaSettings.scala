@@ -24,6 +24,15 @@ object MimaSettings {
       // * com.typesafe.tools.mima.core.ProblemFilters
       // * com.typesafe.tools.mima.core.*Problem
       // * com.typesafe.tools.mima.core.util.log.Logging
+
+      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.TastyUnpickler#DefDef.copy"),
+      ProblemFilters.exclude[IncompatibleResultTypeProblem]("com.typesafe.tools.mima.core.TastyUnpickler#DefDef.copy$default$3"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.TastyUnpickler#DefDef.this"),
+      ProblemFilters.exclude[MissingTypesProblem]("com.typesafe.tools.mima.core.TastyUnpickler$DefDef$"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.TastyUnpickler#DefDef.<init>$default$3"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.TastyUnpickler#DefDef.apply"),
+      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.TastyUnpickler#DefDef.apply$default$3"),
+      ProblemFilters.exclude[IncompatibleSignatureProblem]("com.typesafe.tools.mima.core.TastyUnpickler#DefDef.unapply"),
     ),
   )
 }
