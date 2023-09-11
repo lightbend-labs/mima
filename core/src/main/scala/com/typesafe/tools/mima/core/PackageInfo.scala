@@ -10,11 +10,11 @@ sealed class SyntheticPackageInfo(val owner: PackageInfo, val name: String) exte
 }
 
 object NoPackageInfo extends PackageInfo {
-  val name        = "<no package>"
-  val owner       = this
-  def definitions = sys.error("Called definitions on NoPackageInfo")
-  val packages    = mutable.Map.empty[String, PackageInfo]
-  val classes     = Map.empty[String, ClassInfo]
+  val name                     = "<no package>"
+  val owner: PackageInfo       = this
+  def definitions: Definitions = sys.error("Called definitions on NoPackageInfo")
+  val packages                 = mutable.Map.empty[String, PackageInfo]
+  val classes                  = Map.empty[String, ClassInfo]
 }
 
 sealed class ConcretePackageInfo(val owner: PackageInfo, cp: ClassPath, pkg: String, defs: Definitions)
