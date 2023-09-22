@@ -1,6 +1,6 @@
 package com.typesafe.tools.mima.core
 
-import scala.annotation.tailrec
+import scala.annotation.{nowarn, tailrec}
 import scala.collection.mutable
 
 sealed class SyntheticPackageInfo(val owner: PackageInfo, val name: String) extends PackageInfo {
@@ -9,9 +9,10 @@ sealed class SyntheticPackageInfo(val owner: PackageInfo, val name: String) exte
   lazy val classes  = Map.empty[String, ClassInfo]
 }
 
+@nowarn("msg=under -Xsource:3, inferred")  // return types are a bit different between 2 and 3 but it's fine afaics
 object NoPackageInfo extends PackageInfo {
   val name        = "<no package>"
-  val owner       = this
+  val owner        = this
   def definitions = sys.error("Called definitions on NoPackageInfo")
   val packages    = mutable.Map.empty[String, PackageInfo]
   val classes     = Map.empty[String, ClassInfo]

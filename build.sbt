@@ -18,9 +18,16 @@ inThisBuild(Seq(
 ))
 
 def compilerOptions(scalaVersion: String): Seq[String] =
-  Seq("-feature", "-Wconf:cat=deprecation&msg=Stream|JavaConverters:s") ++
+  Seq(
+    "-feature",
+    "-Wconf:cat=deprecation&msg=Stream|JavaConverters:s",
+  ) ++
   (CrossVersion.partialVersion(scalaVersion) match {
-    case Some((2, _)) => Seq("-Xsource:3", "-Xlint")
+    case Some((2, _)) => Seq(
+      "-Xsource:3", "-Xlint",
+      // these are too annoying when crossbuilding
+      "-Wconf:cat=unused-nowarn:s",
+    )
     case _ => Seq()
   })
 

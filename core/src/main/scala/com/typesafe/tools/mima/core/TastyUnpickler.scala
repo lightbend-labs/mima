@@ -2,7 +2,7 @@ package com.typesafe.tools.mima.core
 
 import java.util.UUID
 
-import scala.annotation.tailrec
+import scala.annotation.{nowarn, tailrec}
 import scala.collection.mutable, mutable.{ ArrayBuffer, ListBuffer }
 
 import TastyFormat._, NameTags._, TastyTagOps._, TastyRefs._
@@ -438,6 +438,7 @@ object TastyUnpickler {
 
   final case class SimpleName(raw: String)                                                   extends Name
   final case class ObjectName(base: Name)                                                    extends Name
+  @nowarn("msg=constructor modifiers are assumed by synthetic")
   final case class TypeName private[TastyUnpickler] (base: Name)                             extends Name
   final case class QualifiedName(qual: Name, sep: SimpleName, sel: SimpleName)               extends Name
 
