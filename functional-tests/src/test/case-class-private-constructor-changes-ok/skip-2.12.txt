@@ -1,0 +1,1 @@
+Code does not compile on 2.11 because unapply cannot be redefined

@@ -13,7 +13,7 @@ object UnitTests {
   } yield ()
 
   def runTestCaseIf(testCase: TestCase, direction: Direction): Try[Unit] = {
-    if ((testCase.baseDir / direction.oracleFile).exists)
+    if ((testCase.baseDir / direction.oracleFile).exists && !testCase.skip)
       runTestCase1(testCase, direction)
     else
       Success(())
