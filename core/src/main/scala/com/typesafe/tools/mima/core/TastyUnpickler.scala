@@ -1,11 +1,14 @@
 package com.typesafe.tools.mima.core
 
+import com.typesafe.tools.mima.core.TastyFormat.*
+import com.typesafe.tools.mima.core.TastyFormat.NameTags.*
+import com.typesafe.tools.mima.core.TastyRefs.*
+import com.typesafe.tools.mima.core.TastyTagOps.*
+
 import java.util.UUID
-
 import scala.annotation.tailrec
-import scala.collection.mutable, mutable.{ ArrayBuffer, ListBuffer }
-
-import TastyFormat._, NameTags._, TastyTagOps._, TastyRefs._
+import scala.collection.mutable
+import scala.collection.mutable.{ArrayBuffer, ListBuffer}
 
 object TastyUnpickler {
   def unpickleClass(in: TastyReader, clazz: ClassInfo, path: String): Unit = {
@@ -19,8 +22,7 @@ object TastyUnpickler {
     val names = readNames(in)
     val tree  = unpickleTree(getTreeReader(in, names), names)
 
-    copyPrivateWithin(tree, clazz.owner)
-    copyClassPrivate(tree, clazz.owner)
+    copyPrivateFlags(tree, clazz.owner)
     copyAnnotations(tree, clazz.owner)
   }
 
@@ -74,7 +76,7 @@ object TastyUnpickler {
     }
   }.traverse(tree)
 
-  def copyPrivateWithin(tree: Tree, pkgInfo: PackageInfo): Unit = new ClassTraverser(pkgInfo) {
+  def copyPrivateFlags(tree: Tree, pkgInfo: PackageInfo): Unit = new ClassTraverser(pkgInfo) {
     override def forEachClass(clsDef: ClsDef, cls: ClassInfo): Unit =
       clsDef.privateWithin.foreach(_ => cls.module._scopedPrivate = true)
 
@@ -86,7 +88,6 @@ object TastyUnpickler {
     def doMethods(tmpl: Template) = {
       val clazz = currentClass
       (tmpl.fields ::: tmpl.meths).iterator
-        //.filter(_.name != Name.Constructor) // TODO support package private constructors
         .toSeq.groupBy(_.name).foreach { case (name, pickleMethods) =>
           doMethodOverloads(clazz, name, pickleMethods)
         }
@@ -94,43 +95,21 @@ object TastyUnpickler {
 
     def doMethodOverloads(clazz: ClassInfo, name: Name, pickleMethods: Seq[TermMemberDef]) = {
       val bytecodeMethods = clazz.methods.get(name.source).filter(!_.isBridge).toList
-      if (pickleMethods.size == bytecodeMethods.size && pickleMethods.exists(_.privateWithin.isDefined)) {
-        bytecodeMethods.zip(pickleMethods).foreach { case (bytecodeMeth, pickleMeth) =>
-          bytecodeMeth.scopedPrivate = pickleMeth.privateWithin.isDefined
-        }
-      }
-    }
-  }.traverse(tree)
 
-  def copyClassPrivate(tree: Tree, pkgInfo: PackageInfo): Unit = new ClassTraverser(pkgInfo) {
-    override def forEachClass(clsDef: ClsDef, cls: ClassInfo): Unit = {
-    }
+      if (pickleMethods.size == bytecodeMethods.size) {
+        if (pickleMethods.exists(t => t.privateWithin.isDefined || t.classPrivate)) {
+          bytecodeMethods.zip(pickleMethods).foreach { case (bytecodeMeth, pickleMeth) =>
 
-    override def traverseTemplate(tmpl: Template): Unit = {
-      super.traverseTemplate(tmpl)
-      doMethods(tmpl)
-    }
-
-    def doMethods(tmpl: Template) = {
-      val clazz = currentClass
-      tmpl.meths.iterator
-        .toSeq.groupBy(_.name).foreach { case (name, pickleMethods) =>
-          doMethodOverloads(clazz, name, pickleMethods)
-        }
-    }
-
-    def doMethodOverloads(clazz: ClassInfo, name: Name, pickleMethods: Seq[DefDef]) = {
-      val bytecodeMethods = clazz.methods.get(name.source).filter(!_.isBridge).toList
-      if (pickleMethods.size == bytecodeMethods.size && pickleMethods.exists(_.classPrivate)) {
-        bytecodeMethods.zip(pickleMethods).foreach { case (bytecodeMeth, pickleMeth) =>
-          bytecodeMeth.classPrivate = pickleMeth.classPrivate
+            bytecodeMeth.scopedPrivate = pickleMeth.privateWithin.isDefined
+            bytecodeMeth.classPrivate = pickleMeth.classPrivate
+          }
         }
       }
     }
   }.traverse(tree)
 
   def unpickleTree(in: TastyReader, names: Names): Tree = {
-    import in._
+    import in.*
 
     def readName()         = names(readNat())
     def skipTree(tag: Int) = { skipTreeTagged(in, tag); UnknownTree(tag) }
@@ -172,8 +151,8 @@ object TastyUnpickler {
           val name = readName()
           skipTree(readByte()) // type
           if (!nothingButMods(end)) skipTree(readByte()) // rhs
-          val (privateWithin, _, annots) = readMods(end)
-          ValDef(name, privateWithin, annots)
+          val (privateWithin, classPrivate, annots) = readMods(end)
+          ValDef(name, privateWithin, classPrivate, annots)
         }
 
         def readDefDef() = {
@@ -276,7 +255,7 @@ object TastyUnpickler {
   }
 
   def skipTreeTagged(in: TastyReader, tag: Int): Unit = {
-    import in._
+    import in.*
     astCategory(tag) match {
       case AstCat1TagOnly =>
       case AstCat2Nat     => readNat()
@@ -301,11 +280,11 @@ object TastyUnpickler {
     def show = s"${showXs(annots, end = " ")}${showPrivateWithin(privateWithin)}class $name$template"
   }
   final case class Template(classes: List[ClsDef], fields: List[ValDef], meths: List[DefDef]) extends Tree { def show = s"${(classes ::: meths).map("\n  " + _).mkString}" }
-  final case class ValDef(name: Name, privateWithin: Option[Type], annots: List[Annot] = Nil) extends TermMemberDef
+  final case class ValDef(name: Name, privateWithin: Option[Type], classPrivate: Boolean, annots: List[Annot] = Nil) extends TermMemberDef
   final case class DefDef(name: Name, privateWithin: Option[Type], classPrivate: Boolean, annots: List[Annot] = Nil) extends TermMemberDef
 
   sealed trait TermMemberDef extends Tree {
-    def name: Name; def privateWithin: Option[Type]; def annots: List[Annot]
+    def name: Name; def privateWithin: Option[Type]; def classPrivate: Boolean; def annots: List[Annot]
     def show = s"${showXs(annots, end = " ")}${showPrivateWithin(privateWithin)}def $name"
   }
 
@@ -341,7 +320,7 @@ object TastyUnpickler {
     def traversePkg(pkg: Pkg)                              = { val Pkg(path, trees) = pkg; traverse(path); trees.foreach(traverse) }
     def traverseClsDef(clsDef: ClsDef)                     = { val ClsDef(name, tmpl, privateWithin, annots) = clsDef; traverseName(name); traverseTemplate(tmpl); traversePrivateWithin(privateWithin); annots.foreach(traverse) }
     def traverseTemplate(tmpl: Template)                   = { val Template(classes, fields, meths) = tmpl; classes.foreach(traverse); fields.foreach(traverse); meths.foreach(traverse) }
-    def traverseValDef(valDef: ValDef)                     = { val ValDef(name, privateWithin, annots) = valDef; traverseName(name); traversePrivateWithin(privateWithin); annots.foreach(traverse) }
+    def traverseValDef(valDef: ValDef)                     = { val ValDef(name, privateWithin, _, annots) = valDef; traverseName(name); traversePrivateWithin(privateWithin); annots.foreach(traverse) }
     def traverseDefDef(defDef: DefDef)                     = { val DefDef(name, privateWithin, _, annots) = defDef; traverseName(name); traversePrivateWithin(privateWithin); annots.foreach(traverse) }
     def traversePrivateWithin(privateWithin: Option[Type]) = { privateWithin.foreach(traverseType) }
 
@@ -379,7 +358,7 @@ object TastyUnpickler {
   }
 
   def getSectionReader(in: TastyReader, names: Names, name: String): Option[TastyReader] = {
-    import in._
+    import in.*
     @tailrec def loop(): Option[TastyReader] = {
       if (isAtEnd) None
       else if (names(readNat()).debug == name) Some(nextSectionReader(in))
@@ -389,7 +368,7 @@ object TastyUnpickler {
   }
 
   private def nextSectionReader(in: TastyReader) = {
-    import in._
+    import in.*
     val end  = readEnd()
     val curr = currentAddr
     goto(end)
@@ -403,7 +382,7 @@ object TastyUnpickler {
   }
 
   private def readNewName(in: TastyReader, names: ArrayBuffer[Name]): Name = {
-    import in._
+    import in.*
 
     val tag = readByte()
     val end = readEnd()
@@ -583,14 +562,14 @@ object TastyUnpickler {
   }
 
   final case class Header(
-      val header: (Int, Int, Int, Int),
-      val version: (Int, Int, Int),
-      val toolingVersion: String,
-      val uuid: UUID,
+    val header: (Int, Int, Int, Int),
+    val version: (Int, Int, Int),
+    val toolingVersion: String,
+    val uuid: UUID,
   )
 
   def readHeader(in: TastyReader): Header = {
-    import in._
+    import in.*
 
     def readToolingVersion() = {
       val toolingLen = readNat()
