@@ -1,14 +1,11 @@
 package com.typesafe.tools.mima.core
 
-import com.typesafe.tools.mima.core.TastyFormat.*
-import com.typesafe.tools.mima.core.TastyFormat.NameTags.*
-import com.typesafe.tools.mima.core.TastyRefs.*
-import com.typesafe.tools.mima.core.TastyTagOps.*
-
 import java.util.UUID
-import scala.annotation.tailrec
-import scala.collection.mutable
-import scala.collection.mutable.{ArrayBuffer, ListBuffer}
+
+import scala.annotation.{nowarn, tailrec}
+import scala.collection.mutable, mutable.{ ArrayBuffer, ListBuffer }
+
+import TastyFormat._, NameTags._, TastyTagOps._, TastyRefs._
 
 object TastyUnpickler {
   def unpickleClass(in: TastyReader, clazz: ClassInfo, path: String): Unit = {
@@ -109,7 +106,7 @@ object TastyUnpickler {
   }.traverse(tree)
 
   def unpickleTree(in: TastyReader, names: Names): Tree = {
-    import in.*
+    import in._
 
     def readName()         = names(readNat())
     def skipTree(tag: Int) = { skipTreeTagged(in, tag); UnknownTree(tag) }
@@ -255,7 +252,7 @@ object TastyUnpickler {
   }
 
   def skipTreeTagged(in: TastyReader, tag: Int): Unit = {
-    import in.*
+    import in._
     astCategory(tag) match {
       case AstCat1TagOnly =>
       case AstCat2Nat     => readNat()
@@ -358,7 +355,7 @@ object TastyUnpickler {
   }
 
   def getSectionReader(in: TastyReader, names: Names, name: String): Option[TastyReader] = {
-    import in.*
+    import in._
     @tailrec def loop(): Option[TastyReader] = {
       if (isAtEnd) None
       else if (names(readNat()).debug == name) Some(nextSectionReader(in))
@@ -368,7 +365,7 @@ object TastyUnpickler {
   }
 
   private def nextSectionReader(in: TastyReader) = {
-    import in.*
+    import in._
     val end  = readEnd()
     val curr = currentAddr
     goto(end)
@@ -382,7 +379,7 @@ object TastyUnpickler {
   }
 
   private def readNewName(in: TastyReader, names: ArrayBuffer[Name]): Name = {
-    import in.*
+    import in._
 
     val tag = readByte()
     val end = readEnd()
@@ -449,6 +446,7 @@ object TastyUnpickler {
 
   final case class SimpleName(raw: String)                                                   extends Name
   final case class ObjectName(base: Name)                                                    extends Name
+  @nowarn("msg=constructor modifiers are assumed by synthetic")
   final case class TypeName private[TastyUnpickler] (base: Name)                             extends Name
   final case class QualifiedName(qual: Name, sep: SimpleName, sel: SimpleName)               extends Name
 
@@ -562,14 +560,14 @@ object TastyUnpickler {
   }
 
   final case class Header(
-    val header: (Int, Int, Int, Int),
-    val version: (Int, Int, Int),
-    val toolingVersion: String,
-    val uuid: UUID,
+    header: (Int, Int, Int, Int),
+    version: (Int, Int, Int),
+    toolingVersion: String,
+    uuid: UUID,
   )
 
   def readHeader(in: TastyReader): Header = {
-    import in.*
+    import in._
 
     def readToolingVersion() = {
       val toolingLen = readNat()

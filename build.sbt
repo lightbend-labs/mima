@@ -18,9 +18,16 @@ inThisBuild(Seq(
 ))
 
 def compilerOptions(scalaVersion: String): Seq[String] =
-  Seq("-feature", "-Wconf:cat=deprecation&msg=Stream|JavaConverters:s") ++
+  Seq(
+    "-feature",
+    "-Wconf:cat=deprecation&msg=Stream|JavaConverters:s",
+  ) ++
   (CrossVersion.partialVersion(scalaVersion) match {
-    case Some((2, _)) => Seq("-Xsource:3", "-Xlint")
+    case Some((2, _)) => Seq(
+      "-Xsource:3", "-Xlint",
+      // these are too annoying when crossbuilding
+      "-Wconf:cat=unused-nowarn:s",
+    )
     case _ => Seq()
   })
 
@@ -35,8 +42,8 @@ commands += Command.command("testStaging") { state =>
 
 // Keep in sync with TestCli
 val scala212 = "2.12.18"
-val scala213 = "2.13.11"
-val scala3 = "3.3.0"
+val scala213 = "2.13.12"
+val scala3 = "3.3.1"
 
 val root = project.in(file(".")).settings(
   name := "mima",
@@ -46,7 +53,7 @@ val root = project.in(file(".")).settings(
 )
 aggregateProjects(core.jvm, core.native, sbtplugin, functionalTests)
 
-val munit = Def.setting("org.scalameta" %%% "munit" % "1.0.0-M8")
+val munit = Def.setting("org.scalameta" %%% "munit" % "1.0.0-M10")
 
 val core = crossProject(JVMPlatform, NativePlatform).crossType(CrossType.Pure).settings(
   name := "mima-core",
@@ -84,7 +91,7 @@ val functionalTests = Project("functional-tests", file("functional-tests"))
   .configs(IntegrationTest)
   .settings(
     crossScalaVersions += scala213,
-    libraryDependencies += "io.get-coursier" %% "coursier" % "2.1.5",
+    libraryDependencies += "io.get-coursier" %% "coursier" % "2.1.7",
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
     libraryDependencies += munit.value,
     testFrameworks += new TestFramework("munit.Framework"),

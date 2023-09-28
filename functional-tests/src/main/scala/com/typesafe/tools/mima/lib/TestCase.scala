@@ -65,7 +65,8 @@ final class TestCase(val baseDir: Directory, val scalaCompiler: ScalaCompiler, v
     val opts = List("-classpath", cpStr, "-d", s"$out").asJava
     val units = sourceFiles.map { sf =>
       new SimpleJavaFileObject(new URI(s"string:///${sf.path}"), JavaFileObject.Kind.SOURCE) {
-        override def getCharContent(ignoreEncodingErrors: Boolean) = java.nio.CharBuffer.wrap(sf.content)
+        override def getCharContent(ignoreEncodingErrors: Boolean): java.nio.CharBuffer =
+          java.nio.CharBuffer.wrap(sf.content)
       }
     }.asJava
     val infos = new mutable.LinkedHashSet[Diagnostic[_ <: JavaFileObject]]
