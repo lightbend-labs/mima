@@ -86,6 +86,9 @@ object MimaPlugin extends AutoPlugin {
     val excludeAnnots = mimaExcludeAnnotations.value.toList
     val failOnNoPrevious = mimaFailOnNoPrevious.value
     val projName = name.value
+    val filters = mimaBinaryIssueFilters.value
+    val backwardFilters = mimaBackwardIssueFilters.value
+    val forwardFilters = mimaForwardIssueFilters.value
 
     (prevClassfiles, checkDirection) => {
       if (prevClassfiles eq NoPreviousClassfiles) {
@@ -96,7 +99,12 @@ object MimaPlugin extends AutoPlugin {
       }
 
       prevClassfiles.iterator.map { case (moduleId, prevClassfiles) =>
-        moduleId -> SbtMima.runMima(prevClassfiles, currClassfiles, cp, checkDirection, sv, log, excludeAnnots)
+        val (backwardProblems, forwardProblems) = SbtMima.runMima(prevClassfiles, currClassfiles, cp, checkDirection, sv, log, excludeAnnots)
+        def isReported(versionedFilters: Map[String, Seq[ProblemFilter]])(problem: Problem) =
+          ProblemReporting.isReported(moduleId.revision, filters, versionedFilters)(problem)
+        val filteredBackwardProblems = backwardProblems.filter(isReported(backwardFilters))
+        val filteredForwardProblems  = forwardProblems.filter(isReported(forwardFilters))
+        moduleId -> (filteredBackwardProblems, filteredForwardProblems)
       }
     }
   }
