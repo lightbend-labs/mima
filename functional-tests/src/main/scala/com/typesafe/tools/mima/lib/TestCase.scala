@@ -1,22 +1,25 @@
 package com.typesafe.tools.mima.lib
 
-import java.io.{ ByteArrayOutputStream, PrintStream }
-import java.net.{ URI, URLClassLoader }
-import javax.tools._
+import com.typesafe.tools.mima.core.ClassPath
 
+import java.io.{ByteArrayOutputStream, PrintStream}
+import java.net.{URI, URLClassLoader}
+import java.nio.charset.StandardCharsets
+import java.nio.file.Files
+import javax.tools._
 import scala.annotation.tailrec
 import scala.collection.JavaConverters._
 import scala.collection.mutable
 import scala.reflect.internal.util.BatchSourceFile
-import scala.reflect.io.{ Directory, Path, PlainFile }
-import scala.util.{ Failure, Success, Try }
-
-import com.typesafe.tools.mima.core.ClassPath
+import scala.reflect.io.{Directory, Path, PlainFile}
+import scala.util.{Failure, Success, Try}
 
 final class TestCase(val baseDir: Directory, val scalaCompiler: ScalaCompiler, val javaCompiler: JavaCompiler) {
   def name               = baseDir.name
   def scalaBinaryVersion = if (scalaCompiler.isScala3) "3" else scalaCompiler.version.take(4)
   def scalaJars          = scalaCompiler.jars
+
+  def skip: Boolean      = (baseDir / s"skip-${scalaBinaryVersion}.txt").exists
 
   val srcV1  = (baseDir / "v1").toDirectory
   val srcV2  = (baseDir / "v2").toDirectory
@@ -44,8 +47,14 @@ final class TestCase(val baseDir: Directory, val scalaCompiler: ScalaCompiler, v
     if (sourceFiles.forall(_.isJava)) return Success(())
     val bootcp = ClassPath.join(scalaJars.map(_.getPath))
     val cpOpt  = if (cp.isEmpty) Nil else List("-classpath", ClassPath.join(cp.map(_.path)))
+    val optsFile = baseDir / s"scalac-options-${scalaBinaryVersion}.txt"
+    val testOpts = if (optsFile.exists) {
+      Files.readAllLines(optsFile.jfile.toPath, StandardCharsets.UTF_8).asScala.filterNot(_.trim.startsWith("#")).toList
+    } else {
+      List.empty
+    }
     val paths = sourceFiles.map(_.path)
-    val args = "-bootclasspath" :: bootcp :: cpOpt ::: "-d" :: s"$out" :: paths
+    val args = "-bootclasspath" :: bootcp :: testOpts ::: cpOpt ::: "-d" :: s"$out" :: paths
     scalaCompiler.compile(args)
   }
 

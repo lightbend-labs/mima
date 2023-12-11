@@ -1,6 +1,6 @@
 package com.typesafe.tools.mima.core
 
-import PickleFormat._
+import com.typesafe.tools.mima.core.PickleFormat.*
 
 object MimaUnpickler {
   def unpickleClass(buf: PickleBuffer, clazz: ClassInfo, path: String): Unit = {
@@ -174,7 +174,6 @@ object MimaUnpickler {
     def doMethods(clazz: ClassInfo, methods: List[SymbolInfo]) = {
       methods.iterator
         .filter(!_.isParam)
-        .filter(_.name.value != CONSTRUCTOR) // TODO support package private constructors
         .toSeq.groupBy(_.name).foreach { case (name, pickleMethods) =>
           doMethodOverloads(clazz, name, pickleMethods)
         }
@@ -192,9 +191,10 @@ object MimaUnpickler {
       // then implementing the rules of erasure, so that you can then match the pickle
       // types with the erased types.  Meanwhile we'll just ignore them, worst case users
       // need to add a filter like they have for years.
-      if (pickleMethods.size == bytecodeMethods.size && pickleMethods.exists(_.isScopedPrivate)) {
+      if (pickleMethods.size == bytecodeMethods.size && pickleMethods.exists(m => m.isScopedPrivate || m.isClassPrivate)) {
         bytecodeMethods.zip(pickleMethods).foreach { case (bytecodeMeth, pickleMeth) =>
           bytecodeMeth.scopedPrivate = pickleMeth.isScopedPrivate
+          bytecodeMeth.classPrivate = pickleMeth.isClassPrivate
         }
       }
     }
@@ -262,6 +262,7 @@ object MimaUnpickler {
     def hasFlag(flag: Long): Boolean = (flags & flag) != 0L
     def isModuleOrModuleClass        = hasFlag(Flags.MODULE_PKL)
     def isParam                      = hasFlag(Flags.PARAM)
+    def isClassPrivate               = hasFlag(Flags.PRIVATE)
   }
   val NoSymbol: SymbolInfo = SymbolInfo(NONEsym, nme.NoSymbol, null, 0, false)
 
@@ -289,6 +290,7 @@ object MimaUnpickler {
   }
 
   object Flags {
+    final val PRIVATE    = 1L << 2
     final val MODULE_PKL = 1L << 10
     final val PARAM      = 1L << 13
   }
