@@ -10,7 +10,7 @@ import scala.util.{ Properties => StdLibProps }
 object TestCli {
   // Keep in sync with build.sbt
   val scala211 = "2.11.12"
-  val scala212 = "2.12.18"
+  val scala212 = "2.12.19"
   val scala213 = "2.13.12"
   val scala3   = "3.3.1"
   val hostScalaVersion = StdLibProps.scalaPropOrNone("maven.version.number").get
