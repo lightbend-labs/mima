@@ -24,7 +24,7 @@ def compilerOptions(scalaVersion: String): Seq[String] =
   ) ++
   (CrossVersion.partialVersion(scalaVersion) match {
     case Some((2, _)) => Seq(
-      "-Xsource:3", "-Xlint",
+      "-Xsource:3-cross", "-Xlint",
       // these are too annoying when crossbuilding
       "-Wconf:cat=unused-nowarn:s",
     )
