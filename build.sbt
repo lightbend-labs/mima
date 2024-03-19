@@ -24,10 +24,15 @@ def compilerOptions(scalaVersion: String): Seq[String] =
   ) ++
   (CrossVersion.partialVersion(scalaVersion) match {
     case Some((2, _)) => Seq(
-      "-Xsource:3", "-Xlint",
+      "-Xlint",
       // these are too annoying when crossbuilding
       "-Wconf:cat=unused-nowarn:s",
     )
+    case _ => Seq()
+  }) ++
+  (CrossVersion.partialVersion(scalaVersion) match {
+    case Some((2, 12)) => Seq("-Xsource:3")
+    case Some((2, 13)) => Seq("-Xsource:3-cross")
     case _ => Seq()
   })
 
@@ -42,7 +47,7 @@ commands += Command.command("testStaging") { state =>
 
 // Keep in sync with TestCli
 val scala212 = "2.12.19"
-val scala213 = "2.13.12"
+val scala213 = "2.13.13"
 val scala3 = "3.3.3"
 
 val root = project.in(file(".")).settings(
