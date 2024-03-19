@@ -1,2 +1,2 @@
--Xsource:3
+-Xsource:3-cross
 -Wconf:cat=scala3-migration:s
