@@ -48,7 +48,7 @@ commands += Command.command("testStaging") { state =>
 // Keep in sync with TestCli
 val scala212 = "2.12.19"
 val scala213 = "2.13.13"
-val scala3 = "3.3.3"
+val scala3 = "3.4.1"
 
 val root = project.in(file(".")).settings(
   name := "mima",
