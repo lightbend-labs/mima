@@ -29,17 +29,17 @@ See the [prerequisites](#prerequisites) if this is your first release.
 * [ ] [Find and merge][prs/list] your update PR.
 * [ ] [Find and hit "Publish Release"][releases/list] on the draft GitHub release.
 
-[compare/view]:    https://github.com/lightbend/mima/compare/1.1.2...main
-[issues/new]:      https://github.com/lightbend/mima/issues/new
-[prs/list]:        https://github.com/lightbend/mima/pulls
-[releases/list]:   https://github.com/lightbend/mima/releases
-[releases/new]:    https://github.com/lightbend/mima/releases/new
+[compare/view]:    https://github.com/lightbend-labs/mima/compare/1.1.2...main
+[issues/new]:      https://github.com/lightbend-labs/mima/issues/new
+[prs/list]:        https://github.com/lightbend-labs/mima/pulls
+[releases/list]:   https://github.com/lightbend-labs/mima/releases
+[releases/new]:    https://github.com/lightbend-labs/mima/releases/new
 
-[RELEASING.md]: https://raw.githubusercontent.com/lightbend/mima/main/RELEASING.md
+[RELEASING.md]: https://raw.githubusercontent.com/lightbend-labs/mima/main/RELEASING.md
 [repo1/list]: https://repo1.maven.org/maven2/com/typesafe/mima-core_2.12/1.1.2/
 [sonatype/guide]: https://central.sonatype.org/pages/releasing-the-deployment.html
 [sonatype/staging-repos]: https://oss.sonatype.org/#stagingRepositories
-[ci]: https://github.com/lightbend/mima/actions/workflows/ci.yml
+[ci]: https://github.com/lightbend-labs/mima/actions/workflows/ci.yml
 
 You are done!
 

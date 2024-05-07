@@ -122,7 +122,7 @@ full signature including generic parameters. This can catch real
 incompatibilities, but also sometimes triggers for a change in generics that
 would not in fact cause problems at run time. Notably, it will warn when
 updating your project to scala 2.12.9+ or 2.13.1+,
-see [this issue](https://github.com/lightbend/mima/issues/423) for details.
+see [this issue](https://github.com/lightbend-labs/mima/issues/423) for details.
 
 You can opt-in to this check by setting:
 

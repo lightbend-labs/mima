@@ -3,13 +3,13 @@ import mimabuild._
 inThisBuild(Seq(
   organization := "com.typesafe",
   licenses := Seq("Apache License v2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
-  homepage := Some(url("http://github.com/lightbend/mima")),
+  homepage := Some(url("http://github.com/lightbend-labs/mima")),
   developers := List(
     Developer("mdotta", "Mirco Dotta", "@dotta", url("https://github.com/dotta")),
     Developer("jsuereth", "Josh Suereth", "@jsuereth", url("https://github.com/jsuereth")),
     Developer("dwijnand", "Dale Wijnand", "@dwijnand", url("https://github.com/dwijnand")),
   ),
-  scmInfo := Some(ScmInfo(url("https://github.com/lightbend/mima"), "scm:git:git@github.com:lightbend/mima.git")),
+  scmInfo := Some(ScmInfo(url("https://github.com/lightbend-labs/mima"), "scm:git:git@github.com:lightbend-labs/mima.git")),
   dynverVTagPrefix := false,
   versionScheme := Some("early-semver"),
   scalaVersion := scala212,
