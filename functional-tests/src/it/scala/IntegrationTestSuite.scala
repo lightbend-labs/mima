@@ -387,7 +387,7 @@ class IntegrationTestSuite extends munit.FunSuite {
   test("java-9-module-info") {
     // jaxb-api 2.3.0 introduced a module-info.class
     // which caused MiMa to blow up when parsing the class file
-    // https://github.com/lightbend/mima/issues/206
+    // https://github.com/lightbend-labs/mima/issues/206
     // this test checks it against 2.3.0-b170201.1204 (a beta release of 2.3.0?)
     // to assert MiMa doesn't blow up
     testIntegration("javax.xml.bind", "jaxb-api", "2.3.0", "2.3.0-b170201-1204")()

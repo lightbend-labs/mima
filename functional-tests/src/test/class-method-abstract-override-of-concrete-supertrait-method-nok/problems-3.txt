@@ -3,4 +3,4 @@ in new version there is abstract method foo()Int in class B, which does not have
 #     abstract method foo()Int in class B does not have a correspondent in new version
 # which is a `DirectAbstractMethodProblem`, rather than the above `ReversedAbstractMethodProblem`
 # not sure exactly what that means... ¯\_(ツ)_/¯
-# https://github.com/lightbend/mima/issues/590
+# https://github.com/lightbend-labs/mima/issues/590

@@ -41,7 +41,7 @@ sealed abstract class Problem extends ProblemRef {
     case ReversedMissingMethodProblem(ref)                => s"${ref.memberString} is present only in $affectedVersion version"
     case FinalMethodProblem(ref)                          => s"${ref.methodString} is declared final in $affectedVersion version"
     case IncompatibleResultTypeProblem(ref, newmeth)      => s"${ref.methodString} has a different result type in $affectedVersion version, where it is ${newmeth.tpe.resultType} rather than ${ref.tpe.resultType}"
-    case IncompatibleSignatureProblem(ref, newmeth)       => s"${ref.methodString} has a different generic signature in $affectedVersion version, where it is ${newmeth.signature} rather than ${ref.signature}. See https://github.com/lightbend/mima#incompatiblesignatureproblem"
+    case IncompatibleSignatureProblem(ref, newmeth)       => s"${ref.methodString} has a different generic signature in $affectedVersion version, where it is ${newmeth.signature} rather than ${ref.signature}. See https://github.com/lightbend-labs/mima#incompatiblesignatureproblem"
     case DirectAbstractMethodProblem(ref)                 => s"${ref.methodString} does not have a correspondent in $affectedVersion version"
     case ReversedAbstractMethodProblem(ref)               => s"in $affectedVersion version there is ${ref.methodString}, which does not have a correspondent"
     case UpdateForwarderBodyProblem(ref)                  => s"in $affectedVersion version, classes mixing ${ref.owner.fullName} needs to update body of ${ref.shortMethodString}"
