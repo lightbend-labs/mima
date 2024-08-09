@@ -10,7 +10,7 @@ import com.typesafe.tools.mima.plugin.MimaPlugin.autoImport._
 
 object MimaSettings {
   // clear out mimaBinaryIssueFilters when changing this
-  val mimaPreviousVersion = "1.1.3"
+  val mimaPreviousVersion = "1.1.4"
 
   val mimaSettings = Def.settings (
     mimaPreviousArtifacts := Set(pluginProjectID.value.withRevision(mimaPreviousVersion)
@@ -24,25 +24,6 @@ object MimaSettings {
       // * com.typesafe.tools.mima.core.ProblemFilters
       // * com.typesafe.tools.mima.core.*Problem
       // * com.typesafe.tools.mima.core.util.log.Logging
-
-      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.TastyUnpickler#DefDef.copy"),
-      ProblemFilters.exclude[IncompatibleResultTypeProblem]("com.typesafe.tools.mima.core.TastyUnpickler#DefDef.copy$default$3"),
-      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.TastyUnpickler#DefDef.this"),
-      ProblemFilters.exclude[MissingTypesProblem]("com.typesafe.tools.mima.core.TastyUnpickler$DefDef$"),
-      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.TastyUnpickler#DefDef.<init>$default$3"),
-      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.TastyUnpickler#DefDef.apply"),
-      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.TastyUnpickler#DefDef.apply$default$3"),
-      ProblemFilters.exclude[IncompatibleSignatureProblem]("com.typesafe.tools.mima.core.TastyUnpickler#DefDef.unapply"),
-      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.TastyUnpickler.copyPrivateWithin"),
-      ProblemFilters.exclude[ReversedMissingMethodProblem]("com.typesafe.tools.mima.core.TastyUnpickler#TermMemberDef.classPrivate"),
-      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.TastyUnpickler#ValDef.copy"),
-      ProblemFilters.exclude[IncompatibleResultTypeProblem]("com.typesafe.tools.mima.core.TastyUnpickler#ValDef.copy$default$3"),
-      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.TastyUnpickler#ValDef.this"),
-      ProblemFilters.exclude[MissingTypesProblem]("com.typesafe.tools.mima.core.TastyUnpickler$ValDef$"),
-      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.TastyUnpickler#ValDef.<init>$default$3"),
-      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.TastyUnpickler#ValDef.apply"),
-      ProblemFilters.exclude[DirectMissingMethodProblem]("com.typesafe.tools.mima.core.TastyUnpickler#ValDef.apply$default$3"),
-      ProblemFilters.exclude[IncompatibleSignatureProblem]("com.typesafe.tools.mima.core.TastyUnpickler#ValDef.unapply")
     ),
   )
 }
