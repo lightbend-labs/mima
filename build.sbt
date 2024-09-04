@@ -82,7 +82,7 @@ val cli = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(
     name := "mima-cli",
-    crossScalaVersions ++= Seq(scala213, scala3),
+    crossScalaVersions ++= Seq(scala3),
     scalacOptions ++= compilerOptions(scalaVersion.value),
     libraryDependencies += munit.value % Test,
     MimaSettings.mimaSettings,
