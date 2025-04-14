@@ -46,9 +46,9 @@ commands += Command.command("testStaging") { state =>
 }
 
 // Keep in sync with TestCli
-val scala212 = "2.12.19"
-val scala213 = "2.13.14"
-val scala3 = "3.3.3"
+val scala212 = "2.12.20"
+val scala213 = "2.13.16"
+val scala3 = "3.3.5"
 
 val root = project.in(file(".")).settings(
   name := "mima",
@@ -58,7 +58,7 @@ val root = project.in(file(".")).settings(
 )
 aggregateProjects(core.jvm, core.native, cli.jvm, sbtplugin, functionalTests)
 
-val munit = Def.setting("org.scalameta" %%% "munit" % "1.0.0")
+val munit = Def.setting("org.scalameta" %%% "munit" % "1.1.0")
 
 val core = crossProject(JVMPlatform, NativePlatform).crossType(CrossType.Pure).settings(
   name := "mima-core",
@@ -108,7 +108,7 @@ val functionalTests = Project("functional-tests", file("functional-tests"))
   .configs(IntegrationTest)
   .settings(
     crossScalaVersions += scala213,
-    libraryDependencies += "io.get-coursier" %% "coursier" % "2.1.10",
+    libraryDependencies += "io.get-coursier" %% "coursier" % "2.1.24",
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
     libraryDependencies += munit.value,
     scalacOptions ++= compilerOptions(scalaVersion.value),
