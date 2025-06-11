@@ -56,7 +56,7 @@ val root = project.in(file(".")).settings(
   mimaFailOnNoPrevious := false,
   publish / skip := true,
 )
-aggregateProjects(core.jvm, core.native, sbtplugin, functionalTests)
+aggregateProjects(core.jvm, core.native, cli.jvm, sbtplugin, functionalTests)
 
 val munit = Def.setting("org.scalameta" %%% "munit" % "1.1.1")
 
@@ -65,7 +65,6 @@ val core = crossProject(JVMPlatform, NativePlatform).crossType(CrossType.Pure).s
   crossScalaVersions ++= Seq(scala213, scala3),
   scalacOptions ++= compilerOptions(scalaVersion.value),
   libraryDependencies += munit.value % Test,
-  testFrameworks += new TestFramework("munit.Framework"),
   MimaSettings.mimaSettings,
   apiMappings ++= {
     // WORKAROUND https://github.com/scala/bug/issues/9311
@@ -77,8 +76,21 @@ val core = crossProject(JVMPlatform, NativePlatform).crossType(CrossType.Pure).s
       }
       .toMap
   },
-
 ).nativeSettings(mimaPreviousArtifacts := Set.empty)
+
+val cli = crossProject(JVMPlatform)
+  .crossType(CrossType.Pure)
+  .settings(
+    name := "mima-cli",
+    crossScalaVersions ++= Seq(scala3),
+    scalacOptions ++= compilerOptions(scalaVersion.value),
+    libraryDependencies += munit.value % Test,
+    MimaSettings.mimaSettings,
+    // cli has no previous release,
+    // but also we don't care about its binary compatibility as it's meant to be used standalone
+    mimaPreviousArtifacts := Set.empty
+  )
+  .dependsOn(core)
 
 val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core.jvm).settings(
   name := "sbt-mima-plugin",
@@ -99,7 +111,6 @@ val functionalTests = Project("functional-tests", file("functional-tests"))
     libraryDependencies += "io.get-coursier" %% "coursier" % "2.1.24",
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
     libraryDependencies += munit.value,
-    testFrameworks += new TestFramework("munit.Framework"),
     scalacOptions ++= compilerOptions(scalaVersion.value),
     //Test / run / fork := true,
     //Test / run / forkOptions := (Test / run / forkOptions).value.withWorkingDirectory((ThisBuild / baseDirectory).value),
