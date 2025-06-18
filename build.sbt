@@ -48,7 +48,7 @@ commands += Command.command("testStaging") { state =>
 // Keep in sync with TestCli
 val scala212 = "2.12.20"
 val scala213 = "2.13.16"
-val scala3 = "3.3.5"
+val scala3 = "3.3.6"
 
 val root = project.in(file(".")).settings(
   name := "mima",
@@ -58,7 +58,7 @@ val root = project.in(file(".")).settings(
 )
 aggregateProjects(core.jvm, core.native, cli.jvm, sbtplugin, functionalTests)
 
-val munit = Def.setting("org.scalameta" %%% "munit" % "1.1.0")
+val munit = Def.setting("org.scalameta" %%% "munit" % "1.1.1")
 
 val core = crossProject(JVMPlatform, NativePlatform).crossType(CrossType.Pure).settings(
   name := "mima-core",
