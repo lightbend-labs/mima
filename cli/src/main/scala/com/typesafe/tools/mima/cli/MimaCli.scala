@@ -19,7 +19,6 @@ case class Main(
     val newBin = newBinOpt.getOrElse(
       throw new IllegalArgumentException("New binary was not specified")
     )
-    // TODO: should have some machine-readable output here, as an option
     val problems = new MiMaLib(classpath)
       .collectProblems(oldBin, newBin, Nil)
       .flatMap(formatter.formatProblem)
