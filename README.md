@@ -89,6 +89,55 @@ import com.github.lolgab.mill.mima._
 
 Please check [this page](https://github.com/lolgab/mill-mima) for further information.
 
+### CLI
+
+You can use MiMa using its command-line interface - it's the most straightforward way to compare two jars and see some human-readable descriptions of the issues.
+
+You can launch it with Coursier:
+
+```bash
+cs launch com.typesafe:mima-cli_3:latest.release -- old.jar new.jar
+```
+
+Or create a reusable script:
+
+```bash
+cs bootstrap com.typesafe:mima-cli_3:latest.release --output mima
+./mima old.jar new.jar
+```
+
+Here are the usage instructions:
+
+```
+Usage:
+
+mima [OPTIONS] oldfile newfile
+
+  oldfile: Old (or, previous) files - a JAR or a directory containing classfiles
+  newfile: New (or, current) files - a JAR or a directory containing classfiles
+
+Options:
+  -cp CLASSPATH:
+     Specify Java classpath, separated by ':'
+
+  -v, --verbose:
+     Show a human-readable description of each problem
+
+  -f, --forward-only:
+    Show only forward-binary-compatibility problems
+
+  -b, --backward-only:
+    Show only backward-binary-compatibility problems
+
+  -g, --include-generics:
+    Include generic signature problems, which may not directly cause bincompat
+    problems and are hidden by default. Has no effect if using --forward-only.
+
+  -j, --bytecode-names:
+    Show bytecode names of fields and methods, rather than human-readable names
+```
+
+
 ## Filtering binary incompatibilities
 
 When MiMa reports a binary incompatibility that you consider acceptable, such as a change in an internal package,
