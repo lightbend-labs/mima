@@ -5,7 +5,7 @@ import java.util.regex.Pattern
 
 object ProblemFilters {
 
-  private case class ExcludeByName(name: String, cls: Class[_]) extends ProblemFilter {
+  private case class ExcludeByName(name: String, cls: Class[?]) extends ProblemFilter {
     private[this] val pattern = Pattern.compile(name.split("\\*", -1).map(Pattern.quote).mkString(".*"))
 
     override def apply(problem: Problem): Boolean = {

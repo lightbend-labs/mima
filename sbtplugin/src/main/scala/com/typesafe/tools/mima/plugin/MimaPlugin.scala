@@ -11,7 +11,7 @@ object MimaPlugin extends AutoPlugin {
   object autoImport extends MimaKeys
   import autoImport.*
 
-  override def globalSettings: Seq[Def.Setting[_]] = Seq(
+  override def globalSettings: Seq[Def.Setting[?]] = Seq(
     mimaPreviousArtifacts := NoPreviousArtifacts,
     mimaExcludeAnnotations := Nil,
     mimaBinaryIssueFilters := Nil,
@@ -21,7 +21,7 @@ object MimaPlugin extends AutoPlugin {
     mimaCheckDirection := "backward",
   )
 
-  override def projectSettings: Seq[Def.Setting[_]] = Seq(
+  override def projectSettings: Seq[Def.Setting[?]] = Seq(
     mimaReportBinaryIssues := {
       binaryIssuesIterator.value.foreach { case (moduleId, problems) =>
         SbtMima.reportModuleErrors(
@@ -50,7 +50,7 @@ object MimaPlugin extends AutoPlugin {
   )
 
   @deprecated("Switch to enablePlugins(MimaPlugin)", "0.7.0")
-  def mimaDefaultSettings: Seq[Setting[_]] = globalSettings ++ buildSettings ++ projectSettings
+  def mimaDefaultSettings: Seq[Setting[?]] = globalSettings ++ buildSettings ++ projectSettings
 
   trait ArtifactsToClassfiles {
     def toClassfiles(previousArtifacts: Set[ModuleID]): Map[ModuleID, File]
