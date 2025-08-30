@@ -2,7 +2,7 @@ import mimabuild._
 
 inThisBuild(Seq(
   organization := "com.typesafe",
-  licenses := Seq("Apache License v2.0" -> url("http://www.apache.org/licenses/LICENSE-2.0")),
+  licenses := Seq(License.Apache2),
   homepage := Some(url("http://github.com/lightbend-labs/mima")),
   developers := List(
     Developer("mdotta", "Mirco Dotta", "@dotta", url("https://github.com/dotta")),
@@ -14,7 +14,11 @@ inThisBuild(Seq(
   versionScheme := Some("early-semver"),
   scalaVersion := scala212,
   resolvers ++= (if (isStaging) List(stagingResolver) else Nil),
-  publishTo := Some(if (isSnapshot.value) Opts.resolver.sonatypeOssSnapshots.head else Opts.resolver.sonatypeStaging),
+  publishTo := {
+    val centralSnapshots = "https://central.sonatype.com/repository/maven-snapshots/"
+    if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
+    else localStaging.value
+  },
 ))
 
 def compilerOptions(scalaVersion: String): Seq[String] =
@@ -49,6 +53,7 @@ commands += Command.command("testStaging") { state =>
 val scala212 = "2.12.20"
 val scala213 = "2.13.16"
 val scala3 = "3.3.6"
+val scala3_7 = "3.7.2"
 
 val root = project.in(file(".")).settings(
   name := "mima",
@@ -94,6 +99,13 @@ val cli = crossProject(JVMPlatform)
 
 val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core.jvm).settings(
   name := "sbt-mima-plugin",
+  crossScalaVersions ++= Seq(scala3_7),
+  (pluginCrossBuild / sbtVersion) := {
+    scalaBinaryVersion.value match {
+      case "2.12" => "1.5.8"
+      case _      => "2.0.0-RC3"
+    }
+  },
   scalacOptions ++= compilerOptions(scalaVersion.value),
   // drop the previous value to drop running Test/compile
   scriptedDependencies := Def.task(()).dependsOn(publishLocal, core.jvm / publishLocal).value,

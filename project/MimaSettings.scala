@@ -24,6 +24,10 @@ object MimaSettings {
       // * com.typesafe.tools.mima.core.ProblemFilters
       // * com.typesafe.tools.mima.core.*Problem
       // * com.typesafe.tools.mima.core.util.log.Logging
+      exclude[MissingClassProblem]("com.typesafe.tools.mima.plugin.MimaPlugin$EmptyMap"),
+      exclude[MissingClassProblem]("com.typesafe.tools.mima.plugin.MimaPlugin$EmptySet"),
+      exclude[MissingClassProblem]("com.typesafe.tools.mima.plugin.MimaPlugin$NoPreviousArtifacts$"),
+      exclude[MissingClassProblem]("com.typesafe.tools.mima.plugin.MimaPlugin$NoPreviousClassfiles$"),
     ),
   )
 }

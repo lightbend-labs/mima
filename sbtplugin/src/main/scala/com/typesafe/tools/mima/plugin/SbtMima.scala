@@ -3,11 +3,11 @@ package plugin
 
 import java.io.File
 
-import com.typesafe.tools.mima.core._
+import com.typesafe.tools.mima.core.*
 import com.typesafe.tools.mima.lib.MiMaLib
-import sbt._
-import sbt.Keys.{ Classpath, TaskStreams }
-import sbt.librarymanagement.{ UpdateLogging => _, _ }
+import sbt.*
+import sbt.Keys.TaskStreams
+import sbt.librarymanagement.{ UpdateLogging => _, * }
 
 import scala.io.Source
 import scala.collection.mutable
@@ -18,7 +18,7 @@ import scala.util.matching._
 object SbtMima {
   /** Runs MiMa and returns a two lists of potential binary incompatibilities,
       the first for backward compatibility checking, and the second for forward checking. */
-  def runMima(prev: File, curr: File, cp: Classpath, dir: String, scalaVersion: String, logger: Logger, excludeAnnots: List[String]): (List[Problem], List[Problem]) = {
+  def runMima(prev: File, curr: File, cp: Seq[Attributed[File]], dir: String, scalaVersion: String, logger: Logger, excludeAnnots: List[String]): (List[Problem], List[Problem]) = {
     sanityCheckScalaVersion(scalaVersion)
     val mimaLib = new MiMaLib(Attributed.data(cp), new SbtLogger(logger))
     def checkBC = mimaLib.collectProblems(prev, curr, excludeAnnots)
@@ -114,7 +114,8 @@ object SbtMima {
 
   def issueFiltersFromFiles(filtersDirectory: File, fileExtension: Regex, s: TaskStreams): Map[String, Seq[ProblemFilter]] = {
     val ExclusionPattern = """ProblemFilters\.exclude\[([^\]]+)\]\("([^"]+)"\)""".r
-    val mappings = mutable.HashMap.empty[String, Seq[ProblemFilter]].withDefault(_ => new ListBuffer[ProblemFilter])
+    val mappings = mutable.HashMap.empty[String, Seq[ProblemFilter]]
+      .withDefault(_ => new ListBuffer[ProblemFilter].toSeq)
     val failures = new ListBuffer[String]
 
     def parseOneFile(file: File): Seq[ProblemFilter] = {
@@ -138,11 +139,11 @@ object SbtMima {
       } catch {
         case NonFatal(t) => failures += s"Couldn't load '$file': ${t.getMessage}"
       } finally source.close()
-      filters
+      filters.toSeq
     }
 
     for {
-      fileOrDir <- Option(filtersDirectory.listFiles()).getOrElse(Array.empty)
+      fileOrDir <- Option(filtersDirectory.listFiles()).getOrElse(Array.empty[File])
       extension <- fileExtension.findFirstIn(fileOrDir.getName)
       version = fileOrDir.getName.dropRight(extension.length)
       file <- Option(fileOrDir.listFiles()).getOrElse(Array(fileOrDir))
