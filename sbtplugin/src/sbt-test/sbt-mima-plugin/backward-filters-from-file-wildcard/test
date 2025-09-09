@@ -1,12 +1,12 @@
-> set scalaSource in Compile := baseDirectory.value /"src" /"main" /"scala" /"v1"
+> set Compile / scalaSource := baseDirectory.value /"src" /"main" /"scala" /"v1"
 > set version := s"0.0.1-SNAPSHOT"
 > publishLocal
 
-> set scalaSource in Compile := baseDirectory.value /"src" /"main" /"scala" /"v2"
+> set Compile / scalaSource := baseDirectory.value /"src" /"main" /"scala" /"v2"
 > set version := s"0.0.2-SNAPSHOT"
 > publishLocal
 
-> set scalaSource in Compile := baseDirectory.value /"src" /"main" /"scala" /"v3"
+> set Compile / scalaSource := baseDirectory.value /"src" /"main" /"scala" /"v3"
 > set version := s"0.1.0-SNAPSHOT"
 
 # filters are read from file, so mima check should pass

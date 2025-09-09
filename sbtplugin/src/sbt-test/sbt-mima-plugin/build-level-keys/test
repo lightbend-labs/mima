@@ -2,10 +2,10 @@
 # Particularly mimaPreviousArtifacts & mimaBinaryIssueFilters.
 
 # Setup: v2 has a breaking change from v1
-> set scalaSource in Compile := baseDirectory.value /"v1"
+> set Compile / scalaSource := baseDirectory.value /"v1"
 > set version := s"0.0.1-SNAPSHOT"
 > publishLocal
-> set scalaSource in Compile := baseDirectory.value /"v2"
+> set Compile / scalaSource := baseDirectory.value /"v2"
 > set version := s"0.0.2-SNAPSHOT"
 
 # fail, due to unset mimaPreviousArtifacts and empty mimaBinaryIssueFilters

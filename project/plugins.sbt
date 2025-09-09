@@ -6,11 +6,6 @@ scalacOptions ++= Seq(
   "-Ywarn-unused:_,-imports",
 )
 
-// Useful to self-test releases
-val stagingResolver = "Sonatype OSS Staging" at "https://oss.sonatype.org/content/repositories/staging"
-def isStaging = sys.props.contains("mimabuild.staging")
-resolvers ++= (if (isStaging) List(stagingResolver) else Nil)
-
 addSbtPlugin("com.github.sbt"   % "sbt-dynver"      % "5.1.1")
 addSbtPlugin("com.github.sbt" % "sbt-pgp"         % "2.3.1")
 addSbtPlugin("com.typesafe"   % "sbt-mima-plugin" % "1.1.4")

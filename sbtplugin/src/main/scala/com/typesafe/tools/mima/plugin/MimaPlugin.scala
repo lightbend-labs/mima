@@ -3,15 +3,21 @@ package plugin
 
 import sbt.*, Keys.*
 import core.*
+import PluginCompat.*
+import xsbti.FileConverter
+import scala.annotation.nowarn
 
 /** MiMa's sbt plugin. */
 object MimaPlugin extends AutoPlugin {
   override def trigger = allRequirements
 
+  private val NoPreviousArtifacts = PluginCompat.NoPreviousArtifacts
+  private val NoPreviousClassfiles = PluginCompat.NoPreviousClassfiles
+
   object autoImport extends MimaKeys
   import autoImport.*
 
-  override def globalSettings: Seq[Def.Setting[_]] = Seq(
+  override def globalSettings: Seq[Def.Setting[?]] = Seq(
     mimaPreviousArtifacts := NoPreviousArtifacts,
     mimaExcludeAnnotations := Nil,
     mimaBinaryIssueFilters := Nil,
@@ -21,7 +27,7 @@ object MimaPlugin extends AutoPlugin {
     mimaCheckDirection := "backward",
   )
 
-  override def projectSettings: Seq[Def.Setting[_]] = Seq(
+  override def projectSettings: Seq[Def.Setting[?]] = Seq(
     mimaReportBinaryIssues := {
       binaryIssuesIterator.value.foreach { case (moduleId, problems) =>
         SbtMima.reportModuleErrors(
@@ -43,14 +49,14 @@ object MimaPlugin extends AutoPlugin {
     },
     mimaCurrentClassfiles := (Compile / classDirectory).value,
     mimaFindBinaryIssues := binaryIssuesIterator.value.toMap,
-    mimaFindBinaryIssues / fullClasspath := (Compile / fullClasspath).value,
+    mimaFindBinaryIssues / fullClasspath := Def.uncached((Compile / fullClasspath).value),
     mimaBackwardIssueFilters := SbtMima.issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:backward[s]?|both)\\.excludes".r, streams.value),
     mimaForwardIssueFilters := SbtMima.issueFiltersFromFiles(mimaFiltersDirectory.value, "\\.(?:forward[s]?|both)\\.excludes".r, streams.value),
     mimaFiltersDirectory := (Compile / sourceDirectory).value / "mima-filters",
   )
 
   @deprecated("Switch to enablePlugins(MimaPlugin)", "0.7.0")
-  def mimaDefaultSettings: Seq[Setting[_]] = globalSettings ++ buildSettings ++ projectSettings
+  def mimaDefaultSettings: Seq[Setting[?]] = globalSettings ++ buildSettings ++ projectSettings
 
   trait ArtifactsToClassfiles {
     def toClassfiles(previousArtifacts: Set[ModuleID]): Map[ModuleID, File]
@@ -86,6 +92,9 @@ object MimaPlugin extends AutoPlugin {
     val excludeAnnots = mimaExcludeAnnotations.value.toList
     val failOnNoPrevious = mimaFailOnNoPrevious.value
     val projName = name.value
+    val conv0 = fileConverter.value
+    @nowarn
+    implicit val conv: FileConverter = conv0
 
     (prevClassfiles, checkDirection) => {
       if (prevClassfiles eq NoPreviousClassfiles) {
@@ -96,7 +105,15 @@ object MimaPlugin extends AutoPlugin {
       }
 
       prevClassfiles.iterator.map { case (moduleId, prevClassfiles) =>
-        moduleId -> SbtMima.runMima(prevClassfiles, currClassfiles, cp, checkDirection, sv, log, excludeAnnots)
+        moduleId -> SbtMima.runMima(
+          prevClassfiles,
+          currClassfiles,
+          toOldClasspath(cp),
+          checkDirection,
+          sv,
+          log,
+          excludeAnnots
+        )
       }
     }
   }
@@ -110,34 +127,5 @@ object MimaPlugin extends AutoPlugin {
   // without blowing up the Akka build's heap
   private val binaryIssuesIterator = Def.task {
     binaryIssuesFinder.value.runMima(mimaPreviousClassfiles.value, mimaCheckDirection.value)
-  }
-
-  // Used to differentiate unset mimaPreviousArtifacts from empty mimaPreviousArtifacts
-  private object NoPreviousArtifacts extends EmptySet[ModuleID]
-  private object NoPreviousClassfiles extends EmptyMap[ModuleID, File]
-
-  private sealed class EmptySet[A] extends Set[A] {
-    def iterator          = Iterator.empty
-    def contains(elem: A) = false
-    def + (elem: A)       = Set(elem)
-    def - (elem: A)       = this
-
-    override def size                  = 0
-    override def foreach[U](f: A => U) = ()
-    override def toSet[B >: A]: Set[B] = this.asInstanceOf[Set[B]]
-  }
-
-  private sealed class EmptyMap[K, V] extends Map[K, V] {
-    def get(key: K)              = None
-    def iterator                 = Iterator.empty
-    def + [V1 >: V](kv: (K, V1)) = updated(kv._1, kv._2)
-    def - (key: K)               = this
-
-    override def size                                       = 0
-    override def contains(key: K)                           = false
-    override def getOrElse[V1 >: V](key: K, default: => V1) = default
-    override def updated[V1 >: V](key: K, value: V1)        = Map(key -> value)
-
-    override def apply(key: K) = throw new NoSuchElementException(s"key not found: $key")
   }
 }
