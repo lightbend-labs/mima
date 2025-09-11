@@ -58,7 +58,7 @@ val root = project.in(file(".")).settings(
 )
 aggregateProjects(core.jvm, core.native, cli.jvm, sbtplugin, functionalTests)
 
-val munit = Def.setting("org.scalameta" %%% "munit" % "1.1.1")
+val munit = Def.setting("org.scalameta" %%% "munit" % "1.1.2")
 
 val core = crossProject(JVMPlatform, NativePlatform).crossType(CrossType.Pure).settings(
   name := "mima-core",
