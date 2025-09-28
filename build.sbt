@@ -103,7 +103,7 @@ val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core.jvm).settings(
   (pluginCrossBuild / sbtVersion) := {
     scalaBinaryVersion.value match {
       case "2.12" => "1.5.8"
-      case _      => "2.0.0-RC3"
+      case _      => "2.0.0-RC5"
     }
   },
   scalacOptions ++= compilerOptions(scalaVersion.value),
