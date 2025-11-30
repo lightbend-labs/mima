@@ -7,7 +7,7 @@ private[mima] object ProblemReporting {
     // version string "x.y.z" is converted to an Int tuple (x, y, z) for comparison
     val VersionRegex = """(\d+)\.?(\d+)?\.?(.*)?""".r
     def int(versionPart: String) =
-      Try(versionPart.replace("x", Short.MaxValue.toString).filter(_.isDigit).toInt).getOrElse(0)
+      Try(versionPart.replace("x", Long.MaxValue.toString).filter(_.isDigit).toInt).getOrElse(0)
     Ordering[(Int, Int, Int)].on[String] {
       case VersionRegex(x, y, z) => (int(x), int(y), int(z))
       case bad => throw new IllegalArgumentException(bad)
