@@ -50,7 +50,7 @@ commands += Command.command("testStaging") { state =>
 }
 
 // Keep in sync with TestCli
-val scala212 = "2.12.20"
+val scala212 = "2.12.21"
 val scala213 = "2.13.18"
 val scala3 = "3.3.6"
 val scala3_7 = "3.7.2"
