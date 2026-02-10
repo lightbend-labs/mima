@@ -53,7 +53,7 @@ an error at runtime (i.e. MiMa isn't reporting false positives).  Broken down in
 There are also a few other test types:
 
 * the standard `test` task runs all unit tests in MiMa,
-* the `IntegrationTest / test` task will run a suite of "integration tests" (seldomly used)
+* the `integration-tests / test` task will run a suite of "integration tests" (seldomly used)
 * the standard `scripted` task will run the scripted tests for MiMa's sbt plugin
 
 Unit tests should be favoured to verify specific MiMa APIs.  Functional tests should be favoured to verify

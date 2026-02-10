@@ -10,14 +10,15 @@ inThisBuild(Seq(
     Developer("dwijnand", "Dale Wijnand", "@dwijnand", url("https://github.com/dwijnand")),
   ),
   scmInfo := Some(ScmInfo(url("https://github.com/lightbend-labs/mima"), "scm:git:git@github.com:lightbend-labs/mima.git")),
-  dynverVTagPrefix := false,
   versionScheme := Some("early-semver"),
   scalaVersion := scala212,
-  resolvers ++= (if (isStaging) List(stagingResolver) else Nil),
-  publishTo := {
-    val centralSnapshots = "https://central.sonatype.com/repository/maven-snapshots/"
-    if (isSnapshot.value) Some("central-snapshots" at centralSnapshots)
-    else localStaging.value
+  // Fallback version when no v-prefixed tags exist (migration from non-v tags to v-prefixed tags)
+  version := {
+    val v = version.value
+    if (v.startsWith("0.0.0+")) {
+      // No v-prefixed tag found, use 1.1.4 as base (last release before v-prefix migration)
+      "1.1.4" + v.stripPrefix("0.0.0")
+    } else v
   },
 ))
 
@@ -40,15 +41,6 @@ def compilerOptions(scalaVersion: String): Seq[String] =
     case _ => Seq()
   })
 
-// Useful to self-test releases
-val stagingResolver = "Sonatype OSS Staging" at "https://oss.sonatype.org/content/repositories/staging"
-def isStaging = sys.props.contains("mimabuild.staging")
-commands += Command.command("testStaging") { state =>
-  val prep = if (isStaging) Nil else List("reload")
-  sys.props("mimabuild.staging") = "true"
-  prep ::: "mimaReportBinaryIssues" :: state
-}
-
 // Keep in sync with TestCli
 val scala212 = "2.12.20"
 val scala213 = "2.13.18"
@@ -61,7 +53,7 @@ val root = project.in(file(".")).settings(
   mimaFailOnNoPrevious := false,
   publish / skip := true,
 )
-aggregateProjects(core.jvm, core.native, cli.jvm, sbtplugin, functionalTests)
+aggregateProjects(core.jvm, core.native, cli.jvm, sbtplugin, functionalTests, integrationTests)
 
 val munit = Def.setting("org.scalameta" %%% "munit" % "1.1.1")
 
@@ -117,21 +109,26 @@ val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core.jvm).settings(
 val testFunctional = taskKey[Unit]("Run the functional test")
 val functionalTests = Project("functional-tests", file("functional-tests"))
   .dependsOn(core.jvm)
-  .configs(IntegrationTest)
   .settings(
     crossScalaVersions += scala213,
     libraryDependencies += "io.get-coursier" %% "coursier" % "2.1.24",
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
     libraryDependencies += munit.value,
     scalacOptions ++= compilerOptions(scalaVersion.value),
-    //Test / run / fork := true,
-    //Test / run / forkOptions := (Test / run / forkOptions).value.withWorkingDirectory((ThisBuild / baseDirectory).value),
-    // Test / testOnly / watchTriggers += baseDirectory.value.toGlob / "src" / "test" / **,
-    // ^ disabled b/c of "Build triggered by [..]/target/scala-2.12/v2-classes."
     testFunctional := (Test / test).value,
-    Defaults.itSettings,
     Test / mainClass := Some("com.typesafe.tools.mima.lib.UnitTests"),
-    IntegrationTest / testOptions += Tests.Argument(TestFrameworks.MUnit, "-b"), // disable buffering => immediate output
+    mimaFailOnNoPrevious := false,
+    publish / skip := true,
+  )
+
+val integrationTests = Project("integration-tests", file("integration-tests"))
+  .dependsOn(functionalTests % "compile->compile")
+  .settings(
+    crossScalaVersions += scala213,
+    libraryDependencies += munit.value,
+    scalacOptions ++= compilerOptions(scalaVersion.value),
+    Test / unmanagedSourceDirectories := Seq((functionalTests / baseDirectory).value / "src" / "it" / "scala"),
+    Test / testOptions += Tests.Argument(TestFrameworks.MUnit, "-b"), // disable buffering => immediate output
     mimaFailOnNoPrevious := false,
     publish / skip := true,
   )
