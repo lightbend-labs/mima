@@ -67,7 +67,9 @@ object TastyUnpickler {
 
       for (defDef <- clsDef.template.meths) {
         val annots = defDef.annots.map(annot => AnnotInfo(annot.tycon.toString))
-        for (meth <- cls.lookupClassMethods(new MethodInfo(cls, defDef.name.source, 0, "()V")))
+        // cls.methods.get() instead of cls.lookupClassMethods() to avoid evaluating `superClasses` during Tasty
+        // unpickling, which can cause a circular lazy val initialization deadlock on Scala 3
+        for (meth <- cls.methods.get(defDef.name.source))
           meth._annotations ++= annots
       }
     }
