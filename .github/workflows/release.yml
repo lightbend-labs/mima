@@ -1,4 +1,4 @@
-name: Release
+name: release
 
 on:
   push:
@@ -6,21 +6,28 @@ on:
 
 jobs:
   release:
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - scala: 2.12.x
+            java: 8
+          - scala: 2.13.x
+            java: 8
+          - scala: 3.3.x
+            java: 8
+          - scala: 3.8.x
+            java: 17
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
-        with:
-          fetch-depth: 0
-      
       - uses: actions/setup-java@v5
         with:
           distribution: temurin
-          java-version: 8
+          java-version: ${{matrix.java}}
           cache: sbt
-      
       - uses: sbt/setup-sbt@v1
-      
-      - run: sbt ci-release
+      - run: sbt ++${{matrix.scala}} publishSigned
         env:
           PGP_PASSPHRASE: ${{ secrets.PGP_PASSPHRASE }}
           PGP_SECRET: ${{ secrets.PGP_SECRET }}
