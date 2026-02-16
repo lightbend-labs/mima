@@ -1,4 +1,6 @@
-import mimabuild._
+import mimabuild.*
+
+import scala.util.Properties
 
 inThisBuild(Seq(
   organization := "com.typesafe",
@@ -11,8 +13,17 @@ inThisBuild(Seq(
   ),
   scmInfo := Some(ScmInfo(url("https://github.com/lightbend-labs/mima"), "scm:git:git@github.com:lightbend-labs/mima.git")),
   versionScheme := Some("early-semver"),
-  scalaVersion := scala212,
 ))
+
+lazy val commonSettings: Seq[Setting[_]] = Seq(
+  // in order to build `sbtplugin`, the `scalaVersion` of `core.jvm` has to match (2.12 or 3.8)
+  scalaVersion := crossScalaVersions.value.headOption.getOrElse((LocalProject("sbtplugin") / scalaVersion).value),
+  publish / skip := crossScalaVersions.value.isEmpty,
+  publishLocal / skip := false, // sbtplugin/scripted requires publishLocal
+  scalacOptions ++= compilerOptions(scalaVersion.value),
+)
+
+def java8or17[T](if8: => T, if17: => T): T = if (Properties.isJavaAtLeast("17")) if17 else if8
 
 def compilerOptions(scalaVersion: String): Seq[String] =
   Seq(
@@ -36,23 +47,22 @@ def compilerOptions(scalaVersion: String): Seq[String] =
 // Keep in sync with TestCli
 val scala212 = "2.12.21"
 val scala213 = "2.13.18"
-val scala3 = "3.3.7"   // keep at LTS
+val scala3_3 = "3.3.7" // keep at LTS
 val scala3_8 = "3.8.1" // keep at 3.8 for sbt 2 plugin
 
-val root = project.in(file(".")).settings(
+val root = project.in(file(".")).settings(commonSettings).settings(
   name := "mima",
   crossScalaVersions := Nil,
   mimaFailOnNoPrevious := false,
-  publish / skip := true,
 )
+
 aggregateProjects(core.jvm, core.native, cli.jvm, sbtplugin, functionalTests, integrationTests)
 
 val munit = Def.setting("org.scalameta" %%% "munit" % "1.2.2")
 
-val core = crossProject(JVMPlatform, NativePlatform).crossType(CrossType.Pure).settings(
+val core = crossProject(JVMPlatform, NativePlatform).crossType(CrossType.Pure).settings(commonSettings).settings(
   name := "mima-core",
-  crossScalaVersions ++= Seq(scala213, scala3),
-  scalacOptions ++= compilerOptions(scalaVersion.value),
+  crossScalaVersions := java8or17(Seq(scala212, scala213, scala3_3), Nil),
   libraryDependencies += munit.value % Test,
   MimaSettings.mimaSettings,
   apiMappings ++= {
@@ -69,28 +79,24 @@ val core = crossProject(JVMPlatform, NativePlatform).crossType(CrossType.Pure).s
 
 val cli = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
+  .settings(commonSettings)
   .settings(
     name := "mima-cli",
-    crossScalaVersions ++= Seq(scala213, scala3),
-    scalacOptions ++= compilerOptions(scalaVersion.value),
+    crossScalaVersions := java8or17(Seq(scala212, scala213, scala3_3), Nil),
     libraryDependencies += munit.value % Test,
-    MimaSettings.mimaSettings,
-    // cli has no previous release,
-    // but also we don't care about its binary compatibility as it's meant to be used standalone
-    mimaPreviousArtifacts := Set.empty
+    mimaFailOnNoPrevious := false,
   )
   .dependsOn(core)
 
-val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core.jvm).settings(
+val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core.jvm).settings(commonSettings).settings(
   name := "sbt-mima-plugin",
-  crossScalaVersions ++= Seq(scala3_8),
+  crossScalaVersions := java8or17(Seq(scala212), Seq(scala3_8)),
   (pluginCrossBuild / sbtVersion) := {
     scalaBinaryVersion.value match {
       case "2.12" => "1.5.8"
       case _      => "2.0.0-RC9"
     }
   },
-  scalacOptions ++= compilerOptions(scalaVersion.value),
   // drop the previous value to drop running Test/compile
   scriptedDependencies := Def.task(()).dependsOn(publishLocal, core.jvm / publishLocal).value,
   scriptedLaunchOpts += s"-Dplugin.version=${version.value}",
@@ -104,26 +110,26 @@ val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core.jvm).settings(
 val testFunctional = taskKey[Unit]("Run the functional test")
 val functionalTests = Project("functional-tests", file("functional-tests"))
   .dependsOn(core.jvm)
+  .settings(commonSettings)
   .settings(
-    crossScalaVersions += scala213,
+    crossScalaVersions := java8or17(Seq(scala212, scala213), Nil),
+    publish / skip := true,
     libraryDependencies += "io.get-coursier" %% "coursier" % "2.1.24",
     libraryDependencies += "org.scala-lang" % "scala-reflect" % scalaVersion.value,
     libraryDependencies += munit.value,
-    scalacOptions ++= compilerOptions(scalaVersion.value),
     testFunctional := (Test / test).value,
     Test / mainClass := Some("com.typesafe.tools.mima.lib.UnitTests"),
     mimaFailOnNoPrevious := false,
-    publish / skip := true,
   )
 
 val integrationTests = Project("integration-tests", file("integration-tests"))
   .dependsOn(functionalTests % "compile->compile")
+  .settings(commonSettings)
   .settings(
-    crossScalaVersions += scala213,
+    crossScalaVersions := java8or17(Seq(scala212, scala213), Nil),
+    publish / skip := true,
     libraryDependencies += munit.value,
-    scalacOptions ++= compilerOptions(scalaVersion.value),
     Test / unmanagedSourceDirectories := Seq((functionalTests / baseDirectory).value / "src" / "it" / "scala"),
     Test / testOptions += Tests.Argument(TestFrameworks.MUnit, "-b"), // disable buffering => immediate output
     mimaFailOnNoPrevious := false,
-    publish / skip := true,
   )
