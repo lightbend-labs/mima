@@ -27,7 +27,7 @@ jobs:
           java-version: 8
           cache: sbt
       - uses: sbt/setup-sbt@v1
-      - run: sbt ++${{matrix.scala}} core/publishSigned cli/publishSigned
+      - run: sbt ++${{matrix.scala}} coreJVM/publishSigned coreNative/publishSigned cliJVM/publishSigned
 
   release-sbtplugin:
     strategy:
