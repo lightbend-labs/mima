@@ -12,14 +12,6 @@ inThisBuild(Seq(
   scmInfo := Some(ScmInfo(url("https://github.com/lightbend-labs/mima"), "scm:git:git@github.com:lightbend-labs/mima.git")),
   versionScheme := Some("early-semver"),
   scalaVersion := scala212,
-  // Fallback version when no v-prefixed tags exist (migration from non-v tags to v-prefixed tags)
-  version := {
-    val v = version.value
-    if (v.startsWith("0.0.0+")) {
-      // No v-prefixed tag found, use 1.1.4 as base (last release before v-prefix migration)
-      "1.1.4" + v.stripPrefix("0.0.0")
-    } else v
-  },
 ))
 
 def compilerOptions(scalaVersion: String): Seq[String] =
@@ -44,8 +36,8 @@ def compilerOptions(scalaVersion: String): Seq[String] =
 // Keep in sync with TestCli
 val scala212 = "2.12.21"
 val scala213 = "2.13.18"
-val scala3 = "3.3.7"
-val scala3_7 = "3.7.4"
+val scala3 = "3.3.7"   // keep at LTS
+val scala3_8 = "3.8.1" // keep at 3.8 for sbt 2 plugin
 
 val root = project.in(file(".")).settings(
   name := "mima",
@@ -79,7 +71,7 @@ val cli = crossProject(JVMPlatform)
   .crossType(CrossType.Pure)
   .settings(
     name := "mima-cli",
-    crossScalaVersions ++= Seq(scala3),
+    crossScalaVersions ++= Seq(scala213, scala3),
     scalacOptions ++= compilerOptions(scalaVersion.value),
     libraryDependencies += munit.value % Test,
     MimaSettings.mimaSettings,
@@ -91,11 +83,11 @@ val cli = crossProject(JVMPlatform)
 
 val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core.jvm).settings(
   name := "sbt-mima-plugin",
-  crossScalaVersions ++= Seq(scala3_7),
+  crossScalaVersions ++= Seq(scala3_8),
   (pluginCrossBuild / sbtVersion) := {
     scalaBinaryVersion.value match {
       case "2.12" => "1.5.8"
-      case _      => "2.0.0-RC3"
+      case _      => "2.0.0-RC9"
     }
   },
   scalacOptions ++= compilerOptions(scalaVersion.value),
@@ -104,6 +96,9 @@ val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core.jvm).settings(
   scriptedLaunchOpts += s"-Dplugin.version=${version.value}",
   scriptedLaunchOpts += s"-Dsbt.boot.directory=${file(sys.props("user.home")) / ".sbt" / "boot"}",
   MimaSettings.mimaSettings,
+  // remove once there is a previous `_sbt2_3` sbt plugin release
+  mimaFailOnNoPrevious := false,
+  mimaPreviousArtifacts := (if (scalaVersion.value.startsWith("3.8")) Set.empty else mimaPreviousArtifacts.value),
 )
 
 val testFunctional = taskKey[Unit]("Run the functional test")
