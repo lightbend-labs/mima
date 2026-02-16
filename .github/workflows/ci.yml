@@ -5,12 +5,11 @@ on:
   push:
 
 jobs:
-  core:
+  test:
     strategy:
       fail-fast: false
       matrix:
-        java: [8, 17, 25]
-        scala: [2.12.x, 2.13.x, 3.3.x]
+        java: [8, 17]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -20,18 +19,17 @@ jobs:
           java-version: ${{matrix.java}}
           cache: sbt
       - uses: sbt/setup-sbt@v1
-      - run: sbt ++${{matrix.scala}} coreJVM/test coreNative/test cliJVM/test coreJVM/mimaReportBinaryIssues
+      - run: sbt +test +mimaReportBinaryIssues
+      # use of an old sbt version, as a smoke test. only on 2.12.
+      - run: sbt ++2.12.x 'set sbtplugin/scriptedSbt := "1.5.8"' 'sbtplugin/scripted sbt-mima-plugin/minimal'
+        if: matrix.java == 8
 
-  sbtplugin:
-    needs: core
+  scripted:
+    needs: test
     strategy:
       fail-fast: false
       matrix:
-        include:
-          - scala: 2.12.x
-            java: 8
-          - scala: 3.8.x
-            java: 17
+        java: [8, 17]
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -41,11 +39,10 @@ jobs:
           java-version: ${{matrix.java}}
           cache: sbt
       - uses: sbt/setup-sbt@v1
-      # set ThisBuild/scalaVersion because sbtplugin depends on core, but core stays on 2.12 with `++3.8.x`
-      - run: sbt ++${{matrix.scala}} 'set ThisBuild/scalaVersion := (sbtplugin/scalaVersion).value' sbtplugin/mimaReportBinaryIssues sbtplugin/scripted
+      - run: sbt +sbtplugin/scripted
 
-  testFunctional:
-    needs: core
+  functional-tests:
+    needs: test
     strategy:
       fail-fast: false
       matrix:
@@ -59,10 +56,10 @@ jobs:
           java-version: 8
           cache: sbt
       - uses: sbt/setup-sbt@v1
-      - run: sbt "functional-tests/runMain com.typesafe.tools.mima.lib.UnitTests -${{matrix.scala}}"
+      - run: sbt ++2.12.x "functional-tests/runMain com.typesafe.tools.mima.lib.UnitTests -${{matrix.scala}}"
 
-  testIntegration:
-    needs: core
+  integration-tests:
+    needs: test
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v6
@@ -72,4 +69,4 @@ jobs:
           java-version: 8
           cache: sbt
       - uses: sbt/setup-sbt@v1
-      - run: sbt integration-tests/test
+      - run: sbt ++2.12.x integration-tests/test
