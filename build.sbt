@@ -102,9 +102,6 @@ val sbtplugin = project.enablePlugins(SbtPlugin).dependsOn(core.jvm).settings(co
   scriptedLaunchOpts += s"-Dplugin.version=${version.value}",
   scriptedLaunchOpts += s"-Dsbt.boot.directory=${file(sys.props("user.home")) / ".sbt" / "boot"}",
   MimaSettings.mimaSettings,
-  // remove once there is a previous `_sbt2_3` sbt plugin release
-  mimaFailOnNoPrevious := false,
-  mimaPreviousArtifacts := (if (scalaVersion.value.startsWith("3.8")) Set.empty else mimaPreviousArtifacts.value),
 )
 
 val testFunctional = taskKey[Unit]("Run the functional test")
