@@ -10,7 +10,7 @@ import com.typesafe.tools.mima.plugin.MimaPlugin.autoImport._
 
 object MimaSettings {
   // clear out mimaBinaryIssueFilters when changing this
-  val mimaPreviousVersion = "1.1.4"
+  val mimaPreviousVersion = "1.1.5"
 
   val mimaSettings = Def.settings (
     mimaPreviousArtifacts := Set(pluginProjectID.value.withRevision(mimaPreviousVersion)
@@ -24,10 +24,9 @@ object MimaSettings {
       // * com.typesafe.tools.mima.core.ProblemFilters
       // * com.typesafe.tools.mima.core.*Problem
       // * com.typesafe.tools.mima.core.util.log.Logging
-      exclude[MissingClassProblem]("com.typesafe.tools.mima.plugin.MimaPlugin$EmptyMap"),
-      exclude[MissingClassProblem]("com.typesafe.tools.mima.plugin.MimaPlugin$EmptySet"),
-      exclude[MissingClassProblem]("com.typesafe.tools.mima.plugin.MimaPlugin$NoPreviousArtifacts$"),
-      exclude[MissingClassProblem]("com.typesafe.tools.mima.plugin.MimaPlugin$NoPreviousClassfiles$"),
+
+      // _3 artifact was built with 3.3, mima checking with 3.8 reports a generic signature change (scala3#24684)
+      ProblemFilters.exclude[IncompatibleSignatureProblem]("com.typesafe.tools.mima.core.TastyUnpickler#MethodSignature.copy$default$*"),
     ),
   )
 }
