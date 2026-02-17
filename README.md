@@ -50,7 +50,7 @@ contain bugs.
 
 ### SBT
 
-MiMa's sbt plugin supports sbt 1.x only.  (Use v0.3.0 for sbt 0.13.x.)
+MiMa's sbt plugin supports sbt 1.x and 2.x.
 
 To use it add the following to your `project/plugins.sbt` file:
 
