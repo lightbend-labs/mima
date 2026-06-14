@@ -282,6 +282,9 @@ object TastyFormat {
   val INVISIBLE     = 44
   val EMPTYCLAUSE   = 45
   val SPLITCLAUSE   = 46
+  val TRACKED       = 47
+  val SUBMATCH      = 48
+  val INTO          = 49
 
   val AstCat2       = 60 to  89      // Cat. 2: tag Nat
   val SHAREDterm    = 60
@@ -316,6 +319,8 @@ object TastyFormat {
   val RECtype            = 100
   val SINGLETONtpt       = 101
   val BOUNDED            = 102
+  val EXPLICITtpt        = 103
+  val ELIDED             = 104
 
   val AstCat4       = 100 to 127     // Cat. 4: tag Nat AST
   val IDENT         = 110
@@ -377,10 +382,16 @@ object TastyFormat {
   val TYPEREFin      = 175
   val  SELECTin      = 176
   val EXPORT         = 177
+  val QUOTE          = 178
+  val SPLICE         = 179
   val METHODtype     = 180
+  val APPLYsigpoly   = 181
+  val QUOTEPATTERN   = 182
+  val SPLICEPATTERN  = 183
   val MATCHtype      = 190
   val MATCHtpt       = 191
   val MATCHCASEtype  = 192
+  val FLEXIBLEtype   = 193
   val HOLE           = 255
 
   /** Standard-Section: "Positions" LinesSizes Assoc*
