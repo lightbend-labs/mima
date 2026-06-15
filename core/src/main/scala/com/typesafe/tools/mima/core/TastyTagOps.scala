@@ -57,6 +57,8 @@ object TastyTagOps {
     case TRANSPARENT        => true
     case INFIX              => true
     case INVISIBLE          => true
+    case TRACKED            => true
+    case INTO               => true
     case ANNOTATION         => true
     case   PRIVATEqualified => true
     case PROTECTEDqualified => true
@@ -107,6 +109,9 @@ object TastyTagOps {
     case INVISIBLE     => "INVISIBLE"
     case EMPTYCLAUSE   => "EMPTYCLAUSE"
     case SPLITCLAUSE   => "SPLITCLAUSE"
+    case TRACKED       => "TRACKED"
+    case SUBMATCH      => "SUBMATCH"
+    case INTO          => "INTO"
 
     case SHAREDterm    => "SHAREDterm"
     case SHAREDtype    => "SHAREDtype"
@@ -139,6 +144,8 @@ object TastyTagOps {
     case RECtype            => "RECtype"
     case SINGLETONtpt       => "SINGLETONtpt"
     case BOUNDED            => "BOUNDED"
+    case EXPLICITtpt        => "EXPLICITtpt"
+    case ELIDED             => "ELIDED"
 
     case IDENT         => "IDENT"
     case IDENTtpt      => "IDENTtpt"
@@ -198,10 +205,16 @@ object TastyTagOps {
     case TYPEREFin      => "TYPEREFin"
     case  SELECTin      =>  "SELECTin"
     case EXPORT         => "EXPORT"
+    case QUOTE          => "QUOTE"
+    case SPLICE         => "SPLICE"
     case METHODtype     => "METHODtype"
+    case APPLYsigpoly   => "APPLYsigpoly"
+    case QUOTEPATTERN   => "QUOTEPATTERN"
+    case SPLICEPATTERN  => "SPLICEPATTERN"
     case MATCHtype      => "MATCHtype"
     case MATCHtpt       => "MATCHtpt"
     case MATCHCASEtype  => "MATCHCASEtype"
+    case FLEXIBLEtype   => "FLEXIBLEtype"
     case HOLE           => "HOLE"
 
     case tag => s"BadTag($tag)"
