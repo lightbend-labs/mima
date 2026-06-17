@@ -19,6 +19,10 @@ case class Main(
     val newBin = newBinOpt.getOrElse(
       throw new IllegalArgumentException("New binary was not specified")
     )
+    if (!oldBin.exists())
+      throw new IllegalArgumentException(s"oldfile does not exist: $oldBin")
+    if (!newBin.exists())
+      throw new IllegalArgumentException(s"newfile does not exist: $newBin")
     val problems = new MiMaLib(classpath)
       .collectProblems(oldBin, newBin, Nil)
       .flatMap(formatter.formatProblem)
