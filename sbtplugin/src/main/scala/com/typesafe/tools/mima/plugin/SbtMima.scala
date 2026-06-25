@@ -85,7 +85,7 @@ object SbtMima {
       val allFilters = backErrors.flatMap(_.howToFilter) ++ forwErrors.flatMap(_.howToFilter)
       if (allFilters.nonEmpty) {
         doLog("Filter with:")
-        for (f <- allFilters) doLog("   " + f)
+        for (f <- allFilters) doLog("   " + f + ",")
       }
 
       if (failOnProblem)
