@@ -61,12 +61,6 @@ object SbtMima {
       ProblemReporting.isReported(module.revision, filters, versionedFilters)(problem)
     }
 
-    def pretty(affected: String)(p: Problem): String = {
-      val desc = p.description(affected)
-      val howToFilter = p.howToFilter.fold("")(s => s"\n   filter with: $s")
-      s" * $desc$howToFilter"
-    }
-
     val backErrors = backward.filter(isReported(backwardFilters))
     val forwErrors = forward.filter(isReported(forwardFilters))
 
@@ -82,8 +76,17 @@ object SbtMima {
       val msg = s"Failed binary compatibility check against $module! Found $count potential problems$filteredNote"
 
       logResult(msg)
-      for (p <- backErrors) doLog(pretty("current")(p))
-      for (p <- forwErrors) doLog(pretty("other")(p))
+
+      // Print problems first, then how to filter them, so that the latter is easy to copy/paste when there are many
+
+      for (p <- backErrors) doLog(" * " + p.description("current"))
+      for (p <- forwErrors) doLog(" * " + p.description("other"))
+
+      val allFilters = backErrors.flatMap(_.howToFilter) ++ forwErrors.flatMap(_.howToFilter)
+      if (allFilters.nonEmpty) {
+        doLog("Filter with:")
+        for (f <- allFilters) doLog("   " + f)
+      }
 
       if (failOnProblem)
         sys.error(msg)
